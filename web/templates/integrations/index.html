@@ -1,0 +1,69 @@
+{{define "integrations/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.integration-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;margin-bottom:2rem}
+.integration-card{background:white;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,0.08);transition:transform 0.3s}
+.integration-card:hover{transform:translateY(-5px)}
+.integration-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+.integration-icon{width:50px;height:50px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.integration-icon.sap{background:#0078d7;color:white}
+.integration-icon.oracle{background:#f80000;color:white}
+.integration-icon.sharepoint{background:#0078d4;color:white}
+.integration-icon.google{background:#4285f4;color:white}
+.integration-icon.slack{background:#4a154b;color:white}
+.integration-icon.teams{background:#464eb8;color:white}
+.status-indicator{width:10px;height:10px;border-radius:50%;display:inline-block}
+.status-active{background:#16a34a}
+.status-inactive{background:#64748b}
+.status-error{background:#dc2626}
+</style>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🔗 Integration Hub</h2>
+        <a href="/advanced/integrations/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Integration</a>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card"><div class="card-body text-center"><h3>{{.Stats.Total}}</h3><p class="text-muted mb-0">Total Integrations</p></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body text-center"><h3 style="color:#16a34a">{{.Stats.Active}}</h3><p class="text-muted mb-0">Active</p></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body text-center"><h3 style="color:#64748b">{{.Stats.Inactive}}</h3><p class="text-muted mb-0">Inactive</p></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body text-center"><h3 style="color:#dc2626">{{.Stats.Error}}</h3><p class="text-muted mb-0">Error</p></div></div>
+        </div>
+    </div>
+    <div class="integration-grid">
+        {{range .Integrations}}
+        <div class="integration-card">
+            <div class="integration-header">
+                <div class="integration-icon {{lower .Provider}}"><i class="bi bi-plug"></i></div>
+                <div><h5 class="mb-0">{{.Name}}</h5><small class="text-muted">{{.Provider}} • {{.Type}}</small></div>
+            </div>
+            <div class="mb-3">
+                <span class="status-indicator status-{{.Status}}"></span> <strong>{{.Status}}</strong>
+                {{if .LastSyncAt}}<br><small class="text-muted">Last sync: {{.LastSyncAt}}</small>{{end}}
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/advanced/integrations/{{.ID}}" class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-eye"></i> View</a>
+                <form action="/advanced/integrations/{{.ID}}/test" method="POST" class="d-inline">
+                    <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-circle"></i> Test</button>
+                </form>
+            </div>
+        </div>
+        {{else}}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-plug" style="font-size:4rem;color:#cbd5e1"></i>
+                <h4 class="mt-3">No Integrations Yet</h4>
+                <p class="text-muted">Connect ArsipPro with your favorite tools</p>
+                <a href="/advanced/integrations/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Create Integration</a>
+            </div>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

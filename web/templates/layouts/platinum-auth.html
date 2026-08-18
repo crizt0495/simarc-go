@@ -1,0 +1,509 @@
+{{define "layouts/platinum-auth.html"}}
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{.CSRFToken}}">
+  <title>{{.title}} — {{.AppName}}</title>
+
+  <link rel="icon" type="image/svg+xml" href="/images/logo-icon.svg?v={{.AssetVersion}}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://code.jquery.com">
+
+  <!-- Critical CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" fetchpriority="high">
+
+  <!-- Non-critical: load icons async -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"></noscript>
+  <link href="/css/enterprise-premium.css?v={{.AssetVersion}}" rel="stylesheet">
+  <link href="/css/dark-mode.css?v={{.AssetVersion}}" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body.auth-body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      /* 'safe center' = centered when there is room, but falls back to
+         top-aligned when the card is taller than the viewport so the page
+         can always be scrolled (small phones / on-screen keyboard). */
+      align-items: safe center;
+      justify-content: center;
+      position: relative;
+      background: #f0f4f8;
+      /* Horizontal clipping only. Vertical overflow propagates to the
+         viewport, so the page scrolls normally when the card is taller
+         than the screen (small phones / on-screen keyboard).
+         NOTE: do NOT add overflow-y here — an overflow-y on the flex body
+         turns the body into its own scroll container and the page can no
+         longer be scrolled. */
+      overflow-x: hidden;
+      padding: 20px;
+    }
+    [data-theme="dark"] body.auth-body { background: #080c14; }
+
+    /* ── Animated Background ── */
+    .auth-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .auth-bg-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 45% at 10% 20%, rgba(37,99,235,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(99,102,241,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 35% at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 40%);
+    }
+    [data-theme="dark"] .auth-bg-gradient {
+      background:
+        radial-gradient(ellipse 60% 45% at 10% 20%, rgba(37,99,235,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(99,102,241,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 35% at 50% 50%, rgba(139,92,246,0.06) 0%, transparent 40%);
+    }
+    .auth-bg-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.3;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    [data-theme="dark"] .auth-bg-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    }
+
+    /* Floating orbs */
+    .auth-orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(80px);
+    }
+    .auth-orb-1 {
+      width: 500px; height: 500px;
+      background: rgba(37,99,235,0.06);
+      top: -150px; left: -100px;
+      animation: orbDrift 25s ease-in-out infinite;
+    }
+    .auth-orb-2 {
+      width: 400px; height: 400px;
+      background: rgba(139,92,246,0.05);
+      bottom: -120px; right: -80px;
+      animation: orbDrift 20s ease-in-out infinite reverse;
+    }
+    .auth-orb-3 {
+      width: 250px; height: 250px;
+      background: rgba(6,182,212,0.04);
+      top: 50%; left: 60%;
+      animation: orbDrift 18s ease-in-out infinite 5s;
+    }
+    @keyframes orbDrift {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(30px,-40px) scale(1.05); }
+      66% { transform: translate(-20px,20px) scale(0.95); }
+    }
+
+    /* ── Login Card ── */
+    .auth-card-wrap {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      animation: cardIn 0.5s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .auth-card {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 28px;
+      padding: 44px 36px 36px;
+      border: 1px solid rgba(255,255,255,0.5);
+      box-shadow:
+        0 4px 32px rgba(0,0,0,0.04),
+        0 1px 4px rgba(0,0,0,0.02);
+    }
+    [data-theme="dark"] .auth-card {
+      background: rgba(15,23,42,0.75);
+      border-color: rgba(255,255,255,0.06);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+    }
+
+    /* ── Logo & Header ── */
+    .auth-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-logo {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 30px;
+      box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .auth-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    [data-theme="dark"] .auth-header h1 { color: #f1f5f9; }
+    .auth-header p {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+    [data-theme="dark"] .auth-header p { color: #94a3b8; }
+
+    /* ── App Name Badge ── */
+    .auth-appname {
+      text-align: center;
+      margin-bottom: 28px;
+      padding: 10px 16px;
+      background: rgba(37,99,235,0.04);
+      border-radius: 12px;
+      border: 1px solid rgba(37,99,235,0.06);
+    }
+    [data-theme="dark"] .auth-appname {
+      background: rgba(37,99,235,0.06);
+      border-color: rgba(37,99,235,0.1);
+    }
+    .auth-appname span {
+      font-size: 12px;
+      font-weight: 600;
+      color: #2563eb;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    [data-theme="dark"] .auth-appname span { color: #60a5fa; }
+
+    /* ── Alerts ── */
+    .auth-alert {
+      padding: 12px 16px;
+      border-radius: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 18px;
+      animation: alertPop 0.35s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes alertPop {
+      from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes authShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+    .animate-shake { animation: authShake 0.4s ease; }
+    .auth-alert-success {
+      background: rgba(16,185,129,0.1);
+      color: #059669;
+      border: 1px solid rgba(16,185,129,0.2);
+    }
+    .auth-alert-danger {
+      background: rgba(239,68,68,0.1);
+      color: #dc2626;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    [data-theme="dark"] .auth-alert-success {
+      background: rgba(16,185,129,0.15);
+      color: #34d399;
+    }
+    [data-theme="dark"] .auth-alert-danger {
+      background: rgba(239,68,68,0.15);
+      color: #f87171;
+    }
+
+    /* ── Form ── */
+    .auth-field {
+      margin-bottom: 18px;
+    }
+    .auth-field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+    [data-theme="dark"] .auth-field label { color: #cbd5e1; }
+
+    .auth-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      transition: all 0.2s ease;
+    }
+    [data-theme="dark"] .auth-input-wrap {
+      background: rgba(30,41,59,0.5);
+      border-color: rgba(255,255,255,0.08);
+    }
+    .auth-input-wrap:focus-within {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+    }
+    [data-theme="dark"] .auth-input-wrap:focus-within {
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    .auth-field-icon {
+      position: absolute;
+      left: 16px;
+      color: #94a3b8;
+      font-size: 18px;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+    .auth-input-wrap:focus-within .auth-field-icon { color: #2563eb; }
+
+    .auth-input {
+      width: 100%;
+      height: 52px;
+      padding: 0 16px 0 48px;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      font-family: inherit;
+      color: #0f172a;
+      outline: none;
+    }
+    [data-theme="dark"] .auth-input { color: #f1f5f9; }
+    .auth-input::placeholder { color: #94a3b8; font-size: 14px; }
+
+    .auth-pw-toggle {
+      position: absolute;
+      right: 10px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .auth-pw-toggle:hover {
+      background: rgba(0,0,0,0.04);
+      color: #64748b;
+    }
+
+    /* ── Login Button ── */
+    .auth-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb, #6366f1);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 4px 16px rgba(37,99,235,0.25);
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .auth-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.2) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,235,0.35); }
+    .auth-btn:hover::after { opacity: 1; }
+    .auth-btn:active { transform: translateY(0) scale(0.98); }
+    .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    .auth-btn .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: authSpin 0.6s linear infinite;
+    }
+    .auth-btn.loading .spinner { display: inline-block; }
+    .auth-btn.loading .btn-text,
+    .auth-btn.loading .btn-icon { display: none; }
+    @keyframes authSpin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ── */
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    [data-theme="dark"] .auth-footer { color: #64748b; }
+    .auth-footer i { font-size: 10px; }
+
+    /* ── Theme Toggle ── */
+    .auth-theme-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(0,0,0,0.06);
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      animation: fadeIn 0.3s ease 0.4s both;
+    }
+    .auth-theme-btn:hover {
+      background: #fff;
+      color: #2563eb;
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    [data-theme="dark"] .auth-theme-btn {
+      background: rgba(30,41,59,0.6);
+      border-color: rgba(255,255,255,0.06);
+      color: #94a3b8;
+    }
+    [data-theme="dark"] .auth-theme-btn:hover {
+      background: #1e293b;
+      color: #fff;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      body.auth-body { padding: 12px; align-items: flex-start; padding-top: 48px; }
+      .auth-card {
+        padding: 28px 20px 24px;
+        border-radius: 20px;
+      }
+      .auth-header { margin-bottom: 24px; }
+      .auth-header h1 { font-size: 20px; }
+      .auth-input { height: 48px; font-size: 16px; }
+      .auth-btn { height: 48px; }
+      .auth-logo { width: 56px; height: 56px; font-size: 26px; }
+      .auth-theme-btn { bottom: 16px; right: 16px; width: 40px; height: 40px; }
+    }
+  </style>
+</head>
+<body class="auth-body">
+  <!-- ─── ANIMATED BACKGROUND ─── -->
+  <div class="auth-bg">
+    <div class="auth-bg-gradient"></div>
+    <div class="auth-bg-grid"></div>
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
+    <div class="auth-orb auth-orb-3"></div>
+  </div>
+
+  <!-- ─── LOGIN CARD ─── -->
+  <div class="auth-card-wrap">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">
+          <i class="bi bi-archive-fill"></i>
+        </div>
+        <h1>Selamat Datang</h1>
+        <p>Masuk untuk mengakses sistem kearsipan elektronik</p>
+      </div>
+
+      {{block "content" .}}{{end}}
+
+      <div class="auth-footer">
+        &copy; {{.Year}}{{if .LANIP}} &middot; <i class="bi bi-wifi"></i> {{.LANIP}}{{end}}
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── THEME TOGGLE ─── -->
+  <button class="auth-theme-btn" id="authThemeBtn" title="Toggle tema">
+    <i class="bi bi-moon" id="authThemeIcon"></i>
+  </button>
+
+  <script>
+  (function() {
+    var html = document.documentElement;
+    var t = localStorage.getItem('theme') || 'light';
+    html.setAttribute('data-theme', t);
+    var icon = document.getElementById('authThemeIcon');
+    if (icon) icon.className = t === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    document.getElementById('authThemeBtn').addEventListener('click', function() {
+      var nt = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', nt);
+      localStorage.setItem('theme', nt);
+      icon.className = nt === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    });
+
+    /* Ripple mouse tracking */
+    document.addEventListener('mousemove', function(e) {
+      var btn = e.target.closest('.auth-btn');
+      if (btn) {
+        var rect = btn.getBoundingClientRect();
+        btn.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
+        btn.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <!-- Premium Gold Gradient -->
+    <linearGradient id="iconGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4AF37;stop-opacity:1" />
+      <stop offset="35%" style="stop-color:#F5E6A8;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#C9A961;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Metallic Gold Gradient -->
+    <linearGradient id="iconMetallicGold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#9A7B0A;stop-opacity:1" />
+      <stop offset="25%" style="stop-color:#D4AF37;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F5E6A8;stop-opacity:1" />
+      <stop offset="75%" style="stop-color:#D4AF37;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9A7B0A;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Deep Navy Background -->
+    <linearGradient id="iconNavyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0B1C2D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#061018;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Premium Shadow -->
+    <filter id="iconShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Inner Glow -->
+    <filter id="innerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background Rounded Square -->
+  <rect x="10" y="10" width="180" height="180" rx="36" fill="url(#iconNavyGradient)" filter="url(#iconShadow)"/>
+  
+  <!-- Premium Border -->
+  <rect x="12" y="12" width="176" height="176" rx="34" fill="none" stroke="url(#iconMetallicGold)" stroke-width="2.5" opacity="0.9"/>
+  
+  <!-- Inner Border -->
+  <rect x="18" y="18" width="164" height="164" rx="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  
+  <!-- Stylized Letter A (Premium) -->
+  <path d="M 100 45 L 65 135 L 77 135 L 85 115 L 115 115 L 123 135 L 135 135 Z" 
+        fill="url(#iconMetallicGold)" 
+        filter="url(#iconShadow)"/>
+  
+  <!-- Horizontal Bar of A -->
+  <line x1="88" y1="102" x2="112" y2="102" 
+        stroke="#0B1C2D" 
+        stroke-width="5" 
+        stroke-linecap="round"
+        opacity="0.9"/>
+  
+  <!-- Top Accent Star -->
+  <path d="M 100 28 L 102 34 L 108 34 L 103 38 L 105 44 L 100 40 L 95 44 L 97 38 L 92 34 L 98 34 Z" 
+        fill="url(#iconMetallicGold)" 
+        opacity="0.85"/>
+  
+  <!-- Side Decorative Dots -->
+  <circle cx="55" cy="100" r="3" fill="url(#iconMetallicGold)" opacity="0.7"/>
+  <circle cx="145" cy="100" r="3" fill="url(#iconMetallicGold)" opacity="0.7"/>
+  
+  <!-- Bottom Arc -->
+  <path d="M 70 155 Q 100 165 130 155" 
+        fill="none" 
+        stroke="url(#iconMetallicGold)" 
+        stroke-width="2.5" 
+        stroke-linecap="round"
+        opacity="0.7"/>
+  
+  <!-- Corner Embellishments -->
+  <circle cx="30" cy="30" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
+  <circle cx="170" cy="30" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
+  <circle cx="30" cy="170" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
+  <circle cx="170" cy="170" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
+  
+  <!-- Glossy Overlay -->
+  <ellipse cx="100" cy="100" rx="70" ry="70" fill="url(#iconGoldGradient)" opacity="0.08" style="mix-blend-mode: overlay;"/>
+</svg>

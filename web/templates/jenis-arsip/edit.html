@@ -1,0 +1,100 @@
+{{define "jenis-arsip/edit.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.edit-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%); border-radius: var(--r-xl); padding: 1.75rem 2rem; position: relative; overflow: hidden; margin-bottom: 1.5rem; animation: slideUp 0.35s ease both; }
+.edit-header::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+.edit-header h4 { color: #fff; font-weight: 800; letter-spacing: -0.03em; position: relative; z-index: 1; margin: 0; }
+.edit-header p { color: rgba(255,255,255,0.65); font-size: 0.8rem; position: relative; z-index: 1; margin: 0.15rem 0 0 0; }
+.edit-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); overflow: hidden; animation: slideUp 0.35s ease 0.08s both; }
+.edit-card .card-body-custom { padding: 1.75rem; }
+.form-field { margin-bottom: 1.25rem; }
+.form-field label { display: block; font-weight: 600; font-size: 0.8rem; color: var(--ink-2); margin-bottom: 0.35rem; }
+.form-field label .required { color: var(--danger); margin-left: 2px; }
+.form-field .form-control, .form-field .form-select { width: 100%; padding: 0.55rem 0.85rem; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 0.85rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit; }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field textarea.form-control { min-height: 100px; resize: vertical; }
+@media (max-width:768px) { .edit-header { padding: 1.25rem; } .edit-card .card-body-custom { padding: 1rem; } }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="edit-header shadow-sm">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h4><i class="bi bi-folder-open me-2"></i>Edit Jenis Arsip</h4>
+                <p>Perbarui jenis dan kategori arsip</p>
+            </div>
+            <a href="/jenis-arsip" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="edit-card">
+                <div class="card-body-custom">
+                    <form method="POST" action="/jenis-arsip/{{.m.ID}}">
+                        <div class="form-field">
+                            <label>Kode Jenis <span class="required">*</span></label>
+                            <input type="text" name="kode_jenis" class="form-control" value="{{.m.KodeJenis}}" required placeholder="Contoh: ARS-001">
+                            <div class="form-text" style="font-size:0.75rem;color:var(--ink-4);margin-top:0.3rem;">Kode unik untuk jenis arsip (tidak boleh duplikat)</div>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Nama Jenis <span class="required">*</span></label>
+                            <input type="text" name="nama_jenis" class="form-control" value="{{.m.NamaJenis}}" required placeholder="Contoh: Arsip Statis">
+                            <div class="form-text" style="font-size:0.75rem;color:var(--ink-4);margin-top:0.3rem;">Nama lengkap jenis arsip</div>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Keterangan</label>
+                            <textarea name="keterangan" class="form-control" placeholder="Deskripsi atau catatan tambahan tentang jenis arsip ini">{{.m.Keterangan}}</textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between pt-2 border-top" style="border-color:var(--border)!important;">
+                            <a href="/jenis-arsip" class="btn btn-secondary btn-sm rounded-pill fw-700 px-3" style="font-size:0.8rem;">
+                                <i class="bi bi-x-circle me-1"></i>Batal
+                            </a>
+                            <button type="submit" class="btn btn-primary rounded-pill fw-800 px-4 py-2 shadow-sm" style="font-size:0.85rem;">
+                                <i class="bi bi-check-circle-fill me-2"></i>Update Jenis Arsip
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm" style="border-radius:var(--r-lg);background:var(--surface-2);animation:slideUp 0.35s ease 0.14s both;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div style="width:32px;height:32px;border-radius:var(--r);background:var(--brand-lt);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:1rem;">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </div>
+                        <h6 class="fw-800 mb-0" style="color:var(--ink);font-size:0.85rem;">Informasi</h6>
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--ink-3);">
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span style="color:var(--ink-4);">ID</span>
+                            <span class="fw-600" style="color:var(--ink-2);font-size:0.7rem;max-width:180px;text-align:right;word-break:break-all;">{{.m.ID}}</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span style="color:var(--ink-4);">Dibuat</span>
+                            <span class="fw-600" style="color:var(--ink-2);">{{formatDate .m.CreatedAt}}</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span style="color:var(--ink-4);">Diperbarui</span>
+                            <span class="fw-600" style="color:var(--ink-2);">{{formatDate .m.UpdatedAt}}</span>
+                        </div>
+                    </div>
+                    <hr style="border-color:var(--border);">
+                    <ul class="small mb-0" style="color:var(--ink-4);padding-left:1rem;font-size:0.75rem;">
+                        <li class="mb-1">Jenis arsip yang sudah digunakan tidak dapat dihapus.</li>
+                        <li>Pastikan kode jenis tidak sama dengan data lain.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

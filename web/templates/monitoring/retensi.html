@@ -1,0 +1,224 @@
+{{define "monitoring/retensi.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+    .mon-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #dc2626 100%);
+        border-radius: var(--r-xl);
+        padding: 1.75rem 2rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .mon-hero::after {
+        content: '';
+        position: absolute;
+        top: -40%; right: -5%;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .mon-hero .hero-title {
+        font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
+    }
+    .mon-hero .hero-sub {
+        font-size: 0.8rem; opacity: 0.7; font-weight: 500;
+    }
+
+    .mon-stat {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 1.5rem;
+    }
+    .ms-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    .ms-card:hover { border-color: var(--brand); box-shadow: var(--sh-sm); }
+    .ms-card .ms-accent {
+        position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .ms-card .ms-icon {
+        width: 40px; height: 40px;
+        border-radius: var(--r);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.05rem; margin-bottom: 0.75rem;
+    }
+    .ms-card .ms-value {
+        font-size: 1.5rem; font-weight: 800; color: var(--ink-2); line-height: 1.2;
+    }
+    .ms-card .ms-label {
+        font-size: 0.65rem; font-weight: 600; color: var(--ink-4);
+        text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.15rem;
+    }
+
+    .premium-table thead th {
+        background: transparent;
+        border: none;
+        color: var(--ink-4);
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+    .premium-table tbody tr {
+        transition: all 0.15s ease;
+        border-bottom: 1px solid var(--border);
+    }
+    .premium-table tbody tr:hover { background: rgba(26,86,219,0.02); }
+    .premium-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        font-size: 0.85rem;
+        color: var(--ink-2);
+    }
+
+
+    .fade-up { animation: fadeUp 0.35s ease both; }
+    .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+    .fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
+
+    @media (max-width: 768px) {
+        .mon-hero { padding: 1.25rem; }
+        .mon-hero .hero-title { font-size: 1.1rem; }
+        .mon-stat { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .premium-table thead { display: none; }
+        .premium-table tbody tr {
+            display: block; margin-bottom: 0.75rem;
+            border: 1px solid var(--border); border-radius: var(--r);
+            padding: 0.75rem; background: var(--surface);
+        }
+        .premium-table tbody td {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.4rem 0 !important; border: none !important;
+            border-bottom: 1px solid var(--border) !important;
+            text-align: right; font-size: 0.8rem;
+        }
+        .premium-table tbody td:last-child { border-bottom: none !important; }
+        .premium-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700; color: var(--ink-3);
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+            padding-right: 0.75rem;
+        }
+    }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="mon-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-hourglass-split me-2"></i>Monitoring Retensi Arsip</div>
+                <div class="hero-sub">Pantau arsip yang masa retensinya akan atau telah berakhir untuk tindak lanjut</div>
+            </div>
+            <a href="/pemusnahan/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-trash3 me-1"></i>Ajukan Pemusnahan
+            </a>
+        </div>
+    </div>
+
+    <div class="mon-stat fade-up-d1">
+        <div class="ms-card"><div class="ms-accent" style="background:var(--danger);"></div><div class="ms-icon" style="background:#fee2e2;color:var(--danger);"><i class="bi bi-exclamation-triangle"></i></div><div class="ms-value">{{.Stats.SudahBerakhir}}</div><div class="ms-label">Sudah Berakhir</div></div>
+        <div class="ms-card"><div class="ms-accent" style="background:var(--warning);"></div><div class="ms-icon" style="background:#fef3c7;color:var(--warning);"><i class="bi bi-clock"></i></div><div class="ms-value">{{.Stats.AkanBerakhir}}</div><div class="ms-label">Akan Berakhir (1 Thn)</div></div>
+        <div class="ms-card"><div class="ms-accent" style="background:var(--info);"></div><div class="ms-icon" style="background:#e0f2fe;color:var(--info);"><i class="bi bi-trash3"></i></div><div class="ms-value">0</div><div class="ms-label">Siap Dimusnahkan</div></div>
+        <div class="ms-card"><div class="ms-accent" style="background:var(--success);"></div><div class="ms-icon" style="background:#dcfce7;color:var(--success);"><i class="bi bi-check-circle"></i></div><div class="ms-value">{{.Stats.MasihAktif}}</div><div class="ms-label">Masih Aktif</div></div>
+    </div>
+
+    <div class="card mb-3 fade-up-d1">
+        <div class="card-body" style="padding:1.25rem;">
+            <form method="GET" action="/monitoring/retensi" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Status Retensi</label>
+                    <select class="form-select" name="status_filter" style="font-size:0.85rem;">
+                        <option value="">Semua Status</option>
+                        <option value="sudah_berakhir" {{if eq .FilterStatus "sudah_berakhir"}}selected{{end}}>⚠️ Sudah Berakhir</option>
+                        <option value="akan_berakhir" {{if eq .FilterStatus "akan_berakhir"}}selected{{end}}>⏰ Akan Berakhir</option>
+                        <option value="siap_dimusnahkan" {{if eq .FilterStatus "siap_dimusnahkan"}}selected{{end}}>🗑️ Siap Dimusnahkan</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Unit Kerja</label>
+                    <select class="form-select" name="unit_kerja_id" style="font-size:0.85rem;">
+                        <option value="">Semua Unit</option>
+                        {{range .UnitKerjaList}}
+                        <option value="{{.ID}}" {{if eq $.FilterUnitKerjaID .ID}}selected{{end}}>{{.NamaUnit}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Cari Arsip</label>
+                    <input type="text" class="form-control" name="search" placeholder="Ketik nama/nomor arsip..." value="{{.FilterSearch}}" style="font-size:0.85rem;">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100" style="font-size:0.85rem;"><i class="bi bi-search me-1"></i>Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm fade-up-d2" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--surface);border-bottom:1px solid var(--border);padding:0.85rem 1.25rem;">
+            <h5 class="fw-800 mb-0" style="font-size:0.85rem;"><i class="bi bi-list-ul text-primary me-2"></i>Daftar Arsip</h5>
+            <span class="badge badge-soft-primary rounded-pill">{{.Total}} Total</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table premium-table mb-0">
+                <thead>
+                    <tr>
+                        <th width="60">No</th>
+                        <th>Nomor Arsip</th>
+                        <th style="min-width:180px">Nama Arsip</th>
+                        <th>Tanggal Dibuat</th>
+                        <th>Retensi Berakhir</th>
+                        <th>Sisa</th>
+                        <th>Unit Kerja</th>
+                        <th width="60" class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $i, $v := .List}}
+                    <tr>
+                        <td class="text-muted fw-700" data-label="No">{{add $i $.FirstItem}}</td>
+                        <td data-label="Nomor"><span class="badge-soft badge-soft-primary font-monospace small fw-700">{{$v.NomorArsip}}</span></td>
+                        <td data-label="Nama">
+                            <strong style="font-size:0.88rem;">{{$v.NamaArsip}}</strong>
+                            {{if $v.Uraian}}<div class="text-muted mt-1" style="font-size:0.7rem;white-space:normal;">{{truncate $v.Uraian 60}}</div>{{end}}
+                        </td>
+                        <td data-label="Dibuat"><span class="small"><i class="bi bi-calendar3 me-1"></i>{{$v.TanggalDibuat}}</span></td>
+                        <td data-label="Berakhir">
+                            <span class="small fw-700 {{if $v.TanggalRetensiBerakhirExpired}}text-danger{{else}}text-warning{{end}}">
+                                <i class="bi bi-hourglass-bottom me-1"></i>{{if $v.TanggalRetensiBerakhir}}{{$v.TanggalRetensiBerakhir}}{{else}}<span class="text-muted">-</span>{{end}}
+                            </span>
+                        </td>
+                        <td data-label="Sisa">
+                            <span class="fw-700" style="font-size:0.8rem;color:var(--ink-3);">{{if $v.SisaRetensi}}{{$v.SisaRetensi}} th{{else}}<span class="text-muted">-</span>{{end}}</span>
+                        </td>
+                        <td data-label="Unit">{{if $v.UnitKerja}}<span class="small"><i class="bi bi-building text-primary me-1"></i>{{$v.UnitKerja.NamaUnit}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                        <td class="text-center" data-label="Aksi">
+                            <a href="/arsip/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted"><i class="bi bi-hourglass-split d-block mb-2" style="font-size:2.5rem;opacity:0.3;"></i><h6 class="fw-700">Tidak Ada Data</h6><small>Tidak ada arsip yang sesuai dengan filter</small></div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{if .HasPages}}
+        <div class="d-flex justify-content-center px-3 py-3 border-top" style="background:var(--surface-2);">
+            {{.Pagination}}
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

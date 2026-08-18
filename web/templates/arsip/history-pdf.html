@@ -1,0 +1,43 @@
+{{define "arsip/history-pdf.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Riwayat Arsip - {{.arsip.NamaArsip}}</title>
+<style>
+body{font-family:Arial,sans-serif;font-size:12px;margin:20px}
+h1{font-size:18px;margin-bottom:4px}
+h2{font-size:14px;margin-top:20px;border-bottom:1px solid #333;padding-bottom:4px}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;font-size:11px}
+th{background:#f0f0f0}
+.meta{margin-bottom:16px;color:#555}
+</style>
+</head>
+<body>
+<h1>Riwayat Arsip</h1>
+<div class="meta">
+  <strong>{{.arsip.NamaArsip}}</strong> &mdash; No. {{.arsip.NomorArsip}}<br>
+  Klasifikasi: {{if .arsip.KodeKlasifikasi}}{{.arsip.KodeKlasifikasi.KodeKlasifikasi}} - {{.arsip.KodeKlasifikasi.NamaKlasifikasi}}{{else}}-{{end}}<br>
+  Unit Kerja: {{if .arsip.UnitKerja}}{{.arsip.UnitKerja.NamaUnit}}{{else}}-{{end}}
+</div>
+<h2>Log Aktivitas</h2>
+<table>
+<thead><tr><th>#</th><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Deskripsi</th></tr></thead>
+<tbody>
+{{range $i, $log := .logs}}
+<tr>
+  <td>{{add $i 1}}</td>
+  <td>{{formatDateTime $log.CreatedAt}}</td>
+  <td>{{if $log.User}}{{$log.User.Name}}{{else}}Sistem{{end}}</td>
+  <td>{{$log.Action}}</td>
+  <td>{{$log.Description}}</td>
+</tr>
+{{else}}
+<tr><td colspan="5">Belum ada log aktivitas</td></tr>
+{{end}}
+</tbody>
+</table>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,287 @@
+{{define "pemberkasan/isi.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="page-title mb-0">Isi Pemberkasan</h4>
+                <div class="page-title-right">
+                    <a href="/pemberkasan" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> <span class="d-none d-sm-inline">Kembali</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Kode Pemberkasan</label>
+                                <p class="mb-0">{{.Item.KodeBerkas}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Nama Berkas</label>
+                                <p class="mb-0">{{if .Item.NamaPemberkasan}}{{.Item.NamaPemberkasan}}{{else}}-{{end}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Tahun</label>
+                                <p class="mb-0">{{.Item.Tahun}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Tanggal Mulai</label>
+                                <p class="mb-0">{{.Item.TanggalMulai}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Jumlah Arsip</label>
+                                <p class="mb-0"><span class="badge bg-primary">{{.Stats.TotalArsip}} arsip</span></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Status</label>
+                                <p class="mb-0">
+                                    <span class="badge 
+                                        {{if eq .Item.StatusBerkas "aktif"}}bg-success
+                                        {{else if eq .Item.StatusBerkas "ditutup"}}bg-secondary
+                                        {{else}}bg-warning
+                                        {{end}}">
+                                        {{.Item.StatusBerkas}}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Tanggal Dibuat</label>
+                                <p class="mb-0">{{.Item.CreatedAt}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Kode Klasifikasi</label>
+                                <p class="mb-0">{{if .Item.KodeKlasifikasi}}{{.Item.KodeKlasifikasi.KodeKlasifikasi}}{{else}}-{{end}} - {{if .Item.KodeKlasifikasi}}{{.Item.KodeKlasifikasi.NamaKlasifikasi}}{{else}}-{{end}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-file-earmark-archive text-white font-size-20"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-1">Total Arsip</p>
+                            <h5 class="mb-0">{{.Stats.TotalArsip}}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-check-circle-fill text-white font-size-20"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-1">Arsip Aktif</p>
+                            <h5 class="mb-0">{{.Stats.ArsipAktif}}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-sm bg-warning rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-clock text-white font-size-20"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-1">Arsip Inaktif</p>
+                            <h5 class="mb-0">{{.Stats.ArsipInaktif}}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Daftar Arsip dalam Pemberkasan</h5>
+                    <div class="text-muted">
+                        {{.Stats.TotalArsip}} arsip
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th>Nomor Arsip</th>
+                                    <th>Nama Arsip</th>
+                                    <th>Jenis Arsip</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Arsip</th>
+                                    <th>Tingkat Keamanan</th>
+                                    <th width="15%">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $i, $a := .Item.Arsip}}
+                                <tr>
+                                    <td>{{add $i 1}}</td>
+                                    <td>{{$a.NomorArsip}}</td>
+                                    <td>{{$a.NamaArsip}}</td>
+                                    <td>{{if $a.KodeKlasifikasi}}{{$a.KodeKlasifikasi.NamaKlasifikasi}}{{else}}-{{end}}</td>
+                                    <td>
+                                        <span class="status-badge
+                                            {{if eq $a.StatusArsip "aktif"}}status-active
+                                            {{else if eq $a.StatusArsip "inaktif"}}status-inactive
+                                            {{else if eq $a.StatusArsip "siap_penyusutan"}}status-ready
+                                            {{else if eq $a.StatusArsip "musnah"}}status-destroyed
+                                            {{else if eq $a.StatusArsip "diberkaskan"}}status-active
+                                            {{else}}status-inactive
+                                            {{end}}">
+                                            {{$a.StatusArsip}}
+                                        </span>
+                                    </td>
+                                    <td>{{$a.TanggalDibuat}}</td>
+                                    <td>{{if $a.KodeKlasifikasi}}{{$a.KodeKlasifikasi.KlasifikasiKeamanan}}{{else}}-{{end}}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="/arsip/{{$a.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="/arsip/{{$a.ID}}/edit" class="btn-crud btn-crud-edit" title="Edit" data-bs-toggle="tooltip">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button type="button" class="btn-crud btn-crud-del" 
+                                                    title="Keluarkan dari Berkas" data-bs-toggle="tooltip"
+                                                    onclick="keluarkanArsip('{{$a.ID}}', '{{$a.NamaArsip}}')">
+                                                <i class="bi bi-eject"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{else}}
+                                <tr>
+                                    <td colspan="8" class="text-center">Tidak ada arsip dalam pemberkasan ini</td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template data-modal="keluarkanModal">
+  <div class="sm-header" style="justify-content:center;padding:32px 24px 8px;border:none;">
+    <div class="sm-confirm-icon sm-icon-danger" style="margin:0 auto;">
+      <i class="bi bi-box-arrow-right"></i>
+    </div>
+  </div>
+  <div class="sm-body" style="text-align:center;padding:8px 24px 16px;">
+    <h5 class="sm-confirm-title">Konfirmasi Keluarkan Arsip</h5>
+    <p class="sm-confirm-message">Apakah Anda yakin ingin mengeluarkan arsip <strong id="namaArsipModal"></strong> dari pemberkasan ini?</p>
+    <p class="sm-confirm-message" style="font-size:13px;margin-top:8px;">Arsip akan tetap tersimpan dalam sistem tetapi tidak lagi tergabung dalam pemberkasan ini.</p>
+  </div>
+  <div class="sm-footer" style="justify-content:center;gap:12px;">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('keluarkanModal')">
+      <i class="bi bi-x-lg me-1"></i>Batal
+    </button>
+    <button type="button" class="sm-btn sm-btn-danger" id="confirmKeluarkanBtn">
+      <i class="bi bi-box-arrow-right me-1"></i>Keluarkan
+    </button>
+  </div>
+</template>
+
+<script>
+let arsipIdToDelete = null;
+
+function keluarkanArsip(id, nama) {
+    arsipIdToDelete = id;
+    // Clone template ke DOM dulu — #namaArsipModal ada di dalam template keluarkanModal
+    SimarcModal.show('keluarkanModal');
+    var nameEl = document.getElementById('namaArsipModal');
+    if (nameEl) nameEl.textContent = nama;
+}
+
+document.getElementById('confirmKeluarkanBtn').addEventListener('click', function() {
+    if (arsipIdToDelete) {
+        const btn = document.getElementById('confirmKeluarkanBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Memproses...';
+        
+        fetch('/api/arsip/' + arsipIdToDelete + '/keluarkan-dari-pemberkasan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]')||{}).getAttribute('content')||'',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                pemberkasan_id: '{{.Item.ID}}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message || 'Terjadi kesalahan');
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mengeluarkan arsip');
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.innerHTML = 'Keluarkan';
+            SimarcModal.hide('keluarkanModal')
+        });
+    }
+});
+</script>
+{{end}}

@@ -1,0 +1,498 @@
+{{define "backup/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+    .backup-stat-card { background: white; border-radius: 16px; padding: 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; border: 1px solid #f0f0f0; }
+    .backup-stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+    .backup-stat-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .backup-stat-icon.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .backup-stat-icon.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
+    .backup-stat-icon.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+    .backup-stat-icon.info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
+    .backup-stat-content h3 { font-size: 32px; font-weight: 700; color: #212529; margin: 0 0 4px 0; }
+    .backup-stat-content p { font-size: 14px; color: #6c757d; margin: 0; }
+    .backup-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .backup-action-card { background: white; border-radius: 12px; padding: 20px; border: 2px solid #e0e0e0; cursor: pointer; transition: all 0.3s ease; }
+    .backup-action-card:hover { border-color: #667eea; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2); transform: translateY(-2px); }
+    .backup-action-card.active { border-color: #667eea; background: #f8f9ff; }
+    .backup-action-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px; }
+    .backup-action-card h5 { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; }
+    .backup-action-card p { margin: 0; font-size: 13px; color: #6c757d; }
+    .backup-list { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .backup-item { display: flex; align-items: center; padding: 16px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; transition: all 0.2s ease; }
+    .backup-item:hover { background: #f8f9ff; border-color: #667eea; }
+    .backup-item-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; margin-right: 16px; }
+    .backup-item-content { flex: 1; }
+    .backup-item-name { font-weight: 600; color: #212529; margin-bottom: 4px; }
+    .backup-item-meta { font-size: 13px; color: #6c757d; }
+    .backup-item-actions { display: flex; gap: 8px; }
+    .progress-container { background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; display: none; }
+    .progress-container.active { display: block; }
+    .progress-bar-container { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 16px 0; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s ease; border-radius: 4px; }
+    .restore-section { background: white; border-radius: 16px; padding: 24px; margin-top: 24px; border: 2px dashed #e0e0e0; }
+    .restore-section:hover { border-color: #667eea; }
+    .gdrive-section { background: white; border-radius: 16px; padding: 24px; margin-top: 24px; border: 1px solid #e0e0e0; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .gdrive-status { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; font-size: 14px; }
+    .gdrive-status.ok { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .gdrive-status.missing { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+</style>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title mb-0"><i class="bi bi-cloud-upload"></i> Backup & Restore</h1>
+            <small class="text-muted">Kelola backup database dan restore data</small>
+        </div>
+        <div><button class="btn btn-outline-primary btn-sm" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Refresh</button></div>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon primary"><i class="bi bi-hdd-stack"></i></div><div class="backup-stat-content"><h3>{{.Statistics.TotalBackups}}</h3><p>Total Backups</p></div></div></div>
+    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon success"><i class="bi bi-database"></i></div><div class="backup-stat-content"><h3>{{.Statistics.TotalSizeFormatted}}</h3><p>Total Size</p></div></div></div>
+    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon warning"><i class="bi bi-clock-history"></i></div><div class="backup-stat-content"><h3>{{.Statistics.LastBackupAge}}</h3><p>Last Backup</p></div></div></div>
+    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon info"><i class="bi bi-shield-check"></i></div><div class="backup-stat-content"><h3>{{.Statistics.AverageSize}}</h3><p>Avg Size</p></div></div></div>
+</div>
+<div id="progressContainer" class="progress-container">
+    <h5><i class="bi bi-hourglass-split"></i> <span id="progressTitle">Processing...</span></h5>
+    <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+    <p class="text-muted mb-0" id="progressText">Please wait...</p>
+</div>
+<div class="backup-actions">
+    <div class="backup-action-card" onclick="createBackup()">
+        <div class="backup-action-icon primary"><i class="bi bi-database"></i></div>
+        <h5>Backup Database</h5>
+        <p>Buat backup database — disimpan di storage lokal</p>
+    </div>
+    <div class="backup-action-card" onclick="createBackupGDrive()">
+        <div class="backup-action-icon success" style="background: linear-gradient(135deg, #4285F4 0%, #34A853 100%);"><i class="bi bi-google"></i></div>
+        <h5>Backup &amp; Upload ke Google Drive</h5>
+        <p>Buat backup database lalu unggah otomatis ke Google Drive</p>
+    </div>
+    <div class="backup-action-card" onclick="showRestoreModal()"><div class="backup-action-icon success"><i class="bi bi-arrow-counterclockwise"></i></div><h5>Restore Database</h5><p>Restore dari backup file</p></div>
+    <div class="backup-action-card" onclick="showImportModal()"><div class="backup-action-icon success" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"><i class="bi bi-filetype-sql"></i></div><h5>Import Database (.SQL)</h5><p>Unggah dan import database .SQL</p></div>
+</div>
+<div class="backup-list">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0"><i class="bi bi-archive"></i> Backup Files</h5>
+        <div class="d-flex gap-2">
+            <select class="form-select form-select-sm no-select2" id="filterBackup" style="width: auto;" onchange="filterBackups()">
+                <option value="all">All Backups</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteOldBackups()"><i class="bi bi-trash"></i> Cleanup Old</button>
+        </div>
+    </div>
+    <div id="backupListContainer">
+        {{range .Backups}}
+        <div class="backup-item" data-date="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+            <div class="backup-item-icon"><i class="bi bi-file-earmark-zip"></i></div>
+            <div class="backup-item-content">
+                <div class="backup-item-name">{{.FileName}}
+                {{if .GoogleDriveFileID}}<span class="badge badge-soft badge-soft-info ms-2"><i class="bi bi-google"></i> GDrive</span>{{end}}
+            </div>
+                <div class="backup-item-meta"><i class="bi bi-hdd"></i> {{formatBytes .FileSize}} • <i class="bi bi-clock"></i> {{.CreatedAt.Format "02 Jan 2006 15:04"}}</div>
+            </div>
+            <div class="backup-item-actions">
+                <a href="/backup/download?filename={{.FileName}}" class="btn btn-sm btn-primary" title="Download"><i class="bi bi-download"></i></a>
+                {{if .GoogleDriveFileID}}
+                <a href="https://drive.google.com/file/d/{{.GoogleDriveFileID}}/view" target="_blank" class="btn btn-sm btn-outline-info" title="Buka di Google Drive"><i class="bi bi-google"></i></a>
+                {{else}}
+                <button class="btn btn-sm btn-outline-info" onclick="uploadBackupToDrive('{{.FileName}}')" title="Upload ke Google Drive"><i class="bi bi-cloud-upload"></i></button>
+                {{end}}
+                <button class="btn btn-sm btn-success" onclick="restoreBackup('{{.FileName}}')" title="Restore"><i class="bi bi-arrow-counterclockwise"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteBackup('{{.FileName}}')" title="Delete"><i class="bi bi-trash"></i></button>
+            </div>
+        </div>
+        {{else}}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 48px; color: #ddd;"></i>
+            <p class="text-muted mt-3">Belum ada backup</p>
+            <button class="btn btn-primary btn-sm" onclick="createBackup()"><i class="bi bi-plus-circle"></i> Buat Backup Pertama</button>
+        </div>
+        {{end}}
+    </div>
+</div>
+<div class="gdrive-section" id="gdriveSettingsCard">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-google" style="color:#4285F4;"></i> Google Drive Backup</h5>
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#gdriveSettingsBody" aria-expanded="false" aria-controls="gdriveSettingsBody"><i class="bi bi-gear"></i> Pengaturan</button>
+    </div>
+    <div id="gdriveStatus" class="gdrive-status {{if .GDriveClientID}}ok{{else}}missing{{end}} mb-3">
+        {{if .GDriveClientID}}
+        <i class="bi bi-check-circle"></i><span><strong>Terhubung.</strong> Backup akan diunggah ke Google Drive saat Anda memilih "Backup &amp; Upload ke Google Drive".</span>
+        {{else}}
+        <i class="bi bi-exclamation-triangle"></i><span><strong>Belum dikonfigurasi.</strong> Masukkan OAuth Client ID Google untuk mengaktifkan upload backup ke Google Drive.</span>
+        {{end}}
+    </div>
+    <div class="collapse {{if not .GDriveClientID}}show{{end}}" id="gdriveSettingsBody">
+        <div class="alert alert-light border mb-3" style="font-size: 13px; border-radius: 12px;">
+            <i class="bi bi-info-circle me-1"></i> <strong>Cara mendapatkan Client ID:</strong>
+            <ol class="mb-0 mt-1 ps-3">
+                <li>Buka <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> &rarr; buat/ pilih project.</li>
+                <li>Aktifkan API <code>Google Drive API</code> (menu <em>APIs &amp; Services</em> &rarr; <em>Library</em>).</li>
+                <li>Buat <strong>OAuth Client ID</strong> tipe <em>Web application</em> (menu <em>Credentials</em> &rarr; <em>Create Credentials</em>), tambahkan <code>http://localhost:8080</code> (atau URL aplikasi) ke <em>Authorized JavaScript origins</em>.</li>
+                <li>Salin <strong>Client ID</strong> ke kolom di bawah. <em>Folder ID</em> opsional (kosongkan untuk upload ke root Drive).</li>
+            </ol>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-bold">OAuth Client ID</label>
+                <input type="text" class="form-control" id="gdriveClientId" placeholder="1234567890-xxxxxxxx.apps.googleusercontent.com" value="{{.GDriveClientID}}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Folder ID (opsional)</label>
+                <input type="text" class="form-control" id="gdriveFolderId" placeholder="Kosongkan untuk root Drive" value="{{.GDriveFolderID}}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary w-100" onclick="gdriveSaveSettings()"><i class="bi bi-save"></i> Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="restore-section">
+    <h5><i class="bi bi-arrow-counterclockwise"></i> Quick Restore</h5>
+    <p class="text-muted mb-3">Upload backup file untuk restore</p>
+    <form action="/backup/restore" method="POST" enctype="multipart/form-data" id="restoreForm">
+        <div class="row g-3">
+            <div class="col-md-6"><input type="file" class="form-control" name="backup_file" accept=".sql,.sql.gz,.enc" required><small class="text-muted">Supported: .sql, .sql.gz, .enc</small></div>
+            <div class="col-md-3"><select class="form-select" name="restore_mode"><option value="overwrite">Overwrite Existing</option><option value="merge">Merge (Skip Duplicates)</option></select></div>
+            <div class="col-md-3"><button type="submit" class="btn btn-success w-100"><i class="bi bi-arrow-counterclockwise"></i> Restore Now</button></div>
+        </div>
+    </form>
+</div>
+<script>
+const GDRIVE_CLIENT_ID = '{{.GDriveClientID}}';
+const GDRIVE_FOLDER_ID = '{{.GDriveFolderID}}';
+let gdriveTokenClient = null;
+
+function loadGsiScript() {
+    return new Promise((resolve, reject) => {
+        if (window.google && google.accounts) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client';
+        s.async = true;
+        s.defer = true;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Gagal memuat library Google Identity Services'));
+        document.head.appendChild(s);
+    });
+}
+
+function getGDriveToken() {
+    return new Promise((resolve, reject) => {
+        if (!GDRIVE_CLIENT_ID) {
+            reject(new Error('Google Drive Client ID belum dikonfigurasi. Buka pengaturan Google Drive di halaman ini.'));
+            return;
+        }
+        loadGsiScript().then(() => {
+            gdriveTokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: GDRIVE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: (resp) => {
+                    if (resp.error) {
+                        reject(new Error(resp.error_description || resp.error || 'Autentikasi Google gagal'));
+                        return;
+                    }
+                    resolve(resp.access_token);
+                },
+            });
+            gdriveTokenClient.requestAccessToken();
+        }).catch(reject);
+    });
+}
+
+// Unggah file ke Google Drive via Drive REST API (resumable upload)
+function uploadToDrive(accessToken, filename, blob, onProgress) {
+    return new Promise((resolve, reject) => {
+        const metadata = { name: filename };
+        if (GDRIVE_FOLDER_ID) metadata.parents = [GDRIVE_FOLDER_ID];
+
+        fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'Content-Type': 'application/json; charset=UTF-8',
+                'X-Upload-Content-Type': 'application/sql',
+                'X-Upload-Content-Length': String(blob.size),
+            },
+            body: JSON.stringify(metadata),
+        }).then(resp => {
+            if (!resp.ok) {
+                return resp.json().then(e => Promise.reject(new Error((e.error && e.error.message) || 'Gagal memulai upload ke Google Drive')));
+            }
+            const location = resp.headers.get('Location');
+            if (!location) return Promise.reject(new Error('Google Drive tidak mengembalikan lokasi upload'));
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', location);
+            xhr.setRequestHeader('Content-Type', 'application/sql');
+            xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)); };
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try { resolve(JSON.parse(xhr.responseText)); }
+                    catch (e2) { reject(new Error('Respons upload tidak valid')); }
+                } else {
+                    reject(new Error('Upload gagal (HTTP ' + xhr.status + ')'));
+                }
+            };
+            xhr.onerror = () => reject(new Error('Upload gagal — periksa koneksi internet'));
+            xhr.send(blob);
+        }).catch(reject);
+    });
+}
+
+function attachGDriveFile(filename, fileId) {
+    return fetch('/backup/gdrive/attach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, google_drive_file_id: fileId, google_drive_url: 'https://drive.google.com/file/d/' + fileId + '/view' })
+    }).then(r => r.json()).then(d => { if (!d.success) throw new Error(d.error || 'Gagal menyimpan referensi Google Drive'); });
+}
+
+function showGDriveSettings() {
+    document.getElementById('gdriveSettingsCard').scrollIntoView({ behavior: 'smooth' });
+    const collapseEl = document.getElementById('gdriveSettingsBody');
+    if (collapseEl && !collapseEl.classList.contains('show')) {
+        if (window.bootstrap && bootstrap.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapseEl).show();
+        } else {
+            collapseEl.classList.add('show');
+        }
+    }
+}
+
+function createBackupGDrive() {
+    if (!GDRIVE_CLIENT_ID) {
+        showToast('❌ Google Drive belum dikonfigurasi. Isi OAuth Client ID di panel Google Drive Backup di bawah, lalu Simpan.', 'error');
+        showGDriveSettings();
+        return;
+    }
+    if (!confirm('Buat backup database dan unggah otomatis ke Google Drive?')) return;
+
+    showProgress('Membuat backup database...', 10);
+    fetch('/backup/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'database', auto_upload_gdrive: true }) })
+    .then(response => response.json()).then(data => {
+        if (!data.success) throw new Error(data.error || 'Backup gagal dibuat');
+        updateProgress(30, 'Mengunduh file backup...');
+        return fetch('/backup/download?filename=' + encodeURIComponent(data.filename)).then(r => {
+            if (!r.ok) throw new Error('Gagal mengunduh file backup');
+            return r.blob();
+        }).then(blob => ({ filename: data.filename, blob }));
+    })
+    .then(({ filename, blob }) => {
+        updateProgress(45, 'Menghubungkan ke Google Drive...');
+        return getGDriveToken().then(token => ({ filename, blob, token }));
+    })
+    .then(({ filename, blob, token }) => {
+        updateProgress(50, 'Mengunggah ke Google Drive...');
+        return uploadToDrive(token, filename, blob, pct => {
+            updateProgress(50 + Math.round(pct * 0.45), 'Mengunggah ke Google Drive... ' + pct + '%');
+        }).then(file => ({ filename, file }));
+    })
+    .then(({ filename, file }) => {
+        updateProgress(97, 'Menyimpan referensi Google Drive...');
+        return attachGDriveFile(filename, file.id);
+    })
+    .then(() => {
+        updateProgress(100, 'Selesai! Backup terunggah ke Google Drive.');
+        setTimeout(() => {
+            hideProgress();
+            showToast('✅ Backup berhasil diunggah ke Google Drive', 'success');
+            setTimeout(() => location.reload(), 2000);
+        }, 600);
+    })
+    .catch(error => { hideProgress(); showToast('❌ ' + error.message, 'error'); });
+}
+
+function uploadBackupToDrive(filename) {
+    if (!GDRIVE_CLIENT_ID) {
+        showToast('❌ Google Drive belum dikonfigurasi. Isi OAuth Client ID di panel Google Drive Backup di bawah, lalu Simpan.', 'error');
+        showGDriveSettings();
+        return;
+    }
+    if (!confirm('Unggah file ' + filename + ' ke Google Drive?')) return;
+
+    showProgress('Mengunduh file backup...', 10);
+    fetch('/backup/download?filename=' + encodeURIComponent(filename))
+    .then(r => { if (!r.ok) throw new Error('Gagal mengunduh file backup'); return r.blob(); })
+    .then(blob => {
+        updateProgress(40, 'Menghubungkan ke Google Drive...');
+        return getGDriveToken().then(token => ({ blob, token }));
+    })
+    .then(({ blob, token }) => {
+        updateProgress(45, 'Mengunggah ke Google Drive...');
+        return uploadToDrive(token, filename, blob, pct => {
+            updateProgress(45 + Math.round(pct * 0.5), 'Mengunggah ke Google Drive... ' + pct + '%');
+        }).then(file => ({ filename, file }));
+    })
+    .then(({ filename, file }) => attachGDriveFile(filename, file.id))
+    .then(() => {
+        updateProgress(100, 'Selesai!');
+        setTimeout(() => {
+            hideProgress();
+            showToast('✅ File berhasil diunggah ke Google Drive', 'success');
+            setTimeout(() => location.reload(), 1500);
+        }, 500);
+    })
+    .catch(error => { hideProgress(); showToast('❌ ' + error.message, 'error'); });
+}
+
+function gdriveSaveSettings() {
+    const clientId = document.getElementById('gdriveClientId').value.trim();
+    const folderId = document.getElementById('gdriveFolderId').value.trim();
+    showProgress('Menyimpan pengaturan Google Drive...', 50);
+    fetch('/backup/gdrive/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: clientId, folder_id: folderId })
+    })
+    .then(r => r.json())
+    .then(d => {
+        hideProgress();
+        if (d.success) {
+            showToast('✅ Pengaturan Google Drive disimpan', 'success');
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast('❌ ' + (d.error || 'Gagal menyimpan pengaturan'), 'error');
+        }
+    })
+    .catch(e => { hideProgress(); showToast('❌ Error: ' + e.message, 'error'); });
+}
+
+function createBackup() {
+    if (!confirm('Buat backup database sekarang?')) return;
+    showProgress('Membuat backup database...', 10);
+    fetch('/backup/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'database' }) })
+    .then(response => response.json()).then(data => {
+        updateProgress(80, 'Menyimpan file...');
+        setTimeout(() => {
+            updateProgress(100, 'Selesai!');
+            setTimeout(() => { hideProgress(); if (data.success) { showToast('✅ Backup berhasil: ' + data.filename, 'success'); setTimeout(() => location.reload(), 2000); } else { showToast('❌ Backup gagal: ' + (data.error || 'Unknown error'), 'error'); } }, 500);
+        }, 500);
+    }).catch(error => { hideProgress(); showToast('❌ Error: ' + error, 'error'); });
+}
+function deleteBackup(filename) {
+    if (!confirm('Apakah Anda yakin ingin menghapus backup ini?')) return;
+    fetch('/backup/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: filename }) })
+    .then(response => response.json()).then(data => { if (data.success) { showToast('✅ Backup berhasil dihapus', 'success'); setTimeout(() => location.reload(), 1000); } else { showToast('❌ Delete gagal: ' + data.error, 'error'); } });
+}
+function restoreBackup(filename) {
+    if (!confirm('PERINGATAN: Restore akan menimpa data existing.\\n\\nFile: ' + filename + '\\n\\nLanjutkan?')) return;
+    showProgress('Restoring backup...', 0);
+    fetch('/backup/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backup_file: filename, restore_mode: 'overwrite' }) })
+    .then(response => response.json()).then(data => {
+        updateProgress(70, 'Restoring database...');
+        setTimeout(() => { updateProgress(100, 'Restore complete!'); setTimeout(() => { hideProgress(); if (data.success) { showToast('✅ Restore berhasil!<br>' + (data.details || data.message), 'success'); setTimeout(() => location.reload(), 2000); } else { showToast('❌ Restore gagal: ' + (data.error || 'Unknown error'), 'error'); } }, 500); }, 2000);
+    }).catch(error => { hideProgress(); showToast('❌ Error: ' + error.message, 'error'); });
+}
+function showProgress(title, percent) { document.getElementById('progressContainer').classList.add('active'); document.getElementById('progressTitle').textContent = title; document.getElementById('progressBar').style.width = percent + '%'; }
+function updateProgress(percent, text) { document.getElementById('progressBar').style.width = percent + '%'; document.getElementById('progressText').textContent = text; }
+function hideProgress() { document.getElementById('progressContainer').classList.remove('active'); }
+function filterBackups() {
+    const filter = document.getElementById('filterBackup').value;
+    const items = document.querySelectorAll('.backup-item');
+    const now = new Date();
+    items.forEach(item => {
+        const itemDate = new Date(item.dataset.date);
+        const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24);
+        if (filter === 'all') item.style.display = 'flex';
+        else if (filter === 'today' && diffDays < 1) item.style.display = 'flex';
+        else if (filter === 'week' && diffDays < 7) item.style.display = 'flex';
+        else if (filter === 'month' && diffDays < 30) item.style.display = 'flex';
+        else item.style.display = 'none';
+    });
+}
+function deleteOldBackups() { if (!confirm('Hapus backup yang lebih tua dari 30 hari?')) return; showProgress('Membersihkan backup lama...', 0); fetch('/backup/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).then(r => r.json()).then(d => { hideProgress(); if (d.success) { showToast('✅ ' + d.message, 'success'); setTimeout(() => location.reload(), 1500); } else { showToast('❌ ' + (d.error || 'Gagal'), 'error'); } }).catch(e => { hideProgress(); showToast('❌ Error: ' + e, 'error'); }); }
+function showRestoreModal() { document.querySelector('.restore-section').scrollIntoView({ behavior: 'smooth' }); }
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification ' + type;
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:350px;padding:16px 20px;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;border-left:4px solid;' + (type === 'success' ? 'border-color:#10b981;' : type === 'error' ? 'border-color:#ef4444;' : 'border-color:#3b82f6;');
+    toast.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle') + '" style="font-size:24px;color:' + (type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6') + '"></i><span>' + message + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;"><i class="bi bi-x"></i></button>';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+function showImportModal() {
+    SimarcModal.show('importSqlModal')
+}
+function submitImportSql(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('sqlFile');
+    if (fileInput.files.length === 0) {
+        showToast('❌ Pilih file SQL terlebih dahulu', 'error');
+        return;
+    }
+    if (!confirm('Apakah Anda yakin ingin mengimpor database? Seluruh data saat ini akan ditimpa.')) {
+        return;
+    }
+    SimarcModal.hide('importSqlModal')
+    showProgress('Mengimpor Database SQL...', 30);
+    const formData = new FormData();
+    formData.append('sql_file', fileInput.files[0]);
+    
+    fetch('/backup/import-sql', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateProgress(100, 'Import Berhasil!');
+            setTimeout(() => {
+                hideProgress();
+                showToast('✅ ' + data.message, 'success');
+                setTimeout(() => location.reload(), 2000);
+            }, 1000);
+        } else {
+            hideProgress();
+            showToast('❌ Import Gagal: ' + (data.error || 'Terjadi kesalahan'), 'error');
+        }
+    })
+    .catch(error => {
+        hideProgress();
+        showToast('❌ Error: ' + error.message, 'error');
+    });
+}
+</script>
+
+<!-- Modal Import SQL — SIMARC V4 -->
+<template data-modal="importSqlModal">
+  <div class="sm-header">
+    <div class="sm-header-left">
+      <div class="sm-icon sm-icon-warning">
+        <i class="bi bi-filetype-sql"></i>
+      </div>
+      <div>
+        <h5 class="sm-title">Import Database (.SQL)</h5>
+        <p class="sm-subtitle">Unggah file SQL untuk restore database</p>
+      </div>
+    </div>
+    <button type="button" class="sm-btn-close" onclick="SimarcModal.hide('importSqlModal')" aria-label="Close">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+  <form id="importSqlForm" onsubmit="submitImportSql(event)" style="display:contents">
+    <div class="sm-body">
+      <div class="alert alert-warning mb-3 d-flex align-items-start gap-2" style="border-radius:var(--r);">
+        <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+        <div><strong>Peringatan!</strong> Proses import ini akan menimpa seluruh data database saat ini dengan isi dari file SQL yang Anda unggah. Silakan pastikan Anda memiliki backup yang valid.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-700">Pilih File .SQL</label>
+        <input type="file" class="form-control" id="sqlFile" accept=".sql" required>
+        <small class="text-muted">Hanya berkas berekstensi <code>.sql</code> yang diperbolehkan.</small>
+      </div>
+    </div>
+    <div class="sm-footer">
+      <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('importSqlModal')">
+        <i class="bi bi-x-lg me-1"></i>Batal
+      </button>
+      <button type="submit" class="sm-btn sm-btn-primary">
+        <i class="bi bi-upload me-1"></i>Mulai Import
+      </button>
+    </div>
+  </form>
+</template>
+{{end}}

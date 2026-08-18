@@ -1,0 +1,134 @@
+{{define "pemberkasan/show.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h2><i class="bi bi-folder me-2"></i>Detail Pemberkasan</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Kode Berkas</label>
+                            <p class="form-control-plaintext">{{.Item.KodeBerkas}}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tahun</label>
+                            <p class="form-control-plaintext">{{.Item.Tahun}}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Nama Berkas</label>
+                            <p class="form-control-plaintext">{{if .Item.NamaPemberkasan}}{{.Item.NamaPemberkasan}}{{else}}-{{end}}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tahun</label>
+                            <p class="form-control-plaintext">{{.Item.Tahun}}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tanggal Mulai</label>
+                            <p class="form-control-plaintext">{{.Item.TanggalMulai}}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tanggal Tutup</label>
+                            <p class="form-control-plaintext">{{if .Item.TanggalTutup}}{{.Item.TanggalTutup}}{{else}}-{{end}}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Status Berkas</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{if eq .Item.StatusBerkas "aktif"}}success{{else}}secondary{{end}}">
+                                    {{.Item.StatusBerkas}}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Dibuat Oleh</label>
+                            <p class="form-control-plaintext">{{if .Item.Creator}}{{.Item.Creator.Name}}{{else}}-{{end}}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>Arsip dalam Berkas Ini</h5>
+                    {{if ne .Item.ArsipCount 0}}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Nomor Arsip</th>
+                                    <th>Nama Arsip</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $a := .Item.ArsipList}}
+                                <tr>
+                                    <td>{{$a.NomorArsip}}</td>
+                                    <td>{{$a.NamaArsip}}</td>
+                                    <td>
+                                        <span class="status-badge 
+                                            {{if eq $a.StatusArsip "aktif"}}status-active
+                                            {{else if eq $a.StatusArsip "inaktif"}}status-inactive
+                                            {{else if eq $a.StatusArsip "siap_penyusutan"}}status-ready
+                                            {{else if eq $a.StatusArsip "musnah"}}status-destroyed
+                                            {{else}}status-inactive
+                                            {{end}}">
+                                            {{$a.StatusArsip}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="/arsip/{{$a.ID}}" class="btn btn-sm btn-info text-white">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{else}}
+                    <p class="text-muted">Tidak ada arsip dalam berkas ini.</p>
+                    {{end}}
+                </div>
+                
+                <div class="d-flex justify-content-start">
+                    <a href="/pemberkasan" class="btn btn-secondary me-2"><i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span></a>
+                    {{if eq .Item.StatusBerkas "aktif"}}
+                    <a href="/pemberkasan/{{.Item.ID}}/edit" class="btn btn-warning me-2">Edit</a>
+                    <form action="/pemberkasan/{{.Item.ID}}/close" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger me-2" onclick="return confirm('Apakah Anda yakin ingin menutup pemberkasan ini?')">
+                            <i class="bi bi-lock me-1"></i> Tutup Berkas
+                        </button>
+                    </form>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

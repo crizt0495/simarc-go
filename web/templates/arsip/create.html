@@ -1,0 +1,606 @@
+{{define "arsip/create.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+{{template "components/select2.html"}}
+<style>
+.create-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh);
+    overflow: hidden;
+    animation: slideUp 0.35s ease both;
+    margin-bottom: 1.5rem;
+}
+.create-card-d1 { animation: slideUp 0.35s ease 0.08s both; }
+
+.create-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    padding: 2rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.create-header::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.create-header h4 {
+    font-weight: 800; color: #fff; margin-bottom: 0.2rem; position: relative; z-index: 1; font-size: 1.35rem;
+}
+.create-header p {
+    color: rgba(255,255,255,0.75); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1;
+}
+
+.card-head {
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.card-head .step-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    background: var(--brand-lt); color: var(--brand);
+    border-radius: 50rem;
+    font-size: 0.65rem; font-weight: 800;
+    flex-shrink: 0;
+}
+.card-head .step-label {
+    font-size: 0.68rem; font-weight: 700;
+    color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+.card-body-custom { padding: 1.5rem; }
+
+.form-field { margin-bottom: 1.25rem; }
+.form-field label {
+    display: block; font-weight: 600; font-size: 0.8rem;
+    color: var(--ink-2); margin-bottom: 0.35rem;
+}
+.form-field label .req { color: var(--danger); margin-left: 2px; }
+.form-field .form-control,
+.form-field .form-select {
+    width: 100%; padding: 0.55rem 0.85rem;
+    border: 1.5px solid var(--border); border-radius: var(--r);
+    font-size: 0.85rem; color: var(--ink);
+    background: var(--surface); transition: all 0.18s ease;
+    outline: none; font-family: inherit;
+}
+.form-field .form-control:focus,
+.form-field .form-select:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+}
+.form-field textarea.form-control { min-height: 100px; resize: vertical; }
+.form-field .form-text { font-size: 0.72rem; color: var(--ink-4); margin-top: 0.2rem; }
+
+.file-drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--r);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: var(--surface-2);
+}
+.file-drop:hover { border-color: var(--brand); background: var(--brand-lt); }
+.file-drop i { font-size: 2rem; color: var(--ink-4); margin-bottom: 0.5rem; display: block; }
+.file-drop .title { font-size: 0.9rem; font-weight: 700; color: var(--ink-2); }
+.file-drop .desc { font-size: 0.75rem; color: var(--ink-4); margin-top: 0.2rem; }
+
+.floating-bar {
+    position: sticky; bottom: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: var(--sh-lg); z-index: 100;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .create-header { padding: 1.25rem; }
+    .create-header h4 { font-size: 1.1rem; }
+    .card-body-custom { padding: 1rem; }
+    .file-drop { padding: 1.5rem 1rem; }
+    .floating-bar { flex-direction: column; gap: 0.75rem; bottom: 1rem; }
+    .floating-bar .btn { width: 100%; justify-content: center; }
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- HERO -->
+    <div class="create-card shadow-sm">
+        <div class="create-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4><i class="bi bi-file-earmark-plus me-2"></i>Daftarkan Arsip Baru</h4>
+                    <p>Input data dokumen dengan mudah. Sistem akan membantu klasifikasi otomatis.</p>
+                </div>
+                <i class="bi bi-file-earmark-plus d-none d-md-block" style="font-size:4rem;opacity:0.15;"></i>
+            </div>
+        </div>
+    </div>
+
+    <form action="/arsip" method="POST" enctype="multipart/form-data" id="createForm">
+        <!-- STEP 1 -->
+        <div class="create-card">
+            <div class="card-head"><span class="step-badge">1</span><span class="step-label">Identitas Dokumen</span></div>
+            <div class="card-body-custom">
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="form-field">
+                            <label>Nama Lengkap Dokumen <span class="req">*</span></label>
+                            <input type="text" name="nama_arsip" id="nama_arsip" class="form-control" placeholder="Contoh: Laporan Pertanggungjawaban Kegiatan 2024" value="{{.PrefilledName}}" required>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="form-field">
+                            <label>Nomor Registrasi <span class="req">*</span></label>
+                            <input type="text" name="nomor_arsip" class="form-control" placeholder="000/SPJ/2024" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-field">
+                            <label><i class="bi bi-calendar3 me-1 text-primary"></i>Tanggal Pembuatan <span class="req">*</span></label>
+                            <div class="position-relative">
+                                <div class="date-input-field position-relative">
+                                    <i class="bi bi-calendar3 date-input-icon"></i>
+                                    <input type="date" name="tanggal_dibuat" class="form-control" value="{{.TodayDate}}" required>
+                                    <div class="date-presets d-flex gap-1 mt-2 flex-wrap" data-for="tanggal_dibuat">
+                                        <button type="button" class="date-preset-btn active" data-days="0">Hari Ini</button>
+                                        <button type="button" class="date-preset-btn" data-days="-1">Kemarin</button>
+                                        <button type="button" class="date-preset-btn" data-days="-7">7 Hari</button>
+                                        <button type="button" class="date-preset-btn" data-days="-30">30 Hari</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-field">
+                            <label><i class="bi bi-clock-history me-1 text-warning"></i>Tanggal Retensi Berakhir</label>
+                            <div class="position-relative">
+                                <div class="date-input-field position-relative">
+                                    <i class="bi bi-clock-history date-input-icon"></i>
+                                    <input type="date" name="tanggal_retensi_berakhir" class="form-control" value="">
+                                </div>
+                                <div id="retensiIndicator" class="mt-2" style="display:none;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span id="retensiIcon" class="badge rounded-pill fw-700" style="font-size:0.6rem;padding:0.25rem 0.65rem;">
+                                            <i class="bi bi-shield-check"></i> <span id="retensiText">-</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Otomatis dari klasifikasi &amp; tgl pembuatan, atau isi manual
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-field">
+                            <label>Kategori Arsip</label>
+                            <select name="jenis_arsip_id" id="jenis_arsip" class="form-select select2-search">
+                                <option value="">-- Pilih Kategori --</option>
+                                {{range .jenisArsipOptions}}
+                                <option value="{{.ID}}" data-kode="{{.KodeJenis}}">{{.NamaJenis}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="form-field">
+                            <label>Kondisi Dokumen</label>
+                            <select name="tingkat_perkembangan" class="form-select select2-search">
+                                <option value="Asli" selected>Asli (Original)</option>
+                                <option value="Copy">Fotokopi / Salinan</option>
+                                <option value="Salinan Resmi">Salinan Resmi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="form-field">
+                                    <label>Jumlah <span class="req">*</span></label>
+                                    <input type="number" name="jumlah" class="form-control" value="1" min="1" required>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-field">
+                                    <label>Satuan <span class="req">*</span></label>
+                                    <select name="satuan" class="form-select select2-search" id="satuan_select" required>
+                                        <option value="Berkas" selected>Berkas</option>
+                                        <option value="Lembar">Lembar</option>
+                                        <option value="Buku">Buku</option>
+                                        <option value="Box">Box</option>
+                                        <option value="Map">Map</option>
+                                        <option value="Bundel">Bundel</option>
+                                        <option value="Dokumen">Dokumen</option>
+                                        <option value="Eksemplar">Eksemplar</option>
+                                        <option value="Roll">Roll</option>
+                                        <option value="Foto">Foto</option>
+                                        <option value="CD/DVD">CD/DVD</option>
+                                        <option value="Flashdisk">Flashdisk</option>
+                                        <option value="Harddisk">Harddisk</option>
+                                        <option value="Lainnya">Lainnya</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-field">
+                            <label>Status Arsip</label>
+                            <select name="status_arsip" class="form-select select2-search">
+                                <option value="aktif" selected>✔ Aktif</option>
+                                <option value="inaktif">◌ Inaktif</option>
+                                <option value="permanen">★ Permanen</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPJ Fields -->
+                <div id="nominal_container" style="display:none;">
+                    <div class="form-field">
+                        <label>Nilai Anggaran (Rp) <span class="req">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
+                        <input type="text" id="nilai_anggaran_mask" class="form-control" placeholder="Contoh: 1.500.000">
+                        <input type="hidden" name="nilai_anggaran" id="nilai_anggaran">
+                    </div>
+                </div>
+                <div id="nomor_spm_container" style="display:none;">
+                    <div class="form-field">
+                        <label>Nomor SPM <span class="req">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
+                        <input type="text" name="nomor_spm" id="nomor_spm" class="form-control" placeholder="Contoh: SPM-2024-001">
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>Ringkasan Singkat (Uraian)</label>
+                    <textarea name="uraian" class="form-control" placeholder="Tuliskan uraian singkat isi dokumen...">{{.PrefilledUraian}}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2 & 3 -->
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="create-card create-card-d1">
+                    <div class="card-head"><span class="step-badge">2</span><span class="step-label">Klasifikasi &amp; Lokasi</span></div>
+                    <div class="card-body-custom">
+                        <div class="form-field">
+                            <label>Kode Klasifikasi <span class="req">*</span></label>
+                            <select name="kode_klasifikasi_id" class="form-select select2-search" required>
+                                <option value="">Cari berdasarkan kode...</option>
+                                {{range .kodeKlasifikasiOptions}}
+                                <option value="{{.ID}}" data-retensi-aktif="{{.RetensiAktif}}" data-retensi-inaktif="{{.RetensiInaktif}}">{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Unit Kerja Pemilik <span class="req">*</span></label>
+                            <select name="unit_kerja_id" class="form-select select2-search" required>
+                                {{range .unitKerjaOptions}}
+                                <option value="{{.ID}}" {{if eq .ID $.AuthUser.UnitKerjaID}}selected{{end}}>{{.NamaUnit}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Lokasi Fisik (Rak/Box) <span class="req">*</span></label>
+                            {{if .FromLocation}}
+                            <div class="d-flex align-items-center gap-2 p-2" style="background:var(--brand-lt);border-radius:var(--r);border:1.5px solid var(--brand);">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <span class="fw-700" style="font-size:0.85rem;">{{.SelectedLokasiName}}</span>
+                                <input type="hidden" name="lokasi_arsip_id" value="{{.SelectedLokasiID}}">
+                                <input type="hidden" name="from_location" value="{{.SelectedLokasiID}}">
+                                <a href="/lokasi-arsip/{{.SelectedLokasiID}}" class="ms-auto btn btn-sm btn-outline-secondary rounded-pill fw-700" style="font-size:0.7rem;">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Detail Lokasi
+                                </a>
+                            </div>
+                            {{else}}
+                            <select name="lokasi_arsip_id" class="form-select select2-search" required>
+                                {{range .lokasiArsipOptions}}
+                                <option value="{{.ID}}">{{.NamaLokasi}}</option>
+                                {{end}}
+                            </select>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="create-card create-card-d1">
+                    <div class="card-head"><span class="step-badge">3</span><span class="step-label">Berkas Digital</span></div>
+                    <div class="card-body-custom">
+                        <div class="file-drop" onclick="document.getElementById('file').click()">
+                            <input type="file" name="file" id="file" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
+                            <i class="bi bi-cloud-upload text-primary"></i>
+                            <div class="title">Klik / Seret Berkas Di Sini</div>
+                            <div class="desc">Mendukung format PDF, JPG, PNG (Max 32MB)</div>
+                            <div id="file-name-preview" class="mt-2 fw-700 text-brand small"></div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 mt-3 p-3" style="background:var(--surface-2);border-radius:var(--r);border:1px solid var(--border);">
+                            <input type="checkbox" id="auto_ocr" name="auto_ocr" value="1" checked style="width:18px;height:18px;accent-color:var(--brand);">
+                            <label for="auto_ocr" class="fw-600" style="font-size:0.8rem;color:var(--ink-2);">Aktifkan OCR (Pencarian Teks Otomatis)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLOATING BAR -->
+        <div class="floating-bar">
+            {{if .FromLocation}}
+            <a href="/lokasi-arsip/{{.SelectedLokasiID}}" class="btn btn-outline-success rounded-pill fw-700 px-3 btn-sm" onclick="return confirm('Selesaikan penambahan arsip dan kembali ke detail lokasi?')">
+                <i class="bi bi-check2-square me-1"></i>Selesai
+            </a>
+            <button type="submit" class="btn btn-primary rounded-pill fw-800 px-5 py-2 shadow-sm">
+                <i class="bi bi-plus-circle-fill me-2"></i>Simpan &amp; Tambah Lagi
+            </button>
+            {{else}}
+            <a href="/arsip" class="btn btn-secondary rounded-pill fw-700 px-3 btn-sm"><i class="bi bi-arrow-left me-1"></i>Batal</a>
+            <button type="submit" class="btn btn-primary rounded-pill fw-800 px-5 py-2 shadow-sm"><i class="bi bi-check-circle-fill me-2"></i>Simpan Arsip Sekarang</button>
+            {{end}}
+        </div>
+    </form>
+</div>
+{{end}}
+{{define "scripts"}}<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ── Satuan Lainnya ──
+    var satuanSelect = document.getElementById('satuan_select');
+    var satuanLainnya = document.getElementById('satuan_lainnya');
+    if (!satuanLainnya) {
+        satuanLainnya = document.createElement('input');
+        satuanLainnya.type = 'text';
+        satuanLainnya.name = 'satuan_lainnya';
+        satuanLainnya.className = 'form-control mt-1';
+        satuanLainnya.placeholder = 'Sebutkan satuan lain...';
+        satuanLainnya.style.display = 'none';
+        satuanSelect.parentNode.appendChild(satuanLainnya);
+    }
+    if (satuanSelect && satuanLainnya) {
+        satuanSelect.addEventListener('change', function() {
+            satuanLainnya.style.display = this.value === 'Lainnya' ? 'block' : 'none';
+            if (this.value === 'Lainnya') satuanLainnya.setAttribute('required', 'required');
+            else satuanLainnya.removeAttribute('required');
+        });
+    }
+
+    // ── Rupiah Format ──
+    var mask = document.getElementById('nilai_anggaran_mask');
+    var hidden = document.getElementById('nilai_anggaran');
+    if (mask && hidden) {
+        mask.addEventListener('input', function() {
+            var raw = this.value.replace(/\D/g, '');
+            if (raw) {
+                var num = parseInt(raw, 10);
+                this.value = 'Rp ' + num.toLocaleString('id-ID');
+                hidden.value = num;
+            } else { this.value = ''; hidden.value = ''; }
+        });
+    }
+
+    // ── SPJ Toggle ──
+    var catSelect = document.getElementById('jenis_arsip');
+    var nominalContainer = document.getElementById('nominal_container');
+    var spmContainer = document.getElementById('nomor_spm_container');
+    var nomorSpm = document.getElementById('nomor_spm');
+    var nilaiAnggaran = document.getElementById('nilai_anggaran');
+    var nilaiAnggaranMask = document.getElementById('nilai_anggaran_mask');
+    function toggleSPJFields() {
+        var selected = catSelect.options[catSelect.selectedIndex];
+        var isSPJ = selected && selected.getAttribute('data-kode') === 'SPJ';
+        nominalContainer.style.display = isSPJ ? 'block' : 'none';
+        spmContainer.style.display = isSPJ ? 'block' : 'none';
+        if (isSPJ) {
+            nomorSpm && nomorSpm.setAttribute('required', '');
+            if (nilaiAnggaran) nilaiAnggaran.setAttribute('required', '');
+            if (nilaiAnggaranMask) nilaiAnggaranMask.setAttribute('required', '');
+        } else {
+            nomorSpm && nomorSpm.removeAttribute('required');
+            if (nilaiAnggaran) nilaiAnggaran.removeAttribute('required');
+            if (nilaiAnggaranMask) nilaiAnggaranMask.removeAttribute('required');
+        }
+    }
+    if (catSelect) {
+        catSelect.addEventListener('change', toggleSPJFields);
+        if (window.jQuery && jQuery.fn.select2) jQuery(catSelect).on('select2:select', toggleSPJFields);
+        setTimeout(toggleSPJFields, 300);
+    }
+
+    // ── Unsaved Changes (SimarcModal) ──
+    (function() {
+        var form = document.getElementById('createForm');
+        if (!form) return;
+        var formDirty = false;
+        form.addEventListener('change', function() { formDirty = true; });
+        form.addEventListener('input', function() { formDirty = true; });
+        form.querySelector('input[type="file"]')?.addEventListener('change', function() { formDirty = true; });
+        var beforeUnloadHandler = function(e) { if (formDirty) { e.preventDefault(); e.returnValue = ''; } };
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+        form.addEventListener('submit', function() { formDirty = false; window.removeEventListener('beforeunload', beforeUnloadHandler); });
+        document.addEventListener('click', function(e) {
+            if (!formDirty) return;
+            var link = e.target.closest('a[href]');
+            if (!link) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#' || href === '' || href.startsWith('javascript:') || href.startsWith('#') || href.startsWith('http')) return;
+            if (href.startsWith('/logout')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof SimarcModal !== 'undefined' && SimarcModal.confirm) {
+                SimarcModal.confirm({
+                    title: 'Data belum disimpan!',
+                    message: 'Anda memiliki data yang belum disimpan. Data akan hilang jika meninggalkan halaman ini.',
+                    icon: 'exclamation-triangle',
+                    iconColor: 'warning',
+                    confirmText: 'YA, TINGGALKAN',
+                    cancelText: 'TETAP DI SINI',
+                    danger: true,
+                    onConfirm: function() { window.location.href = href; }
+                });
+            } else {
+                if (confirm('Data belum disimpan! Tinggalkan halaman?')) {
+                    window.location.href = href;
+                }
+            }
+        });
+    })();
+});</script>
+
+<link href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/id.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var dateInputs = document.querySelectorAll('input[name="tanggal_dibuat"], input[name="tanggal_retensi_berakhir"]');
+        if (dateInputs.length && typeof flatpickr !== 'undefined') {
+            dateInputs.forEach(function(input) {
+                var wrapper = input.closest('.date-input-field');
+                if (!wrapper) return;
+
+                flatpickr(input, {
+                    locale: 'id',
+                    dateFormat: 'Y-m-d',
+                    altInput: true,
+                    altFormat: 'd/m/Y',
+                    allowInput: true,
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr) {
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        wrapper.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+                            btn.classList.remove('active');
+                        });
+                        updatePresetHighlight(input, wrapper);
+                    },
+                    onReady: function(selectedDates, dateStr, instance) {
+                        updatePresetHighlight(input, wrapper);
+                    }
+                });
+            });
+        }
+
+        // ── Date Presets ──
+        document.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var days = parseInt(this.getAttribute('data-days'));
+                var targetName = this.closest('.date-presets').getAttribute('data-for');
+                var input = document.querySelector('input[name="' + targetName + '"]');
+                if (!input) return;
+                var date = new Date();
+                date.setDate(date.getDate() + days);
+                var y = date.getFullYear();
+                var m = String(date.getMonth() + 1).padStart(2, '0');
+                var d = String(date.getDate()).padStart(2, '0');
+                var dateStr = y + '-' + m + '-' + d;
+                input._flatpickr && input._flatpickr.setDate(dateStr);
+            });
+        });
+
+        function updatePresetHighlight(input, wrapper) {
+            if (!input || !input.value) return;
+            var today = new Date();
+            var selected = new Date(input.value + 'T00:00:00');
+            var diffDays = Math.round((selected - today) / (1000 * 60 * 60 * 24));
+            wrapper.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+                var btnDays = parseInt(btn.getAttribute('data-days'));
+                btn.classList.toggle('active', btnDays === diffDays);
+            });
+        }
+
+        // ── Auto Retensi Calculation ──
+        function calculateRetensi() {
+            var tglInput = document.querySelector('input[name="tanggal_dibuat"]');
+            var retensiInput = document.querySelector('input[name="tanggal_retensi_berakhir"]');
+            var kkSelect = document.querySelector('select[name="kode_klasifikasi_id"]');
+            if (!tglInput || !retensiInput || !kkSelect) return;
+            
+            // Only auto-calculate if retensi is empty (not manually set)
+            if (retensiInput.value) return;
+            
+            var tglStr = tglInput.value;
+            var kkSelected = kkSelect.options[kkSelect.selectedIndex];
+            if (!tglStr || !kkSelected || !kkSelected.value) return;
+            
+            // Get retensi from kode klasifikasi data attributes
+            var retAktif = parseInt(kkSelected.getAttribute('data-retensi-aktif') || '0');
+            var retInaktif = parseInt(kkSelected.getAttribute('data-retensi-inaktif') || '0');
+            var totalYears = retAktif + retInaktif;
+            
+            if (totalYears <= 0) return;
+            
+            var tgl = new Date(tglStr + 'T00:00:00');
+            tgl.setFullYear(tgl.getFullYear() + totalYears);
+            var y = tgl.getFullYear();
+            var m = String(tgl.getMonth() + 1).padStart(2, '0');
+            var d = String(tgl.getDate()).padStart(2, '0');
+            retensiInput._flatpickr && retensiInput._flatpickr.setDate(y + '-' + m + '-' + d);
+        }
+
+        // ── Retensi Status Indicator ──
+        function updateRetensiIndicator() {
+            var retensiInput = document.querySelector('input[name="tanggal_retensi_berakhir"]');
+            var indicator = document.getElementById('retensiIndicator');
+            var icon = document.getElementById('retensiIcon');
+            var text = document.getElementById('retensiText');
+            if (!retensiInput || !indicator || !icon || !text) return;
+            
+            var val = retensiInput.value;
+            if (!val) { indicator.style.display = 'none'; return; }
+            
+            var today = new Date();
+            today.setHours(0,0,0,0);
+            var retensiDate = new Date(val + 'T00:00:00');
+            var diffDays = Math.round((retensiDate - today) / (1000 * 60 * 60 * 24));            indicator.style.display = 'block';
+            if (diffDays < 0) {
+                icon.className = 'retensi-badge retensi-overdue';
+                text.textContent = 'Sudah lewat ' + Math.abs(diffDays) + ' hari';
+            } else if (diffDays <= 30) {
+                icon.className = 'retensi-badge retensi-soon';
+                text.textContent = diffDays + ' hari lagi';
+            } else if (diffDays <= 365) {
+                icon.className = 'retensi-badge retensi-normal';
+                text.textContent = Math.floor(diffDays / 30) + ' bulan lagi';
+            } else {
+                icon.className = 'retensi-badge retensi-safe';
+                text.textContent = Math.floor(diffDays / 365) + ' tahun lagi';
+            }
+        }
+
+        // Wire up auto-retensi calculation
+        var tglInput = document.querySelector('input[name="tanggal_dibuat"]');
+        var kkSelect = document.querySelector('select[name="kode_klasifikasi_id"]');
+        var retensiInput = document.querySelector('input[name="tanggal_retensi_berakhir"]');
+        
+        if (tglInput) tglInput.addEventListener('change', function() {
+            calculateRetensi();
+            setTimeout(updateRetensiIndicator, 100);
+        });
+        if (kkSelect) kkSelect.addEventListener('change', function() {
+            setTimeout(calculateRetensi, 200);
+            setTimeout(updateRetensiIndicator, 300);
+        });
+        if (retensiInput) retensiInput.addEventListener('change', function() {
+            setTimeout(updateRetensiIndicator, 100);
+        });
+        
+        // Initial indicator
+        setTimeout(updateRetensiIndicator, 500);
+    }, 50);
+});
+</script>
+{{end}}

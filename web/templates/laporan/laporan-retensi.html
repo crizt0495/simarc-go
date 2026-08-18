@@ -1,0 +1,91 @@
+{{define "laporan/laporan-retensi.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="page-title mb-0"><i class="bi bi-hourglass-split"></i> Laporan Retensi Arsip</h1>
+        <div class="page-actions">
+            <div class="btn-group">
+                <a href="/laporan/retensi/export/pdf" target="_blank" class="btn btn-outline-danger"><i class="bi bi-file-pdf me-1"></i>Export PDF</a>
+                <a href="/laporan/retensi/export/excel" class="btn btn-outline-success"><i class="bi bi-file-excel me-1"></i>Export Excel</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-primary">
+            <div class="card-body">
+                <h6 class="text-muted">Total Arsip</h6>
+                <h3 class="mb-0 fw-bold">{{.Stats.Total}}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-success">
+            <div class="card-body">
+                <h6 class="text-muted">Siap Dimusnahkan</h6>
+                <h3 class="mb-0 fw-bold">{{.Stats.SiapMusnah}}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-warning">
+            <div class="card-body">
+                <h6 class="text-muted">Segera Dimusnahkan</h6>
+                <h3 class="mb-0 fw-bold">{{.Stats.SegeraMusnah}}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-info">
+            <div class="card-body">
+                <h6 class="text-muted">Masih Disimpan</h6>
+                <h3 class="mb-0 fw-bold">{{sub .Stats.Total (add .Stats.SiapMusnah .Stats.SegeraMusnah)}}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-premium">
+                        <thead>
+                            <tr><th>No</th><th>Judul Arsip</th><th>Kode Klasifikasi</th><th>Tanggal Perolehan</th><th>Lama Simpan (tahun)</th><th>Masa Retensi (tahun)</th><th>Status Retensi</th></tr>
+                        </thead>
+                        <tbody>
+                            {{range $idx,$arsip := .ArsipRetensi}}
+                            <tr>
+                                <td>{{add $.ArsipListFirstItem $idx}}</td>
+                                <td>{{$arsip.NamaArsip}}</td>
+                                <td>{{if $arsip.KodeKlasifikasi}}{{$arsip.KodeKlasifikasi.KodeKlasifikasi}}{{else}}-{{end}}</td>
+                                <td>{{formatDate $arsip.TanggalDibuat}}</td>
+                                <td>{{$arsip.LamaSimpan}}</td>
+                                <td>{{if $arsip.TotalRetensi}}{{$arsip.TotalRetensi}}{{else}}-{{end}}</td>
+                                <td>
+                                    <span class="badge{{if eq $arsip.StatusRetensi "Siap Dimusnahkan"}} bg-danger{{else}} bg-success{{end}}">{{$arsip.StatusRetensi}}</span>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="7" class="text-center">Tidak ada data arsip</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+                {{if .ArsipListHasPages}}
+                <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top">
+                    <div class="text-muted small">Menampilkan {{.ArsipListFirstItem}}–{{.ArsipListLastItem}} dari {{.ArsipListTotal}} data</div>
+                    <div>{{.Pagination}}</div>
+                </div>
+                {{else}}
+                <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top">
+                    <div class="text-muted small">Total: <strong>{{len .ArsipRetensi}}</strong> data</div>
+                    <div><button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak Laporan</button></div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

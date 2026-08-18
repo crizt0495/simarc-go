@@ -1,0 +1,149 @@
+{{define "database-form"}}
+<form id="dbSettingsForm" method="POST" action="/pengaturan/database/save" autocomplete="off">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold" for="db_host">Host / Alamat Server</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-server"></i></span>
+                <input type="text" class="form-control" id="db_host" name="db_host"
+                       value="{{.DBInfo.Host}}" placeholder="127.0.0.1" required>
+            </div>
+            <small class="text-muted">Alamat server MySQL/MariaDB</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold" for="db_port">Port</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-hdd-network"></i></span>
+                <input type="text" class="form-control" id="db_port" name="db_port"
+                       value="{{.DBInfo.Port}}" placeholder="3306" required>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold" for="db_database">Nama Database</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-database"></i></span>
+                <input type="text" class="form-control" id="db_database" name="db_database"
+                       value="{{.DBInfo.Name}}" placeholder="simarc_db" required>
+            </div>
+            <small class="text-muted">Database harus sudah ada &mdash; tabelnya dibuat otomatis</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold" for="db_username">Username</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control" id="db_username" name="db_username"
+                       value="{{.DBInfo.User}}" placeholder="root" required>
+            </div>
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-semibold" for="db_password">Password</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                <input type="password" class="form-control" id="db_password" name="db_password"
+                       placeholder="Kosongkan untuk tetap memakai password saat ini"
+                       autocomplete="new-password">
+                <button class="btn btn-outline-secondary" type="button" id="dbPwToggle"
+                        title="Tampilkan password">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="db_password_clear" name="db_password_clear">
+                <label class="form-check-label small" for="db_password_clear">
+                    Tidak memakai password (kosongkan password)
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button type="button" class="btn btn-outline-primary" id="dbTestBtn">
+            <i class="bi bi-plug me-1"></i>Uji Koneksi
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>Simpan &amp; Terapkan Sekarang
+        </button>
+    </div>
+
+    <div id="dbTestResult" class="mt-3"></div>
+
+    <div class="alert alert-warning mt-3 mb-0">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        Kredensial akan disimpan ke file <code>.env</code> dan aplikasi langsung
+        menyambung ke database baru <strong>tanpa perlu restart</strong>. Pastikan
+        kredensial benar sebelum menyimpan &mdash; koneksi selalu diuji terlebih dahulu.
+    </div>
+</form>
+
+<script>
+(function() {
+    var form = document.getElementById('dbSettingsForm');
+    if (!form) return;
+
+    // ── Toggle password visibility ──
+    var pwInput = document.getElementById('db_password');
+    var pwToggle = document.getElementById('dbPwToggle');
+    if (pwToggle && pwInput) {
+        pwToggle.addEventListener('click', function() {
+            var show = pwInput.type === 'password';
+            pwInput.type = show ? 'text' : 'password';
+            this.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+        });
+    }
+
+    // Clear-password checkbox wipes the password field
+    var clearChk = document.getElementById('db_password_clear');
+    if (clearChk && pwInput) {
+        clearChk.addEventListener('change', function() {
+            if (this.checked) {
+                pwInput.value = '';
+                pwInput.disabled = true;
+                pwInput.placeholder = '(tanpa password)';
+            } else {
+                pwInput.disabled = false;
+                pwInput.placeholder = 'Kosongkan untuk tetap memakai password saat ini';
+            }
+        });
+    }
+
+    // ── Uji Koneksi (AJAX) ──
+    var testBtn = document.getElementById('dbTestBtn');
+    var testResult = document.getElementById('dbTestResult');
+    if (testBtn) {
+        testBtn.addEventListener('click', function() {
+            var field = function(name) {
+                var el = form.querySelector('[name="' + name + '"]');
+                return el ? el.value : '';
+            };
+
+            var data = new FormData();
+            data.append('db_host', field('db_host'));
+            data.append('db_port', field('db_port'));
+            data.append('db_database', field('db_database'));
+            data.append('db_username', field('db_username'));
+            data.append('db_password', field('db_password'));
+
+            testResult.innerHTML = '<div class="alert alert-info mb-0 py-2">' +
+                '<span class="spinner-border spinner-border-sm me-2"></span>Menghubungkan&hellip;</div>';
+            testBtn.disabled = true;
+
+            fetch('/pengaturan/database/test', { method: 'POST', body: data })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    var cls = res.success ? 'alert-success' : 'alert-danger';
+                    var icon = res.success ? 'check-circle-fill' : 'x-circle-fill';
+                    testResult.innerHTML = '<div class="alert ' + cls + ' mb-0 py-2">' +
+                        '<i class="bi bi-' + icon + ' me-2"></i>' + (res.message || '') + '</div>';
+                })
+                .catch(function() {
+                    testResult.innerHTML = '<div class="alert alert-danger mb-0 py-2">' +
+                        '<i class="bi bi-x-circle-fill me-2"></i>Gagal menghubungi server.</div>';
+                })
+                .finally(function() { testBtn.disabled = false; });
+        });
+    }
+})();
+</script>
+{{end}}

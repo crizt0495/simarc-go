@@ -1,0 +1,644 @@
+================================================================================
+  SIMARC — SISTEM INFORMASI MANAJEMEN ARSIP RECORD CENTER
+  DOKUMENTASI FITUR BLOCKCHAIN
+================================================================================
+
+  Tanggal  : 9 Juli 2026
+  Versi    : 1.0
+  Status   : Implementasi Private Blockchain untuk Audit Trail
+
+================================================================================
+  1. RINGKASAN EKSEKUTIF
+================================================================================
+
+Blockchain di SIMARC adalah sistem pencatatan riwayat perubahan data (audit
+trail) yang menggunakan prinsip cryptographic hash chaining untuk memastikan
+integritas dan keabadian catatan (immutability).
+
+BUKAN cryptocurrency -- tidak ada token, mining, konsensus terdesentralisasi,
+atau smart contract. Blockchain SIMARC adalah private, permissioned blockchain
+dengan otoritas tunggal (single authority) yang digunakan sebagai mekanisme
+anti-tamper untuk data kearsipan.
+
+  Tujuan utama:
+  (a) Mendeteksi manipulasi data arsip (baik disengaja maupun tidak)
+  (b) Menyediakan bukti kriptografis atas setiap perubahan data
+  (c) Memberikan transparansi penuh atas riwayat akses dan modifikasi arsip
+  (d) Memenuhi standar kepatuhan arsip (audit trail immutable)
+
+
+================================================================================
+  2. KONSEP DASAR BLOCKCHAIN
+================================================================================
+
+  2.1. Apa itu Blockchain?
+
+  Blockchain adalah rantai blok yang saling terhubung secara kriptografis.
+  Setiap blok berisi data transaksi dan hash dari blok sebelumnya, membentuk
+  rantai yang tidak bisa diubah tanpa memutuskan tautan kriptografis.
+
+  Dalam konteks SIMARC, "transaksi" adalah operasi CRUD (Create, Read, Update,
+  Delete) pada data arsip.
+
+  2.2. Mengapa Blockchain diperlukan untuk sistem kearsipan?
+
+  (a) Keaslian arsip (authenticity) -- bukti bahwa data belum diubah sejak
+      pencatatan
+  (b) Integritas arsip (integrity) -- mendeteksi perubahan data ilegal
+  (c) Keabadian (immutability) -- catatan tidak bisa dihapus atau diubah tanpa
+      meninggalkan jejak
+  (d) Transparansi -- seluruh riwayat perubahan dapat diaudit kapan saja
+  (e) Akuntabilitas -- setiap perubahan tercatat dengan identitas pengguna dan
+      timestamp
+
+
+================================================================================
+  3. ARSITEKTUR TEKNIS
+================================================================================
+
+  3.1. Komponen Utama
+
+  +-------------------------------------------------------------------+
+  |                    APLIKASI SIMARC                                |
+  |  +---------------------------+  +--------------------------------+ |
+  |  |  ArsipHandler             |  |  BlockchainHandler             | |
+  |  |  (create/update/delete/   |  |  (index, verify, search,      | |
+  |  |   import)                 |  |   export, entity-audit)        | |
+  |  +------------+--------------+  +----------------+---------------+ |
+  |               |                               |                     |
+  |               v                               v                     |
+  |  +--------------------------------------------------------------+ |
+  |  |              BlockchainAuditService                          | |
+  |  |  - RecordAudit()       -> membuat blok baru                  | |
+  |  |  - VerifyChain()       -> verifikasi seluruh rantai          | |
+  |  |  - VerifyEntityChain() -> verifikasi per entitas             | |
+  |  +---------------------------+----------------------------------+ |
+  |                              |                                     |
+  |                              v                                     |
+  |  +--------------------------------------------------------------+ |
+  |  |           database.DB (MySQL/MariaDB)                        | |
+  |  |           tabel: blockchain_audits                           | |
+  |  +--------------------------------------------------------------+ |
+  +-------------------------------------------------------------------+
+
+  3.2. Stack Teknologi
+
+  Bahasa          : Go (Golang)
+  Framework       : Gin Web Framework
+  Database        : MySQL / MariaDB
+  Hash Algorithm  : SHA-256 (crypto/sha256)
+  Serialisasi     : JSON untuk field details
+  UUID            : github.com/google/uuid
+
+  3.3. Lokasi File
+
+  Backend:
+    internal/models/models.go       -> Model BlockchainAudit
+    internal/services/services.go   -> BlockchainAuditService
+    internal/handlers/features.go   -> BlockchainHandler (UI page)
+    internal/handlers/advanced.go   -> BlockchainAdvancedHandler (API)
+    cmd/server/main.go              -> Registrasi routes
+
+  Frontend:
+    web/templates/blockchain/index.html        -> Blockchain Explorer
+    web/templates/blockchain/show.html         -> Detail blok
+    web/templates/blockchain/entity-audit.html -> Audit per entitas
+    web/templates/dashboard/index.html         -> Dashboard indicator
+
+
+================================================================================
+  4. STRUKTUR DATA (MODEL)
+================================================================================
+
+  4.1. Tabel: blockchain_audits
+
+  Kolom           | Tipe          | Keterangan
+  ----------------+---------------+-----------------------------------------
+  id              | uint (PK)     | Primary key auto-increment
+  uuid            | varchar(36)   | UUID unik untuk setiap blok
+  previous_hash   | varchar(64)   | SHA-256 hash dari blok sebelumnya
+  current_hash    | varchar(64)   | SHA-256 hash dari blok ini
+  block_number    | uint64        | Nomor urut blok dalam rantai
+  timestamp       | varchar(50)   | Waktu pembuatan blok (RFC3339)
+  user_id         | char(36)      | ID user yang melakukan aksi (nullable)
+  action          | varchar(100)  | Aksi: create, update, delete, import
+  entity_type     | varchar(100)  | Jenis entitas: arsip, pemberkasan, dll
+  entity_id       | text          | ID dari entitas yang diubah
+  details         | text          | Deskripsi detail dalam format JSON
+  ip_address      | varchar(45)   | IP address client
+  user_agent      | text          | User agent browser
+  is_valid        | boolean       | Flag validitas (default: true)
+  created_at      | datetime      | Timestamp pembuatan
+  updated_at      | datetime      | Timestamp update
+
+  Nama tabel: blockchain_audits
+
+  4.2. Struktur Model Go
+
+  type BlockchainAudit struct {
+      ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+      UUID         string    `gorm:"column:uuid;size:36" json:"uuid"`
+      PreviousHash string    `gorm:"column:previous_hash;size:64" json:"previous_hash"`
+      CurrentHash  string    `gorm:"column:current_hash;size:64" json:"current_hash"`
+      BlockNumber  uint64    `gorm:"column:block_number" json:"block_number"`
+      Timestamp    string    `gorm:"column:timestamp;size:50" json:"timestamp"`
+      UserID       *string   `gorm:"column:user_id;type:char(36)" json:"user_id"`
+      Action       string    `gorm:"column:action;size:100" json:"action"`
+      EntityType   string    `gorm:"column:entity_type;size:100" json:"entity_type"`
+      EntityID     string    `gorm:"column:entity_id;type:text" json:"entity_id"`
+      Details      string    `gorm:"column:details;type:text" json:"details"`
+      IPAddress    string    `gorm:"column:ip_address;size:45" json:"ip_address"`
+      UserAgent    string    `gorm:"column:user_agent;type:text" json:"user_agent"`
+      IsValid      bool      `gorm:"column:is_valid;default:true" json:"is_valid"`
+      CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
+      UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
+  }
+
+  func (BlockchainAudit) TableName() string { return "blockchain_audits" }
+
+
+================================================================================
+  5. ALGORITMA PEMBUATAN BLOK
+================================================================================
+
+  5.1. Flow Pembuatan Blok (RecordAudit)
+
+  Langkah-langkah ketika sebuah transaksi dicatat:
+
+  Step 1: Transaksi terjadi (arsip dibuat/diedit/dihapus/diimport)
+
+  Step 2: Ambil blok terakhir dari database:
+          SELECT * FROM blockchain_audits
+          ORDER BY block_number DESC LIMIT 1
+
+          Jika belum ada blok: blockNumber = 1, previousHash = ""
+          Jika ada:
+              blockNumber = lastBlock.BlockNumber + 1
+              previousHash = lastBlock.CurrentHash
+
+  Step 3: Siapkan data untuk di-hash:
+          blockData = entityType + ":" + entityID + ":"
+                     + action + ":" + details + ":"
+                     + previousHash
+
+  Step 4: Hitung SHA-256 hash:
+          currentHash = SHA-256(blockData)
+
+  Step 5: Simpan blok baru ke database:
+          INSERT INTO blockchain_audits (
+              uuid, previous_hash, current_hash, block_number,
+              timestamp, user_id, action, entity_type,
+              entity_id, details, ip_address, user_agent, is_valid
+          ) VALUES (
+              uuidBaru, previousHash, currentHash, blockNumber,
+              timestampRFC3339, userID, action, entityType,
+              entityID, detailsJSON, ipAddress, userAgent, true
+          )
+
+  5.2. Implementasi Kode (Go)
+
+  func (s *BlockchainAuditService) RecordAudit(
+      entityType, entityID, action string,
+      data interface{}, userID string,
+      ipAddress, userAgent string,
+  ) error {
+      dataBytes, _ := json.Marshal(data)
+      details := string(dataBytes)
+
+      var prev models.BlockchainAudit
+      database.DB.Order("block_number DESC").First(&prev)
+
+      blockNumber := uint64(1)
+      if prev.BlockNumber > 0 {
+          blockNumber = prev.BlockNumber + 1
+      }
+
+      timestamp := time.Now().Format(time.RFC3339)
+      uuid := uuid.New().String()
+
+      blockData := fmt.Sprintf("%s:%s:%s:%s:%s",
+          entityType, entityID, action, details, prev.CurrentHash)
+      currentHash := sha256sum(blockData)
+
+      var uidPtr *string
+      if userID != "" {
+          uidPtr = &userID
+      }
+
+      audit := models.BlockchainAudit{
+          UUID:         uuid,
+          PreviousHash: prev.CurrentHash,
+          CurrentHash:  currentHash,
+          BlockNumber:  blockNumber,
+          Timestamp:    timestamp,
+          UserID:       uidPtr,
+          Action:       action,
+          EntityType:   entityType,
+          EntityID:     entityID,
+          Details:      details,
+          IPAddress:    ipAddress,
+          UserAgent:    userAgent,
+          IsValid:      true,
+      }
+      return database.DB.Create(&audit).Error
+  }
+
+  5.3. Fungsi Hash SHA-256
+
+  func sha256sum(s string) string {
+      h := sha256.Sum256([]byte(s))
+      return hex.EncodeToString(h[:])
+  }
+
+
+================================================================================
+  6. ALGORITMA VERIFIKASI CHAIN
+================================================================================
+
+  6.1. Flow Verifikasi (VerifyChain)
+
+  Step 1: Ambil SEMUA blok dari database, urut ASC berdasarkan
+          block_number
+
+  Step 2: Untuk setiap blok (i = 0 hingga n):
+
+    2a) Hitung ulang hash yang SEHARUSNYA:
+        expectedHash = SHA-256(
+            entityType + ":" + entityID + ":"
+            + action + ":" + details + ":"
+            + prevRecalculatedHash
+        )
+        Note: prevRecalculatedHash adalah hash YANG DIHITUNG
+        ULANG dari blok sebelumnya, BUKAN previous_hash yang
+        tersimpan di database.
+
+    2b) Bandingkan expectedHash dengan stored currentHash:
+        - Jika cocok  -> blok VALID
+        - Jika berbeda -> blok INVALID
+
+    2c) Simpan expectedHash sebagai prevRecalculatedHash untuk
+        iterasi berikutnya
+
+  Step 3: Hasil verifikasi:
+    {
+        "total_blocks":          jumlah seluruh blok,
+        "invalid_blocks":        jumlah blok tidak valid,
+        "invalid_block_numbers": [daftar nomor blok],
+        "is_valid":              true jika invalid_blocks == 0
+    }
+
+  6.2. Mengapa menggunakan prevRecalculatedHash, bukan previous_hash?
+
+  Ini adalah aspek keamanan KRUSIAL.
+
+  Jika seorang attacker berhasil mengubah nilai current_hash dan
+  previous_hash di database, verifikasi yang hanya memeriksa
+  previous_hash tidak akan mendeteksi perubahan.
+
+  Dengan menghitung ulang hash dari awal (prevRecalculatedHash), kita
+  membuat "trustless verification" -- integritas chain tidak bergantung
+  pada data yang tersimpan di database, melainkan pada konsistensi
+  matematis antara hash yang dihitung ulang.
+
+  Visualisasi perbedaan:
+
+  DATABASE TERSIMPAN:                    VERIFIKASI:
+  +----------+                           +----------+
+  | Blok #1  |                           | Blok #1  |
+  | prev: "" |                           | (hitung hash dari data)
+  | hash: A  |                           | hash = A valid
+  +----+-----+                           +----------+
+       | prev_references                        | prev_recalculated = A
+       v                                        v
+  +----------+                           +----------+
+  | Blok #2  |                           | Blok #2  |
+  | prev: A  |                           | (hitung hash dari data + A)
+  | hash: B  |                           | hash = B valid
+  +----+-----+                           +----------+
+       | prev_references                        | prev_recalculated = B
+       v                                        v
+  +----------+                           +----------+
+  | Blok #3  |                           | Blok #3  |
+  | prev: B  |                           | (hitung hash dari data + B)
+  | hash: C  |                           | hash = C valid
+  +----------+                           +----------+
+
+  Jika attacker mengubah data di Blok #1 dan menyesuaikan hash:
+
+  DATABASE (MANIPULASI):                 VERIFIKASI (DARI AWAL):
+  +----------+                           +----------+
+  | Blok #1  |                           | Blok #1  |
+  | prev: "" |                           | (hitung hash dari data ASLI)
+  | hash: X  | (diubah)                  | hash = X != A -> INVALID!
+  +----------+                           +----------+
+
+  6.3. Implementasi Verifikasi (Go)
+
+  func (s *BlockchainAuditService) VerifyChain() map[string]interface{} {
+      var records []models.BlockchainAudit
+      database.DB.Order("block_number ASC").Find(&records)
+
+      invalidBlocks := 0
+      invalidBlockNumbers := []uint64{}
+      prevRecalculatedHash := ""
+
+      for i := 0; i < len(records); i++ {
+          expectedHash := sha256sum(fmt.Sprintf("%s:%s:%s:%s:%s",
+              records[i].EntityType, records[i].EntityID,
+              records[i].Action, records[i].Details,
+              prevRecalculatedHash))
+
+          if records[i].CurrentHash != expectedHash {
+              invalidBlocks++
+              invalidBlockNumbers = append(invalidBlockNumbers,
+                  records[i].BlockNumber)
+          }
+
+          prevRecalculatedHash = expectedHash
+      }
+
+      return map[string]interface{}{
+          "total_blocks":          len(records),
+          "invalid_blocks":        invalidBlocks,
+          "invalid_block_numbers": invalidBlockNumbers,
+          "is_valid":              invalidBlocks == 0,
+      }
+  }
+
+
+================================================================================
+  7. TRIGGER DAN INTEGRASI
+================================================================================
+
+  7.1. Kapan Blockchain Dicatat?
+
+  Setiap operasi berikut secara otomatis memicu pembuatan blok baru:
+
+  No  Aksi              Lokasi Kode       Detail
+  --  ----------------  ----------------  ------------------------------------
+   1  Create Arsip      arsip.go:495      Arsip baru dibuat dalam sistem
+   2  Update Arsip      arsip.go:838      Data arsip diubah/diedit
+   3  Delete Arsip      arsip.go:838      Arsip dihapus (soft/hard delete)
+   4  Import Arsip      arsip.go:1890     Import massal dari file Excel
+   5  Operasi           arsip.go:1365     Perubahan status pemberkasan
+      Pemberkasan
+
+  7.2. Contoh Isi Field Details (JSON)
+
+  Create arsip:
+  {
+    "arsip_id": "550e8400-e29b-41d4-a716-446655440000",
+    "action": "create",
+    "description": "Menambah arsip: Surat Keputusan Direktur 2025/001",
+    "user": "Admin"
+  }
+
+  Update arsip:
+  {
+    "arsip_id": "550e8400-e29b-41d4-a716-446655440000",
+    "action": "update",
+    "description": "Mengubah status arsip dari aktif menjadi inaktif",
+    "changed_fields": ["status", "lokasi"],
+    "user": "Petugas"
+  }
+
+
+================================================================================
+  8. API ENDPOINTS
+================================================================================
+
+  8.1. Endpoint untuk UI (Web Page)
+
+  Method  Path                                 Handler              Fungsi
+  ------  -----------------------------------  -------------------  ----------
+  GET     /blockchain                          BlockchainHandler.   Halaman
+                                               Index                explorer
+  GET     /blockchain/export                   BlockchainAdvH.      Download
+                                               Export               data JSON
+  GET     /blockchain/entity/:type/:id         BlockchainAdvH.      Halaman
+                                               EntityAudit          audit per
+                                                                    entitas
+  POST    /blockchain/verify                   BlockchainAdvH.      Verifikasi
+                                               Verify               seluruh
+                                                                    chain
+  GET     /blockchain/block/search?hash=xxx    BlockchainAdvH.      Cari hash
+                                               SearchByHash         spesifik
+  GET     /blockchain/:blockNumber             BlockchainAdvH.      Detail
+                                               Show                 satu blok
+
+  8.2. Endpoint untuk API (JSON)
+
+  Method  Path                                 Handler
+  ------  -----------------------------------  -------------------------------
+  GET     /api/v1/blockchain/verify            premiumAPIH.VerifyBlockchain
+  GET     /api/v1/blockchain/audit/:type/:id   premiumAPIH.AuditTrail
+
+
+================================================================================
+  9. FITUR DI FRONTEND (UI)
+================================================================================
+
+  9.1. Blockchain Explorer (/blockchain)
+
+  (a) Hero Section
+      - Status health indicator:
+        Hijau: "Chain Integrity: 100% Healthy"
+        Merah: "ALERTA: Chain Compromised" (jika terdeteksi masalah)
+      - 3 kartu statistik: Total Blok, Terverifikasi, Blok Hari Ini
+
+  (b) Blockchain Ledger (daftar blok)
+      - 50 blok terbaru dengan detail lengkap:
+        * Block number (dengan icon sesuai action)
+        * Entity type & action yang dilakukan
+        * Current hash (dapat di-copy ke clipboard)
+        * Timestamp kapan blok dibuat
+        * User yang melakukan aksi
+
+  (c) Verify Panel (sidebar kanan)
+      - "Verify All Chains" -> POST /blockchain/verify
+        Memverifikasi seluruh rantai blockchain
+      - "Search Hash" -> Cari hash spesifik di ledger
+      - "Verify File" -> Upload file fisik, hitung hash via
+        Web Crypto API (crypto.subtle), cocokkan dengan ledger
+
+  (d) Copy Hash
+      - Setiap hash dapat di-copy ke clipboard
+      - Muncul toast notifikasi: "Hash tersalin!"
+
+  9.2. Entity Audit (/blockchain/entity/:type/:id)
+
+  Menampilkan riwayat blockchain untuk satu entitas spesifik.
+  Contoh: melihat seluruh riwayat perubahan satu arsip dari pertama
+  kali dibuat hingga sekarang.
+
+  9.3. Dashboard Indicator
+
+  Halaman utama dashboard menampilkan alert jika blockchain
+  mendeteksi masalah integritas:
+
+  +--------------------------------------------------------------+
+  |  [PERINGATAN] DARURAT KEAMANAN: Integritas data terancam!    |
+  |  Sistem mendeteksi manipulasi pada 3 blok data.              |
+  |  [Periksa]                                                   |
+  +--------------------------------------------------------------+
+
+  9.4. Client-side File Verification
+
+  Pengguna dapat mengupload file untuk memverifikasi keasliannya:
+
+  Step 1: User memilih file (PDF, JPG, PNG, TXT) via dialog upload
+  Step 2: Browser menghitung SHA-256 hash via Web Crypto API
+          (crypto.subtle.digest) -- hash dihitung di CLIENT
+  Step 3: Hash dikirim ke server untuk dicocokkan dengan ledger
+          blockchain via GET /blockchain/block/search
+  Step 4: Hasil verifikasi:
+          - "Dokumen 100% Asli" jika hash ditemukan di ledger
+          - "Hash Tidak Terdaftar" jika tidak ditemukan
+
+  Keamanan: File fisik TIDAK pernah diupload ke server, hanya
+  hash-nya yang dikirim. Privasi data tetap terjaga.
+
+  Implementasi JavaScript:
+
+  function showFileVerify() {
+      Swal.fire({
+          title: 'Verifikasi Berkas',
+          input: 'file',
+          inputAttributes: {
+              'accept': '.pdf,.jpg,.jpeg,.png,.txt'
+          },
+          confirmButtonText: 'HITUNG HASH',
+          showCancelButton: true
+      }).then(function(file) {
+          if (!file.value) return;
+
+          var reader = new FileReader();
+          reader.onload = function(e) {
+              crypto.subtle.digest('SHA-256', e.target.result)
+              .then(function(hashBuf) {
+                  var hashArr = Array.from(new Uint8Array(hashBuf));
+                  var hashHex = hashArr.map(function(b) {
+                      return b.toString(16).padStart(2, '0');
+                  }).join('');
+
+                  fetch('/blockchain/block/search?hash='
+                      + encodeURIComponent(hashHex))
+                  .then(function(r) { return r.json(); })
+                  .then(function(data) {
+                      if (data.found) {
+                          // Dokumen ASLI
+                      } else {
+                          // Hash tidak terdaftar
+                      }
+                  });
+              });
+          };
+          reader.readAsArrayBuffer(file.value);
+      });
+  }
+
+
+================================================================================
+  10. PERBANDINGAN DENGAN BLOCKCHAIN KONVENSIONAL
+================================================================================
+
+  Aspek               Blockchain SIMARC           Blockchain Publik
+  ------------------  --------------------------  ----------------------------
+  Tipe                Private / Permissioned      Public / Permissionless
+  Konsensus           Single authority            Proof of Work / Stake
+  Partisipasi         Terbatas (1 node)           Terbuka (ribuan node)
+  Token/Cryptocurr.   Tidak ada                   Ada (BTC, ETH, etc.)
+  Smart Contract      Tidak ada                   Ada (Ethereum)
+  Kecepatan           Real-time (insert DB)       Menit-jam (konfirmasi)
+  Biaya               Gratis (hanya storage)      Ada (gas fee, mining fee)
+  Skalabilitas        Tidak terbatas              Terbatas (TPS)
+  Privasi Data        Data tersimpan di DB lokal  Data publik/semi-publik
+  Tujuan Utama        Audit trail integritas      Decentralized finance,
+                      data kearsipan              cryptocurrency, dApp
+
+
+================================================================================
+  11. KEAMANAN DAN LIMITASI
+================================================================================
+
+  11.1. Kekuatan
+
+  (a) Deteksi manipulasi: Setiap perubahan data terdeteksi melalui
+      verifikasi hash chaining
+
+  (b) Anti-tamper via perhitungan ulang: Verifikasi menggunakan
+      prevRecalculatedHash (bukan previous_hash tersimpan), sehingga
+      manipulasi database tetap terdeteksi
+
+  (c) Audit trail lengkap: Semua perubahan tercatat dengan user,
+      waktu, IP address, dan user agent
+
+  (d) Client-side file verification: File diverifikasi tanpa harus
+      diupload ke server (privasi terjaga)
+
+  11.2. Keterbatasan
+
+  (a) Single point of trust: Keamanan bergantung pada keamanan
+      database server karena private blockchain dengan satu authority
+
+  (b) Tidak terdesentralisasi: Tidak ada distribusi data ke banyak
+      node, sehingga jika database hancur, data blockchain hilang
+
+  (c) Backup dependency: Keandalan blockchain bergantung pada backup
+      database rutin
+
+  (d) Immutable: Data yang sudah dicatat tidak bisa dihapus atau
+      diubah, yang bisa menjadi masalah kepatuhan GDPR (right to
+      erasure)
+
+  11.3. Mitigasi
+
+  (a) Regular backup database dengan enkripsi
+  (b) Logging tambahan di level sistem operasi
+  (c) Access control ketat ke database (hanya aplikasi yang bisa
+      menulis)
+  (d) Untuk kepatuhan GDPR: data sensitif tidak disimpan di field
+      details, hanya referensi ID
+
+
+================================================================================
+  12. REGISTRASI ROUTES (MAIN.GO)
+================================================================================
+
+  // -- Blockchain Routes (Web) --
+  auth.GET("/blockchain", blockchainH.Index)
+  auth.GET("/blockchain/export", blockchainAdvH.Export)
+  auth.GET("/blockchain/entity/:entityType/:entityId",
+      blockchainAdvH.EntityAudit)
+  auth.POST("/blockchain/verify", blockchainAdvH.Verify)
+  auth.GET("/blockchain/block/search", blockchainAdvH.SearchByHash)
+  auth.GET("/blockchain/:blockNumber", blockchainAdvH.Show)
+
+  // -- Blockchain Routes (API v1) --
+  apiv1.GET("/blockchain/verify", premiumAPIH.VerifyBlockchain)
+  apiv1.GET("/blockchain/audit/:entityType/:entityId",
+      premiumAPIH.AuditTrail)
+
+
+================================================================================
+  13. KESIMPULAN
+================================================================================
+
+  Blockchain SIMARC adalah cryptographic audit trail yang dirancang
+  khusus untuk sistem kearsipan dengan tujuan:
+
+  1. Menjamin integritas data arsip melalui SHA-256 hash chaining
+  2. Mendeteksi setiap bentuk manipulasi data, termasuk modifikasi
+     langsung di database
+  3. Memberikan transparansi penuh melalui Blockchain Explorer
+  4. Memungkinkan verifikasi keaslian dokumen fisik melalui hash
+     matching tanpa mengupload file ke server
+  5. Memenuhi kebutuhan kepatuhan dan regulasi kearsipan
+
+  Sistem ini bukan cryptocurrency atau smart contract platform --
+  melainkan tools anti-tamper untuk memastikan data arsip tetap
+  asli, utuh, dan dapat diaudit kapan saja.
+
+================================================================================
+  AKHIR DOKUMEN
+================================================================================

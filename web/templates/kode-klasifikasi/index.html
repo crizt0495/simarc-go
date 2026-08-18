@@ -1,0 +1,197 @@
+{{define "kode-klasifikasi/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h2><i class="bi bi-tags me-2"></i>Daftar Kode Klasifikasi</h2>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="/kode-klasifikasi">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-search me-1"></i>Pencarian</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Cari kode, nama klasifikasi, atau keamanan..." 
+                                   value="{{.Search}}">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold"><i class="bi bi-folder me-1"></i>Kategori Kode</label>
+                            <select name="filter_kategori" class="form-select">
+                                <option value="">Semua Kategori</option>
+                                {{range .KategoriOptions}}
+                                <option value="{{.}}" {{if eq $.FilterKategori .}}selected{{end}}>
+                                    {{.}}00 - {{.}}99
+                                </option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold"><i class="bi bi-toggle-on me-1"></i>Status</label>
+                            <select name="filter_status" class="form-select">
+                                <option value="">Semua Status</option>
+                                <option value="1" {{if eq $.FilterStatus "1"}}selected{{end}}>Aktif</option>
+                                <option value="0" {{if eq $.FilterStatus "0"}}selected{{end}}>Non-Aktif</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold"><i class="bi bi-trash3 me-1"></i>Penyusutan</label>
+                            <select name="filter_penyusutan" class="form-select">
+                                <option value="">Semua Jenis</option>
+                                <option value="dinilai_kembali" {{if eq $.FilterPenyusutan "dinilai_kembali"}}selected{{end}}>Dinilai Kembali</option>
+                                <option value="permanen" {{if eq $.FilterPenyusutan "permanen"}}selected{{end}}>Permanen</option>
+                                <option value="musnah" {{if eq $.FilterPenyusutan "musnah"}}selected{{end}}>Dimusnahkan</option>
+                                <option value="alih_media" {{if eq $.FilterPenyusutan "alih_media"}}selected{{end}}>Alih Media</option>
+                                <option value="transfer" {{if eq $.FilterPenyusutan "transfer"}}selected{{end}}>Transfer</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold"><i class="bi bi-shield-check me-1"></i>Keamanan</label>
+                            <select name="filter_keamanan" class="form-select">
+                                <option value="">Semua Tingkat</option>
+                                <option value="terbuka" {{if eq $.FilterKeamanan "terbuka"}}selected{{end}}>Terbuka</option>
+                                <option value="terbatas" {{if eq $.FilterKeamanan "terbatas"}}selected{{end}}>Terbatas</option>
+                                <option value="rahasia" {{if eq $.FilterKeamanan "rahasia"}}selected{{end}}>Rahasia</option>
+                                <option value="sangat_rahasia" {{if eq $.FilterKeamanan "sangat_rahasia"}}selected{{end}}>Sangat Rahasia</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold"><i class="bi bi-clock me-1"></i>Total Retensi (Tahun)</label>
+                            <div class="input-group">
+                                <input type="number" name="retensi_min" class="form-control" placeholder="Min" 
+                                       value="{{.RetensiMin}}" min="0">
+                                <span class="input-group-text">-</span>
+                                <input type="number" name="retensi_max" class="form-control" placeholder="Max" 
+                                       value="{{.RetensiMax}}" min="0">
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="btn-group w-100">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-funnel me-1"></i> Terapkan Filter
+                                </button>
+                                <a href="/kode-klasifikasi" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+
+                        {{if or .Search .FilterPenyusutan .FilterKeamanan (ne .FilterStatus "") .FilterKategori .RetensiMin .RetensiMax}}
+                        <div class="col-12">
+                            <div class="alert alert-info py-2 mb-0">
+                                <small><i class="bi bi-info-circle-fill me-1"></i><strong>Filter Aktif:</strong></small>
+                                {{if .Search}}
+                                <span class="badge bg-primary me-1">Pencarian: "{{.Search}}"</span>
+                                {{end}}
+                                {{if .FilterKategori}}
+                                <span class="badge bg-success me-1">Kategori: {{.FilterKategori}}</span>
+                                {{end}}
+                                {{if ne .FilterStatus ""}}
+                                <span class="badge bg-{{if eq .FilterStatus "1"}}success{{else}}secondary{{end}} me-1">Status: {{if eq .FilterStatus "1"}}Aktif{{else}}Non-Aktif{{end}}</span>
+                                {{end}}
+                                {{if .FilterPenyusutan}}
+                                <span class="badge bg-warning me-1">Penyusutan: {{.FilterPenyusutan}}</span>
+                                {{end}}
+                                {{if .FilterKeamanan}}
+                                <span class="badge bg-info me-1">Keamanan: {{.FilterKeamanan}}</span>
+                                {{end}}
+                                {{if or .RetensiMin .RetensiMax}}
+                                <span class="badge bg-dark me-1">Retensi: {{.RetensiMin}} - {{.RetensiMax}} tahun</span>
+                                {{end}}
+                                <span class="badge bg-secondary ms-2">Total: {{.Total}} hasil</span>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover datatable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Kode Klasifikasi</th>
+                                <th>Nama Klasifikasi</th>
+                                <th>Retensi Aktif</th>
+                                <th>Retensi Inaktif</th>
+                                <th>Penyusutan</th>
+                                <th>Keamanan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range $i, $v := .List}}
+                            <tr>
+                                <td>{{add $i $.FirstItem}}</td>
+                                <td><code>{{$v.KodeKlasifikasi}}</code></td>
+                                <td>{{$v.NamaKlasifikasi}}</td>
+                                <td>{{$v.RetensiAktif}} tahun</td>
+                                <td>{{$v.RetensiInaktif}} tahun</td>
+                                <td>
+                                    <span class="badge bg-{{if eq $v.PenyusutanArsip "permanen"}}success{{else if eq $v.PenyusutanArsip "musnah"}}danger{{else if eq $v.PenyusutanArsip "alih_media"}}info{{else if eq $v.PenyusutanArsip "transfer"}}primary{{else}}warning{{end}}">
+                                        {{$v.PenyusutanArsip}}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{if eq $v.KlasifikasiKeamanan "terbuka"}}success{{else if eq $v.KlasifikasiKeamanan "terbatas"}}primary{{else if eq $v.KlasifikasiKeamanan "rahasia"}}warning{{else}}danger{{end}}">
+                                        {{$v.KlasifikasiKeamanan}}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{if $v.IsActive}}success{{else}}secondary{{end}}">
+                                        {{if $v.IsActive}}Aktif{{else}}Non-Aktif{{end}}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <a href="/kode-klasifikasi/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/kode-klasifikasi/{{$v.ID}}/edit" class="btn-crud btn-crud-edit" title="Edit" data-bs-toggle="tooltip">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form action="/kode-klasifikasi/{{$v.ID}}/delete" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kode klasifikasi {{$v.KodeKlasifikasi}}?')">
+                                            <button type="submit" class="btn-crud btn-crud-del" title="Hapus" data-bs-toggle="tooltip">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="bi bi-search fs-3 mb-2"></i><br>
+                                    Tidak ada data kode klasifikasi yang sesuai dengan filter
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted">
+                            Menampilkan {{.FirstItem}} - {{.LastItem}} dari {{.Total}} data
+                        </div>
+                        <div>
+                            {{.Pagination}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

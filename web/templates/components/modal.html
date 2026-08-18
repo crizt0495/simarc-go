@@ -1,0 +1,69 @@
+{{define "components/modal.html"}}
+{{/* ═══════════════════════════════════════════════════════════════
+    SIMARC MODAL COMPONENT V4 — Portal-based, self-contained
+    ═══════════════════════════════════════════════════════════════
+    Usage:
+      <template data-modal="myModal">
+        <div class="sm-header">
+          <div class="sm-title-group">
+            <h5 class="sm-title">Judul</h5>
+            <p class="sm-subtitle">Subjudul</p>
+          </div>
+        </div>
+        <div class="sm-body">
+          Konten...
+        </div>
+        <div class="sm-footer">
+          <button class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('myModal')">Batal</button>
+          <button class="sm-btn sm-btn-primary" onclick="SimarcModal.hide('myModal')">Simpan</button>
+        </div>
+      </template>
+      <button onclick="SimarcModal.show('myModal', { size: 'md' })">Buka Modal</button>
+    ═══════════════════════════════════════════════════════════════ */}}
+
+{{/* ── SIMARC V4 Modal — Rendered via <template data-modal="ID"> ── */}}
+{{$id := .id | default (printf "modal-%d" (now.UnixNano))}}
+
+<template data-modal="{{$id}}">
+  {{/* Header */}}
+  {{if not .noHeader}}
+  <div class="sm-header">
+    <div class="sm-title-group">
+      {{if .title}}<h5 class="sm-title" id="{{$id}}-title">{{.title}}</h5>{{end}}
+      {{if .subtitle}}<p class="sm-subtitle">{{.subtitle}}</p>{{end}}
+    </div>
+    {{if not .noClose}}
+    <button type="button" class="sm-btn-close" onclick="SimarcModal.hide('{{$id}}')" aria-label="Tutup modal">
+      <i class="bi bi-x-lg"></i>
+    </button>
+    {{end}}
+  </div>
+  {{end}}
+
+  {{/* Body */}}
+  <div class="sm-body" {{if .bodyClass}}class="{{.bodyClass}}"{{end}}>
+    {{if .content}}
+      {{template "content" .}}
+    {{else if .body}}
+      {{.body}}
+    {{end}}
+  </div>
+
+  {{/* Footer */}}
+  {{if and (not .noFooter) (or .footer .confirmText) (or .cancelText)}}
+  <div class="sm-footer">
+    {{if .cancelText}}
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('{{$id}}')">
+      <i class="bi bi-x-lg me-1"></i>{{.cancelText}}
+    </button>
+    {{end}}
+    {{if .confirmText}}
+    <button type="button" class="sm-btn sm-btn-primary{{if .danger}} sm-btn-danger{{end}}"
+            {{if .onConfirm}}onclick="({{.onConfirm}})()"{{end}}>
+      <i class="bi bi-check-lg me-1"></i>{{.confirmText}}
+    </button>
+    {{end}}
+  </div>
+  {{end}}
+</template>
+{{end}}

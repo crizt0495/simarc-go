@@ -1,0 +1,379 @@
+{{define "settings/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="bi bi-palette"></i>
+        Pengaturan Tema
+    </h1>
+</div>
+
+<div class="row">
+    <!-- Color Settings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-circle-fill"></i>
+                <span>Warna Utama</span>
+            </div>
+            <div class="card-body">
+                <form action="/settings/theme" method="POST">
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-circle-fill text-primary me-2"></i>Warna Primer
+                        </label>
+                        <div class="d-flex gap-2">
+                            <input type="color" class="form-control form-control-color" 
+                                   id="primary_color" name="primary_color" 
+                                   value="{{.ThemeSettings.primary_color}}"
+                                   style="width: 60px; height: 45px;">
+                            <input type="text" class="form-control" 
+                                   id="primary_color_text" 
+                                   value="{{.ThemeSettings.primary_color}}"
+                                   placeholder="#1e3a8a">
+                        </div>
+                        <small class="text-muted">Digunakan untuk tombol, link, dan elemen utama lainnya</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-circle-fill text-secondary me-2"></i>Warna Sekunder
+                        </label>
+                        <div class="d-flex gap-2">
+                            <input type="color" class="form-control form-control-color" 
+                                   id="secondary_color" name="secondary_color" 
+                                   value="{{.ThemeSettings.secondary_color}}"
+                                   style="width: 60px; height: 45px;">
+                            <input type="text" class="form-control" 
+                                   id="secondary_color_text" 
+                                   value="{{.ThemeSettings.secondary_color}}"
+                                   placeholder="#2563eb">
+                        </div>
+                        <small class="text-muted">Digunakan untuk elemen pendukung dan hover states</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-circle-fill text-info me-2"></i>Warna Accent
+                        </label>
+                        <div class="d-flex gap-2">
+                            <input type="color" class="form-control form-control-color" 
+                                   id="accent_color" name="accent_color" 
+                                   value="{{.ThemeSettings.accent_color}}"
+                                   style="width: 60px; height: 45px;">
+                            <input type="text" class="form-control" 
+                                   id="accent_color_text" 
+                                   value="{{.ThemeSettings.accent_color}}"
+                                   placeholder="#06b6d4">
+                        </div>
+                        <small class="text-muted">Digunakan untuk highlight dan elemen dekoratif</small>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-sidebar me-2"></i>Tema Sidebar
+                        </label>
+                        <select class="form-select" name="sidebar_theme" id="sidebar_theme">
+                            <option value="light" {{if eq .ThemeSettings.sidebar_theme "light"}}selected{{end}}>
+                                🔆 Light - Terang
+                            </option>
+                            <option value="dark" {{if eq .ThemeSettings.sidebar_theme "dark"}}selected{{end}}>
+                                🌙 Dark - Gelap
+                            </option>
+                            <option value="colored" {{if eq .ThemeSettings.sidebar_theme "colored"}}selected{{end}}>
+                                🎨 Colored - Berwarna
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-layout-header me-2"></i>Tema Header
+                        </label>
+                        <select class="form-select" name="header_theme" id="header_theme">
+                            <option value="light" {{if eq .ThemeSettings.header_theme "light"}}selected{{end}}>
+                                🔆 Light - Terang
+                            </option>
+                            <option value="dark" {{if eq .ThemeSettings.header_theme "dark"}}selected{{end}}>
+                                🌙 Dark - Gelap
+                            </option>
+                            <option value="colored" {{if eq .ThemeSettings.header_theme "colored"}}selected{{end}}>
+                                🎨 Colored - Berwarna
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-square me-2"></i>Border Radius
+                        </label>
+                        <input type="range" class="form-range" 
+                               id="border_radius" name="border_radius" 
+                               min="0" max="30" 
+                               value="{{.ThemeSettings.border_radius}}">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>0px (Kotak)</span>
+                            <span id="border_radius_value">{{.ThemeSettings.border_radius}}px</span>
+                            <span>30px (Bulat)</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-check-circle me-2"></i>Simpan Pengaturan
+                        </button>
+                        <a href="/settings/theme/reset" class="btn btn-outline-danger"
+                           onclick="return confirm('Reset semua pengaturan tema ke default?')">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-eye"></i>
+                <span>Preview Tema</span>
+            </div>
+            <div class="card-body">
+                <div class="theme-preview p-4 rounded" id="themePreview">
+                    <h5 class="mb-3" id="previewTitle">Preview Elemen</h5>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted small text-uppercase mb-2">Tombol</h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-preview-primary">Primary</button>
+                            <button class="btn btn-preview-secondary">Secondary</button>
+                            <button class="btn btn-preview-accent">Accent</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-muted small text-uppercase mb-2">Badge</h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="badge bg-preview-primary">Primary</span>
+                            <span class="badge bg-preview-secondary">Secondary</span>
+                            <span class="badge bg-preview-accent">Accent</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-muted small text-uppercase mb-2">Progress Bar</h6>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-preview-primary" style="width: 40%"></div>
+                            <div class="progress-bar bg-preview-secondary" style="width: 30%"></div>
+                            <div class="progress-bar bg-preview-accent" style="width: 20%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-muted small text-uppercase mb-2">Alert</h6>
+                        <div class="alert-preview p-3 rounded">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <span>Ini adalah contoh alert dengan warna kustom</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-muted small text-uppercase mb-2">Card</h6>
+                        <div class="card-preview p-3 rounded">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="icon-preview rounded-circle d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Card Title</div>
+                                    <small class="text-muted">Card description text</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="text-muted small text-uppercase mb-3">Preset Warna Cepat</h6>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-primary btn-sm preset-btn" 
+                                data-primary="#1e3a8a" data-secondary="#2563eb" data-accent="#06b6d4">
+                            🌊 Ocean Blue
+                        </button>
+                        <button class="btn btn-outline-success btn-sm preset-btn" 
+                                data-primary="#065f46" data-secondary="#10b981" data-accent="#34d399">
+                            🌿 Forest Green
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm preset-btn" 
+                                data-primary="#991b1b" data-secondary="#ef4444" data-accent="#f87171">
+                            ❤️ Ruby Red
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm preset-btn" 
+                                data-primary="#92400e" data-secondary="#f59e0b" data-accent="#fbbf24">
+                            🌅 Sunset Gold
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm preset-btn" 
+                                data-primary="#5b21b6" data-secondary="#8b5cf6" data-accent="#a78bfa">
+                            💜 Royal Purple
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.theme-preview {
+    background: var(--off-white);
+    border: 2px solid var(--platinum);
+}
+.btn-preview-primary {
+    background: var(--primary_color, #1e3a8a);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+.btn-preview-secondary {
+    background: var(--secondary_color, #2563eb);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+.btn-preview-accent {
+    background: var(--accent_color, #06b6d4);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+.badge {
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+}
+.bg-preview-primary {
+    background: var(--primary_color, #1e3a8a) !important;
+}
+.bg-preview-secondary {
+    background: var(--secondary_color, #2563eb) !important;
+}
+.bg-preview-accent {
+    background: var(--accent_color, #06b6d4) !important;
+}
+.progress-bar {
+    transition: width 0.3s ease;
+}
+.alert-preview {
+    background: rgba(6, 182, 212, 0.1);
+    border-left: 4px solid var(--accent_color, #06b6d4);
+    color: var(--deep-navy);
+}
+.card-preview {
+    background: var(--pure-white);
+    border: 1px solid var(--platinum);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.icon-preview {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary_color, #1e3a8a), var(--secondary_color, #2563eb));
+    color: white;
+    font-size: 1.25rem;
+}
+.preset-btn {
+    font-size: 0.85rem;
+}
+.form-control-color {
+    padding: 0;
+    border: 2px solid var(--platinum);
+    border-radius: 8px;
+    cursor: pointer;
+}
+.form-control-color::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 6px;
+}
+.form-control-color::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
+.form-control-color::-moz-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
+</style>
+
+<script>
+function syncColorInputs(colorId, textId) {
+    const colorInput = document.getElementById(colorId);
+    const textInput = document.getElementById(textId);
+    
+    if (colorInput && textInput) {
+        colorInput.addEventListener('input', function() {
+            textInput.value = this.value;
+            updatePreview();
+        });
+        
+        textInput.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                colorInput.value = this.value;
+                updatePreview();
+            }
+        });
+    }
+}
+
+syncColorInputs('primary_color', 'primary_color_text');
+syncColorInputs('secondary_color', 'secondary_color_text');
+syncColorInputs('accent_color', 'accent_color_text');
+
+const borderRadiusSlider = document.getElementById('border_radius');
+const borderRadiusValue = document.getElementById('border_radius_value');
+
+if (borderRadiusSlider) {
+    borderRadiusSlider.addEventListener('input', function() {
+        borderRadiusValue.textContent = this.value + 'px';
+        updatePreview();
+    });
+}
+
+function updatePreview() {
+    const root = document.documentElement;
+    const primaryColor = document.getElementById('primary_color').value;
+    const secondaryColor = document.getElementById('secondary_color').value;
+    const accentColor = document.getElementById('accent_color').value;
+    const borderRadius = document.getElementById('border_radius').value + 'px';
+    
+    root.style.setProperty('--primary_color', primaryColor);
+    root.style.setProperty('--secondary_color', secondaryColor);
+    root.style.setProperty('--accent_color', accentColor);
+    root.style.setProperty('--border_radius', borderRadius);
+}
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const primary = this.getAttribute('data-primary');
+        const secondary = this.getAttribute('data-secondary');
+        const accent = this.getAttribute('data-accent');
+        
+        document.getElementById('primary_color').value = primary;
+        document.getElementById('primary_color_text').value = primary;
+        
+        document.getElementById('secondary_color').value = secondary;
+        document.getElementById('secondary_color_text').value = secondary;
+        
+        document.getElementById('accent_color').value = accent;
+        document.getElementById('accent_color_text').value = accent;
+        
+        updatePreview();
+    });
+});
+
+updatePreview();
+</script>
+{{end}}

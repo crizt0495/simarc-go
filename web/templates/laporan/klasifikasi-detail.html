@@ -1,0 +1,243 @@
+{{define "laporan/klasifikasi-detail.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+:root{--radius:14px;--shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.04)}
+.klasifikasi-page{--bg-card:#fff;--bg-hover:#f8fafc;--text-title:#1e293b;--text-body:#475569;--border-card:#e2e8f0}
+[data-theme="dark"] .klasifikasi-page{--bg-card:#1e293b;--bg-hover:#334155;--text-title:#f1f5f9;--text-body:#cbd5e1;--border-card:#334155}
+.card-klas{background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:all 0.2s}
+.klas-sidebar{max-height:calc(100vh - 200px);overflow-y:auto;scrollbar-width:thin}
+.klas-sidebar::-webkit-scrollbar{width:5px}
+.klas-sidebar::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:10px}
+.klas-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-card);text-decoration:none;color:var(--text-body);transition:all 0.15s;cursor:pointer}
+.klas-item:hover{background:var(--bg-hover);color:var(--text-title)}
+.klas-item.active{background:rgba(59,130,246,0.08);border-left:3px solid #3b82f6;color:#2563eb;font-weight:600}
+.klas-item .badge-count{background:#e2e8f0;color:#475569;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
+.klas-item.active .badge-count{background:rgba(59,130,246,0.15);color:#2563eb}
+.klas-item .kode{font-size:12px;font-weight:700;letter-spacing:0.02em}
+.klas-item .nama{font-size:12px;margin-top:2px;opacity:0.75}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{border-radius:12px;padding:16px;text-align:center}
+.stat-card .icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px}
+.stat-card .value{font-size:22px;font-weight:800;letter-spacing:-0.03em;margin-bottom:2px}
+.stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.7}
+.stat-card.aktif{background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
+.stat-card.aktif .icon{background:#16a34a;color:#fff}
+.stat-card.aktif .value{color:#15803d}
+.stat-card.inaktif{background:linear-gradient(135deg,#fefce8,#fef9c3)}
+.stat-card.inaktif .icon{background:#ca8a04;color:#fff}
+.stat-card.inaktif .value{color:#a16207}
+.stat-card.susut{background:linear-gradient(135deg,#fff7ed,#ffedd5)}
+.stat-card.susut .icon{background:#ea580c;color:#fff}
+.stat-card.susut .value{color:#c2410c}
+.stat-card.permanen{background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+.stat-card.permanen .icon{background:#2563eb;color:#fff}
+.stat-card.permanen .value{color:#1d4ed8}
+.progress-stacked{display:flex;height:8px;border-radius:10px;overflow:hidden;margin:12px 0}
+.progress-seg{height:100%;transition:width 0.3s}
+.arsip-table{width:100%;border-collapse:separate;border-spacing:0 4px}
+.arsip-table th{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.arsip-table td{padding:10px 14px;font-size:13px;background:var(--bg-card);border-bottom:1px solid var(--border-card)}
+.arsip-table tr td:first-child{border-radius:10px 0 0 10px}
+.arsip-table tr td:last-child{border-radius:0 10px 10px 0}
+.arsip-table tr:hover td{background:var(--bg-hover)}
+.arsip-table .nomor{font-weight:700;color:#2563eb;font-size:12px}
+.arsip-table .nama{font-weight:600;color:var(--text-title)}
+.arsip-table .uraian{font-size:11px;color:#94a3b8;margin-top:2px}
+.empty-state{padding:60px 20px;text-align:center}
+.empty-state .icon{width:72px;height:72px;border-radius:20px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;color:#94a3b8}
+.empty-state h5{font-weight:700;margin-bottom:6px;color:var(--text-title)}
+.empty-state p{color:#94a3b8;font-size:13px;max-width:400px;margin:0 auto}
+.top-klas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.top-klas a{padding:8px 16px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;text-decoration:none;font-size:13px;font-weight:600;color:#475569;transition:all 0.15s}
+.top-klas a:hover{background:#eff6ff;border-color:#bfdbfe;color:#2563eb}
+.top-klas a span{color:#94a3b8;font-weight:400}
+.section-header{background:#f8fafc;padding:10px 16px;border-bottom:1px solid var(--border-card);display:flex;align-items:center;justify-content:space-between}
+[data-theme="dark"] .section-header{background:#1e293b}
+</style>
+<div class="container-fluid klasifikasi-page">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h4 class="fw-bold mb-1" style="color:var(--text-title);font-size:20px">Laporan per Kode Klasifikasi</h4>
+      <nav aria-label="breadcrumb" style="font-size:13px">
+        <ol class="breadcrumb m-0"><li class="breadcrumb-item"><a href="/laporan">Laporan</a></li><li class="breadcrumb-item active">Klasifikasi</li></ol>
+      </nav>
+    </div>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm no-select2" style="width:260px" onchange="if(this.value)window.location='?kode_klasifikasi_id='+this.value">
+        <option value="">-- Cari Kode / Nama --</option>
+        {{range .AllKlasifikasi}}
+        <option value="{{.ID}}"{{if eq $.RequestKodeKlasifikasiID .ID}} selected{{end}}>{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>
+        {{end}}
+      </select>
+      <a href="/laporan/klasifikasi{{.QueryString}}" class="btn btn-light btn-sm"><i class="bi bi-arrow-clockwise"></i></a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Sidebar -->
+    <div class="col-md-3">
+      <div class="card-klas">
+        <div class="section-header">
+          <span class="fw-bold" style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:0.04em">Kode Klasifikasi</span>
+          <span class="badge" style="background:#e2e8f0;color:#475569;font-size:10px">{{len .AllKlasifikasi}}</span>
+        </div>
+        <div class="klas-sidebar">
+          {{range .KlasifikasiList}}
+          <a href="?kode_klasifikasi_id={{.ID}}" class="klas-item{{if eq $.RequestKodeKlasifikasiID .ID}} active{{end}}">
+            <div>
+              <div class="kode">{{.KodeKlasifikasi.KodeKlasifikasi}}</div>
+              <div class="nama">{{.KodeKlasifikasi.NamaKlasifikasi}}</div>
+            </div>
+            <span class="badge-count">{{.ArsipCount}}</span>
+          </a>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+      {{if .RequestKodeKlasifikasiID}}
+        {{with .SelectedKlasifikasi}}
+        <!-- Header Info -->
+        <div class="card-klas p-3 mb-3">
+          <div class="d-flex align-items-start justify-content-between">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge" style="background:#2563eb;color:#fff;font-size:12px;padding:4px 12px;border-radius:8px">{{.KodeKlasifikasi}}</span>
+                {{if .KlasifikasiKeamanan}}
+                <span class="badge" style="background:#f1f5f9;color:#475569;font-size:11px;padding:4px 10px;border-radius:8px">{{.KlasifikasiKeamanan}}</span>
+                {{end}}
+              </div>
+              <h5 class="fw-bold mb-1" style="color:var(--text-title);font-size:17px">{{.NamaKlasifikasi}}</h5>
+              {{if or .UnitPengolah .DasarPertimbangan}}
+              <div style="font-size:12px;color:#64748b;margin-top:4px">
+                {{if .UnitPengolah}}<span class="me-3"><i class="bi bi-building me-1"></i>{{.UnitPengolah}}</span>{{end}}
+                {{if .DasarPertimbangan}}<span><i class="bi bi-journal-text me-1"></i>{{.DasarPertimbangan}}</span>{{end}}
+              </div>
+              {{end}}
+            </div>
+            <div style="font-size:12px;color:#94a3b8;text-align:right;white-space:nowrap">
+              <div><i class="bi bi-archive me-1"></i>{{$.ArsipDetailTotal}} arsip</div>
+              {{if .RetensiAktif}}<div class="mt-1"><i class="bi bi-clock me-1"></i>Retensi {{.RetensiAktif}}/{{.RetensiInaktif}} th</div>{{end}}
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stat-grid">
+          <div class="stat-card aktif">
+            <div class="icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="value">{{$.ArsipStats.Aktif}}</div>
+            <div class="label">Aktif</div>
+          </div>
+          <div class="stat-card inaktif">
+            <div class="icon"><i class="bi bi-clock-fill"></i></div>
+            <div class="value">{{$.ArsipStats.Inaktif}}</div>
+            <div class="label">Inaktif</div>
+          </div>
+          <div class="stat-card susut">
+            <div class="icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="value">{{$.ArsipStats.SiapPenyusutan}}</div>
+            <div class="label">Siap Susut</div>
+          </div>
+          <div class="stat-card permanen">
+            <div class="icon"><i class="bi bi-shield-check"></i></div>
+            <div class="value">{{$.ArsipStats.Permanen}}</div>
+            <div class="label">Permanen</div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-stacked">
+          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenAktif}}%;background:#16a34a" title="Aktif: {{printf "%.1f" $.ArsipStats.PersenAktif}}%"></div>
+          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenInaktif}}%;background:#ca8a04" title="Inaktif: {{printf "%.1f" $.ArsipStats.PersenInaktif}}%"></div>
+          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenSusut}}%;background:#ea580c" title="Siap Susut: {{printf "%.1f" $.ArsipStats.PersenSusut}}%"></div>
+          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenPermanen}}%;background:#2563eb" title="Permanen: {{printf "%.1f" $.ArsipStats.PersenPermanen}}%"></div>
+        </div>
+
+        <!-- Arsip Table -->
+        <div class="card-klas">
+          <div class="section-header">
+            <span class="fw-bold" style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:0.04em">Daftar Arsip</span>
+            <span class="badge" style="background:#e2e8f0;color:#475569;font-size:10px">{{$.ArsipDetailTotal}} total</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="arsip-table table-premium">
+              <thead>
+                <tr>
+                  <th style="width:100px">Nomor</th>
+                  <th>Nama Arsip</th>
+                  <th style="width:140px">Unit Kerja</th>
+                  <th style="width:100px;text-align:center">Status</th>
+                  <th style="width:60px;text-align:center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range $.ArsipDetail}}
+                <tr>
+                  <td><span class="nomor">{{.NomorArsip}}</span></td>
+                  <td>
+                    <div class="nama">{{.NamaArsip}}</div>
+                    {{if .Uraian}}<div class="uraian">{{limitString .Uraian 80}}</div>{{end}}
+                  </td>
+                  <td style="font-size:12px;color:#64748b">{{.UnitKerja}}</td>
+                  <td style="text-align:center">
+                    {{if eq .StatusClass "success"}}
+                      <span class="badge" style="background:#dcfce7;color:#15803d;font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
+                    {{else if eq .StatusClass "warning"}}
+                      <span class="badge" style="background:#fef9c3;color:#a16207;font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
+                    {{else if eq .StatusClass "danger"}}
+                      <span class="badge" style="background:#fee2e2;color:#dc2626;font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
+                    {{else}}
+                      <span class="badge" style="background:#dbeafe;color:#1d4ed8;font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
+                    {{end}}
+                  </td>
+                  <td style="text-align:center">
+                    <a href="/arsip/{{.ID}}" class="btn btn-sm" style="background:#f1f5f9;color:#475569;border-radius:8px;font-size:12px;padding:4px 10px;text-decoration:none" title="Detail"><i class="bi bi-eye"></i></a>
+                  </td>
+                </tr>
+                {{else}}
+                <tr><td colspan="5">
+                  <div class="empty-state">
+                    <div class="icon"><i class="bi bi-inbox"></i></div>
+                    <h5>Belum Ada Arsip</h5>
+                    <p>Belum ditemukan arsip dengan kode klasifikasi ini.</p>
+                  </div>
+                </td></tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{if $.ArsipDetailPagination}}
+          <div class="px-3 py-2 border-top d-flex justify-content-end">
+            {{safeHTML $.ArsipDetailPagination}}
+          </div>
+          {{end}}
+        </div>
+        {{end}}
+
+      {{else}}
+      <!-- No selection - empty state -->
+      <div class="card-klas d-flex align-items-center justify-content-center" style="min-height:450px">
+        <div class="empty-state">
+          <div class="icon"><i class="bi bi-diagram-3"></i></div>
+          <h5>Pilih Kode Klasifikasi</h5>
+          <p>Pilih kode klasifikasi di samping kiri atau gunakan pencarian di atas untuk melihat rincian arsip, statistik, dan informasi retensi.</p>
+          {{if gt (len .TopKlasifikasi) 0}}
+          <div class="mt-4">
+            <p class="text-muted mb-3" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">5 Klasifikasi Terpopuler</p>
+            <div class="top-klas">
+              {{range .TopKlasifikasi}}
+              <a href="?kode_klasifikasi_id={{.ID}}"><strong>{{.KodeKlasifikasi.KodeKlasifikasi}}</strong> <span>({{.ArsipCount}})</span></a>
+              {{end}}
+            </div>
+          </div>
+          {{end}}
+        </div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+</div>
+{{end}}

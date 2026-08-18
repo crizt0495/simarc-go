@@ -1,0 +1,336 @@
+{{define "jadwal-retensi/show.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Detail Jadwal Retensi
+                </h2>
+                <div class="btn-group">
+                    <a href="/jadwal-retensi" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+                    </a>
+                    {{if eq .Item.Status "draft"}}
+                    <a href="/jadwal-retensi/{{.Item.ID}}/edit" class="btn btn-warning">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-{{if eq .Item.Status "draft"}}secondary{{else if eq .Item.Status "scheduled"}}info{{else if eq .Item.Status "in_progress"}}warning{{else if eq .Item.Status "completed"}}success{{else}}danger{{end}}">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-{{if eq .Item.Status "draft"}}file-text{{else if eq .Item.Status "scheduled"}}calendar{{else if eq .Item.Status "in_progress"}}gear{{else if eq .Item.Status "completed"}}check-circle{{else}}x-circle{{end}} me-2 fs-4"></i>
+            <div>
+                <strong>Status: {{.Item.Status}}</strong>
+                {{if .Item.TanggalPelaksanaan}}
+                <br><small>Dilaksanakan: {{.Item.TanggalPelaksanaan}}</small>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informasi Jadwal</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td width="200"><strong>Nama Jadwal</strong></td>
+                            <td>{{.Item.NamaJadwal}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deskripsi</strong></td>
+                            <td>{{if .Item.Deskripsi}}{{.Item.Deskripsi}}{{else}}-{{end}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanggal Jadwal</strong></td>
+                            <td>{{.Item.TanggalJadwal}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Jenis Jadwal</strong></td>
+                            <td>
+                                <span class="badge bg-{{if eq .Item.JenisJadwal "pemusnahan"}}danger{{else if eq .Item.JenisJadwal "penyusutan"}}info{{else if eq .Item.JenisJadwal "transfer"}}success{{else}}warning{{end}}">
+                                    {{.Item.JenisJadwal}}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unit Kerja</strong></td>
+                            <td>{{if .Item.UnitKerja}}{{.Item.UnitKerja.NamaUnit}}{{else}}Semua Unit Kerja{{end}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Catatan</strong></td>
+                            <td>{{if .Item.Catatan}}{{.Item.Catatan}}{{else}}-{{end}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dibuat Oleh</strong></td>
+                            <td>{{if .Item.Creator}}{{.Item.Creator.Name}}{{else}}-{{end}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanggal Dibuat</strong></td>
+                            <td>{{.Item.CreatedAt}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Terakhir Diupdate</strong></td>
+                            <td>{{.Item.UpdatedAt}}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-gear me-2"></i>Aksi</h6>
+                </div>
+                <div class="card-body">
+                    {{if eq .Item.Status "draft"}}
+                    <form action="/jadwal-retensi/{{.Item.ID}}/schedule" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-info">
+                            <i class="bi bi-calendar-check me-1"></i>Jadwalkan
+                        </button>
+                    </form>
+                    {{end}}
+
+                    {{if eq .Item.Status "scheduled"}}
+                    <form action="/jadwal-retensi/{{.Item.ID}}/start" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-play-fill me-1"></i>Mulai Pelaksanaan
+                        </button>
+                    </form>
+                    {{end}}
+
+                    {{if eq .Item.Status "completed"}}
+                    <form action="/jadwal-retensi/{{.Item.ID}}/execute" method="POST" class="d-inline" 
+                          onsubmit="return confirm('Apakah Anda yakin ingin melaksanakan pemusnahan? Tindakan ini tidak dapat dibatalkan!')">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>Eksekusi Pemusnahan
+                        </button>
+                    </form>
+                    {{end}}
+
+                    {{if and (ne .Item.Status "cancelled") (ne .Item.Status "completed")}}
+                    <button type="button" class="btn btn-outline-danger" onclick="SimarcModal.show('cancelModal', { size: 'sm' })">
+                        <i class="bi bi-x-circle me-1"></i>Batalkan Jadwal
+                    </button>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Daftar Arsip ({{.Item.TotalArsip}})</h6>
+                    <span class="badge bg-primary">{{.ArsipTotal}} ditampilkan</span>
+                </div>
+                <div class="card-body">
+                    {{if gt (len .ArsipList) 0}}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nomor Arsip</th>
+                                    <th>Nama Arsip</th>
+                                    <th>Unit Kerja</th>
+                                    <th>Status</th>
+                                    <th>Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $i, $a := .ArsipList}}
+                                <tr>
+                                    <td>{{add $i $.ArsipFirstItem}}</td>
+                                    <td><strong>{{if $a.Arsip}}{{$a.Arsip.NomorArsip}}{{else}}-{{end}}</strong></td>
+                                    <td>{{if $a.Arsip}}{{$a.Arsip.NamaArsip}}{{else}}-{{end}}</td>
+                                    <td>{{if $a.Arsip.UnitKerja}}{{$a.Arsip.UnitKerja.NamaUnit}}{{else}}-{{end}}</td>
+                                    <td>
+                                        <span class="badge bg-{{if eq $a.Status "pending"}}secondary{{else if eq $a.Status "processed"}}success{{else}}warning{{end}}">
+                                            {{$a.Status}}
+                                        </span>
+                                    </td>
+                                    <td>{{if $a.Catatan}}{{$a.Catatan}}{{else}}-{{end}}</td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        {{.ArsipPagination}}
+                    </div>
+                    {{else}}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Belum ada arsip dalam jadwal ini.
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Statistik</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h2 class="mb-0">{{.Item.TotalArsip}}</h2>
+                        <small class="text-muted">Total Arsip</small>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <h4 class="text-secondary">{{.Stats.Pending}}</h4>
+                            <small>Pending</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <h4 class="text-success">{{.Stats.Processed}}</h4>
+                            <small>Proses</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <h4 class="text-warning">{{.Stats.Skipped}}</h4>
+                            <small>Skipped</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Timeline</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        <li class="timeline-item">
+                            <div class="timeline-icon bg-primary">
+                                <i class="bi bi-plus"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Jadwal Dibuat</div>
+                                <div class="timeline-description">{{.Item.CreatedAt}}</div>
+                            </div>
+                        </li>
+                        {{if .Item.TanggalJadwal}}
+                        <li class="timeline-item">
+                            <div class="timeline-icon bg-info">
+                                <i class="bi bi-calendar"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Tanggal Jadwal</div>
+                                <div class="timeline-description">{{.Item.TanggalJadwal}}</div>
+                            </div>
+                        </li>
+                        {{end}}
+                        {{if .Item.TanggalPelaksanaan}}
+                        <li class="timeline-item">
+                            <div class="timeline-icon bg-warning">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Pelaksanaan Dimulai</div>
+                                <div class="timeline-description">{{.Item.TanggalPelaksanaan}}</div>
+                            </div>
+                        </li>
+                        {{end}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template data-modal="cancelModal">
+  <form action="/jadwal-retensi/cancel/{{.Item.ID}}" method="POST" style="display:contents">
+    <div class="sm-header">
+      <div class="sm-header-left">
+        <div class="sm-icon sm-icon-danger">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div>
+          <h5 class="sm-title">Batalkan Jadwal</h5>
+          <p class="sm-subtitle">Konfirmasi pembatalan jadwal retensi</p>
+        </div>
+      </div>
+      <button type="button" class="sm-btn-close" onclick="SimarcModal.hide('cancelModal')" aria-label="Close">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="sm-body">
+      <p>Apakah Anda yakin ingin membatalkan jadwal retensi ini?</p>
+      <div class="mb-3">
+        <label for="reason" class="form-label small fw-700">Alasan Pembatalan</label>
+        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+      </div>
+    </div>
+    <div class="sm-footer">
+      <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('cancelModal')">
+        <i class="bi bi-x-lg me-1"></i>Batal
+      </button>
+      <button type="submit" class="sm-btn sm-btn-danger">
+        <i class="bi bi-check-lg me-1"></i>Ya, Batalkan
+      </button>
+    </div>
+  </form>
+</template>
+
+<style>
+    .timeline {
+        position: relative;
+        padding: 0;
+        list-style: none;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 20px;
+        width: 2px;
+        background: var(--platinum);
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding-left: 50px;
+    }
+    .timeline-icon {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        z-index: 1;
+    }
+    .timeline-icon.bg-primary { background: var(--primary-blue) !important; color: white; }
+    .timeline-icon.bg-info { background: var(--accent-cyan) !important; color: white; }
+    .timeline-icon.bg-warning { background: var(--warning-amber) !important; color: white; }
+    .timeline-content {
+        background: var(--off-white);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--platinum);
+    }
+    .timeline-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--deep-navy);
+    }
+    .timeline-description {
+        font-size: 0.875rem;
+        color: var(--royal-navy);
+    }
+</style>
+{{end}}

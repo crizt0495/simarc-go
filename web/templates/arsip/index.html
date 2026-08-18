@@ -1,0 +1,1067 @@
+{{define "arsip/index.html"}}
+{{template "layouts/app.html" .}}
+{{end}}
+{{define "content"}}
+{{template "components/select2.html"}}
+<style>
+/* ═══════════════════════════════════════
+   ARSIP — PREMIUM DAFTAR ARSIP
+   ═══════════════════════════════════════ */
+
+/* ── Hero Header ── */
+.arsip-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    border-radius: var(--r-xl);
+    padding: 1.75rem 2rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.arsip-hero::after {
+    content: '';
+    position: absolute;
+    top: -30%; right: -5%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.arsip-hero .hero-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.15rem;
+}
+.arsip-hero .hero-sub {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+/* ── Stat Mini ── */
+.stat-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 0.85rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+.stat-mini:hover {
+    border-color: var(--brand);
+    box-shadow: var(--sh-sm);
+}
+.stat-mini-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--r);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+.stat-mini-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--ink-2);
+    line-height: 1.2;
+}
+.stat-mini-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--ink-4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── Premium Table ── */
+.table-premium {
+    border-collapse: separate;
+    border-spacing: 0 6px;
+    margin-top: -6px;
+}
+.table-premium thead th {
+    background: transparent;
+    border: none;
+    color: var(--ink-4);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 0.75rem;
+    border-bottom: 2px solid var(--border);
+}
+.table-premium tbody tr {
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+    border: 1px solid var(--border);
+}
+.table-premium tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    border-color: var(--brand-200, #bfdbfe);
+}
+.table-premium tbody td {
+    border: none;
+    padding: 0.85rem 0.75rem;
+    background: transparent;
+    vertical-align: middle;
+    font-size: 0.8rem;
+    color: var(--ink-2);
+}
+.table-premium tbody tr td:first-child { border-radius: var(--r) 0 0 var(--r); }
+.table-premium tbody tr td:last-child { border-radius: 0 var(--r) var(--r) 0; }
+
+/* ── Status Badges ── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.status-aktif { background: #dcfce7; color: #15803d; }
+.status-inaktif { background: #f1f5f9; color: #475569; }
+.status-siap_penyusutan { background: #fef3c7; color: #b45309; }
+.status-musnah { background: #fee2e2; color: #b91c1c; }
+.status-permanen { background: #e0e7ff; color: #4338ca; }
+.status-diberkaskan { background: #e0f2fe; color: #0369a1; }
+.status-dipinjam { background: #fce7f3; color: #be185d; }
+
+/* ── Action Buttons (using global .btn-crud from enterprise-premium.css) ── */
+
+/* ── File indicator ── */
+.file-indicator {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+.file-indicator.exists { background: #dcfce7; color: #15803d; }
+.file-indicator.empty { background: #f1f5f9; color: #94a3b8; }
+
+/* ── Filter Active Badges ── */
+.filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    transition: all 0.12s ease;
+}
+.filter-badge:hover { opacity: 0.8; }
+.filter-badge .remove {
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+    margin-left: 0.2rem;
+    opacity: 0.6;
+    text-decoration: none;
+    color: inherit;
+}
+.filter-badge .remove:hover { opacity: 1; }
+
+/* ── Filter Panel ── */
+.filter-panel {
+    background: var(--surface-2);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+.filter-panel .form-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-4);
+    margin-bottom: 0.3rem;
+}
+.filter-panel .search-wrap {
+    position: relative;
+}
+.filter-panel .search-wrap i {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-4);
+    pointer-events: none;
+}
+
+/* ── Bulk Toolbar ── */
+.bulk-toolbar {
+    background: linear-gradient(135deg, #eff6ff, #eef2ff);
+    border: 1px solid rgba(26,86,219,0.12);
+    border-radius: var(--r-lg);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.bulk-toolbar .count-text {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--brand);
+}
+.bulk-toolbar .bulk-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ── Toast ── */
+.toast-premium {
+    background: var(--ink);
+    color: #fff;
+    padding: 0.75rem 1rem;
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-lg);
+    font-size: 0.85rem;
+    min-width: 280px;
+    animation: toastSlide 0.3s ease both;
+}
+.toast-premium .toast-close {
+    background: none; border: none;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer; font-size: 1rem; padding: 0; line-height: 1;
+}
+.toast-premium .toast-close:hover { color: #fff; }
+@keyframes toastSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Animations ── */
+.fade-up { animation: fadeUp 0.35s ease both; }
+.fade-up-d1 { animation: fadeUp 0.35s ease 0.06s both; }
+.fade-up-d2 { animation: fadeUp 0.35s ease 0.1s both; }
+.fade-up-d3 { animation: fadeUp 0.35s ease 0.14s both; }
+
+
+/* ── Search highlight ── */
+mark {
+    padding: 0.1em 0.25em;
+    border-radius: 0.2rem;
+    font-weight: 700;
+    background: #fef08a;
+    color: #1e293b;
+}
+
+@media (max-width: 992px) {
+    .arsip-hero { padding: 1.25rem; }
+    .arsip-hero .hero-title { font-size: 1.1rem; }
+    .stat-mini { padding: 0.65rem 0.85rem; }
+    .stat-mini-value { font-size: 1.05rem; }
+    .stat-mini-icon { width: 34px; height: 34px; font-size: 0.9rem; }
+    .table-premium thead { display: none; }
+    .table-premium tbody tr {
+        display: block;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+    }
+    .table-premium tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.35rem 0 !important;
+        border: none !important;
+        border-bottom: 1px solid var(--border) !important;
+        text-align: right;
+        font-size: 0.78rem;
+    }
+    .table-premium tbody td:last-child { border-bottom: none !important; }
+    .table-premium tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--ink-3);
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding-right: 0.75rem;
+    }
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- ZONE 1: HERO HEADER -->
+    <div class="arsip-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-file-earmark-text me-2"></i>Daftar Arsip</div>
+                <div class="hero-sub">
+                    <i class="bi bi-info-circle me-1"></i>Total <strong>{{.totalArsip}}</strong> arsip tersimpan
+                    {{if not .CanSeeAllUnits}}{{if .AuthUser.UnitKerja}}· Unit: <strong>{{.AuthUser.UnitKerja.NamaUnit}}</strong>{{end}}{{end}}
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                {{if .CanOcr}}<a href="/ocr" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.7rem;"><i class="bi bi-camera me-1"></i>OCR</a>{{end}}
+                {{if .CanImport}}<a href="/arsip/import" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.7rem;"><i class="bi bi-file-earmark-excel me-1"></i>Import</a>{{end}}
+                {{if .CanCreate}}<a href="/arsip/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;"><i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">Tambah</span></a>{{end}}
+            </div>
+        </div>
+        {{if .searchKeyword}}
+        <div class="mt-2 d-inline-flex align-items-center gap-2" style="background:rgba(255,255,255,0.08);border-radius:50px;padding:0.3rem 0.8rem;font-size:0.7rem;">
+            <i class="bi bi-search"></i> Mencari "<strong>{{.searchKeyword}}</strong>" — {{.TotalResults}} hasil
+        </div>
+        {{end}}
+    </div>
+
+    <!-- ZONE 2: STATS -->
+    <div class="row g-2 mb-3 fade-up-d1">
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon icon-blue"><i class="bi bi-archive"></i></div><div><div class="stat-mini-value">{{.totalArsip}}</div><div class="stat-mini-label">Total Arsip</div></div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon icon-green"><i class="bi bi-check-circle"></i></div><div><div class="stat-mini-value">{{.aktifArsip}}</div><div class="stat-mini-label">Aktif</div></div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:var(--surface-3);color:var(--ink-3);"><i class="bi bi-pause-circle"></i></div><div><div class="stat-mini-value">{{.inaktifArsip}}</div><div class="stat-mini-label">Inaktif</div></div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon icon-amber"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-mini-value">{{sub .totalArsip (add .aktifArsip .inaktifArsip)}}</div><div class="stat-mini-label">Lainnya</div></div></div>
+        </div>
+    </div>
+
+    <!-- ZONE 3: FILTER PANEL -->
+    <div class="card fade-up-d1" style="overflow:visible">
+        <div class="card-header d-flex justify-content-between align-items-center" style="padding:0.85rem 1.25rem">
+            <h5 class="fw-800 mb-0" style="font-size:0.9rem"><i class="bi bi-funnel text-primary me-2"></i>Filter &amp; Pencarian</h5>
+            <button class="btn btn-sm btn-outline-primary rounded-pill fw-700 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#arsipFilterCollapse" aria-expanded="true" style="font-size:0.7rem">
+                <i class="bi bi-chevron-up me-1" id="filterToggleIcon"></i> Sembunyikan
+            </button>
+        </div>
+        <div id="arsipFilterCollapse" class="collapse show">
+            <div class="filter-panel m-3">
+                <form method="GET" action="/arsip" class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Pencarian</label>
+                        <div class="search-wrap">
+                            <input type="text" class="form-control" name="search" placeholder="Cari: No. Arsip, Nama, Uraian, Klasifikasi, Unit Kerja..." value="{{.searchKeyword}}" autocomplete="off" style="font-size:0.85rem;">
+                            <i class="bi bi-search"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Unit Kerja</label>
+                        <select class="form-select form-select-sm select2-search" name="unit_kerja_id">
+                            <option value="">Semua Unit</option>
+                            {{if .CanSeeAllUnits}}
+                            {{range .unitKerjaOptions}}<option value="{{.ID}}" {{if eq $.FilterUnitKerjaID .ID}}selected{{end}}>{{.NamaUnit}}</option>{{end}}
+                            {{else}}
+                            <option value="{{if .AuthUser.UnitKerjaID}}{{.AuthUser.UnitKerjaID}}{{end}}" selected>{{if .AuthUser.UnitKerja}}{{.AuthUser.UnitKerja.NamaUnit}}{{else}}Unit Saya{{end}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select class="form-select form-select-sm select2-search" name="status">
+                            <option value="">Semua</option>
+                            <option value="aktif" {{if eq .FilterStatus "aktif"}}selected{{end}}>Aktif</option>
+                            <option value="inaktif" {{if eq .FilterStatus "inaktif"}}selected{{end}}>Inaktif</option>
+                            <option value="siap_penyusutan" {{if eq .FilterStatus "siap_penyusutan"}}selected{{end}}>Siap Penyusutan</option>
+                            <option value="musnah" {{if eq .FilterStatus "musnah"}}selected{{end}}>Musnah</option>
+                            <option value="permanen" {{if eq .FilterStatus "permanen"}}selected{{end}}>Permanen</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Klasifikasi</label>
+                        <select class="form-select form-select-sm select2-search" name="kode_klasifikasi_id">
+                            <option value="">Semua</option>
+                            {{range .kodeKlasifikasiOptions}}<option value="{{.ID}}" {{if eq $.FilterKlasifikasiID .ID}}selected{{end}}>{{.KodeKlasifikasi}} - {{truncate .NamaKlasifikasi 25}}</option>{{end}}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Lokasi</label>
+                        <select class="form-select form-select-sm select2-search" name="lokasi_arsip_id">
+                            <option value="">Semua</option>
+                            {{range .lokasiArsipOptions}}<option value="{{.ID}}" {{if eq $.FilterLokasiID .ID}}selected{{end}}>{{.NamaLokasi}}</option>{{end}}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Kategori Arsip</label>
+                        <select class="form-select form-select-sm select2-search" name="jenis_arsip_id">
+                            <option value="">Semua</option>
+                            {{range .jenisArsipOptions}}<option value="{{.ID}}" {{if eq (printf "%v" $.FilterJenisArsipID) (printf "%v" .ID)}}selected{{end}}>{{.NamaJenis}}</option>{{end}}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Tgl Mulai</label>
+                        <input type="date" class="form-control form-control-sm" name="start_date" value="{{.FilterStartDate}}" style="font-size:0.85rem;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Tgl Akhir</label>
+                        <input type="date" class="form-control form-control-sm" name="end_date" value="{{.FilterEndDate}}" style="font-size:0.85rem;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Berkas Digital</label>
+                        <select class="form-select form-select-sm" name="status_berkas_digital">
+                            <option value="">Semua</option>
+                            <option value="sudah_ada" {{if eq .FilterBerkasDigital "sudah_ada"}}selected{{end}}>Ada Berkas</option>
+                            <option value="belum_ada" {{if eq .FilterBerkasDigital "belum_ada"}}selected{{end}}>Belum Ada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Pemberkasan</label>
+                        <select class="form-select form-select-sm" name="pemberkasan_id">
+                            <option value="">Semua</option>
+                            {{range .pemberkasanOptions}}<option value="{{.ID}}" {{if eq $.FilterPemberkasanID .ID}}selected{{end}}>{{.NamaPemberkasan}}</option>{{end}}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Nilai Min</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="nilai_min" value="{{.FilterNilaiMin}}" placeholder="0" style="font-size:0.85rem;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Nilai Max</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="nilai_max" value="{{.FilterNilaiMax}}" placeholder="1000000" style="font-size:0.85rem;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Urutkan</label>
+                        <select class="form-select form-select-sm" name="sort_by">
+                            <option value="" {{if eq .FilterSortBy ""}}selected{{end}}>Default</option>
+                            <option value="nomor_arsip" {{if eq .FilterSortBy "nomor_arsip"}}selected{{end}}>No. Arsip</option>
+                            <option value="nama_arsip" {{if eq .FilterSortBy "nama_arsip"}}selected{{end}}>Nama</option>
+                            <option value="tanggal_dibuat" {{if eq .FilterSortBy "tanggal_dibuat"}}selected{{end}}>Tanggal</option>
+                            <option value="status" {{if eq .FilterSortBy "status"}}selected{{end}}>Status</option>
+                            <option value="unit_kerja" {{if eq .FilterSortBy "unit_kerja"}}selected{{end}}>Unit</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Arah</label>
+                        <select class="form-select form-select-sm" name="sort_order">
+                            <option value="ASC" {{if eq .FilterSortOrder "ASC"}}selected{{end}}>↑</option>
+                            <option value="DESC" {{if eq .FilterSortOrder "DESC"}}selected{{end}}>↓</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Tampil</label>
+                        <select class="form-select form-select-sm" name="per_page">
+                            <option value="10" {{if eq $.PerPage 10}}selected{{end}}>10</option>
+                            <option value="25" {{if eq $.PerPage 25}}selected{{end}}>25</option>
+                            <option value="50" {{if eq $.PerPage 50}}selected{{end}}>50</option>
+                            <option value="100" {{if eq $.PerPage 100}}selected{{end}}>100</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill fw-700 flex-grow-1"><i class="bi bi-funnel me-1"></i>Terapkan</button>
+                        {{if .HasFilters}}<a href="/arsip" class="btn btn-outline-secondary btn-sm rounded-pill fw-700"><i class="bi bi-x-circle me-1"></i>Reset</a>{{end}}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Filters -->
+    {{if .HasFilters}}
+    <div class="d-flex flex-wrap align-items-center gap-1 mt-3 fade-up-d2">
+        <span class="text-muted small fw-700 me-1" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Filter:</span>
+        {{if .FilterSearch}}<span class="filter-badge badge-soft-primary"><i class="bi bi-search"></i> "{{.FilterSearch}}" <a href="#" class="remove" data-param="search">&times;</a></span>{{end}}
+        {{if .FilterStatus}}<span class="filter-badge badge-soft-success"><i class="bi bi-tag"></i> {{.FilterStatus}} <a href="#" class="remove" data-param="status">&times;</a></span>{{end}}
+        {{if .FilterUnitKerjaID}}<span class="filter-badge badge-soft-success"><i class="bi bi-building"></i> Unit <a href="#" class="remove" data-param="unit_kerja_id">&times;</a></span>{{end}}
+        {{if .FilterKlasifikasiID}}<span class="filter-badge badge-soft-warning"><i class="bi bi-folder"></i> Klasifikasi <a href="#" class="remove" data-param="kode_klasifikasi_id">&times;</a></span>{{end}}
+        {{if .FilterLokasiID}}<span class="filter-badge" style="background:var(--surface-3);color:var(--ink-3)"><i class="bi bi-geo-alt"></i> Lokasi <a href="#" class="remove" data-param="lokasi_arsip_id">&times;</a></span>{{end}}
+        {{if or .FilterStartDate .FilterEndDate}}<span class="filter-badge badge-soft-danger"><i class="bi bi-calendar"></i> {{.FilterStartDate}} ~ {{.FilterEndDate}} <a href="#" class="remove" data-params='["start_date","end_date"]'>&times;</a></span>{{end}}
+        {{if .FilterBerkasDigital}}<span class="filter-badge badge-soft-primary"><i class="bi bi-file-earmark"></i> Berkas: {{if eq .FilterBerkasDigital "sudah_ada"}}Ada{{else}}Belum{{end}} <a href="#" class="remove" data-param="status_berkas_digital">&times;</a></span>{{end}}
+        {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:var(--pink-500);color:#fff;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
+        {{if .FilterPemberkasanID}}<span class="filter-badge badge-soft-info"><i class="bi bi-archive"></i> Pemberkasan <a href="#" class="remove" data-param="pemberkasan_id">&times;</a></span>{{end}}
+        <a href="/arsip" class="filter-badge" style="background:var(--danger);color:#fff;text-decoration:none"><i class="bi bi-x-circle"></i> Hapus Semua</a>
+    </div>
+    {{end}}
+
+    <!-- EXPORT & TOOLS -->
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-1 flex-wrap gap-2 fade-up-d2">
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill fw-700 px-3" id="copySearchUrlBtn" style="font-size:0.7rem"><i class="bi bi-link-45deg"></i><span class="d-none d-sm-inline ms-1">Copy URL</span></button>
+        </div>
+        <div>
+            <form id="exportSearchForm" method="POST" action="/arsip/export-search" class="d-flex gap-2">
+                <select name="export_format" class="form-select form-select-sm" style="width:auto;font-size:0.75rem">
+                    <option value="excel">Excel</option>
+                    <option value="csv">CSV</option>
+                    <option value="pdf">PDF</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-success rounded-pill fw-700 px-3" style="font-size:0.7rem"><i class="bi bi-download"></i><span class="d-none d-sm-inline ms-1">Export</span></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ZONE 4: BULK ACTIONS -->
+    <div id="bulkActionToolbar" class="d-none fade-up-d2">
+        <div class="bulk-toolbar shadow-sm">
+            <div class="count-text"><i class="bi bi-check-circle me-1"></i><span id="selectedCount">0</span> arsip dipilih</div>
+            <div class="bulk-actions">
+                <button type="button" class="btn btn-primary btn-sm rounded-pill fw-700 px-3" id="bulkBerkaskanBtn"><i class="bi bi-folder-plus me-1"></i>Berkaskan</button>
+                <button type="button" class="btn btn-success btn-sm rounded-pill fw-700 px-3" id="moveLocationBtn"><i class="bi bi-map me-1"></i>Pindah Lokasi</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill fw-700 px-3" id="clearSelectionBtn"><i class="bi bi-x-circle me-1"></i>Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ZONE 5: TABLE -->
+    <div class="card fade-up-d2">
+        <div class="table-responsive">
+            <table class="table table-premium">
+                <thead>
+                    <tr>
+                        <th width="36" class="text-center"><div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="selectAllCheckbox" title="Pilih Semua"></div></th>
+                        <th width="44" class="text-center">#</th>
+                        <th width="120">Nomor</th>
+                        <th style="min-width:240px">Identitas & Uraian</th>
+                        <th width="100" class="text-end">Nominal</th>
+                        <th width="100">No. SPM</th>
+                        <th width="60" class="text-center">Jml</th>
+                        <th width="130">Unit Kerja</th>
+                        <th width="85">Tanggal</th>
+                        <th width="90">Kategori</th>
+                        <th width="95">Status</th>
+                        <th width="50" class="text-center">File</th>
+                        <th width="290" class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $idx, $arsip := .arsipList}}
+                    {{$kategoriKode := "UMUM"}}{{$kategori := "Umum"}}{{$badgeClass := "badge-soft-secondary"}}
+                    {{if $arsip.JenisArsipRel}}{{$kategoriKode = $arsip.JenisArsipRel.KodeJenis}}{{$kategori = $arsip.JenisArsipRel.NamaJenis}}{{end}}
+                    <tr>
+                        <td class="text-center" data-label="Pilih"><div class="form-check mb-0"><input type="checkbox" class="form-check-input arsip-checkbox" data-arsip-id="{{$arsip.ID}}" data-arsip-nomor="{{$arsip.NomorArsip}}"></div></td>
+                        <td class="text-center text-muted fw-700 small" data-label="No">{{add $.StartIndex $idx}}</td>
+                        <td data-label="Nomor"><span class="fw-800 font-monospace" style="font-size:0.78rem;">{{if $.searchKeyword}}{{highlight $arsip.NomorArsip $.searchKeyword}}{{else}}{{$arsip.NomorArsip}}{{end}}</span></td>
+                        <td data-label="Identitas">
+                            <div>
+                                <a href="/arsip/{{$arsip.ID}}" class="fw-800 text-decoration-none hover-primary" style="font-size:0.88rem;color:var(--ink-2);">{{if $.searchKeyword}}{{highlight $arsip.NamaArsip $.searchKeyword}}{{else}}{{$arsip.NamaArsip}}{{end}}</a>
+                                {{if $arsip.Uraian}}<div class="text-muted mt-1" style="font-size:0.7rem;max-width:500px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{if $.searchKeyword}}{{highlight (truncate $arsip.Uraian 120) $.searchKeyword}}{{else}}{{truncate $arsip.Uraian 120}}{{end}}</div>{{end}}
+                            </div>
+                        </td>
+                        <td class="text-end" data-label="Nominal">{{if $arsip.NilaiAnggaran}}<span class="fw-800 font-monospace" style="color:#059669;font-size:0.78rem;">Rp {{formatNumber $arsip.NilaiAnggaran}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                        <td data-label="No. SPM"><span class="font-monospace small fw-600">{{if $arsip.NomorSPM}}{{$arsip.NomorSPM}}{{else}}<span class="text-muted">-</span>{{end}}</span></td>
+                        <td class="text-center" data-label="Jml"><span class="fw-700" style="font-size:0.78rem;">{{$arsip.Jumlah}} {{$arsip.Satuan}}</span></td>
+                        <td data-label="Unit"><span class="small fw-600"><i class="bi bi-building text-primary me-1"></i>{{if $arsip.UnitKerja}}{{$arsip.UnitKerja.NamaUnit}}{{else}}-{{end}}</span></td>
+                        <td data-label="Tanggal"><span class="small fw-600" style="color:var(--ink-3);"><i class="bi bi-calendar3 me-1"></i>{{formatDate $arsip.TanggalDibuat}}</span></td>
+                        <td data-label="Kategori"><span class="status-badge" style="background:rgba(99,102,241,0.1);color:#6366f1;">{{$kategori}}</span></td>
+                        <td data-label="Status"><span class="status-badge status-{{$arsip.StatusArsip}}">{{replaceUnderscore $arsip.StatusArsip}}</span></td>
+                        <td class="text-center" data-label="File">
+                            {{if $arsip.FilePath}}<span class="file-indicator exists" title="{{$arsip.FileName}}"><i class="bi bi-file-earmark-check-fill"></i></span>{{else}}<span class="file-indicator empty"><i class="bi bi-file-earmark-x"></i></span>{{end}}
+                        </td>
+                        <td class="text-center" data-label="Aksi">
+                            <div class="d-flex justify-content-center gap-1">
+                                <a href="/arsip/{{$arsip.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+                                <button type="button" class="btn-crud btn-crud-info" data-history-id="{{$arsip.ID}}" title="Riwayat"><i class="bi bi-clock-history"></i></button>
+                                {{if $.CanEdit}}<a href="/arsip/{{$arsip.ID}}/edit" class="btn-crud btn-crud-edit" title="Edit" data-bs-toggle="tooltip"><i class="bi bi-pencil-square"></i></a>{{end}}
+                                {{if $.CanDelete}}<button type="button" class="btn-crud btn-crud-del btn-action-delete" data-delete-url="/arsip/{{$arsip.ID}}/delete" data-arsip-nomor="{{$arsip.NomorArsip}}" data-csrf="{{$.CSRFToken}}" title="Hapus" data-bs-toggle="tooltip"><i class="bi bi-trash"></i></button>{{end}}
+                                {{if not $arsip.PemberkasanID}}{{if $.CanBerkaskan}}<button class="btn-crud btn-crud-primary" type="button" onclick="openBerkaskanModal('{{$arsip.ID}}')" title="Berkaskan"><i class="bi bi-folder-plus"></i></button>{{end}}{{end}}
+                                <a class="btn-crud btn-crud-success" href="/arsip/{{$arsip.ID}}/download" title="Download" data-bs-toggle="tooltip"><i class="bi bi-download"></i></a>
+                                {{if $arsip.FilePath}}<a class="btn-crud btn-crud-info" href="/arsip/{{$arsip.ID}}/view" target="_blank" title="Preview" data-bs-toggle="tooltip"><i class="bi bi-file-earmark-pdf"></i></a>{{end}}
+                            </div>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="13" class="text-center py-5"><div class="text-muted"><i class="bi bi-inbox d-block mb-2" style="font-size:2.5rem;opacity:0.3;"></i><h6 class="fw-700">Belum Ada Arsip</h6><small class="text-muted">Tidak ada data arsip yang sesuai dengan kriteria pencarian</small></div></td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{if gt .TotalPages 1}}
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" style="background:var(--surface-2);">
+            <small class="text-muted fw-600">Halaman <strong>{{.CurrentPage}}</strong> dari <strong>{{.TotalPages}}</strong> · {{.TotalResults}} arsip</small>
+            <nav><ul class="pagination pagination-sm mb-0">
+                {{if gt .CurrentPage 1}}<li class="page-item"><a class="page-link" href="?page=1{{.QueryString}}" title="Pertama"><i class="bi bi-chevron-double-left"></i></a></li><li class="page-item"><a class="page-link" href="?page={{sub .CurrentPage 1}}{{.QueryString}}" title="Sebelum"><i class="bi bi-chevron-left"></i></a></li>{{else}}<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-left"></i></span></li><li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>{{end}}
+                {{if gt .CurrentPage 4}}<li class="page-item"><a class="page-link" href="?page=1{{.QueryString}}">1</a></li><li class="page-item disabled"><span class="page-link">&hellip;</span></li>{{end}}
+                {{range $p := .PageNumbers}}<li class="page-item {{if eq $p $.CurrentPage}}active{{end}}"><a class="page-link" href="?page={{$p}}{$.QueryString}">{{$p}}</a></li>{{end}}
+                {{if lt (add .CurrentPage 3) .TotalPages}}<li class="page-item disabled"><span class="page-link">&hellip;</span></li><li class="page-item"><a class="page-link" href="?page={{.TotalPages}}{{.QueryString}}">{{.TotalPages}}</a></li>{{end}}
+                {{if lt .CurrentPage .TotalPages}}<li class="page-item"><a class="page-link" href="?page={{add .CurrentPage 1}}{{.QueryString}}" title="Berikut"><i class="bi bi-chevron-right"></i></a></li><li class="page-item"><a class="page-link" href="?page={{.TotalPages}}{{.QueryString}}" title="Terakhir"><i class="bi bi-chevron-double-right"></i></a></li>{{else}}<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li><li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-right"></i></span></li>{{end}}
+            </ul></nav>
+        </div>
+        {{end}}
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="liveToast" class="toast-premium" style="display:none;">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle text-success" id="toastIcon"></i>
+            <span class="flex-grow-1" id="toastMessage"></span>
+            <button type="button" class="toast-close" onclick="document.getElementById('liveToast').style.display='none'">&times;</button>
+        </div>
+    </div>
+</div>
+
+<!-- SIMARC V4 Modals: berkaskan, bulkBerkaskan, moveLocation, history -->
+<template data-modal="berkaskanModal">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Berkaskan Arsip</h5>
+      <p class="sm-subtitle">Pilih berkas tujuan untuk arsip ini</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('berkaskanModal')" aria-label="Tutup">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <form id="berkaskanForm">
+  <div class="sm-body">
+    <div id="berkaskanLoading" class="text-center py-4"><div class="spinner-border text-primary mb-2" role="status"></div><p class="text-muted small">Memuat data...</p></div>
+    <div class="d-none" id="berkaskanFormContent">
+      <input type="hidden" id="arsipId" name="arsip_id">
+      <div class="alert alert-info d-flex align-items-start gap-2 py-2" style="border-radius:var(--r);font-size:0.85rem;"><i class="bi bi-info-circle"></i><div><strong>Arsip:</strong> <span id="modalArsipInfo"></span></div></div>
+      <div class="mb-3"><label class="form-label small fw-700" for="pemberkasanSelect"><i class="bi bi-folder me-1"></i>Pilih Berkas Tujuan</label><select class="form-select" id="pemberkasanSelect" name="pemberkasan_id" required><option value="">-- Pilih --</option></select></div>
+      <div class="mb-3"><label class="form-label small fw-700" for="catatan"><i class="bi bi-journal-text me-1"></i>Catatan</label><textarea class="form-control" id="catatan" name="catatan" rows="3" placeholder="Catatan tambahan..."></textarea></div>
+    </div>
+  </div>
+  <div class="sm-footer">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('berkaskanModal')"><i class="bi bi-x-lg me-1"></i>Batal</button>
+    <button type="button" class="sm-btn sm-btn-primary" id="submitBerkaskanBtn"><i class="bi bi-check-circle me-1"></i>Berkaskan</button>
+  </div>
+  </form>
+</template>
+
+<template data-modal="bulkBerkaskanModal">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Berkaskan Massal</h5>
+      <p class="sm-subtitle">Berkaskan banyak arsip sekaligus</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('bulkBerkaskanModal')" aria-label="Tutup">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <form id="bulkBerkaskanForm">
+  <div class="sm-body">
+    <div id="bulkBerkaskanLoading" class="text-center py-4"><div class="spinner-border text-primary mb-2" role="status"></div><p class="text-muted small">Memproses...</p></div>
+    <div class="d-none" id="bulkBerkaskanFormContent">
+      <div id="bulkArsipIdsContainer"></div>
+      <div class="alert alert-info d-flex align-items-start gap-2 py-2" style="border-radius:var(--r);font-size:0.85rem;"><i class="bi bi-info-circle"></i><div><strong>Total:</strong> <span id="bulkArsipCount">0</span> arsip</div></div>
+      <div class="mb-3"><label class="form-label small fw-700" for="bulkPemberkasanSelect"><i class="bi bi-folder me-1"></i>Berkas Tujuan</label><select class="form-select" id="bulkPemberkasanSelect" name="pemberkasan_id" required><option value="">-- Pilih --</option></select></div>
+      <div class="mb-3"><label class="form-label small fw-700" for="bulkCatatan"><i class="bi bi-journal-text me-1"></i>Catatan</label><textarea class="form-control" id="bulkCatatan" name="catatan" rows="3" placeholder="Catatan tambahan..."></textarea></div>
+    </div>
+  </div>
+  <div class="sm-footer">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('bulkBerkaskanModal')"><i class="bi bi-x-lg me-1"></i>Batal</button>
+    <button type="button" class="sm-btn sm-btn-primary" id="submitBulkBerkaskanBtn"><i class="bi bi-check-circle me-1"></i>Berkaskan Semua</button>
+  </div>
+  </form>
+</template>
+
+<template data-modal="moveLocationModal">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Pindah Lokasi</h5>
+      <p class="sm-subtitle">Pindahkan arsip ke lokasi baru</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('moveLocationModal')" aria-label="Tutup">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <form id="moveLocationForm">
+  <div class="sm-body">
+    <div id="moveLocationLoading" class="text-center py-4"><div class="spinner-border text-primary mb-2" role="status"></div><p class="text-muted small">Memuat data...</p></div>
+    <div class="d-none" id="moveLocationFormContent">
+      <input type="hidden" id="moveArsipIds" name="ids">
+      <div class="alert alert-info d-flex align-items-start gap-2 py-2" style="border-radius:var(--r);font-size:0.85rem;"><i class="bi bi-info-circle"></i><div><strong>Total:</strong> <span id="moveArsipCount">0</span> arsip</div></div>
+      <div class="mb-3"><label class="form-label small fw-700"><i class="bi bi-list-check me-1"></i>Arsip</label><div id="selectedArchivesList" class="border rounded p-3" style="max-height:180px;overflow-y:auto;background:var(--surface-2);font-size:0.85rem;"></div></div>
+      <div class="mb-3"><label class="form-label small fw-700" for="newLocationSelect"><i class="bi bi-map-marker me-1"></i>Lokasi Tujuan</label><select class="form-select" id="newLocationSelect" name="lokasi_arsip_id" required><option value="">-- Pilih --</option></select><div id="locationInfo" class="mt-1 small text-muted"></div></div>
+      <div class="mb-3"><label class="form-label small fw-700" for="moveCatatan"><i class="bi bi-journal-text me-1"></i>Catatan</label><textarea class="form-control" id="moveCatatan" name="catatan" rows="2" placeholder="Catatan..."></textarea></div>
+    </div>
+  </div>
+  <div class="sm-footer">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('moveLocationModal')"><i class="bi bi-x-lg me-1"></i>Batal</button>
+    <button type="button" class="sm-btn sm-btn-primary" id="submitMoveLocationBtn"><i class="bi bi-check-circle me-1"></i>Pindahkan</button>
+  </div>
+  </form>
+</template>
+
+<template data-modal="historyModal">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Riwayat Arsip</h5>
+      <p class="sm-subtitle">Timeline aktivitas dan versi file arsip</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('historyModal')" aria-label="Tutup">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <div class="sm-body p-0">
+    <div id="historyLoading" class="text-center py-5"><div class="spinner-border text-primary mb-2" role="status"></div><p class="text-muted small">Memuat riwayat...</p></div>
+    <div id="historyContent" class="d-none">
+      <div class="p-4 border-bottom"><div class="row"><div class="col-md-8"><h6 class="fw-800 mb-2"><span id="historyArsipNomor"></span></h6><p class="text-muted small mb-2" id="historyArsipNama"></p><div class="d-flex gap-2 flex-wrap" id="historyArsipBadges"></div></div><div class="col-md-4 text-end"><a href="#" id="exportPdfBtn" class="btn btn-sm btn-outline-danger rounded-pill fw-700"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a></div></div></div>
+      <div class="p-4 border-bottom"><div class="row g-2" id="historyStats"></div></div>
+      <div class="p-4"><h6 class="fw-800 mb-3 small" style="text-transform:uppercase;letter-spacing:0.06em;"><i class="bi bi-timeline text-primary me-1"></i>Timeline Aktivitas</h6><div id="timelineContainer"></div></div>
+      <div class="p-4 border-top"><h6 class="fw-800 mb-3 small" style="text-transform:uppercase;letter-spacing:0.06em;"><i class="bi bi-layers text-primary me-1"></i>Versi File</h6><div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th width="60">Versi</th><th>File</th><th>Diubah Oleh</th><th>Catatan</th><th width="140">Tanggal</th><th width="80">Aksi</th></tr></thead><tbody id="versionsTableBody"></tbody></table></div></div>
+    </div>
+  </div>
+  <div class="sm-footer">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('historyModal')"><i class="bi bi-x-lg me-1"></i>Tutup</button>
+  </div>
+</template>
+
+<script src="/js/search-enhanced.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    /* ── Toast (using SimarcModal) ── */
+    window.showToast = function(title, message, type) {
+        if (typeof SimarcModal !== 'undefined' && SimarcModal.toast) {
+            SimarcModal.toast(message || title, type || 'success', 4000);
+        } else {
+            // Fallback local toast
+            const el = document.getElementById('liveToast');
+            if (!el) return;
+            document.getElementById('toastMessage').textContent = message || title;
+            const icon = document.getElementById('toastIcon');
+            icon.className = 'bi bi-' + (type === 'success' ? 'check-circle text-success' : type === 'warning' ? 'exclamation-triangle text-warning' : 'x-circle text-danger');
+            el.style.display = 'block';
+            clearTimeout(el._hide);
+            el._hide = setTimeout(() => el.style.display = 'none', 4000);
+        }
+    };
+
+    /* ── Delete Confirmation (SimarcModal) ── */
+    document.querySelectorAll('.btn-action-delete[data-delete-url]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var url = this.getAttribute('data-delete-url');
+            var nomor = this.getAttribute('data-arsip-nomor');
+            var csrf = this.getAttribute('data-csrf');
+            if (typeof SimarcModal !== 'undefined' && SimarcModal.confirm) {
+                SimarcModal.confirm({
+                    title: 'Hapus Arsip?',
+                    message: 'Yakin ingin menghapus arsip <strong>' + nomor + '</strong>?<br><span class="text-muted small">Data tidak dapat dikembalikan.</span>',
+                    icon: 'trash',
+                    iconColor: 'danger',
+                    confirmText: '<i class="bi bi-trash me-1"></i> Ya, Hapus',
+                    cancelText: 'Batal',
+                    danger: true,
+                    onConfirm: function() {
+                        SimarcModal.toast('Menghapus...', 'info', 0);
+                        var form = document.createElement('form');
+                        form.method = 'POST'; form.action = url; form.style.display = 'none';
+                        var input = document.createElement('input');
+                        input.type = 'hidden'; input.name = '_token'; input.value = csrf;
+                        form.appendChild(input); document.body.appendChild(form); form.submit();
+                    }
+                });
+            } else {
+                // Fallback: native confirm
+                if (confirm('Yakin ingin menghapus arsip ' + nomor + '?')) {
+                    var form = document.createElement('form');
+                    form.method = 'POST'; form.action = url; form.style.display = 'none';
+                    var input = document.createElement('input');
+                    input.type = 'hidden'; input.name = '_token'; input.value = csrf;
+                    form.appendChild(input); document.body.appendChild(form); form.submit();
+                }
+            }
+        });
+    });
+
+    /* ── Bulk Selection ── */
+    let selectedArsipIds = new Set();
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            document.querySelectorAll('.arsip-checkbox').forEach(function(cb) {
+                cb.checked = this.checked;
+                const id = cb.getAttribute('data-arsip-id');
+                this.checked ? selectedArsipIds.add(id) : selectedArsipIds.delete(id);
+            }.bind(this));
+            updateBulkToolbar();
+        });
+    }
+    document.querySelectorAll('.arsip-checkbox').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            const id = this.getAttribute('data-arsip-id');
+            this.checked ? selectedArsipIds.add(id) : selectedArsipIds.delete(id);
+            updateBulkToolbar();
+        });
+    });
+    function updateBulkToolbar() {
+        const toolbar = document.getElementById('bulkActionToolbar');
+        const countSpan = document.getElementById('selectedCount');
+        if (selectedArsipIds.size > 0) {
+            toolbar.classList.remove('d-none');
+            countSpan.textContent = selectedArsipIds.size;
+        } else {
+            toolbar.classList.add('d-none');
+        }
+        const allCbs = document.querySelectorAll('.arsip-checkbox');
+        const checked = document.querySelectorAll('.arsip-checkbox:checked');
+        if (selectAllCheckbox) selectAllCheckbox.checked = allCbs.length > 0 && allCbs.length === checked.length;
+    }
+    document.getElementById('clearSelectionBtn')?.addEventListener('click', function() {
+        selectedArsipIds.clear();
+        document.querySelectorAll('.arsip-checkbox').forEach(function(cb) { cb.checked = false; });
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        updateBulkToolbar();
+    });
+
+    /* ── Filter collapse toggle ── */
+    const filterCollapse = document.getElementById('arsipFilterCollapse');
+    document.querySelector('[data-bs-target="#arsipFilterCollapse"]')?.addEventListener('click', function() {
+        const icon = document.getElementById('filterToggleIcon');
+        if (icon) icon.classList.toggle('bi-chevron-up');
+        if (icon) icon.classList.toggle('bi-chevron-down');
+        this.querySelector('span').textContent = filterCollapse.classList.contains('show') ? 'Sembunyikan' : 'Tampilkan';
+    });
+
+    /* ── Auto-submit search debounce ── */
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                if (searchInput.value.length >= 2 || searchInput.value.length === 0) {
+                    searchInput.closest('form').submit();
+                }
+            }, 600);
+        });
+    }
+
+    /* ── Remove individual filter via JS ── */
+    document.querySelectorAll('.remove').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var params = this.getAttribute('data-params');
+            var param = this.getAttribute('data-param');
+            var url = new URL(window.location.href);
+            if (params) { try { params = JSON.parse(params); } catch(e) { params = [params]; } params.forEach(function(p) { url.searchParams.delete(p); }); }
+            else if (param) { url.searchParams.delete(param); }
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        });
+    });
+
+    /* ── Berkaskan Modal (SIMARC V4) ── */
+    window.openBerkaskanModal = function(arsipId) {
+        // Modal harus di-show DULU agar <template> di-clone ke DOM;
+        // #arsipId dkk. berada di dalam template tersebut (null sebelum show).
+        SimarcModal.show('berkaskanModal', { size: 'lg' });
+        document.getElementById('arsipId').value = arsipId;
+        document.getElementById('berkaskanLoading').classList.remove('d-none');
+        document.getElementById('berkaskanFormContent').classList.add('d-none');
+        loadPemberkasanOptions(arsipId);
+    };
+    document.getElementById('submitBerkaskanBtn')?.addEventListener('click', submitBerkaskan);
+
+    /* ── Bulk Berkaskan Modal (SIMARC V4) ── */
+    document.getElementById('bulkBerkaskanBtn')?.addEventListener('click', function() {
+        const ids = Array.from(selectedArsipIds);
+        // Clone template ke DOM dulu (elemen di dalam template belum ada sebelum show)
+        SimarcModal.show('bulkBerkaskanModal', { size: 'lg' });
+        const bc = document.getElementById('bulkArsipIdsContainer');
+        if(!bc)return;
+        bc.innerHTML = '';
+        ids.forEach(function(id) { var inp = document.createElement('input'); inp.type = 'hidden'; inp.name = 'arsip_ids[]'; inp.value = id; bc.appendChild(inp); });
+        document.getElementById('bulkArsipCount').textContent = ids.length;
+        document.getElementById('bulkBerkaskanLoading').classList.remove('d-none');
+        document.getElementById('bulkBerkaskanFormContent').classList.add('d-none');
+        loadBulkPemberkasanOptions(ids[0]);
+    });
+    document.getElementById('submitBulkBerkaskanBtn')?.addEventListener('click', submitBulkBerkaskan);
+
+    /* ── Move Location Modal (SIMARC V4) ── */
+    document.getElementById('moveLocationBtn')?.addEventListener('click', function() {
+        const ids = Array.from(selectedArsipIds);
+        // Clone template ke DOM dulu (elemen di dalam template belum ada sebelum show)
+        SimarcModal.show('moveLocationModal', { size: 'lg' });
+        document.getElementById('moveArsipIds').value = JSON.stringify(ids);
+        document.getElementById('moveArsipCount').textContent = ids.length;
+        document.getElementById('moveLocationLoading').classList.remove('d-none');
+        document.getElementById('moveLocationFormContent').classList.add('d-none');
+        loadMoveLocationData(ids);
+    });
+    document.getElementById('submitMoveLocationBtn')?.addEventListener('click', submitMoveLocation);
+
+    /* ── History Modal (SIMARC V4) ── */
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-history-id]');
+        if (btn) {
+            const id = btn.getAttribute('data-history-id');
+            // Clone template ke DOM dulu — elemen riwayat ada di dalam template historyModal
+            if (!SimarcModal.show('historyModal', { size: 'xl' })) {
+                showToast('Error', 'Gagal membuka modal riwayat', 'danger');
+                return;
+            }
+            const loadingEl = document.getElementById('historyLoading');
+            const contentEl = document.getElementById('historyContent');
+            if (loadingEl) loadingEl.classList.remove('d-none');
+            if (contentEl) contentEl.classList.add('d-none');
+            loadHistoryData(id);
+        }
+    });
+
+    /* ── Helper functions ── */
+    function loadPemberkasanOptions(arsipId) {
+        fetch('/arsip/' + arsipId + '/berkaskan/json').then(r => r.json()).then(data => {
+            document.getElementById('berkaskanLoading').classList.add('d-none');
+            document.getElementById('berkaskanFormContent').classList.remove('d-none');
+            const sel = document.getElementById('pemberkasanSelect');
+            sel.innerHTML = '<option value="">-- Pilih berkas --</option>';
+            if (data.success && data.data.pemberkasanOptions) {
+                data.data.pemberkasanOptions.forEach(function(p) {
+                    var opt = document.createElement('option'); opt.value = p.id;
+                    opt.textContent = p.kode_berkas + ' - ' + (p.nama_pemberkasan || '-');
+                    sel.appendChild(opt);
+                });
+                document.getElementById('modalArsipInfo').textContent = (data.data.arsip?.nomor_arsip || '') + ' - ' + (data.data.arsip?.nama_arsip || '');
+            } else {
+                sel.innerHTML = '<option value="">Tidak ada berkas tersedia</option>';
+            }
+        }).catch(function() {
+            showToast('Error', 'Gagal memuat data berkas', 'danger');
+            var loadingEl = document.getElementById('berkaskanLoading');
+            var formEl = document.getElementById('berkaskanFormContent');
+            if(loadingEl)loadingEl.classList.add('d-none');
+            if(formEl)formEl.classList.remove('d-none');
+        });
+    }
+    function loadBulkPemberkasanOptions(arsipId) {
+        fetch('/arsip/' + arsipId + '/berkaskan/json').then(r => r.json()).then(data => {
+            document.getElementById('bulkBerkaskanLoading').classList.add('d-none');
+            document.getElementById('bulkBerkaskanFormContent').classList.remove('d-none');
+            const sel = document.getElementById('bulkPemberkasanSelect');
+            sel.innerHTML = '<option value="">-- Pilih berkas --</option>';
+            if (data.success && data.data.pemberkasanOptions) {
+                data.data.pemberkasanOptions.forEach(function(p) {
+                    var opt = document.createElement('option'); opt.value = p.id;
+                    opt.textContent = p.kode_berkas + ' - ' + (p.nama_pemberkasan || '-');
+                    sel.appendChild(opt);
+                });
+            } else { sel.innerHTML = '<option value="">Tidak ada berkas</option>'; }
+        }).catch(function() {
+            showToast('Error', 'Gagal memuat data berkas', 'danger');
+            var loadingEl = document.getElementById('bulkBerkaskanLoading');
+            var formEl = document.getElementById('bulkBerkaskanFormContent');
+            if(loadingEl)loadingEl.classList.add('d-none');
+            if(formEl)formEl.classList.remove('d-none');
+        });
+    }
+    function submitBerkaskan() {
+        const fd = new FormData(document.getElementById('berkaskanForm'));
+        const id = document.getElementById('arsipId').value;
+        const btn = document.getElementById('submitBerkaskanBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+        fetch('/arsip/' + id + '/berkaskan', { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
+        .then(r => r.json()).then(d => {
+            if (d.success) { showToast('Berhasil', d.message, 'success'); SimarcModal.hide('berkaskanModal'); setTimeout(() => location.reload(), 1000); }
+            else { showToast('Error', d.message || 'Gagal', 'danger'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Berkaskan'; }
+        }).catch(function() { showToast('Error', 'Terjadi kesalahan', 'danger'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Berkaskan'; });
+    }
+    function submitBulkBerkaskan() {
+        const fd = new FormData(document.getElementById('bulkBerkaskanForm'));
+        const btn = document.getElementById('submitBulkBerkaskanBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+        fetch('/arsip/bulk-berkaskan', { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
+        .then(r => r.json()).then(d => {
+            if (d.success) { showToast('Berhasil', d.message, 'success'); SimarcModal.hide('bulkBerkaskanModal'); selectedArsipIds.clear(); updateBulkToolbar(); setTimeout(() => location.reload(), 1000); }
+            else { showToast('Error', d.message || 'Gagal', 'danger'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Berkaskan Semua'; }
+        }).catch(function() { showToast('Error', 'Terjadi kesalahan', 'danger'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Berkaskan Semua'; });
+    }
+    function loadMoveLocationData(ids) {
+        const params = new URLSearchParams();
+        ids.forEach(function(id) { params.append('ids[]', id); });
+        fetch('/arsip/move-location?' + params.toString()).then(r => r.json()).then(data => {
+            document.getElementById('moveLocationLoading').classList.add('d-none');
+            document.getElementById('moveLocationFormContent').classList.remove('d-none');
+            if (data.success) {
+                const list = document.getElementById('selectedArchivesList');
+                list.innerHTML = '';
+                data.data.archives.forEach(function(a, i) {
+                    list.innerHTML += '<div class="d-flex justify-content-between align-items-center py-1 border-bottom' + (i === data.data.archives.length-1 ? ' border-bottom-0' : '') + '"><div><strong>' + a.nomor_arsip + '</strong> - ' + a.nama_arsip + '<div class="text-muted" style="font-size:0.7rem;"><i class="bi bi-map-marker"></i> ' + a.current_location + '</div></div></div>';
+                });
+                const sel = document.getElementById('newLocationSelect');
+                sel.innerHTML = '<option value="">-- Pilih lokasi --</option>';
+                data.data.locations.forEach(function(l) {
+                    var opt = document.createElement('option'); opt.value = l.id; opt.textContent = l.nama_lokasi; opt.setAttribute('data-desc', l.deskripsi || '');
+                    sel.appendChild(opt);
+                });
+                sel.addEventListener('change', function() {
+                    document.getElementById('locationInfo').textContent = this.options[this.selectedIndex]?.getAttribute('data-desc') || '';
+                });
+            }
+        }).catch(() => {
+            document.getElementById('moveLocationLoading').classList.add('d-none');
+            document.getElementById('moveLocationFormContent').classList.remove('d-none');
+        });
+    }
+    function submitMoveLocation() {
+        const sel = document.getElementById('newLocationSelect');
+        if (!sel.value) { showToast('Error', 'Pilih lokasi tujuan', 'danger'); return; }
+        const btn = document.getElementById('submitMoveLocationBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+        const fd = new FormData();
+        var idsRaw;
+        try{idsRaw=JSON.parse(document.getElementById('moveArsipIds').value)}catch(e){showToast('Error','Data arsip tidak valid','danger');btn.disabled=false;btn.innerHTML='<i class="bi bi-check-circle me-1"></i>Pindahkan';return}
+        idsRaw.forEach(function(id) { fd.append('ids[]', id); });
+        fd.append('lokasi_arsip_id', sel.value);
+        if (document.getElementById('moveCatatan').value) fd.append('catatan', document.getElementById('moveCatatan').value);
+        fetch('/arsip/move-location', { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
+        .then(r => r.json()).then(d => {
+            if (d.success) { showToast('Berhasil', d.message, 'success'); SimarcModal.hide('moveLocationModal'); selectedArsipIds.clear(); updateBulkToolbar(); setTimeout(() => location.reload(), 1000); }
+            else { showToast('Error', d.message || 'Gagal', 'danger'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Pindahkan'; }
+        }).catch(function() { showToast('Error', 'Terjadi kesalahan', 'danger'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Pindahkan'; });
+    }
+    function loadHistoryData(id) {
+        fetch('/arsip/' + id + '/history/json').then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t)});return r.json()}).then(data => {
+            var el;
+            el=document.getElementById('historyLoading');if(el)el.classList.add('d-none');
+            el=document.getElementById('historyContent');if(el)el.classList.remove('d-none');
+            if (data.success) {
+                const h = data.data;
+                el=document.getElementById('historyArsipNomor');if(el)el.textContent = h.arsip.nomor_arsip + ' — ' + h.arsip.nama_arsip;
+                el=document.getElementById('historyArsipNama');if(el)el.textContent = '';
+                el=document.getElementById('historyArsipBadges');if(el)el.innerHTML = '<span class="badge bg-info"><i class="bi bi-geo-alt me-1"></i>' + h.arsip.current_location + '</span><span class="badge bg-success"><i class="bi bi-building me-1"></i>' + h.arsip.unit_kerja + '</span><span class="badge bg-warning text-dark"><i class="bi bi-tags me-1"></i>' + h.arsip.jenis_arsip + '</span>';
+                el=document.getElementById('exportPdfBtn');if(el)el.href = '/arsip/' + id + '/history/export-pdf';
+                el=document.getElementById('historyStats');if(el)el.innerHTML = '<div class="col"><div class="card border-0 h-100" style="background:rgba(26,86,219,0.04);"><div class="card-body text-center p-2"><i class="bi bi-file-earmark-arrow-up text-primary"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.total_versions + '</h4><small class="text-muted">Versi</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(5,150,105,0.04);"><div class="card-body text-center p-2"><i class="bi bi-shield-lock text-success"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.total_actions + '</h4><small class="text-muted">Aksi</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(2,132,199,0.04);"><div class="card-body text-center p-2"><i class="bi bi-map text-info"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.location_changes + '</h4><small class="text-muted">Pindah</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(217,119,6,0.04);"><div class="card-body text-center p-2"><i class="bi bi-clock text-warning"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:0.8rem;">' + h.statistics.last_modified + '</h4><small class="text-muted">Terakhir</small></div></div></div>';
+                renderTimeline(h.timeline);
+                renderVersions(h.versions);
+            } else {
+                showToast('Error', data.message || 'Gagal memuat data riwayat', 'danger');
+            }
+        }).catch(function(err) {
+            var el=document.getElementById('historyLoading');
+            if(el)el.classList.add('d-none');
+            showToast('Error', 'Gagal memuat riwayat: ' + (err.message || 'Terjadi kesalahan'), 'danger');
+        });
+    }
+    function renderTimeline(timeline) {
+        const c = document.getElementById('timelineContainer');
+        if (!c) return;
+        c.innerHTML = '';
+        if (!timeline.length) { c.innerHTML = '<p class="text-muted text-center py-3 small">Belum ada aktivitas</p>'; return; }
+        timeline.forEach(function(item) {
+            const bg = item.color === 'success' ? '#dcfce7' : item.color === 'warning' ? '#fef3c7' : item.color === 'danger' ? '#fee2e2' : '#dbeafe';
+            const fg = item.color === 'success' ? '#15803d' : item.color === 'warning' ? '#b45309' : item.color === 'danger' ? '#b91c1c' : '#2563eb';
+            const d = document.createElement('div'); d.className = 'd-flex gap-3 mb-3';
+            d.innerHTML = '<div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width:36px;height:36px;background:' + bg + ';color:' + fg + ';"><i class="bi bi-' + item.icon + '"></i></div><div class="flex-grow-1"><div class="d-flex justify-content-between"><strong style="font-size:0.85rem;">' + item.title + '</strong><small class="text-muted">' + item.formatted_time + '</small></div><p class="mb-0 text-muted" style="font-size:0.78rem;">' + (item.description || '-') + '</p><small class="fw-600" style="font-size:0.7rem;"><i class="bi bi-person me-1"></i>' + item.user + '</small></div></div>';
+            c.appendChild(d);
+        });
+    }
+    function renderVersions(versions) {
+        const tbody = document.getElementById('versionsTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!versions.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3"><small>Belum ada versi</small></td></tr>'; return; }
+        versions.forEach(function(v) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td><span class="badge bg-primary rounded-pill">v' + v.nomor_versi + '</span></td><td class="small">' + (v.filename || 'File') + '</td><td class="small">' + v.diubah_oleh + '</td><td class="small">' + v.catatan_perubahan + '</td><td class="small">' + v.created_at + '</td><td><a href="/arsip/version/' + v.id + '/download" class="btn-crud btn-crud-view" title="Download"><i class="bi bi-download"></i></a></td></tr>';
+            tbody.appendChild(tr);
+        });
+    }
+});
+</script>
+{{end}}

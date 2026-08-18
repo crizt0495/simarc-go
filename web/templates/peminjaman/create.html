@@ -1,0 +1,219 @@
+{{define "peminjaman/create.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+{{template "components/select2.html"}}
+<style>
+/* ═══════════════════════════════════════
+   PEMINJAMAN — PREMIUM CREATE
+   ═══════════════════════════════════════ */
+
+.create-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh);
+    overflow: hidden;
+    animation: slideUpCard 0.4s ease both;
+}
+@keyframes slideUpCard {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.create-header {
+    background: linear-gradient(135deg, var(--brand) 0%, #7c3aed 100%);
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+.create-header::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.create-header h4 {
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.2rem;
+    position: relative; z-index: 1;
+}
+.create-header p {
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+    font-size: 0.85rem;
+    margin-bottom: 0;
+    position: relative; z-index: 1;
+}
+
+.form-field {
+    margin-bottom: 1.5rem;
+}
+.form-field label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-2);
+    margin-bottom: 0.4rem;
+}
+.form-field input, .form-field select, .form-field textarea {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--surface);
+    transition: all 0.2s ease;
+    outline: none;
+    font-family: inherit;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+}
+.form-field textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+.form-field .char-count {
+    text-align: right;
+    font-size: 0.7rem;
+    color: var(--ink-4);
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+.info-box {
+    background: linear-gradient(135deg, #eff6ff, #f0f0ff);
+    border: 1px solid rgba(26,86,219,0.12);
+    border-radius: var(--r);
+    padding: 1rem 1.25rem;
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+.info-box i {
+    font-size: 1.35rem;
+    color: var(--brand);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+.info-box h6 {
+    font-weight: 800;
+    color: var(--brand);
+    margin-bottom: 0.1rem;
+    font-size: 0.8rem;
+}
+.info-box p {
+    margin-bottom: 0;
+    font-size: 0.78rem;
+    color: var(--ink-3);
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .create-header { padding: 1.25rem; }
+    .create-card .card-body { padding: 1.25rem !important; }
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="create-card shadow-sm">
+                <div class="create-header">
+                    <h4><i class="bi bi-plus-circle me-2"></i>Ajukan Peminjaman Arsip</h4>
+                    <p>Isi formulir untuk mengajukan peminjaman arsip</p>
+                </div>
+                <div class="card-body p-4 p-xl-5">
+                    <form action="/peminjaman" method="POST" id="pinjamForm">
+                        <!-- Arsip Select -->
+                        <div class="form-field">
+                            <label for="arsipSelect"><i class="bi bi-file-earmark-text me-1"></i>Pilih Arsip</label>
+                            <select name="arsip_id" id="arsipSelect" class="form-select" required>
+                                <option value="">-- Pilih Arsip yang akan dipinjam --</option>
+                                {{range .arsipOpts}}
+                                    <option value="{{.ID}}">{{.NomorArsip}} - {{.NamaArsip}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <!-- Tanggal Kembali -->
+                        <div class="form-field">
+                            <label for="tanggal_kembali"><i class="bi bi-calendar me-1"></i>Rencana Tanggal Kembali</label>
+                            <input type="date" name="tanggal_due_date" id="tanggal_kembali" class="form-control" required>
+                            <small class="text-muted fw-600" style="font-size:0.7rem;">Estimasi tanggal pengembalian arsip</small>
+                        </div>
+
+                        <!-- Keperluan -->
+                        <div class="form-field">
+                            <label for="keperluan"><i class="bi bi-chat-text me-1"></i>Keperluan / Alasan Pinjam</label>
+                            <textarea name="keperluan" id="keperluan" rows="4" required placeholder="Jelaskan alasan peminjaman arsip ini secara jelas dan lengkap..."
+                                oninput="document.getElementById('charCount').textContent = this.value.length"></textarea>
+                            <div class="char-count"><span id="charCount">0</span> karakter</div>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="info-box">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <div>
+                                <h6>Ketentuan Peminjaman</h6>
+                                <p>Setelah diajukan, permohonan akan diproses oleh admin. Pastikan data yang diisi sudah benar sebelum mengirimkan permohonan. Arsip yang dipinjam wajib dikembalikan sesuai dengan tanggal yang direncanakan.</p>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-2">
+                            <a href="/peminjaman" class="btn btn-secondary rounded-pill fw-700 px-4 btn-sm">
+                                <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+                            </a>
+                            <button type="submit" class="btn btn-primary rounded-pill fw-800 px-5 py-2 shadow-sm">
+                                <i class="bi bi-send me-2"></i>Kirim Permohonan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to 7 days from now
+    const dateInput = document.getElementById('tanggal_kembali');
+    if (dateInput && !dateInput.value) {
+        var d = new Date();
+        d.setDate(d.getDate() + 7);
+        dateInput.value = d.toISOString().split('T')[0];
+    }
+
+    // Init Select2 jika jQuery tersedia
+    const sel = document.getElementById('arsipSelect');
+    if (window.jQuery && jQuery.fn.select2 && sel && !sel.disabled) {
+        jQuery(sel).select2({
+            width: '100%',
+            placeholder: '-- Pilih Arsip --',
+            allowClear: true
+        });
+    }
+
+    // Form submit validation
+    document.getElementById('pinjamForm')?.addEventListener('submit', function(e) {
+        const keperluan = document.getElementById('keperluan');
+        if (keperluan && keperluan.value.trim().length < 10) {
+            e.preventDefault();
+            alert('Keperluan peminjaman minimal 10 karakter. Jelaskan alasan Anda secara detail.');
+            keperluan.focus();
+            return false;
+        }
+    });
+});
+</script>
+{{end}}

@@ -1,0 +1,82 @@
+{{define "mobile/create.html"}}<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="csrf-token" content="{{.CSRFToken}}">
+    <title>Tambah Arsip - {{.AppName}}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;padding:1rem;padding-bottom:70px}
+        .card{background:white;border-radius:16px;padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+        .card-header{font-size:1.25rem;font-weight:700;color:#1e3a8a;margin-bottom:1rem}
+        .form-group{margin-bottom:1rem}
+        .form-label{display:block;font-weight:600;color:#1e293b;margin-bottom:0.5rem}
+        .form-control{width:100%;padding:0.75rem;border:1px solid #e2e8f0;border-radius:12px;font-size:1rem}
+        .form-control:focus{outline:none;border-color:#3b82f6}
+        .btn{width:100%;padding:1rem;border:none;border-radius:12px;font-size:1rem;font-weight:600;text-align:center;text-decoration:none;margin-bottom:0.5rem;cursor:pointer;display:inline-block}
+        .btn-primary{background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:white}
+        .btn-secondary{background:#f1f5f9;color:#1e293b}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header"><i class="bi bi-plus-circle me-2"></i>Tambah Arsip Baru</div>
+        <form action="/mobile/store" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label">Nama Arsip *</label>
+                <input type="text" name="nama_arsip" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Jenis Arsip *</label>
+                <select name="jenis_arsip" class="form-control form-select" required>
+                    <option value="">Pilih Jenis</option>
+                    <option value="SPJ">SPJ</option>
+                    <option value="Kontrak">Kontrak</option>
+                    <option value="SK">SK</option>
+                    <option value="Nota Dinas">Nota Dinas</option>
+                    <option value="Surat Dinas">Surat Dinas</option>
+                    <option value="Laporan">Laporan</option>
+                    <option value="Invoice">Invoice</option>
+                    <option value="Faktur">Faktur</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status *</label>
+                <select name="status_arsip" class="form-control form-select" required>
+                    <option value="aktif">Aktif</option>
+                    <option value="inaktif">Inaktif</option>
+                    <option value="siap_penyusutan">Siap Penyusutan</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tanggal Dibuat *</label>
+                <input type="date" name="tanggal_dibuat" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Uraian Lengkap</label>
+                <textarea name="uraian_lengkap" class="form-control" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lokasi Arsip *</label>
+                <select name="lokasi_arsip_id" class="form-control form-select" required>
+                    <option value="">Pilih Lokasi</option>
+                    {{range .LokasiArsip}}
+                    <option value="{{.ID}}">{{.NamaLokasi}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">File (Optional)</label>
+                <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                <small style="color:#94a3b8">Max 10MB (PDF, DOC, JPG, PNG)</small>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Simpan Arsip</button>
+            <a href="javascript:history.back()" class="btn btn-secondary"><i class="bi bi-x-circle me-2"></i>Batal</a>
+        </form>
+    </div>
+</body>
+</html>{{end}}

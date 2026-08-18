@@ -1,0 +1,116 @@
+{{define "qrcode/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>&#x1F4F1; QR Code Management</h2>
+        <div class="d-flex gap-2">
+            <a href="/advanced/qrcode/scanner" class="btn btn-outline-primary">
+                <i class="bi bi-qr-code-scan"></i> Scanner
+            </a>
+            <button class="btn btn-primary" onclick="SimarcModal.show('bulkGenerateModal')">
+                <i class="bi bi-plus-lg"></i> Bulk Generate
+            </button>
+        </div>
+    </div>
+    <style>
+        .qr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-box { background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-box h4 { font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem; }
+        .stat-box .value { font-size: 1.75rem; font-weight: bold; color: #1e293b; }
+    </style>
+    <div class="qr-stats">
+        <div class="stat-box">
+            <h4>Total QR Codes</h4>
+            <div class="value">{{.Stats.TotalQr}}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Active</h4>
+            <div class="value" style="color: #16a34a">{{.Stats.Active}}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Total Scans</h4>
+            <div class="value">{{.Stats.TotalScans}}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Box QR</h4>
+            <div class="value">{{.Stats.Boxes}}</div>
+        </div>
+        <div class="stat-box">
+            <h4>Archive QR</h4>
+            <div class="value">{{.Stats.Archives}}</div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Scans</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover datatable">
+                    <thead>
+                        <tr>
+                            <th>QR Code</th>
+                            <th>Action</th>
+                            <th>User</th>
+                            <th>Time</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .RecentScans}}
+                        <tr>
+                            <td>
+                                <code>{{slice .QrCodeId 0 8}}...</code>
+                                <br>
+                                <small>{{if .QrCode}}{{.QrCode.BoxNumber}}{{else}}Arsip{{end}}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{if eq .Action "check_in"}}success{{else}}info{{end}}">
+                                    {{replace .Action "_" " "}}
+                                </span>
+                            </td>
+                            <td>{{if .User}}{{.User.Name}}{{else}}System{{end}}</td>
+                            <td>{{.CreatedAt}}</td>
+                            <td>{{if .Notes}}{{.Notes}}{{else}}-{{end}}</td>
+                        </tr>
+                        {{else}}
+                        <tr><td colspan="5" class="text-center text-muted">No scans yet</td></tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<template data-modal="bulkGenerateModal">
+  <form action="/advanced/qrcode/bulk-generate" method="POST" style="display:contents">
+    <div class="sm-header">
+      <div class="sm-header-left">
+        <div class="sm-icon sm-icon-primary">
+          <i class="bi bi-qr-code"></i>
+        </div>
+        <div>
+          <h5 class="sm-title">Generate QR Code Massal</h5>
+          <p class="sm-subtitle">Generate QR code untuk banyak arsip sekaligus</p>
+        </div>
+      </div>
+      <button type="button" class="sm-btn-close" onclick="SimarcModal.hide('bulkGenerateModal')" aria-label="Close">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="sm-body">
+      <p>Masukkan ID arsip untuk generate QR Code:</p>
+      <textarea name="arsip_ids[]" class="form-control" rows="5" placeholder="Masukkan ID arsip (pisahkan dengan koma)"></textarea>
+      <small class="text-muted">Contoh: uuid1,uuid2,uuid3</small>
+    </div>
+    <div class="sm-footer">
+      <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('bulkGenerateModal')">
+        <i class="bi bi-x-lg me-1"></i>Batal
+      </button>
+      <button type="submit" class="sm-btn sm-btn-primary">
+        <i class="bi bi-qr-code me-1"></i>Generate
+      </button>
+    </div>
+  </form>
+</template>
+{{end}}

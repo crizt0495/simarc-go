@@ -1,0 +1,14 @@
+{{define "mobile/archives.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid py-4">
+    <h4 class="mb-4"><i class="bi bi-archive me-2"></i>Arsip</h4>
+    <div class="list-group">
+        {{range .arsipList}}
+        <a href="/mobile/archives/{{.ID}}" class="list-group-item list-group-item-action">
+            <div class="fw-700">{{.NamaArsip}}</div>
+            <small class="text-muted">{{.NomorArsip}}</small>
+        </a>
+        {{end}}
+    </div>
+</div>
+{{end}}

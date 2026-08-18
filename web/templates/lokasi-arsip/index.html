@@ -1,0 +1,168 @@
+{{define "lokasi-arsip/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+    .lokasi-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #065f46 100%);
+        border-radius: var(--r-xl);
+        padding: 1.75rem 2rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .lokasi-hero::after {
+        content: '';
+        position: absolute;
+        top: -40%; right: -5%;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .lokasi-hero .hero-title {
+        font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
+    }
+    .lokasi-hero .hero-sub {
+        font-size: 0.8rem; opacity: 0.7; font-weight: 500;
+    }
+    .premium-table thead th {
+        background: transparent;
+        border: none;
+        color: var(--ink-4);
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+    .premium-table tbody tr {
+        transition: all 0.15s ease;
+        border-bottom: 1px solid var(--border);
+    }
+    .premium-table tbody tr:hover { background: rgba(26,86,219,0.02); }
+    .premium-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        font-size: 0.85rem;
+        color: var(--ink-2);
+    }
+    .fade-up { animation: fadeUp 0.35s ease both; }
+    .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+    @media (max-width: 768px) {
+        .lokasi-hero { padding: 1.25rem; }
+        .lokasi-hero .hero-title { font-size: 1.1rem; }
+        .premium-table thead { display: none; }
+        .premium-table tbody tr {
+            display: block; margin-bottom: 0.75rem;
+            border: 1px solid var(--border); border-radius: var(--r);
+            padding: 0.75rem; background: var(--surface);
+        }
+        .premium-table tbody td {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.4rem 0 !important; border: none !important;
+            border-bottom: 1px solid var(--border) !important;
+            text-align: right; font-size: 0.8rem;
+        }
+        .premium-table tbody td:last-child { border-bottom: none !important; }
+        .premium-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700; color: var(--ink-3);
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+            padding-right: 0.75rem;
+        }
+    }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="lokasi-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-geo-alt me-2"></i>Lokasi Arsip</div>
+                <div class="hero-sub">Kelola lokasi penyimpanan fisik arsip di lingkungan record center</div>
+            </div>
+            <a href="/lokasi-arsip/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-plus-lg me-1"></i>Tambah Lokasi
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm fade-up-d1" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-body" style="padding:1.25rem;">
+            <form class="row g-2 mb-3" method="GET" action="/lokasi-arsip">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search" placeholder="Cari nama lokasi atau deskripsi..." value="{{.Search}}" style="font-size:0.85rem;">
+                        <button class="btn btn-primary" type="submit" style="font-size:0.85rem;">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <a href="/lokasi-arsip" class="btn btn-outline-secondary" style="font-size:0.85rem;">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="filter_deskripsi" placeholder="Filter deskripsi..." value="{{.FilterDeskripsi}}" style="font-size:0.85rem;">
+                </div>
+            </form>
+            <div class="table-responsive">
+                <table class="table premium-table mb-0" data-pagination="server">
+                    <thead>
+                        <tr>
+                            <th width="60">No</th>
+                            <th>Nama Lokasi</th>
+                            <th>Deskripsi</th>
+                            <th>Kapasitas</th>
+                            <th>Status</th>
+                            <th class="text-center">Arsip</th>
+                            <th width="140" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range $i, $v := .List}}
+                        <tr>
+                            <td data-label="No">{{add $i $.FirstItem}}</td>
+                            <td data-label="Nama"><strong style="font-size:0.88rem;">{{$v.NamaLokasi}}</strong></td>
+                            <td data-label="Deskripsi">{{if $v.Deskripsi}}<span class="text-muted small">{{$v.Deskripsi}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                            <td data-label="Kapasitas"><span class="fw-600">{{if $v.Kapasitas}}{{$v.Kapasitas}}{{else}}-{{end}}</span></td>
+                            <td data-label="Status">
+                                <span class="badge-soft {{if $v.IsActive}}badge-soft-success{{else}}badge-soft-warning{{end}}">
+                                    {{if $v.IsActive}}Aktif{{else}}Non-Aktif{{end}}
+                                </span>
+                            </td>
+                            <td class="text-center" data-label="Arsip">
+                                <span class="badge rounded-pill px-3 py-1.5 fw-700" style="background:{{if ne $v.ArsipCount 0}}rgba(26,86,219,0.08);color:var(--brand){{else}}var(--surface-3);color:var(--ink-4){{end}};">
+                                    <i class="bi bi-archive me-1"></i>{{$v.ArsipCount}}
+                                </span>
+                            </td>
+                            <td class="text-center" data-label="Aksi">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="/lokasi-arsip/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+                                    <a href="/arsip/create?lokasi_arsip_id={{$v.ID}}" class="btn-crud" style="background:var(--brand-lt);color:var(--brand);border-radius:var(--r);width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:all 0.15s ease;" title="Tambah Arsip" data-bs-toggle="tooltip"><i class="bi bi-plus-lg" style="font-size:0.75rem;"></i></a>
+                                    <a href="/lokasi-arsip/{{$v.ID}}/edit" class="btn-crud btn-crud-edit" title="Edit" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>
+                                    <form action="/lokasi-arsip/{{$v.ID}}/delete" method="POST" class="d-inline">
+                                        <button type="button" class="btn-crud btn-crud-del" onclick="if(confirm('Hapus lokasi {{$v.NamaLokasi}}?')){this.closest('form').submit()}" title="Hapus" data-bs-toggle="tooltip"><i class="bi bi-trash3"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted"><i class="bi bi-geo-alt d-block mb-2" style="font-size:2.5rem;opacity:0.3;"></i><h6 class="fw-700">Belum Ada Lokasi</h6><small>Tidak ada data lokasi arsip</small></div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+
+                {{if .HasPages}}
+                <div class="d-flex justify-content-center mt-3">
+                    {{.Pagination}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

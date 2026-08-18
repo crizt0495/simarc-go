@@ -1,0 +1,185 @@
+{{define "pengaturan/system.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="page-title mb-0">
+            <i class="bi bi-info-circle"></i> Informasi Sistem
+        </h1>
+        <div class="page-actions">
+            <a href="/pengaturan" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pc-display"></i> Informasi Server</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Go Version</th>
+                                <td>: <code>{{.Info.go_version}}</code></td>
+                            </tr>
+                            <tr>
+                                <th>OS / Arch</th>
+                                <td>: <code>{{.Info.go_os}}/{{.Info.go_arch}}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Server</th>
+                                <td>: Gin (Go Framework)</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Database</th>
+                                <td>: {{.Info.db_driver}} ({{.Info.db_version}})</td>
+                            </tr>
+                            <tr>
+                                <th>Debug Mode</th>
+                                <td>: 
+                                    {{if eq .Info.app_debug "true"}}
+                                        <span class="badge bg-warning">Menyala</span>
+                                    {{else}}
+                                        <span class="badge bg-success">Mati</span>
+                                    {{end}}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Konfigurasi Aplikasi</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Nama Aplikasi</th>
+                                <td>: <strong>{{.Info.app_name}}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>App URL</th>
+                                <td>: <code>{{.Info.app_url}}:{{.Info.app_port}}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Zona Waktu</th>
+                                <td>: {{.Info.timezone}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Locale</th>
+                                <td>: id_ID (Indonesia)</td>
+                            </tr>
+                            <tr>
+                                <th>CPU Cores</th>
+                                <td>: {{.Info.cpu_cores}} core</td>
+                            </tr>
+                            <tr>
+                                <th>Goroutines</th>
+                                <td>: {{.Info.goroutines}} aktif</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-memory"></i> Penggunaan Memori</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="text-primary">{{.Info.memory_alloc}}</h3>
+                            <p class="text-muted">Memory Terpakai</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="text-info">{{.Info.memory_total_alloc}}</h3>
+                            <p class="text-muted">Total Alokasi</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="text-secondary">{{.Info.memory_sys}}</h3>
+                            <p class="text-muted">Memory Sistem</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-database"></i> Statistik Database</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-primary">{{.Stats.TotalUsers}}</h3>
+                            <p class="text-muted">Total Users</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-success">{{.Stats.TotalArsip}}</h3>
+                            <p class="text-muted">Total Arsip</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-info">{{.Stats.TotalUnitKerja}}</h3>
+                            <p class="text-muted">Unit Kerja</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-warning">{{.Stats.TotalRoles}}</h3>
+                            <p class="text-muted">Roles</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> Permissions & Roles</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Total Permissions:</strong> {{.Stats.TotalPermissions}}</p>
+                        <p><strong>Total Roles:</strong> {{.Stats.TotalRoles}}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Active User:</strong> {{.AuthUser.Name}}</p>
+                        <p><strong>User Role:</strong> {{if .AuthUser.Role}}{{.AuthUser.Role.Name}}{{end}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

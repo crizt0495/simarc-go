@@ -1,0 +1,126 @@
+{{define "supervision/certificate.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sertifikat Blockchain - {{.AppName}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --surface: #ffffff; --primary-900: #0f172a; --royal-gold: #c5a880; --royal-gold-dark: #a98b5f; --neutral-800: #1e293b; --neutral-500: #64748b; }
+        body { background-color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--neutral-800); margin: 0; padding: 40px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .certificate-wrapper { max-width: 900px; margin: 0 auto; position: relative; background: var(--surface); padding: 60px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08); border-radius: 4px; border: 2px solid #e2e8f0; overflow: hidden; }
+        .certificate-border-outer { position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px; border: 2px solid var(--royal-gold); pointer-events: none; }
+        .certificate-border-inner { position: absolute; top: 26px; left: 26px; right: 26px; bottom: 26px; border: 1px solid var(--royal-gold); opacity: 0.5; pointer-events: none; }
+        .corner-decoration { position: absolute; width: 40px; height: 40px; border: 3px solid var(--royal-gold); pointer-events: none; }
+        .corner-tl { top: 30px; left: 30px; border-right: none; border-bottom: none; }
+        .corner-tr { top: 30px; right: 30px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 30px; left: 30px; border-right: none; border-top: none; }
+        .corner-br { bottom: 30px; right: 30px; border-left: none; border-top: none; }
+        .certificate-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; height: 500px; opacity: 0.02; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23000' d='M50 5L10 25v30c0 20 15 35 40 40 25-5 40-20 40-40V25L50 5zm0 18c12.1 0 22 9.9 22 22S62.1 67 50 67s-22-9.9-22-22 9.9-22 22-22z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; }
+        .cert-header { text-align: center; margin-bottom: 40px; }
+        .cert-logo { font-size: 1.75rem; font-weight: 800; color: var(--neutral-900); letter-spacing: -1px; margin-bottom: 5px; text-transform: uppercase; }
+        .cert-tagline { font-size: 0.75rem; color: var(--royal-gold-dark); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 25px; }
+        .cert-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: var(--neutral-900); margin-bottom: 5px; }
+        .cert-subtitle { font-size: 0.9rem; color: var(--neutral-500); letter-spacing: 3px; text-transform: uppercase; font-weight: 600; }
+        .cert-divider { width: 80px; height: 2px; background: var(--royal-gold); margin: 20px auto; }
+        .cert-recipient-label { text-align: center; font-size: 0.95rem; color: var(--neutral-500); margin-bottom: 15px; }
+        .cert-recipient-name { font-family: 'Playfair Display', serif; font-size: 1.85rem; font-weight: 700; color: var(--neutral-900); text-align: center; margin-bottom: 25px; }
+        .cert-description { text-align: center; font-size: 0.95rem; line-height: 1.8; max-width: 700px; margin: 0 auto 40px auto; color: var(--neutral-800); }
+        .cert-details-table { width: 100%; margin-bottom: 40px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 20px 0; }
+        .cert-details-table td { padding: 10px 15px; font-size: 0.875rem; }
+        .cert-details-label { font-weight: 600; color: var(--neutral-500); width: 200px; }
+        .cert-details-value { color: var(--neutral-900); font-weight: 500; }
+        .blockchain-footprint { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 40px; position: relative; }
+        .footprint-title { font-size: 0.8rem; font-weight: 700; color: var(--neutral-900); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 6px; }
+        .hash-box { font-family: 'Courier New', Courier, monospace; font-size: 0.75rem; word-break: break-all; background: #ffffff; border: 1px dashed #cbd5e1; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; }
+        .cert-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+        .signature-box { text-align: center; width: 220px; }
+        .signature-line { width: 100%; height: 1px; background-color: #cbd5e1; margin-bottom: 10px; }
+        .signature-title { font-size: 0.75rem; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; }
+        .cert-seal { text-align: center; position: relative; }
+        .seal-outer { width: 90px; height: 90px; border: 2px dashed var(--royal-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .seal-inner { width: 76px; height: 76px; background: linear-gradient(135deg, var(--royal-gold) 0%, var(--royal-gold-dark) 100%); border-radius: 50%; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: 800; text-transform: uppercase; text-align: center; line-height: 1.2; box-shadow: 0 4px 10px rgba(197, 168, 128, 0.3); }
+        .qr-section { display: flex; align-items: center; gap: 15px; border-left: 2px solid var(--royal-gold); padding-left: 15px; }
+        .qr-text { font-size: 0.7rem; color: var(--neutral-500); line-height: 1.4; max-width: 150px; }
+        .action-buttons { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 9999; }
+        .btn-action { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15); transition: all 0.3s ease; font-size: 1.25rem; }
+        .btn-action:hover { transform: translateY(-5px); }
+        @media print { body { background: none; padding: 0; margin: 0; } .certificate-wrapper { box-shadow: none; border: none; padding: 40px; max-width: 100%; width: 100%; height: 100%; position: absolute; top: 0; left: 0; } .action-buttons { display: none !important; } }
+    </style>
+</head>
+<body>
+    <div class="certificate-wrapper">
+        <div class="certificate-border-outer"></div>
+        <div class="certificate-border-inner"></div>
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        <div class="certificate-watermark"></div>
+        <div class="cert-header">
+            <div class="cert-logo">{{.AppName}}</div>
+            <div class="cert-tagline">Sistem Informasi Manajemen Arsip Record Center</div>
+            <div class="cert-title">Sertifikat Otentisitas Blockchain</div>
+            <div class="cert-subtitle">Blockchain Audit Trail Verification</div>
+            <div class="cert-divider"></div>
+        </div>
+        <div class="cert-recipient-label">Dengan ini menyatakan secara resmi bahwa dokumen kearsipan:</div>
+        <div class="cert-recipient-name">{{.Cert.ArchiveTitle}}</div>
+        <div class="cert-description">
+            Telah terdaftar secara resmi ke dalam <strong>Private Internal Blockchain Ledger</strong>. 
+            Metadata dan integritas data digital arsip ini dijamin otentik, belum pernah diubah, 
+            serta bersifat permanen (*immutable*) sejak tanggal registrasi blok pertama.
+        </div>
+        <table class="cert-details-table">
+            <tr>
+                <td class="cert-details-label">Nomor Sertifikat</td>
+                <td class="cert-details-value text-primary font-monospace">{{.Cert.CertificateNo}}</td>
+                <td class="cert-details-label">Nomor Arsip</td>
+                <td class="cert-details-value">{{if .Cert.ArchiveNumber}}{{.Cert.ArchiveNumber}}{{else}}-{{end}}</td>
+            </tr>
+            <tr>
+                <td class="cert-details-label">Unit Pengolah</td>
+                <td class="cert-details-value">{{.Cert.UnitName}}</td>
+                <td class="cert-details-label">Waktu Registrasi</td>
+                <td class="cert-details-value">{{.Cert.IssueDate}} WIB</td>
+            </tr>
+            <tr>
+                <td class="cert-details-label">Status Rantai</td>
+                <td class="cert-details-value text-success fw-bold"><i class="bi bi-shield-check-fill me-1"></i> {{.Cert.BlockchainStatus}}</td>
+                <td class="cert-details-label">Metode Enkripsi</td>
+                <td class="cert-details-value">SHA-256 Chaining Protocol</td>
+            </tr>
+        </table>
+        <div class="blockchain-footprint">
+            <div class="footprint-title"><i class="bi bi-cpu text-primary"></i> Data Blok Blockchain (Audit Footprint)</div>
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="mb-2"><small class="text-muted fw-bold d-block">FINGERPRINT DIGITAL (CURRENT HASH):</small><div class="hash-box text-primary">{{.Cert.DigitalFingerprint}}</div></div>
+                    <div><small class="text-muted fw-bold d-block">LINK BLOCK SEBELUMNYA (PREVIOUS HASH):</small><div class="hash-box text-secondary">{{if .Cert.PreviousBlock}}{{.Cert.PreviousBlock}}{{else}}GENESIS BLOCK (00000000000000000000000000000000){{end}}</div></div>
+                </div>
+                <div class="col-md-3 d-flex align-items-center justify-content-end mt-3 mt-md-0">
+                    <div class="qr-section">
+                        <div class="qr-code">
+                            <div style="width:80px;height:80px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;border:1px solid #ddd;">QR</div>
+                        </div>
+                        <div class="qr-text">Scan QR Code untuk verifikasi otentisitas berkas langsung secara online.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cert-footer">
+            <div class="signature-box"><div class="signature-space" style="height: 60px;"></div><div class="signature-line"></div><div class="signature-title">Kepala Unit Kearsipan</div></div>
+            <div class="cert-seal"><div class="seal-outer"><div class="seal-inner">{{.AppName}}<br>SECURE<br>LEDGER</div></div></div>
+            <div class="signature-box"><div class="signature-space" style="height: 60px;"></div><div class="signature-line"></div><div class="signature-title">Blockchain Auditor</div></div>
+        </div>
+    </div>
+    <div class="action-buttons">
+        <button onclick="window.print()" class="btn btn-primary btn-action" title="Cetak Sertifikat"><i class="bi bi-printer"></i></button>
+        <button onclick="window.history.back()" class="btn btn-secondary btn-action" title="Kembali"><i class="bi bi-arrow-left"></i></button>
+    </div>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=SIMARC
+Comment=Sistem Informasi Manajemen Arsip
+Exec=bash -c "cd %k && ./run.sh"
+Terminal=true
+Type=Application
+Icon=web/static/images/logo-icon.svg
+Categories=Office;

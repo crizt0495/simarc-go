@@ -1,0 +1,317 @@
+{{define "dashboard/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+
+{{if not .BlockchainIntegrity.IsValid}}
+<div class="alert alert-danger" style="border-radius:var(--r-lg)">
+  <i class="bi bi-shield-slash-fill" style="font-size:20px"></i>
+  <div>
+    <strong>DARURAT KEAMANAN: Integritas data terancam!</strong><br>
+    <span>Sistem mendeteksi manipulasi pada {{.BlockchainIntegrity.InvalidBlocks}} data.</span>
+  </div>
+  <a href="/blockchain" class="btn btn-danger btn-sm" style="margin-left:auto;flex-shrink:0">Periksa</a>
+</div>
+{{end}}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle d-none d-md-block">Selamat datang, <strong>{{.AuthUser.Name}}</strong> — ringkasan status kearsipan organisasi</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-secondary" onclick="refreshDashboard()" id="btnRefresh">
+      <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline"> Perbarui Data</span>
+    </button>
+  </div>
+</div>
+
+<!-- KPI Stats Row 1 (5 cards) -->
+<div class="grid-5 mb-4">
+  <div class="stat-card cursor-pointer" onclick="location.href='/arsip'">
+    <div class="stat-card-icon icon-blue"><i class="bi bi-archive"></i></div>
+    <div class="stat-card-value" data-stat="total">{{.Stats.Total}}</div>
+    <div class="stat-card-label">Total Arsip</div>
+    <div class="stat-card-trend trend-up"><i class="bi bi-box"></i> Seluruh arsip</div>
+  </div>
+  <div class="stat-card cursor-pointer stat-card-purple" onclick="location.href='/arsip'">
+    <div class="stat-card-icon icon-indigo"><i class="bi bi-box-seam"></i></div>
+    <div class="stat-card-value" data-stat="total_items">{{.Stats.TotalItems}}</div>
+    <div class="stat-card-label">Total Item Fisik</div>
+    <div class="stat-card-trend trend-up"><i class="bi bi-collection"></i> {{.Stats.Total}} arsip</div>
+  </div>
+  <div class="stat-card stat-card-success cursor-pointer" onclick="location.href='/arsip?status=aktif'">
+    <div class="stat-card-icon icon-green"><i class="bi bi-check-circle"></i></div>
+    <div class="stat-card-value" data-stat="aktif">{{.Stats.Aktif}}</div>
+    <div class="stat-card-label">Arsip Aktif</div>
+    <div class="progress mt-2" style="height:4px"><div class="progress-bar" style="width:{{percent (int .Stats.Aktif) (int .Stats.Total)}}%;background:var(--success);"></div></div>
+  </div>
+  <div class="stat-card stat-card-info cursor-pointer" onclick="location.href='/arsip?status=inaktif'">
+    <div class="stat-card-icon icon-purple"><i class="bi bi-pause-circle"></i></div>
+    <div class="stat-card-value" data-stat="inaktif">{{.Stats.Inaktif}}</div>
+    <div class="stat-card-label">Arsip Inaktif</div>
+    <div class="progress mt-2" style="height:4px"><div class="progress-bar" style="width:{{percent (int .Stats.Inaktif) (int .Stats.Total)}}%;background:var(--purple-500)"></div></div>
+  </div>
+  <div class="stat-card stat-card-warning cursor-pointer" onclick="location.href='/arsip?status=siap_penyusutan'">
+    <div class="stat-card-icon icon-amber"><i class="bi bi-exclamation-triangle"></i></div>
+    <div class="stat-card-value" data-stat="siap_penyusutan">{{.Stats.SiapPenyusutan}}</div>
+    <div class="stat-card-label">Siap Musnah</div>
+    <div class="mt-2">{{if ne .Stats.SiapPenyusutan 0}}<span class="badge badge-danger">Perlu Review</span>{{else}}<span class="badge badge-success">Aman</span>{{end}}</div>
+  </div>
+</div>
+
+<!-- KPI Stats Row 2 (4 cards) -->
+<div class="grid-4 mb-4">
+  <div class="stat-card">
+    <div class="stat-card-icon icon-blue"><i class="bi bi-file-text"></i></div>
+    <div class="stat-card-value" data-stat="spj">{{.Stats.Spj}}</div>
+    <div class="stat-card-label">Arsip SPJ</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon icon-purple"><i class="bi bi-files"></i></div>
+    <div class="stat-card-value" data-stat="non_spj">{{.Stats.NonSpj}}</div>
+    <div class="stat-card-label">Arsip Non-SPJ</div>
+  </div>
+  <div class="stat-card stat-card-success">
+    <div class="stat-card-icon icon-green"><i class="bi bi-cloud-check"></i></div>
+    <div class="stat-card-value" data-stat="with_file">{{.DigitalFileStats.WithDigitalFile}}</div>
+    <div class="stat-card-label">Sudah Digital</div>
+    <div class="progress mt-2" style="height:4px"><div class="progress-bar" style="width:{{.DigitalFileStats.Percentage}}%;background:var(--success);"></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon icon-red"><i class="bi bi-cloud-slash"></i></div>
+    <div class="stat-card-value" data-stat="without_file">{{.DigitalFileStats.WithoutDigitalFile}}</div>
+    <div class="stat-card-label">Belum Digital</div>
+    {{if ne .Stats.Unclassified 0}}<a href="/arsip?no_classification=1" class="badge badge-warning mt-2 text-decoration-none">{{.Stats.Unclassified}} belum terklasifikasi</a>{{end}}
+  </div>
+</div>
+
+<!-- Box Stats + Chart -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <span class="card-title"><i class="bi bi-graph-up-arrow text-brand me-2"></i>Prediksi Pertumbuhan Arsip (6 Bulan)</span>
+        <span class="badge badge-primary">Linear Regression</span>
+      </div>
+      <div class="card-body">
+        <div style="height:260px;position:relative">
+          <canvas id="forecastChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <span class="card-title"><i class="bi bi-box-seam text-brand me-2"></i>Inventaris Box RC</span>
+      </div>
+      <div class="card-body" style="padding:16px">
+        <div class="flex-between mb-3">
+          <span class="text-muted" style="font-size:0.75rem">Total Box</span>
+          <strong class="fw-800" style="font-size:22px;cursor:pointer" onclick="SimarcModal.show('modalTotalBox', { size: 'sm' })" title="Klik untuk lihat daftar box">{{.BoxStats.TotalRcBoxes}}</strong>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="bg-surface-2 rounded p-3">
+            <div class="text-muted mb-1" style="font-size:0.7rem">Khusus SPJ</div>
+            <div style="font-size:20px;font-weight:800;color:var(--warning);cursor:pointer" onclick="SimarcModal.show('modalSpjBox', { size: 'sm' })" title="Klik untuk lihat daftar box SPJ">{{.BoxStats.BoxMurniSpj}}</div>
+          </div>
+          <div class="bg-surface-2 rounded p-3">
+            <div class="text-muted mb-1" style="font-size:0.7rem">Non-SPJ</div>
+            <div style="font-size:20px;font-weight:800;color:var(--success);cursor:pointer" onclick="SimarcModal.show('modalNonSpjBox', { size: 'sm' })" title="Klik untuk lihat daftar box Non-SPJ">{{.BoxStats.BoxMurniNonSpj}}</div>
+          </div>
+          <div class="bg-surface-2 rounded p-3">
+            <div class="text-muted mb-1" style="font-size:0.7rem">Campuran</div>
+            <div style="font-size:20px;font-weight:800;color:var(--ink-2);cursor:pointer" onclick="SimarcModal.show('modalCampuranBox', { size: 'sm' })" title="Klik untuk lihat daftar box campuran">{{.BoxStats.BoxCampuran}}</div>
+          </div>
+          <div class="bg-brand-lt rounded p-3">
+            <div class="text-muted mb-1" style="font-size:0.7rem">Digitalisasi</div>
+            <div style="font-size:20px;font-weight:800;color:var(--brand)">{{printf "%.1f" .BoxStats.RcDigitalPercent}}%</div>
+          </div>
+        </div>
+
+<!-- SIMARC V4 Box Modals -->
+<template data-modal="modalTotalBox">
+  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Daftar Box RC</h5><p class="sm-subtitle">Semua box yang terdaftar</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalTotalBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
+  <div class="sm-body">{{if .BoxStats.ListAll}}<div class="list-group list-group-flush">{{range .BoxStats.ListAll}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box text-muted small"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalTotalBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
+
+<template data-modal="modalSpjBox">
+  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Khusus SPJ</h5><p class="sm-subtitle">Box dengan arsip SPJ murni</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
+  <div class="sm-body">{{if .BoxStats.ListMurniSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--warning);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
+
+<template data-modal="modalNonSpjBox">
+  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Non-SPJ</h5><p class="sm-subtitle">Box dengan arsip Non-SPJ murni</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalNonSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
+  <div class="sm-body">{{if .BoxStats.ListMurniNonSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniNonSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--success);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalNonSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
+
+<template data-modal="modalCampuranBox">
+  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Campuran</h5><p class="sm-subtitle">Box dengan arsip campuran</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalCampuranBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
+  <div class="sm-body">{{if .BoxStats.ListCampuran}}<div class="list-group list-group-flush">{{range .BoxStats.ListCampuran}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box text-muted small"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalCampuranBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="bi bi-clock-history text-brand me-2"></i>Aktivitas Terbaru</span>
+    <a href="/laporan/aktivitas" class="btn btn-sm btn-outline-primary rounded-pill px-3">Lihat Semua <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="table-wrap table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Pengguna</th>
+          <th>Aktivitas</th>
+          <th>Aksi</th>
+          <th class="text-end">Waktu</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .RecentActivities}}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:34px;height:34px;background:var(--brand-lt);color:var(--brand);font-weight:700;font-size:13px;flex-shrink:0">{{upperFirst (slice .UserName 0 1)}}</div>
+              <span class="fw-semibold">{{.UserName}}</span>
+            </div>
+          </td>
+          <td><span class="text-muted">{{.Description}}</span></td>
+          <td><span class="badge badge-neutral">{{.Action}}</span></td>
+          <td class="text-end"><span class="text-muted small">{{formatDateTime .CreatedAt}}</span></td>
+        </tr>
+        {{else}}
+        <tr>
+          <td colspan="4">
+            <div class="text-center py-5">
+              <i class="bi bi-inbox" style="font-size:2rem;color:var(--border-2)"></i>
+              <p class="text-muted mt-2 mb-0">Belum ada aktivitas</p>
+            </div>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+async function refreshDashboard() {
+  const btn = document.getElementById('btnRefresh');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Memperbarui...';
+  try {
+    const r = await fetch('{{.RefreshUrl}}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '{{.CSRFToken}}', 'Accept': 'application/json' } });
+    if (r.ok) location.reload();
+  } catch(e) { btn.innerHTML = orig; btn.disabled = false; }
+}
+
+async function pollDashboardStats() {
+  try {
+    const r = await fetch('/dashboard/api', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    if (!r.ok) return;
+    const json = await r.json();
+    if (!json.success || !json.data) return;
+    const d = json.data;
+
+    // Update stat values via data-stat attributes
+    const updateStat = (key, value) => {
+      const el = document.querySelector(`[data-stat="${key}"]`);
+      if (el) el.textContent = value;
+    };
+    updateStat('total', d.stats.total);
+    updateStat('total_items', d.stats.total_items);
+    updateStat('aktif', d.stats.aktif);
+    updateStat('inaktif', d.stats.inaktif);
+    updateStat('siap_penyusutan', d.stats.siap_penyusutan);
+    updateStat('spj', d.stats.spj);
+    updateStat('non_spj', d.stats.non_spj);
+    updateStat('with_file', d.stats.with_file);
+    updateStat('without_file', d.stats.without_file);
+
+    // Update progress bars
+    const total = d.stats.total;
+    if (total > 0) {
+      // Aktif progress
+      const aktifPct = (d.stats.aktif / total * 100).toFixed(1);
+      const aktifBar = document.querySelector('[data-stat="aktif"]')?.closest('.stat-card')?.querySelector('.progress-bar');
+      if (aktifBar) aktifBar.style.width = aktifPct + '%';
+
+      // Inaktif progress
+      const inaktifPct = (d.stats.inaktif / total * 100).toFixed(1);
+      const inaktifBar = document.querySelector('[data-stat="inaktif"]')?.closest('.stat-card')?.querySelector('.progress-bar');
+      if (inaktifBar) inaktifBar.style.width = inaktifPct + '%';
+
+      // Digital progress
+      const digitalPct = (d.stats.with_file / total * 100).toFixed(1);
+      const digitalBar = document.querySelector('[data-stat="with_file"]')?.closest('.stat-card')?.querySelector('.progress-bar');
+      if (digitalBar) digitalBar.style.width = digitalPct + '%';
+    }
+
+    // Update Siap Musnah badge
+    const siapStat = d.stats.siap_penyusutan;
+    const siapCard = document.querySelector('[data-stat="siap_penyusutan"]')?.closest('.stat-card');
+    if (siapCard) {
+      const oldBadge = siapCard.querySelector('.badge');
+      if (oldBadge) oldBadge.remove();
+      const badge = document.createElement('span');
+      badge.className = 'badge mt-1 ' + (siapStat !== 0 ? 'badge-danger' : 'badge-success');
+      badge.textContent = siapStat !== 0 ? 'Perlu Review' : 'Aman';
+      siapCard.appendChild(badge);
+    }
+
+    // Update digital percentage text if displayed
+    const pctLabel = document.querySelector('[data-stat="with_file"]')?.closest('.stat-card')?.querySelector('.stat-card-label');
+    // (no change needed, percentage is already calculated)
+  } catch(e) { /* silent: ignore polling errors */ }
+}
+
+// Auto-poll every 30 seconds
+setInterval(pollDashboardStats, 30000);
+// Also poll on page load after a short delay
+setTimeout(pollDashboardStats, 2000);
+(function() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  var gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  var textColor = isDark ? '#94a3b8' : '#64748b';
+
+  var ctx = document.getElementById('forecastChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}"{{$m.Month}}"{{end}}],
+      datasets: [{
+        label: 'Prediksi',
+        data: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}{{$m.PredictedCount}}{{end}}],
+        borderColor: '#1a56db',
+        backgroundColor: 'rgba(26,86,219,0.08)',
+        borderWidth: 2, fill: true, tension: 0.4,
+        pointBackgroundColor: '#fff', pointBorderColor: '#1a56db',
+        pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 8 } },
+      scales: {
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 12 } } },
+        x: { grid: { display: false }, ticks: { color: textColor, font: { size: 12 } } }
+      }
+    }
+  });
+
+  window.addEventListener('themeChanged', function(e) {
+    var dark = e.detail.theme === 'dark';
+    ctx.chart && ctx.chart.destroy();
+  });
+})();
+</script>
+{{end}}

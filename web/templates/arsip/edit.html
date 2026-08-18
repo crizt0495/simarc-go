@@ -1,0 +1,752 @@
+{{define "arsip/edit.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+{{template "components/select2.html"}}
+<style>
+/* ═══════════════════════════════════════════
+   ARSIP EDIT — PREMIUM FORM
+   ═══════════════════════════════════════════ */
+
+.edit-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    border-radius: var(--r-xl);
+    padding: 2rem 2.5rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.edit-hero::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -5%;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.edit-hero .hero-title {
+    font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
+    position: relative; z-index: 1;
+}
+.edit-hero .hero-sub {
+    font-size: 0.8rem; opacity: 0.7; font-weight: 500;
+    position: relative; z-index: 1;
+}
+.edit-hero .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.85rem;
+    background: rgba(251,191,36,0.15);
+    color: #fbbf24;
+    border-radius: 50px;
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.edit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-sm);
+    overflow: hidden;
+    animation: fadeUp 0.35s ease both;
+}
+.edit-card-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+.edit-card-d2 { animation: fadeUp 0.35s ease 0.14s both; }
+
+
+.edit-card .card-head {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.edit-card .card-head .step-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    background: var(--brand-lt);
+    color: var(--brand);
+    border-radius: 50rem;
+    font-size: 0.7rem; font-weight: 800;
+    flex-shrink: 0;
+}
+.edit-card .card-head .step-label {
+    font-size: 0.7rem; font-weight: 700;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.edit-card .card-body-custom {
+    padding: 1.5rem;
+}
+
+.form-field {
+    margin-bottom: 1.25rem;
+}
+.form-field label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--ink-2);
+    margin-bottom: 0.35rem;
+}
+.form-field label .required {
+    color: var(--danger);
+    margin-left: 2px;
+}
+.form-field .form-control,
+.form-field .form-select {
+    width: 100%;
+    padding: 0.55rem 0.85rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--surface);
+    transition: all 0.18s ease;
+    outline: none;
+    font-family: inherit;
+}
+.form-field .form-control:focus,
+.form-field .form-select:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+}
+.form-field textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.file-drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--r);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: var(--surface-2);
+}
+.file-drop:hover {
+    border-color: var(--brand);
+    background: var(--brand-lt);
+}
+.file-drop i { font-size: 2rem; color: var(--ink-4); margin-bottom: 0.5rem; display: block; }
+.file-drop .title { font-size: 0.9rem; font-weight: 700; color: var(--ink-2); }
+.file-drop .desc { font-size: 0.75rem; color: var(--ink-4); margin-top: 0.2rem; }
+
+.floating-bar {
+    position: sticky;
+    bottom: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--sh-lg);
+    z-index: 100;
+    margin-top: 1.5rem;
+    animation: fadeUp 0.35s ease 0.2s both;
+}
+
+@media (max-width: 768px) {
+    .edit-hero { padding: 1.25rem; }
+    .edit-hero .hero-title { font-size: 1.1rem; }
+    .edit-card .card-body-custom { padding: 1rem; }
+    .file-drop { padding: 1.5rem 1rem; }
+    .floating-bar { flex-direction: column; gap: 0.75rem; bottom: 1rem; }
+    .floating-bar .btn { width: 100%; justify-content: center; }
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- HERO -->
+    <div class="edit-hero shadow-sm">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-pencil-square me-2"></i>Edit Data Arsip</div>
+                <div class="hero-sub">Nomor Registrasi: <span class="fw-800" style="color:#fbbf24;">{{.arsip.NomorArsip}}</span></div>
+                <span class="hero-badge mt-2 d-inline-flex"><i class="bi bi-tag-fill"></i> Sedang Diedit</span>
+            </div>
+            <a href="/arsip/{{.arsip.ID}}" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-eye me-1"></i>Lihat Detail
+            </a>
+        </div>
+    </div>
+
+    <form action="/arsip/{{.arsip.ID}}" method="POST" enctype="multipart/form-data" id="editForm">
+        <input type="hidden" name="_token" value="{{.CSRFToken}}">
+
+        <!-- STEP 1: Identitas Dokumen -->
+        <div class="edit-card mb-3">
+            <div class="card-head">
+                <span class="step-badge">1</span>
+                <span class="step-label">Identitas Dokumen</span>
+            </div>
+            <div class="card-body-custom">
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="form-field">
+                            <label>Nama Lengkap Dokumen <span class="required">*</span></label>
+                            <input type="text" name="nama_arsip" class="form-control" value="{{.arsip.NamaArsip}}" required>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="form-field">
+                            <label>Nomor Registrasi <span class="required">*</span></label>
+                            <input type="text" name="nomor_arsip" class="form-control" value="{{.arsip.NomorArsip}}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-field">
+                            <label><i class="bi bi-calendar3 me-1 text-primary"></i>Tanggal Pembuatan <span class="required">*</span></label>
+                            <div class="position-relative">
+                                <div class="date-input-field position-relative">
+                                    <i class="bi bi-calendar3 date-input-icon"></i>
+                                    <input type="date" name="tanggal_dibuat" class="form-control" value="{{formatDateISO .arsip.TanggalDibuat}}" required>
+                                    <div class="date-presets d-flex gap-1 mt-2 flex-wrap" data-for="tanggal_dibuat">
+                                        <button type="button" class="date-preset-btn active" data-days="0">Hari Ini</button>
+                                        <button type="button" class="date-preset-btn" data-days="-1">Kemarin</button>
+                                        <button type="button" class="date-preset-btn" data-days="-7">7 Hari</button>
+                                        <button type="button" class="date-preset-btn" data-days="-30">30 Hari</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-field">
+                            <label><i class="bi bi-clock-history me-1 text-warning"></i>Tanggal Retensi Berakhir</label>
+                            <div class="position-relative">
+                                <div class="date-input-field position-relative">
+                                    <i class="bi bi-clock-history date-input-icon"></i>
+                                    <input type="date" name="tanggal_retensi_berakhir" class="form-control" value="{{formatDateISO .arsip.TanggalRetensiAkhir}}">
+                                </div>
+                                <div id="retensiIndicator" class="mt-2" style="{{if .arsip.TanggalRetensiAkhir}}display:block;{{else}}display:none;{{end}}">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span id="retensiIcon" class="badge rounded-pill fw-700" style="font-size:0.6rem;padding:0.25rem 0.65rem;">
+                                            <i class="bi bi-shield-check"></i> <span id="retensiText">-</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Otomatis dari klasifikasi, atau isi manual
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-field">
+                            <label>Kategori Arsip</label>
+                            <select name="jenis_arsip_id" id="jenis_arsip_edit" class="form-select select2-search">
+                                <option value="">-- Pilih Kategori --</option>
+                                {{range .jenisArsipOptions}}
+                                <option value="{{.ID}}" data-kode="{{.KodeJenis}}" {{if eq (derefUint $.arsip.JenisArsipID) .ID}}selected{{end}}>{{.NamaJenis}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="form-field">
+                            <label>Kondisi Dokumen</label>
+                            <select name="tingkat_perkembangan" class="form-select select2-search">
+                                <option value="Asli" {{if eq .arsip.TingkatPerkembangan "Asli"}}selected{{end}}>Asli (Original)</option>
+                                <option value="Copy" {{if eq .arsip.TingkatPerkembangan "Copy"}}selected{{end}}>Fotokopi / Salinan</option>
+                                <option value="Salinan Resmi" {{if eq .arsip.TingkatPerkembangan "Salinan Resmi"}}selected{{end}}>Salinan Resmi</option>
+                                <option value="Draft" {{if eq .arsip.TingkatPerkembangan "Draft"}}selected{{end}}>Draft</option>
+                                <option value="Legalisir" {{if eq .arsip.TingkatPerkembangan "Legalisir"}}selected{{end}}>Legalisir</option>
+                                <option value="Lainnya" {{if eq .arsip.TingkatPerkembangan "Lainnya"}}selected{{end}}>Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="form-field">
+                                    <label>Jumlah <span class="required">*</span></label>
+                                    <input type="number" name="jumlah" class="form-control" value="{{.arsip.Jumlah}}" min="1" required>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-field">
+                                    <label>Satuan <span class="required">*</span></label>
+                                    <select name="satuan" class="form-select select2-search" id="satuan_select_edit" required>
+                                        <option value="Berkas" {{if eq .arsip.Satuan "Berkas"}}selected{{end}}>Berkas</option>
+                                        <option value="Lembar" {{if eq .arsip.Satuan "Lembar"}}selected{{end}}>Lembar</option>
+                                        <option value="Buku" {{if eq .arsip.Satuan "Buku"}}selected{{end}}>Buku</option>
+                                        <option value="Box" {{if eq .arsip.Satuan "Box"}}selected{{end}}>Box</option>
+                                        <option value="Map" {{if eq .arsip.Satuan "Map"}}selected{{end}}>Map</option>
+                                        <option value="Bundel" {{if eq .arsip.Satuan "Bundel"}}selected{{end}}>Bundel</option>
+                                        <option value="Dokumen" {{if eq .arsip.Satuan "Dokumen"}}selected{{end}}>Dokumen</option>
+                                        <option value="Eksemplar" {{if eq .arsip.Satuan "Eksemplar"}}selected{{end}}>Eksemplar</option>
+                                        <option value="Roll" {{if eq .arsip.Satuan "Roll"}}selected{{end}}>Roll</option>
+                                        <option value="Foto" {{if eq .arsip.Satuan "Foto"}}selected{{end}}>Foto</option>
+                                        <option value="CD/DVD" {{if eq .arsip.Satuan "CD/DVD"}}selected{{end}}>CD/DVD</option>
+                                        <option value="Flashdisk" {{if eq .arsip.Satuan "Flashdisk"}}selected{{end}}>Flashdisk</option>
+                                        <option value="Harddisk" {{if eq .arsip.Satuan "Harddisk"}}selected{{end}}>Harddisk</option>
+                                        <option value="Lainnya" {{if eq .arsip.Satuan "Lainnya"}}selected{{end}}>Lainnya</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-field">
+                            <label>Status Arsip</label>
+                            <select name="status_arsip" class="form-select select2-search">
+                                <option value="aktif" {{if eq .arsip.StatusArsip "aktif"}}selected{{end}}>✔ Aktif</option>
+                                <option value="inaktif" {{if eq .arsip.StatusArsip "inaktif"}}selected{{end}}>◌ Inaktif</option>
+                                <option value="permanen" {{if eq .arsip.StatusArsip "permanen"}}selected{{end}}>★ Permanen</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPJ Fields -->
+                <div id="nominal_container_edit" class="row g-3" style="{{if .arsip.NilaiAnggaran}}display:flex;{{else}}display:none;{{end}}">
+                    <div class="col-md-6">
+                        <div class="form-field">
+                            <label>Nilai Anggaran (Rp) <span class="required">*</span></label>
+                            <input type="text" id="nilai_anggaran_mask_edit" class="form-control" placeholder="Contoh: 1.500.000">
+                            <input type="hidden" name="nilai_anggaran" id="nilai_anggaran_edit" value="{{if .arsip.NilaiAnggaran}}{{.arsip.NilaiAnggaran}}{{end}}">
+                        </div>
+                    </div>
+                </div>
+                <div id="nomor_spm_container_edit" class="row g-3" style="{{if .arsip.NomorSPM}}display:flex;{{else}}display:none;{{end}}">
+                    <div class="col-md-6">
+                        <div class="form-field">
+                            <label>Nomor SPM <span class="required">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
+                            <input type="text" name="nomor_spm" id="nomor_spm_edit" class="form-control" placeholder="Contoh: SPM-2024-001" value="{{.arsip.NomorSPM}}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Uraian -->
+                <div class="form-field">
+                    <label>Ringkasan Singkat (Uraian)</label>
+                    <textarea name="uraian" class="form-control">{{.arsip.Uraian}}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <!-- STEP 2: Klasifikasi & Lokasi -->
+                <div class="edit-card edit-card-d1">
+                    <div class="card-head">
+                        <span class="step-badge">2</span>
+                        <span class="step-label">Klasifikasi &amp; Lokasi</span>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="form-field">
+                            <label>Kode Klasifikasi <span class="required">*</span></label>
+                            <select name="kode_klasifikasi_id" class="form-select select2-search" required>
+                                <option value="">-- Pilih Kode Klasifikasi --</option>
+                                {{range .kodeKlasifikasiOptions}}
+                                <option value="{{.ID}}" data-retensi-aktif="{{.RetensiAktif}}" data-retensi-inaktif="{{.RetensiInaktif}}" {{if eq $.arsip.KodeKlasifikasiID .ID}}selected{{end}}>{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Unit Kerja Pemilik <span class="required">*</span></label>
+                            <select name="unit_kerja_id" class="form-select select2-search" required>
+                                <option value="">-- Pilih Unit Kerja --</option>
+                                {{range .unitKerjaOptions}}
+                                <option value="{{.ID}}" {{if eq $.arsip.UnitKerjaID .ID}}selected{{end}}>{{.NamaUnit}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Lokasi Fisik (Rak/Box) <span class="required">*</span></label>
+                            <select name="lokasi_arsip_id" class="form-select select2-search" required>
+                                <option value="">-- Pilih Lokasi --</option>
+                                {{range .lokasiArsipOptions}}
+                                <option value="{{.ID}}" {{if eq (deref $.arsip.LokasiArsipID) .ID}}selected{{end}}>{{.NamaLokasi}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <!-- STEP 3: File Digital -->
+                <div class="edit-card edit-card-d2">
+                    <div class="card-head">
+                        <span class="step-badge">3</span>
+                        <span class="step-label">File Digital</span>
+                    </div>
+                    <div class="card-body-custom">
+                        {{if .arsip.FilePath}}
+                        <div class="alert alert-info border-0 d-flex align-items-center mb-3" style="border-radius:var(--r);background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;">
+                            <i class="bi bi-file-check-fill fs-4 me-3"></i>
+                            <div>
+                                <div class="fw-700 small">BERKAS SUDAH TERSEDIA</div>
+                                <div class="extra-small opacity-75" style="font-size:0.75rem;">Upload file baru untuk memperbarui versi berkas.</div>
+                            </div>
+                        </div>
+                        {{end}}
+                        <div class="file-drop" onclick="document.getElementById('file_edit').click()">
+                            <input type="file" name="file" id="file_edit" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
+                            <i class="bi bi-cloud-upload text-primary"></i>
+                            <div class="title">Klik / Seret Berkas Di Sini</div>
+                            <div class="desc">PDF, JPG, PNG (Max 32MB)</div>
+                            <div id="file-name-preview_edit" class="mt-2 fw-700 text-brand small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLOATING ACTION BAR -->
+        <div class="floating-bar">
+            <a href="/arsip/{{.arsip.ID}}" class="btn btn-secondary btn-sm rounded-pill fw-700 px-3">
+                <i class="bi bi-arrow-left me-1"></i>Batal
+            </a>
+            <button type="submit" class="btn btn-primary rounded-pill fw-800 px-5 py-2 shadow-sm">
+                <i class="bi bi-check-circle-fill me-2"></i>Simpan Perubahan
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ── SPJ Toggle ──
+    const catSelect = document.getElementById('jenis_arsip_edit');
+    const nominalContainer = document.getElementById('nominal_container_edit');
+    const spmContainer = document.getElementById('nomor_spm_container_edit');
+    const nomorSpm = document.getElementById('nomor_spm_edit');
+    const nilaiAnggaran = document.getElementById('nilai_anggaran_edit');
+    const nilaiAnggaranMask = document.getElementById('nilai_anggaran_mask_edit');
+
+    function toggleSPJFields() {
+        var selected = catSelect.options[catSelect.selectedIndex];
+        var isSPJ = selected && selected.getAttribute('data-kode') === 'SPJ';
+        if (isSPJ) {
+            nominalContainer.style.display = 'flex';
+            spmContainer.style.display = 'flex';
+            nomorSpm && nomorSpm.setAttribute('required', '');
+            if (nilaiAnggaran) nilaiAnggaran.setAttribute('required', '');
+            if (nilaiAnggaranMask) nilaiAnggaranMask.setAttribute('required', '');
+        } else {
+            nominalContainer.style.display = 'none';
+            spmContainer.style.display = 'none';
+            nomorSpm && nomorSpm.removeAttribute('required');
+            if (nilaiAnggaran) nilaiAnggaran.removeAttribute('required');
+            if (nilaiAnggaranMask) nilaiAnggaranMask.removeAttribute('required');
+        }
+    }
+    if (catSelect) {
+        catSelect.addEventListener('change', toggleSPJFields);
+        if (window.jQuery && jQuery.fn.select2) {
+            jQuery(catSelect).on('select2:select', toggleSPJFields);
+        }
+        setTimeout(toggleSPJFields, 300);
+    }
+
+    // ── File Name Preview ──
+    const fileInput = document.getElementById('file_edit');
+    const fileNamePreview = document.getElementById('file-name-preview_edit');
+    if (fileInput && fileNamePreview) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileNamePreview.textContent = '📄 ' + this.files[0].name;
+            } else {
+                fileNamePreview.textContent = '';
+            }
+        });
+    }
+
+    // ── Satuan "Lainnya" toggle ──
+    const satuanSelect = document.getElementById('satuan_select_edit');
+    var satuanLainnya = document.querySelector('input[name="satuan_lainnya"]');
+    if (satuanSelect && !satuanLainnya) {
+        satuanLainnya = document.createElement('input');
+        satuanLainnya.type = 'text';
+        satuanLainnya.name = 'satuan_lainnya';
+        satuanLainnya.className = 'form-control mt-1';
+        satuanLainnya.placeholder = 'Sebutkan satuan lain...';
+        satuanLainnya.style.display = 'none';
+        satuanSelect.parentNode.appendChild(satuanLainnya);
+    }
+    function toggleSatuanLainnya() {
+        if (satuanSelect && satuanLainnya) {
+            satuanLainnya.style.display = satuanSelect.value === 'Lainnya' ? 'block' : 'none';
+            if (satuanSelect.value === 'Lainnya') {
+                {{if .arsip.Satuan}}
+                if ('{{.arsip.Satuan}}' === 'Lainnya') {
+                    satuanLainnya.value = '{{.arsip.Uraian}}';
+                }
+                {{end}}
+            }
+        }
+    }
+    if (satuanSelect) {
+        satuanSelect.addEventListener('change', toggleSatuanLainnya);
+        setTimeout(toggleSatuanLainnya, 100);
+    }
+
+    // ── Unsaved Changes Warning ──
+    (function() {
+        var form = document.getElementById('editForm');
+        if (!form) return;
+        var changed = false;
+        form.querySelectorAll('input, select, textarea').forEach(function(f) {
+            if (f.type === 'hidden' || f.type === 'submit' || f.type === 'file') return;
+            var orig = f.value;
+            f.addEventListener('change', function() { changed = true; });
+            f.addEventListener('input', function() {
+                if (f.value !== orig) changed = true;
+            });
+        });
+        window.addEventListener('beforeunload', function(e) {
+            if (changed) { e.preventDefault(); e.returnValue = ''; }
+        });
+        form.addEventListener('submit', function() { changed = false; });
+    })();
+});
+</script>
+{{end}}
+{{define "scripts"}}
+<link href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/id.js"></script>
+<style>
+/* ── Flatpickr Premium Theme ── */
+.flatpickr-calendar {
+    border-radius: var(--r-lg, 12px) !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+    box-shadow: var(--sh-lg, 0 10px 40px rgba(0,0,0,0.12)) !important;
+    margin-top: 4px;
+    font-family: inherit;
+    width: 310px !important;
+}
+.flatpickr-calendar:before, .flatpickr-calendar:after { display: none; }
+.flatpickr-months {
+    background: var(--surface-2, #f8fafc);
+    border-radius: var(--r-lg, 12px) var(--r-lg, 12px) 0 0;
+    padding: 10px 0 8px;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+}
+.flatpickr-current-month { padding: 0; }
+.flatpickr-current-month .flatpickr-monthDropdown-months { font-weight: 700; font-size: 0.9rem; padding: 2px 4px; border-radius: 4px; }
+.flatpickr-current-month input.cur-year { font-weight: 700; font-size: 0.9rem; }
+.flatpickr-weekdaycontainer { padding: 6px 0 2px; }
+.flatpickr-weekday {
+    font-weight: 700; font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--ink-4, #94a3b8) !important;
+}
+.flatpickr-days { padding: 0 4px 4px; }
+.dayContainer { min-width: 280px; max-width: 280px; }
+.flatpickr-day {
+    border-radius: var(--r, 8px); font-weight: 500; font-size: 0.82rem;
+    transition: all 0.12s ease; border: none !important; margin: 1px;
+    max-width: 36px; height: 36px; line-height: 36px;
+}
+.flatpickr-day:hover { background: var(--brand-lt, #dbeafe) !important; color: var(--brand, #2563eb) !important; transform: scale(1.05); }
+.flatpickr-day.today { background: transparent !important; border: 2px solid var(--brand, #2563eb) !important; color: var(--brand, #2563eb) !important; font-weight: 700; }
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.inRange { background: var(--brand, #2563eb) !important; color: #fff !important; font-weight: 700; box-shadow: 0 2px 8px rgba(37,99,235,0.3) !important; border-color: var(--brand, #2563eb) !important; }
+.flatpickr-day.selected:hover { background: var(--brand-dk, #1d4ed8) !important; }
+.flatpickr-day.flatpickr-disabled { color: var(--ink-4, #94a3b8) !important; opacity: 0.4; }
+.flatpickr-prev-month, .flatpickr-next-month { padding: 6px 8px; border-radius: var(--r, 8px); transition: background 0.12s ease; }
+.flatpickr-prev-month:hover, .flatpickr-next-month:hover { background: var(--surface-3, #f1f5f9); }
+.flatpickr-prev-month svg, .flatpickr-next-month svg { fill: var(--ink-3, #64748b); }
+
+.flatpickr-input { display: none !important; }
+
+.flatpickr-alt-input {
+    width: 100%; padding: 0.6rem 0.85rem 0.6rem 2.5rem;
+    border: 1.5px solid var(--border, #e2e8f0); border-radius: var(--r, 8px);
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--ink, #1e293b); background: var(--surface, #fff);
+    transition: all 0.2s ease; outline: none; font-family: inherit; cursor: pointer;
+}
+.flatpickr-alt-input:focus {
+    border-color: var(--brand, #2563eb);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+}
+.flatpickr-alt-input::placeholder { color: var(--ink-4, #94a3b8); font-weight: 500; }
+
+.date-input-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: none;
+    font-size: 1rem;
+    color: var(--ink-4, #94a3b8);
+    transition: color 0.2s ease;
+}
+.date-input-field:focus-within .date-input-icon { color: var(--brand, #2563eb); }
+
+.date-preset-btn:hover {
+    filter: brightness(0.92);
+    transform: translateY(-1px);
+}
+.date-preset-btn:active {
+    transform: translateY(0);
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var dateInputs = document.querySelectorAll('input[name="tanggal_dibuat"], input[name="tanggal_retensi_berakhir"]');
+        if (dateInputs.length && typeof flatpickr !== 'undefined') {
+            dateInputs.forEach(function(input) {
+                var wrapper = input.closest('.date-input-field');
+                if (!wrapper) return;
+
+                flatpickr(input, {
+                    locale: 'id',
+                    dateFormat: 'Y-m-d',
+                    altInput: true,
+                    altFormat: 'd/m/Y',
+                    allowInput: true,
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr) {
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        wrapper.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+                            btn.style.background = 'var(--surface-3)';
+                            btn.style.color = 'var(--ink-3)';
+                        });
+                        updatePresetHighlight(input, wrapper);
+                    },
+                    onReady: function(selectedDates, dateStr, instance) {
+                        updatePresetHighlight(input, wrapper);
+                    }
+                });
+            });
+        }
+
+        // ── Date Presets ──
+        document.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var days = parseInt(this.getAttribute('data-days'));
+                var targetName = this.closest('.date-presets').getAttribute('data-for');
+                var input = document.querySelector('input[name="' + targetName + '"]');
+                if (!input) return;
+                var date = new Date();
+                date.setDate(date.getDate() + days);
+                var y = date.getFullYear();
+                var m = String(date.getMonth() + 1).padStart(2, '0');
+                var d = String(date.getDate()).padStart(2, '0');
+                var dateStr = y + '-' + m + '-' + d;
+                input._flatpickr && input._flatpickr.setDate(dateStr);
+            });
+        });
+
+        function updatePresetHighlight(input, wrapper) {
+            if (!input || !input.value) return;
+            var today = new Date();
+            var selected = new Date(input.value + 'T00:00:00');
+            var diffDays = Math.round((selected - today) / (1000 * 60 * 60 * 24));
+            wrapper.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+                var btnDays = parseInt(btn.getAttribute('data-days'));
+                if (btnDays === diffDays) {
+                    btn.style.background = 'var(--brand)';
+                    btn.style.color = '#fff';
+                }
+            });
+        }
+
+        // ── Auto Retensi Calculation ──
+        function calculateRetensi() {
+            var tglInput = document.querySelector('input[name="tanggal_dibuat"]');
+            var retensiInput = document.querySelector('input[name="tanggal_retensi_berakhir"]');
+            var kkSelect = document.querySelector('select[name="kode_klasifikasi_id"]');
+            if (!tglInput || !retensiInput || !kkSelect) return;
+            
+            // Only auto-calculate if retensi is empty (not manually set)
+            if (retensiInput.value) return;
+            
+            var tglStr = tglInput.value;
+            var kkSelected = kkSelect.options[kkSelect.selectedIndex];
+            if (!tglStr || !kkSelected || !kkSelected.value) return;
+            
+            var retAktif = parseInt(kkSelected.getAttribute('data-retensi-aktif') || '0');
+            var retInaktif = parseInt(kkSelected.getAttribute('data-retensi-inaktif') || '0');
+            var totalYears = retAktif + retInaktif;
+            
+            if (totalYears <= 0) return;
+            
+            var tgl = new Date(tglStr + 'T00:00:00');
+            tgl.setFullYear(tgl.getFullYear() + totalYears);
+            var y = tgl.getFullYear();
+            var m = String(tgl.getMonth() + 1).padStart(2, '0');
+            var d = String(tgl.getDate()).padStart(2, '0');
+            retensiInput._flatpickr && retensiInput._flatpickr.setDate(y + '-' + m + '-' + d);
+        }
+
+        // ── Retensi Status Indicator ──
+        function updateRetensiIndicator() {
+            var retensiInput = document.querySelector('input[name="tanggal_retensi_berakhir"]');
+            var indicator = document.getElementById('retensiIndicator');
+            var icon = document.getElementById('retensiIcon');
+            var text = document.getElementById('retensiText');
+            if (!retensiInput || !indicator || !icon || !text) return;
+            
+            var val = retensiInput.value;
+            if (!val) { indicator.style.display = 'none'; return; }
+            
+            var today = new Date();
+            today.setHours(0,0,0,0);
+            var retensiDate = new Date(val + 'T00:00:00');
+            var diffDays = Math.round((retensiDate - today) / (1000 * 60 * 60 * 24));
+            
+            indicator.style.display = 'block';
+            if (diffDays < 0) {
+                icon.className = 'badge rounded-pill fw-700';
+                icon.style.background = '#fef2f2';
+                icon.style.color = '#dc2626';
+                text.textContent = 'Sudah lewat ' + Math.abs(diffDays) + ' hari';
+            } else if (diffDays <= 30) {
+                icon.className = 'badge rounded-pill fw-700';
+                icon.style.background = '#fef3c7';
+                icon.style.color = '#b45309';
+                text.textContent = diffDays + ' hari lagi';
+            } else if (diffDays <= 365) {
+                icon.className = 'badge rounded-pill fw-700';
+                icon.style.background = '#dbeafe';
+                icon.style.color = '#2563eb';
+                text.textContent = Math.floor(diffDays / 30) + ' bulan lagi';
+            } else {
+                icon.className = 'badge rounded-pill fw-700';
+                icon.style.background = '#dcfce7';
+                icon.style.color = '#15803d';
+                text.textContent = Math.floor(diffDays / 365) + ' tahun lagi';
+            }
+        }
+
+        // Wire up auto-retensi calculation
+        var tglInput = document.querySelector('input[name="tanggal_dibuat"]');
+        var kkSelect = document.querySelector('select[name="kode_klasifikasi_id"]');
+        var retensiInput = document.querySelector('input[name="tanggal_retensi_berakhir"]');
+        
+        if (tglInput) tglInput.addEventListener('change', function() {
+            calculateRetensi();
+            setTimeout(updateRetensiIndicator, 100);
+        });
+        if (kkSelect) kkSelect.addEventListener('change', function() {
+            setTimeout(calculateRetensi, 200);
+            setTimeout(updateRetensiIndicator, 300);
+        });
+        if (retensiInput) retensiInput.addEventListener('change', function() {
+            setTimeout(updateRetensiIndicator, 100);
+        });
+        
+        // Initial indicator
+        setTimeout(updateRetensiIndicator, 500);
+    }, 50);
+});
+</script>
+{{end}}

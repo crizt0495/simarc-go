@@ -1,0 +1,32 @@
+# ── Build artifacts ──
+tmp/
+server
+simarc-server
+*.exe
+*.out
+*.test
+*.test.exe
+
+# ── Environment ──
+.env
+
+# ── Runtime storage (regenerated) ──
+storage/app/backups/*
+storage/qr-codes/*
+public/storage/qr-codes/*
+!storage/app/backups/.gitkeep
+!storage/app/.gitkeep
+
+# ── IDE ──
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── macOS app bundle symlink ──
+SIMARC.app

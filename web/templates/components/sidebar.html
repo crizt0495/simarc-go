@@ -1,0 +1,207 @@
+{{define "components/sidebar.html"}}
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo-icon">
+      <i class="bi bi-archive-fill"></i>
+    </div>
+    <div>
+      <div class="sidebar-logo-text">{{.AppName}}</div>
+      <div class="sidebar-logo-sub">Sistem Informasi Manajemen Arsip</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" id="sidebarNav">
+    <div class="sidebar-section-label">Dashboard</div>
+    <a href="/dashboard" class="sidebar-link {{if eq .CurrentPath "/dashboard"}}active{{end}}">
+      <i class="bi bi-speedometer2"></i> Dashboard Utama
+    </a>
+    <a href="/advanced/dashboard" class="sidebar-link {{if eq .CurrentPath "/advanced/dashboard"}}active{{end}}">
+      <i class="bi bi-cpu"></i> Analitik Lanjutan
+    </a>
+
+    <div class="sidebar-section-label">Manajemen Arsip</div>
+    <a href="/arsip" class="sidebar-link {{if eq .CurrentPath "/arsip"}}active{{end}}">
+      <i class="bi bi-file-earmark-text"></i> Daftar Arsip
+    </a>
+    <a href="/pemberkasan" class="sidebar-link {{if eq .CurrentPath "/pemberkasan"}}active{{end}}">
+      <i class="bi bi-folder-plus"></i> Pemberkasan
+    </a>
+    <a href="/arsip/pemindahan" class="sidebar-link {{if eq .CurrentPath "/arsip/pemindahan"}}active{{end}}">
+      <i class="bi bi-map"></i> Pemindahan Arsip
+    </a>
+    <a href="/pemusnahan" class="sidebar-link {{if eq .CurrentPath "/pemusnahan"}}active{{end}}">
+      <i class="bi bi-trash"></i> Pemusnahan Arsip
+    </a>
+
+    <div class="sidebar-section-label">Layanan</div>
+    <a href="/peminjaman/create" class="sidebar-link {{if eq .CurrentPath "/peminjaman/create"}}active{{end}}">
+      <i class="bi bi-file-earmark-arrow-up"></i> Permohonan Pinjam
+    </a>
+    <a href="/peminjaman" class="sidebar-link {{if eq .CurrentPath "/peminjaman"}}active{{end}}">
+      <i class="bi bi-journal-check"></i> Daftar Peminjaman
+    </a>
+
+    <div class="sidebar-section-label">Master Data</div>
+    <a href="/unit-kerja" class="sidebar-link {{if eq .CurrentPath "/unit-kerja"}}active{{end}}">
+      <i class="bi bi-building"></i> Unit Kerja
+    </a>
+    <a href="/lokasi-arsip" class="sidebar-link {{if eq .CurrentPath "/lokasi-arsip"}}active{{end}}">
+      <i class="bi bi-geo-alt"></i> Lokasi Arsip
+    </a>
+    <a href="/users" class="sidebar-link {{if eq .CurrentPath "/users"}}active{{end}}">
+      <i class="bi bi-people"></i> Petugas
+    </a>
+    <a href="/kode-klasifikasi" class="sidebar-link {{if eq .CurrentPath "/kode-klasifikasi"}}active{{end}}">
+      <i class="bi bi-tags"></i> Kode Klasifikasi
+    </a>
+    <a href="/jenis-arsip" class="sidebar-link {{if eq .CurrentPath "/jenis-arsip"}}active{{end}}">
+      <i class="bi bi-folder"></i> Jenis Arsip
+    </a>
+
+    <div class="sidebar-section-label">Laporan</div>
+    <a href="/search" class="sidebar-link {{if eq .CurrentPath "/search"}}active{{end}}">
+      <i class="bi bi-search"></i> Pencarian Arsip
+    </a>
+    <a href="/laporan" class="sidebar-link {{if eq .CurrentPath "/laporan"}}active{{end}}">
+      <i class="bi bi-graph-up"></i> Dashboard Laporan
+    </a>
+    <a href="/laporan/arsip" class="sidebar-link {{if eq .CurrentPath "/laporan/arsip"}}active{{end}}">
+      <i class="bi bi-file-earmark-text"></i> Laporan Arsip
+    </a>
+    <a href="/laporan/digital" class="sidebar-link {{if eq .CurrentPath "/laporan/digital"}}active{{end}}">
+      <i class="bi bi-cloud-check"></i> Arsip Digital
+    </a>
+    <a href="/laporan/pemberkasan" class="sidebar-link {{if eq .CurrentPath "/laporan/pemberkasan"}}active{{end}}">
+      <i class="bi bi-folder"></i> Laporan Pemberkasan
+    </a>
+    <a href="/laporan/lokasi" class="sidebar-link {{if eq .CurrentPath "/laporan/lokasi"}}active{{end}}">
+      <i class="bi bi-geo-alt"></i> Laporan per Lokasi
+    </a>
+    <a href="/laporan/klasifikasi" class="sidebar-link {{if eq .CurrentPath "/laporan/klasifikasi"}}active{{end}}">
+      <i class="bi bi-tags"></i> Laporan Klasifikasi
+    </a>
+    <a href="/laporan/retensi" class="sidebar-link {{if eq .CurrentPath "/laporan/retensi"}}active{{end}}">
+      <i class="bi bi-hourglass-split"></i> Laporan Retensi
+    </a>
+    <a href="/laporan/pemusnahan" class="sidebar-link {{if eq .CurrentPath "/laporan/pemusnahan"}}active{{end}}">
+      <i class="bi bi-trash"></i> Laporan Pemusnahan
+    </a>
+    <a href="/laporan/aktivitas" class="sidebar-link {{if eq .CurrentPath "/laporan/aktivitas"}}active{{end}}">
+      <i class="bi bi-clock-history"></i> Log Aktivitas
+    </a>
+    <a href="/laporan/statistik" class="sidebar-link {{if eq .CurrentPath "/laporan/statistik"}}active{{end}}">
+      <i class="bi bi-pie-chart"></i> Statistik
+    </a>
+
+    <div class="sidebar-section-label">Monitoring</div>
+    <a href="/monitoring/retensi" class="sidebar-link {{if eq .CurrentPath "/monitoring/retensi"}}active{{end}}">
+      <i class="bi bi-clock"></i> Monitoring Retensi
+    </a>
+    <a href="/jadwal-retensi" class="sidebar-link {{if eq .CurrentPath "/jadwal-retensi"}}active{{end}}">
+      <i class="bi bi-calendar-check"></i> Jadwal Retensi
+    </a>
+
+    <div class="sidebar-section-label">Administrasi</div>
+    <a href="/roles" class="sidebar-link {{if eq .CurrentPath "/roles"}}active{{end}}">
+      <i class="bi bi-person-badge"></i> Manajemen Role
+    </a>
+    <a href="/pengaturan" class="sidebar-link {{if eq .CurrentPath "/pengaturan"}}active{{end}}">
+      <i class="bi bi-gear"></i> Pengaturan
+    </a>
+    <a href="/backup" class="sidebar-link {{if eq .CurrentPath "/backup"}}active{{end}}">
+      <i class="bi bi-database"></i> Backup &amp; Restore
+    </a>
+    <a href="/blockchain" class="sidebar-link {{if eq .CurrentPath "/blockchain"}}active{{end}}">
+      <i class="bi bi-shield-check"></i> Blockchain Audit
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="/profil" class="sidebar-footer-link">
+      <i class="bi bi-person-circle"></i> Profil
+    </a>
+    <button class="sidebar-footer-link" id="sidebarLogoutBtn" style="width:100%;text-align:left;border:none;background:none;cursor:pointer">
+      <i class="bi bi-box-arrow-right"></i> Keluar
+    </button>
+    <form id="sidebar-logout-form" action="/logout" method="POST" style="display:none">
+      <input type="hidden" name="_token" value="{{.CSRFToken}}">
+    </form>
+  </div>
+</aside>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var nav = document.getElementById('sidebarNav');
+  var logoutBtn = document.getElementById('sidebarLogoutBtn');
+
+  // ── Sidebar logout (always active, mobile + desktop) ──
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {
+      document.getElementById('sidebar-logout-form')?.submit();
+    });
+  }
+
+  if (!nav) return;
+
+  // ── Sidebar section collapse on mobile (smooth animation) ──
+  if (window.innerWidth < 992) {
+    var labels = nav.querySelectorAll('.sidebar-section-label');
+    labels.forEach(function(label) {
+      var links = [];
+      var el = label.nextElementSibling;
+      while (el && el.tagName === 'A') {
+        links.push(el);
+        el = el.nextElementSibling;
+      }
+      if (links.length === 0) return;
+
+      // Style the section as collapsible
+      label.style.cursor = 'pointer';
+      label.style.userSelect = 'none';
+      label.style.display = 'flex';
+      label.style.alignItems = 'center';
+      label.style.justifyContent = 'space-between';
+
+      // Add chevron indicator
+      var chevron = document.createElement('i');
+      chevron.className = 'bi bi-chevron-right';
+      chevron.style.cssText = 'font-size:10px;opacity:0.4;transition:transform 0.25s ease';
+      label.appendChild(chevron);
+
+      // Wrap links in a container for smooth slide
+      var container = document.createElement('div');
+      container.className = 'sidebar-section-links';
+      container.style.cssText = 'overflow:hidden;max-height:0;transition:max-height 0.35s ease';
+      links.forEach(function(link) {
+        link.style.display = 'block';
+        container.appendChild(link);
+      });
+      label.parentNode.insertBefore(container, label.nextSibling);
+
+      // Check if any link is active
+      var hasActive = links.some(function(l) { return l.classList.contains('active'); });
+      if (hasActive) {
+        label.setAttribute('data-expanded', 'true');
+        container.style.maxHeight = container.scrollHeight + 'px';
+        chevron.style.transform = 'rotate(90deg)';
+        chevron.style.opacity = '0.7';
+      }
+
+      label.addEventListener('click', function() {
+        var expanded = label.getAttribute('data-expanded') === 'true';
+        label.setAttribute('data-expanded', !expanded);
+        if (expanded) {
+          container.style.maxHeight = '0';
+          chevron.style.transform = 'rotate(0deg)';
+          chevron.style.opacity = '0.4';
+        } else {
+          container.style.maxHeight = container.scrollHeight + 'px';
+          chevron.style.transform = 'rotate(90deg)';
+          chevron.style.opacity = '0.7';
+        }
+      });
+    });
+  }
+});
+</script>
+{{end}}

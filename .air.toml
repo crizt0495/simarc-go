@@ -1,0 +1,22 @@
+# ── Air Hot Reload Configuration ──
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  bin = "./tmp/simarc-server"
+  cmd = "go build -buildvcs=false -ldflags=\"-s -w\" -o ./tmp/simarc-server ./cmd/server/main.go"
+  delay = 1000
+  exclude_dir = ["tmp", "vendor", "web/static", "storage", "go"]
+  exclude_file = []
+  exclude_regex = [".*_test.go"]
+  exclude_unchanged = false
+  follow_symlink = false
+  full_bin = "./tmp/simarc-server"
+  include_dir = []
+  include_ext = ["go", "html", "env"]
+
+[log]
+  time = true
+
+[misc]
+  clean_on_exit = true

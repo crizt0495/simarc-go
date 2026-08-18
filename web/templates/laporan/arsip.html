@@ -1,0 +1,324 @@
+{{define "laporan/arsip.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+{{template "components/select2.html" .}}
+<style>
+/* ── Print-only styling for Arsip Report ── */
+@media print{
+.sidebar,.sidebar-overlay,.page-actions,#filterForm,.pagination,.navbar,.btn,.page-title-right{display:none!important}
+.main-content{margin-left:0!important;padding:0!important}
+.card{border:none!important;box-shadow:none!important;break-inside:avoid}
+table{page-break-inside:auto;font-size:11px}
+tr{page-break-inside:avoid;page-break-after:auto}
+body{color:#000}
+.badge{border:1px solid #000;padding:2px 6px!important}
+}
+.table-premium .uraian-cell {
+min-width: 0;
+white-space: normal;
+word-wrap: break-word;
+word-break: break-word;
+line-height: 1.6;
+color: #64748b;
+font-size: 0.82rem;
+}
+.table-premium .btn-detail {
+padding: 0.25rem 0.65rem;
+font-size: 0.75rem;
+border-radius: 6px;
+transition: all 0.15s ease;
+}
+.table-premium .btn-detail:hover {
+background-color: #1a56db;
+color: #fff;
+border-color: #1a56db;
+}
+</style>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title mb-0"><i class="bi bi-file-earmark-text"></i> Laporan Data Arsip</h1>
+            {{if .ShowUserUnitInfo}}<small class="text-muted"><i class="bi bi-info-circle"></i> Menampilkan arsip dari Unit Kerja: <strong>{{.UserUnitKerja}}</strong></small>{{end}}
+        </div>
+        <div class="page-actions">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary" onclick="printReport()" title="Cetak halaman ini"><i class="bi bi-printer me-1"></i>Cetak</button>
+                <a href="/laporan/arsip/export/pdf{{.QueryString}}" target="_blank" class="btn btn-outline-danger" title="Export ke PDF"><i class="bi bi-file-pdf me-1"></i>PDF</a>
+                <a href="/laporan/arsip/export/excel{{.QueryString}}" class="btn btn-outline-success" title="Export ke Excel"><i class="bi bi-file-excel me-1"></i>Excel</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">Total Arsip</h6>
+                        <h3 class="mb-0 fw-bold">{{.SummaryStats.Total}}</h3>
+                    </div>
+                    <div class="avatar-lg bg-primary rounded-circle d-flex align-items-center justify-content-center text-white"><i class="bi bi-file-earmark-text" style="font-size:1.5rem"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">Arsip Aktif</h6>
+                        <h3 class="mb-0 fw-bold">{{.SummaryStats.Aktif}}</h3>
+                    </div>
+                    <div class="avatar-lg bg-success rounded-circle d-flex align-items-center justify-content-center text-white"><i class="bi bi-check-circle" style="font-size:1.5rem"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-secondary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">Arsip Inaktif</h6>
+                        <h3 class="mb-0 fw-bold">{{.SummaryStats.Inaktif}}</h3>
+                    </div>
+                    <div class="avatar-lg bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white"><i class="bi bi-archive" style="font-size:1.5rem"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-4 border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">Diberkaskan</h6>
+                        <h3 class="mb-0 fw-bold">{{.SummaryStats.Diberkaskan}}</h3>
+                    </div>
+                    <div class="avatar-lg bg-info rounded-circle d-flex align-items-center justify-content-center text-white"><i class="bi bi-folder-check" style="font-size:1.5rem"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="/laporan/arsip" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-12"><h6 class="mb-3"><i class="bi bi-funnel"></i> Filter Data</h6></div>
+                <div class="col-md-3">
+                    <label class="form-label">Unit Kerja</label>
+                    <select class="form-select" name="unit_kerja_id">
+                        <option value="">Semua Unit Kerja</option>
+                        {{range .UnitKerjaList}}
+                        <option value="{{.ID}}"{{if eq $.RequestUnitKerjaID .ID}} selected{{end}}>{{.NamaUnit}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status_arsip">
+                        <option value="">Semua Status</option>
+                        <option value="aktif"{{if eq .RequestStatusArsip "aktif"}} selected{{end}}>Aktif</option>
+                        <option value="inaktif"{{if eq .RequestStatusArsip "inaktif"}} selected{{end}}>Inaktif</option>
+                        <option value="diberkaskan"{{if eq .RequestStatusArsip "diberkaskan"}} selected{{end}}>Diberkaskan</option>
+                        <option value="siap_penyusutan"{{if eq .RequestStatusArsip "siap_penyusutan"}} selected{{end}}>Siap Penyusutan</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Kode Klasifikasi</label>
+                    <select class="form-select select2-search" name="kode_klasifikasi_id">
+                        <option value="">Semua Klasifikasi</option>
+                        {{range .KodeKlasifikasiList}}
+                        <option value="{{.ID}}"{{if eq $.RequestKodeKlasifikasiID .ID}} selected{{end}}>{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Lokasi</label>
+                    <select class="form-select select2-search" name="lokasi_arsip_id">
+                        <option value="">Semua Lokasi</option>
+                        {{range .LokasiArsipList}}
+                        <option value="{{.ID}}"{{if eq $.RequestLokasiArsipID .ID}} selected{{end}}>{{.NamaLokasi}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tahun</label>
+                    <select class="form-select" name="tahun">
+                        <option value="">Semua Tahun</option>
+                        {{range .TahunList}}
+                        <option value="{{.}}"{{if eq $.RequestTahun .}} selected{{end}}>{{.}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Retensi</label>
+                    <select class="form-select" name="retensi_filter">
+                        <option value="">Semua</option>
+                        <option value="akan_berakhir"{{if eq .RequestRetensiFilter "akan_berakhir"}} selected{{end}}>Akan Berakhir (1 thn)</option>
+                        <option value="sudah_berakhir"{{if eq .RequestRetensiFilter "sudah_berakhir"}} selected{{end}}>Sudah Berakhir</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Rentang Tanggal</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control" name="start_date" value="{{.RequestStartDate}}" placeholder="Dari">
+                        <span class="input-group-text">-</span>
+                        <input type="date" class="form-control" name="end_date" value="{{.RequestEndDate}}" placeholder="Sampai">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Pencarian</label>
+                    <input type="text" class="form-control" name="search" value="{{.RequestSearch}}" placeholder="No. Arsip, Nama, atau Uraian...">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Filter</button>
+                </div>
+                {{if .HasFilters}}
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="/laporan/arsip" class="btn btn-outline-secondary w-100"><i class="bi bi-x-circle"></i> Reset</a>
+                </div>
+                {{end}}
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-premium align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="40">No</th><th style="min-width:130px">Nomor Arsip</th><th style="min-width:160px">Nama Arsip</th><th style="min-width:240px">Uraian</th><th width="100">Klasifikasi</th><th style="min-width:140px">Unit Kerja</th><th style="min-width:130px">Lokasi</th><th width="80">Status</th><th width="100">Tgl Dibuat</th><th width="110">Retensi</th><th width="100" class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $idx,$arsip := .ArsipList}}
+                    <tr>
+                        <td>{{add $.ArsipListFirstItem $idx}}</td>
+                        <td><strong>{{$arsip.NomorArsip}}</strong></td>
+                        <td>{{$arsip.NamaArsip}}</td>
+                        <td class="uraian-cell">{{$arsip.Uraian}}</td>
+                         <td><span class="badge bg-secondary bg-opacity-25 text-secondary px-2 py-1 fw-700" style="font-size:0.7rem;">{{if $arsip.KodeKlasifikasi}}{{$arsip.KodeKlasifikasi.KodeKlasifikasi}}{{else}}-{{end}}</span></td>
+                         <td>{{if $arsip.UnitKerja}}{{$arsip.UnitKerja.NamaUnit}}{{else}}-{{end}}</td>
+                         <td>{{if $arsip.LokasiArsip}}{{$arsip.LokasiArsip.NamaLokasi}}{{else}}-{{end}}</td>
+                         <td>
+                             <span class="badge rounded-pill bg-{{if eq $arsip.StatusArsip "aktif"}}success{{else if eq $arsip.StatusArsip "inaktif"}}secondary{{else if eq $arsip.StatusArsip "diberkaskan"}}info{{else if eq $arsip.StatusArsip "siap_penyusutan"}}warning{{else}}secondary{{end}} px-2 py-1 fw-700" style="font-size:0.65rem;">{{$arsip.StatusArsip}}</span>
+                         </td>
+                         <td>{{formatDate $arsip.TanggalDibuat}}</td>
+                         <td class="small">{{if $arsip.TanggalRetensiBerakhir}}<span{{if $arsip.RetensiExpired}} class="text-danger fw-semibold"{{end}}>{{$arsip.TanggalRetensiBerakhir}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                         <td class="text-center"><a href="/arsip/{{$arsip.ID}}" class="btn btn-sm btn-outline-primary btn-detail" title="Detail Arsip" target="_blank"><i class="bi bi-eye"></i> Detail</a></td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="11" class="text-center py-5"><div class="text-muted"><i class="bi bi-inbox display-4"></i><p class="mt-3 mb-0">Tidak ada data arsip</p><small class="text-muted">Coba ubah filter atau atur ulang pencarian</small></div></td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{if .ArsipListHasPages}}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top">
+            <div class="text-muted small">Menampilkan {{.ArsipListFirstItem}}–{{.ArsipListLastItem}} dari {{.ArsipListTotal}} data</div>
+            <div>{{.Pagination}}</div>
+        </div>
+        {{else}}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top">
+            <div class="text-muted small">Total: <strong>{{.count}}</strong> data</div>
+        </div>
+        {{end}}
+    </div>
+</div>
+<script>
+function printReport(){
+    const printWindow=window.open('','','height=768,width=1024');
+    const content=document.querySelector('.page-header').cloneNode(true);
+    const stats=document.querySelector('.row.mb-4').cloneNode(true);
+    const results=document.querySelector('.card:last-child').cloneNode(true);
+    const appName = document.querySelector('meta[name="app-name"]')?.content || 'SIMARC';
+    const institution = document.querySelector('meta[name="institution"]')?.content || '';
+    const today = new Date().toLocaleString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    printWindow.document.write('<html><head><title>Laporan Data Arsip</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('@page{ margin: 20mm 15mm 25mm 15mm; }');
+    printWindow.document.write('@page :first{ margin-top: 15mm; }');
+    printWindow.document.write('*{ box-sizing:border-box; }');
+    printWindow.document.write('body{ font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1e293b; line-height: 1.5; padding:0; margin:0; }');
+    printWindow.document.write('.report-header{ text-align:center; margin-bottom:20px; padding-bottom:15px; border-bottom:3px double #1e293b; }');
+    printWindow.document.write('.report-header h1{ font-size:16px; margin:0 0 3px; text-transform:uppercase; letter-spacing:0.5px; }');
+    printWindow.document.write('.report-header h2{ font-size:13px; margin:0 0 3px; font-weight:normal; color:#475569; }');
+    printWindow.document.write('.report-header .sub{ font-size:10px; color:#64748b; }');
+    printWindow.document.write('.report-title{ font-size:14px; font-weight:bold; text-align:center; margin:15px 0; text-transform:uppercase; }');
+    printWindow.document.write('.stats-row{ display:flex; gap:10px; margin:15px 0; flex-wrap:wrap; }');
+    printWindow.document.write('.stat-card{ flex:1; min-width:120px; border:1px solid #e2e8f0; border-radius:6px; padding:10px 12px; text-align:center; }');
+    printWindow.document.write('.stat-card .label{ font-size:9px; text-transform:uppercase; color:#64748b; letter-spacing:0.5px; }');
+    printWindow.document.write('.stat-card .value{ font-size:18px; font-weight:bold; color:#1e293b; margin-top:3px; }');
+    printWindow.document.write('table{ width:100%; border-collapse:collapse; margin:10px 0; }');
+    printWindow.document.write('th{ background:#1e293b !important; color:#fff !important; padding:7px 6px; font-size:9px; text-transform:uppercase; letter-spacing:0.3px; text-align:left; border:1px solid #334155; }');
+    printWindow.document.write('td{ padding:5px 6px; font-size:10px; border:1px solid #e2e8f0; vertical-align:top; }');
+    printWindow.document.write('tr:nth-child(even){ background:#f8fafc; }');
+    printWindow.document.write('.badge{ display:inline-block; padding:1px 6px; font-size:8px; border-radius:3px; background:#e2e8f0; }');
+    printWindow.document.write('.report-footer{ position:fixed; bottom:10px; left:15mm; right:15mm; text-align:center; font-size:8px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:5px; }');
+    printWindow.document.write('.report-footer .page:after{ content: counter(page); }');
+    printWindow.document.write('@media print{ .no-print{ display:none!important; } }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    
+    // Header institusi
+    printWindow.document.write('<div class="report-header">');
+    printWindow.document.write('<h1>' + institution + '</h1>');
+    printWindow.document.write('<h2>' + appName + '</h2>');
+    printWindow.document.write('<div class="sub">Sistem Informasi Manajemen Kearsipan</div>');
+    printWindow.document.write('</div>');
+    
+    // Title
+    printWindow.document.write('<div class="report-title">Laporan Data Arsip</div>');
+    
+    // Filter info (jika ada)
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput && searchInput.value) {
+        printWindow.document.write('<div style="text-align:center;font-size:10px;color:#64748b;margin-bottom:10px">Pencarian: ' + searchInput.value + '</div>');
+    }
+    
+    // Stats
+    printWindow.document.write('<div class="stats-row">');
+    const statCards = stats.querySelectorAll('.card');
+    statCards.forEach(function(card){
+        const label = card.querySelector('h6')?.textContent || '';
+        const value = card.querySelector('h3')?.textContent || '';
+        printWindow.document.write('<div class="stat-card"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>');
+    });
+    printWindow.document.write('</div>');
+    
+    // Table
+    const table = results.querySelector('table');
+    if (table) {
+        // Clone table and remove Aksi column
+        const clonedTable = table.cloneNode(true);
+        const headerRow = clonedTable.querySelector('thead tr');
+        if (headerRow) {
+            const lastTh = headerRow.querySelector('th:last-child');
+            if (lastTh && lastTh.textContent.includes('Aksi')) lastTh.remove();
+        }
+        clonedTable.querySelectorAll('tbody tr').forEach(function(row){
+            const lastTd = row.querySelector('td:last-child');
+            if (lastTd) {
+                const link = lastTd.querySelector('a');
+                if (link && link.textContent.includes('Detail')) lastTd.remove();
+            }
+        });
+        printWindow.document.write(clonedTable.outerHTML);
+    }
+    
+    // Footer
+    printWindow.document.write('<div class="report-footer">');
+    printWindow.document.write('<span>Dicetak: ' + today + '</span>');
+    printWindow.document.write(' &mdash; Halaman <span class="page"></span>');
+    printWindow.document.write('</div>');
+    
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    setTimeout(function(){ printWindow.print(); printWindow.close(); }, 300);
+}
+</script>
+{{end}}

@@ -1,0 +1,52 @@
+{{define "auth/database-setup.html"}}{{template "layouts/platinum-auth.html" .}}{{end}}
+
+{{define "content"}}
+<style>
+    /* Widen the auth card so the database form has room to breathe */
+    .auth-card-wrap { max-width: 560px !important; }
+    .auth-card { padding: 36px 32px 28px !important; }
+    #dbSettingsForm .form-label { font-size: 13px; font-weight: 600; color: #334155; }
+    [data-theme="dark"] #dbSettingsForm .form-label { color: #cbd5e1; }
+    #dbSettingsForm .form-control {
+        min-height: 44px;
+        border-radius: 12px;
+        border: 1.5px solid #e2e8f0;
+        font-size: 14px;
+    }
+    [data-theme="dark"] #dbSettingsForm .form-control {
+        background: rgba(30,41,59,0.5);
+        border-color: rgba(255,255,255,0.1);
+        color: #f1f5f9;
+    }
+    #dbSettingsForm .input-group-text {
+        border-radius: 12px 0 0 12px;
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-right: 0;
+    }
+    [data-theme="dark"] #dbSettingsForm .input-group-text {
+        background: rgba(30,41,59,0.5);
+        border-color: rgba(255,255,255,0.1);
+        color: #94a3b8;
+    }
+    #dbSettingsForm .btn { border-radius: 12px; }
+</style>
+
+<div class="auth-appname">
+    <span><i class="bi bi-database me-1"></i> Konfigurasi Database</span>
+</div>
+
+<div class="auth-alert auth-alert-danger" id="dbSetupAlert">
+    <i class="bi bi-exclamation-octagon"></i>
+    <div>
+        <strong>Aplikasi tidak dapat terhubung ke database.</strong><br>
+        Periksa kembali kredensial di bawah. Setelah berhasil, Anda akan diarahkan ke halaman masuk.
+    </div>
+</div>
+
+{{template "database-form" .}}
+
+<div class="auth-footer mt-4">
+    Halaman ini tampil otomatis saat database tidak dapat dihubungi.
+</div>
+{{end}}

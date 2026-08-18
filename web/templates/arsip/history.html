@@ -1,0 +1,378 @@
+{{define "arsip/history.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+@keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }
+
+.history-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    border-radius: var(--r-xl);
+    padding: 1.75rem 2rem;
+    position: relative; overflow: hidden;
+    margin-bottom: 1.5rem;
+    animation: slideUp 0.35s ease both;
+}
+.history-hero::after {
+    content: ''; position: absolute; top: -50%; right: -5%;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+}
+.history-hero .hero-title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem; position: relative; z-index: 1; color: #fff; }
+.history-hero .hero-sub { font-size: 0.8rem; opacity: 0.7; font-weight: 500; position: relative; z-index: 1; color: rgba(255,255,255,0.7); }
+
+.stat-card-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1.25rem;
+    box-shadow: var(--sh-sm);
+    animation: slideUp 0.35s ease both;
+    display: flex; align-items: center; gap: 1rem;
+}
+.stat-card-mini .stat-icon {
+    width: 42px; height: 42px;
+    border-radius: var(--r);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+}
+.stat-card-mini .stat-label { font-size: 0.72rem; color: var(--ink-4); font-weight: 600; margin-bottom: 0.1rem; }
+.stat-card-mini .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--ink-2); letter-spacing: -0.03em; }
+
+.side-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-sm);
+    overflow: hidden;
+    animation: slideUp 0.35s ease 0.08s both;
+}
+.side-card .card-body-custom { padding: 1.5rem; }
+
+.blockchain-cta {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: var(--r-lg);
+    padding: 1.75rem;
+    color: #fff;
+    text-align: center;
+    animation: slideUp 0.35s ease 0.12s both;
+}
+
+/* Timeline Styles */
+.timeline-wrap {
+    position: relative;
+    padding-left: 2.5rem;
+    animation: slideUp 0.35s ease 0.08s both;
+}
+.timeline-wrap::before {
+    content: '';
+    position: absolute;
+    left: 11px; top: 4px; bottom: 4px;
+    width: 2px;
+    background: var(--border);
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+.timeline-item:last-child { margin-bottom: 0; }
+.timeline-dot {
+    position: absolute;
+    left: -2.5rem; top: 4px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem;
+    border: 2px solid var(--surface);
+    z-index: 2;
+}
+.timeline-dot.success { background: #10b981; color: #fff; }
+.timeline-dot.warning { background: #f59e0b; color: #fff; }
+.timeline-dot.danger { background: #ef4444; color: #fff; }
+.timeline-dot.info { background: #3b82f6; color: #fff; }
+.timeline-dot.primary { background: #6366f1; color: #fff; }
+.timeline-dot.secondary { background: #64748b; color: #fff; }
+
+.timeline-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1.1rem 1.25rem;
+    box-shadow: var(--sh-sm);
+    transition: all 0.2s ease;
+}
+.timeline-content:hover {
+    border-color: var(--brand-lt);
+    box-shadow: 0 4px 12px rgba(26,86,219,0.06);
+}
+.timeline-content .tl-title {
+    font-weight: 800; font-size: 0.85rem; color: var(--ink);
+    margin-bottom: 0.1rem;
+}
+.timeline-content .tl-time {
+    font-size: 0.72rem; color: var(--ink-4);
+}
+.timeline-content .tl-desc {
+    font-size: 0.8rem; color: var(--ink-3);
+    margin: 0.4rem 0 0.75rem 0;
+}
+.timeline-content .tl-footer {
+    display: flex; align-items: center; gap: 1rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+}
+.timeline-content .tl-user {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-weight: 700; color: var(--ink-2);
+}
+.timeline-content .tl-user .avatar-initials {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--brand-lt);
+    color: var(--brand);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 800;
+    flex-shrink: 0;
+}
+.timeline-content .tl-ip {
+    color: var(--ink-4);
+}
+.timeline-content .tl-ip i { margin-right: 0.25rem; }
+
+.empty-timeline { text-align: center; padding: 3rem 1rem; }
+.empty-timeline i { font-size: 3rem; color: var(--ink-4); opacity: 0.2; }
+.empty-timeline h6 { font-weight: 800; color: var(--ink-2); margin-top: 1rem; }
+.empty-timeline p { font-size: 0.82rem; color: var(--ink-4); }
+
+@media (max-width:768px) {
+    .history-hero { padding: 1.25rem; }
+    .history-hero .hero-title { font-size: 1.1rem; }
+    .side-card .card-body-custom { padding: 1rem; }
+    .timeline-wrap { padding-left: 2rem; }
+    .timeline-dot { left: -2rem; width: 20px; height: 20px; font-size: 0.5rem; }
+    .timeline-content { padding: 0.85rem 1rem; }
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- HERO -->
+    <div class="history-hero shadow-sm">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-clock-history me-2"></i>Riwayat Audit Trail</div>
+                <div class="hero-sub">Pelacakan perubahan data untuk arsip <strong style="color:#fbbf24;">{{.arsip.NomorArsip}}</strong></div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/arsip/{{.arsip.ID}}" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                    <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+                </a>
+                <a href="/arsip/{{.arsip.ID}}/history/export-pdf" class="btn btn-danger btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Ekspor PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- SIDEBAR LEFT -->
+        <div class="col-lg-4">
+            <!-- Stats -->
+            <div class="side-card mb-3">
+                <div class="card-body-custom">
+                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-bar-chart-fill me-2" style="color:var(--brand);"></i>Ringkasan Aktivitas</h6>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="stat-card-mini" style="animation-delay:0s;">
+                            <div class="stat-icon" style="background:var(--brand-lt);color:var(--brand);"><i class="bi bi-file-earmark-text"></i></div>
+                            <div>
+                                <div class="stat-label">Total Versi File</div>
+                                <div class="stat-value">{{len .versions}} <span style="font-size:0.7rem;font-weight:600;color:var(--ink-4);">Versi</span></div>
+                            </div>
+                        </div>
+                        <div class="stat-card-mini" style="animation-delay:0.05s;">
+                            <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#10b981;"><i class="bi bi-shield-check"></i></div>
+                            <div>
+                                <div class="stat-label">Aktivitas Tercatat</div>
+                                <div class="stat-value">{{len .logs}} <span style="font-size:0.7rem;font-weight:600;color:var(--ink-4);">Log</span></div>
+                            </div>
+                        </div>
+                        <div class="stat-card-mini" style="animation-delay:0.1s;">
+                            <div class="stat-icon" style="background:rgba(99,102,241,0.12);color:#6366f1;"><i class="bi bi-calendar-check"></i></div>
+                            <div>
+                                <div class="stat-label">Terakhir Diubah</div>
+                                <div class="stat-value" style="font-size:0.85rem;font-weight:700;">{{formatDateTime .arsip.UpdatedAt}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arsip Info -->
+            <div class="side-card mb-3">
+                <div class="card-body-custom">
+                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-info-circle-fill me-2" style="color:var(--brand);"></i>Informasi Arsip</h6>
+                    <div style="font-size:0.8rem;">
+                        <div class="d-flex justify-content-between py-1">
+                            <span style="color:var(--ink-4);">Dibuat</span>
+                            <span style="color:var(--ink-2);font-weight:600;">{{formatDateTime .arsip.CreatedAt}}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span style="color:var(--ink-4);">Update</span>
+                            <span style="color:var(--ink-2);font-weight:600;">{{formatDateTime .arsip.UpdatedAt}}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span style="color:var(--ink-4);">Klasifikasi</span>
+                            <span style="color:var(--ink-2);font-weight:600;text-align:right;max-width:160px;">{{if .arsip.KodeKlasifikasi}}{{.arsip.KodeKlasifikasi.KodeKlasifikasi}} - {{.arsip.KodeKlasifikasi.NamaKlasifikasi}}{{else}}<span style="color:var(--ink-4);font-weight:400;">—</span>{{end}}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span style="color:var(--ink-4);">Unit Kerja</span>
+                            <span style="color:var(--ink-2);font-weight:600;">{{if .arsip.UnitKerja}}{{.arsip.UnitKerja.NamaUnit}}{{else}}<span style="color:var(--ink-4);font-weight:400;">—</span>{{end}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blockchain CTA -->
+            <div class="blockchain-cta">
+                <div class="mb-2"><i class="bi bi-patch-check-fill" style="color:#60a5fa;font-size:1.8rem;"></i></div>
+                <h6 class="fw-800 mb-2" style="font-size:0.9rem;">Integritas Data</h6>
+                <p style="font-size:0.75rem;opacity:0.7;margin-bottom:1rem;">
+                    Setiap perubahan pada arsip ini diamankan menggunakan teknologi <strong>Hash Chaining (Internal Blockchain)</strong> untuk menjamin data tidak dimanipulasi.
+                </p>
+                <button class="btn btn-info btn-sm rounded-pill fw-800 px-4" onclick="verifyChain()" style="font-size:0.75rem;">
+                    <i class="bi bi-stars me-1"></i>Verifikasi Rantai Data
+                </button>
+            </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="col-lg-8">
+            <div class="timeline-wrap">
+                {{$logs := .logs}}
+                {{$versions := .versions}}
+                {{if gt (len $logs) 0}}
+                {{range $log := $logs}}
+                {{$color := "primary"}}
+                {{$icon := "info-circle"}}
+                {{$title := $log.Action}}
+                {{if eq $log.Action "create"}}{{$color = "success"}}{{$icon = "plus-circle"}}{{$title = "Arsip Dibuat"}}
+                {{else if eq $log.Action "update"}}{{$color = "warning"}}{{$icon = "pencil-square"}}{{$title = "Arsip Diperbarui"}}
+                {{else if eq $log.Action "delete"}}{{$color = "danger"}}{{$icon = "trash"}}{{$title = "Arsip Dihapus"}}
+                {{else if eq $log.Action "move_location"}}{{$color = "info"}}{{$icon = "geo-alt"}}{{$title = "Lokasi Dipindahkan"}}
+                {{else if eq $log.Action "berkaskan"}}{{$color = "primary"}}{{$icon = "folder-plus"}}{{$title = "Arsip Diberkaskan"}}
+                {{else if eq $log.Action "bulk_berkaskan"}}{{$color = "primary"}}{{$icon = "folder-plus"}}{{$title = "Arsip Diberkaskan (Bulk)"}}
+                {{else if eq $log.Action "keluarkan_pemberkasan"}}{{$color = "secondary"}}{{$icon = "folder-minus"}}{{$title = "Dikeluarkan dari Pemberkasan"}}
+                {{end}}
+                {{$userName := "System"}}
+                {{if $log.User}}{{$userName = $log.User.Name}}{{if eq $userName ""}}{{$userName = $log.User.Username}}{{end}}{{end}}
+                <div class="timeline-item">
+                    <div class="timeline-dot {{$color}}"><i class="bi bi-{{$icon}}"></i></div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="tl-title">{{$title}}</div>
+                                <div class="tl-time">{{formatDateTime $log.CreatedAt}} WIB</div>
+                            </div>
+                        </div>
+                        <div class="tl-desc">{{$log.Description}}</div>
+                        <div class="tl-footer">
+                            <span class="tl-user">
+                                <span class="avatar-initials">{{slice $userName 0 1}}</span>
+                                {{$userName}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+                {{else}}
+                <div class="empty-timeline">
+                    <i class="bi bi-inbox"></i>
+                    <h6>Belum Ada Riwayat</h6>
+                    <p>Belum ada aktivitas yang tercatat untuk arsip ini.</p>
+                </div>
+                {{end}}
+            </div>
+
+            <!-- Versi Table -->
+            {{if gt (len .versions) 0}}
+            <div class="side-card mt-3">
+                <div class="card-body-custom">
+                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-layers-fill me-2" style="color:var(--brand);"></i>Versi File</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm" style="margin-bottom:0;font-size:0.8rem;">
+                            <thead>
+                                <tr style="border-bottom:1px solid var(--border);">
+                                    <th style="color:var(--ink-4);font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Versi</th>
+                                    <th style="color:var(--ink-4);font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">File</th>
+                                    <th style="color:var(--ink-4);font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Pengubah</th>
+                                    <th style="color:var(--ink-4);font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Tanggal</th>
+                                    <th style="color:var(--ink-4);font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .versions}}
+                                <tr>
+                                    <td style="font-weight:700;">V{{.Version}}</td>
+                                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{.FilePath}}">{{.FilePath}}</td>
+                                    <td>{{.ChangedBy}}</td>
+                                    <td>{{formatDateTime .CreatedAt}}</td>
+                                    <td><a href="/arsip/version/{{.ID}}/download" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size:0.7rem;font-weight:700;"><i class="bi bi-download me-1"></i>Unduh</a></td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+<!-- Loading modal template for verifyChain -->
+<template data-modal="verifyLoading">
+  <div class="sm-body" style="text-align:center;padding:2rem;">
+    <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <h6 class="fw-700 mt-2">Memulai Verifikasi...</h6>
+    <p class="text-muted small mb-0">Mengecek integritas hash chaining pada blockchain...</p>
+  </div>
+</template>
+
+<script>
+function verifyChain(){
+    if (typeof SimarcModal === 'undefined') { return; }
+    SimarcModal.show('verifyLoading', { size: 'sm' });
+    
+    fetch('/blockchain/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            SimarcModal.hide('verifyLoading');
+            var result = data.data;
+            if (result && result.is_valid) {
+                SimarcModal.confirm({
+                    title: 'Verifikasi Berhasil!',
+                    message: 'Rantai data aman. Divalidasi ' + result.total_blocks + ' blok tanpa anomali.',
+                    icon: 'check-circle-fill',
+                    iconColor: 'success',
+                    confirmText: 'OK',
+                    danger: false
+                });
+            } else {
+                SimarcModal.confirm({
+                    title: 'Anomali Terdeteksi!',
+                    message: 'Ditemukan blok yang tidak valid. Hubungi Administrator!',
+                    icon: 'x-circle-fill',
+                    iconColor: 'danger',
+                    confirmText: 'OK',
+                    danger: true
+                });
+            }
+        })
+        .catch(function() {
+            SimarcModal.hide('verifyLoading');
+            SimarcModal.toast('Gagal menghubungi server verifikasi.', 'error');
+        });
+}
+</script>
+{{end}}

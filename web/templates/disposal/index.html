@@ -1,0 +1,84 @@
+{{define "disposal/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1"><i class="bi bi-recycle text-primary"></i> Dashboard Penyusutan Arsip</h2>
+                    <p class="text-muted mb-0">Sistem otomatis berdasarkan Kode Klasifikasi & Masa Retensi</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form action="/disposal/auto-create-schedules" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Auto-create jadwal untuk semua arsip overdue?')"><i class="bi bi-magic"></i> Auto-Create Jadwal</button>
+                    </form>
+                    <a href="/disposal/export?format=json" class="btn btn-outline-secondary"><i class="bi bi-download"></i> Export</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-3"><div class="card stat-card gradient-primary"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-white-50 mb-2">Total Arsip</h6><h3 class="mb-0">{{.Summary.TotalArchives}}</h3></div><div class="stat-icon"><i class="bi bi-archive"></i></div></div></div></div></div>
+        <div class="col-md-3"><div class="card stat-card gradient-warning"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-white-50 mb-2">Ready for Disposal</h6><h3 class="mb-0">{{.Summary.TotalReadyForDisposal}}</h3></div><div class="stat-icon"><i class="bi bi-clock-history"></i></div></div></div></div></div>
+        <div class="col-md-3"><div class="card stat-card gradient-danger"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-white-50 mb-2">Overdue (Critical)</h6><h3 class="mb-0">{{.Summary.TotalOverdue}}</h3></div><div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div></div></div></div></div>
+        <div class="col-md-3"><div class="card stat-card gradient-success"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h6 class="text-white-50 mb-2">Classifications</h6><h3 class="mb-0">{{.Summary.TotalClassifications}}</h3></div><div class="stat-icon"><i class="bi bi-folder"></i></div></div></div></div></div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card"><div class="card-header"><h5 class="mb-0"><i class="bi bi-pie-chart"></i> Rekomendasi Penyusutan by Type</h5></div><div class="card-body"><div class="row">{{range $type, $count := .Summary.DisposalByType}}<div class="col-6 mb-3"><div class="d-flex align-items-center"><div class="me-3"><i class="bi {{if eq $type "dimusnahkan"}}bi-fire text-danger{{else if eq $type "permanen"}}bi-star text-primary{{else if eq $type "transfer_anri"}}bi-box text-info{{else if eq $type "alih_media"}}bi-file-earmark-arrow-up text-success{{else if eq $type "ditinjau_kembali"}}bi-search text-warning{{else}}bi-pin text-secondary{{end}}" style="font-size: 1.5rem;"></i></div><div><div class="text-muted small">{{$type}}</div><div class="fw-bold">{{$count}}</div></div></div></div>{{end}}</div></div></div>
+        </div>
+        <div class="col-md-6">
+            <div class="card"><div class="card-header"><h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5></div><div class="card-body"><div class="d-grid gap-2"><a href="/jadwal-retensi" class="btn btn-outline-primary"><i class="bi bi-calendar-check"></i> Lihat Jadwal Retensi</a><a href="/kode-klasifikasi" class="btn btn-outline-info"><i class="bi bi-folder2-open"></i> Kelola Kode Klasifikasi</a><button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Print Dashboard</button></div></div></div>
+        </div>
+    </div>
+    {{if gt (len .Summary.UrgentItems) 0}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white"><h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Top 20 Arsip Overdue (Prioritas Tertinggi)</h5></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light"><tr><th>Kode Klasifikasi</th><th>No. Arsip</th><th>Nama Arsip</th><th>Overdue</th><th>Rekomendasi</th><th>Urgency</th><th>Aksi</th></tr></thead>
+                            <tbody>
+                                {{range $item := .Summary.UrgentItems}}
+                                <tr>
+                                    <td><a href="/disposal/classification/{{$item.Classification}}" class="text-decoration-none">{{$item.Classification}}</a></td>
+                                    <td><strong>{{$item.Arsip.NomorArsip}}</strong></td>
+                                    <td><div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{$item.Arsip.NamaArsip}}">{{$item.Arsip.NamaArsip}}</div></td>
+                                    <td><span class="badge bg-danger">{{$item.DaysUntilDisposal}} hari</span></td>
+                                    <td><span class="badge bg-{{if eq $item.DisposalRecommendation "dimusnahkan"}}danger{{else if eq $item.DisposalRecommendation "permanen"}}primary{{else if eq $item.DisposalRecommendation "transfer_anri"}}info{{else if eq $item.DisposalRecommendation "alih_media"}}success{{else if eq $item.DisposalRecommendation "ditinjau_kembali"}}warning{{else}}secondary{{end}}">{{$item.DisposalRecommendation}}</span></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-{{if ge $item.UrgencyScore 80}}danger{{else if ge $item.UrgencyScore 60}}warning{{else}}info{{end}}" role="progressbar" style="width: {{$item.UrgencyScore}}%" aria-valuenow="{{$item.UrgencyScore}}" aria-valuemin="0" aria-valuemax="100">{{$item.UrgencyScore}}%</div>
+                                        </div>
+                                    </td>
+                                    <td><a href="/arsip/{{$item.Arsip.ID}}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{end}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card"><div class="card-header"><h5 class="mb-0"><i class="bi bi-folder"></i> Klasifikasi dengan Arsip Overdue/Ready</h5></div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover mb-0"><thead class="table-light"><tr><th>Kode</th><th>Nama Klasifikasi</th><th>Retensi</th><th>Total Arsip</th><th>Overdue</th><th>Ready Soon</th><th>Urgency Score</th><th>Aksi</th></tr></thead><tbody>{{range $class := .Summary.Classifications}}{{if or (ne $class.OverdueDisposal 0) (ne $class.ReadyForDisposal 0)}}<tr><td><strong>{{$class.KodeKlasifikasi}}</strong></td><td><div style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{$class.NamaKlasifikasi}}">{{$class.NamaKlasifikasi}}</div></td><td><span class="badge bg-info">{{$class.TotalRetensiTahun}} tahun</span></td><td>{{$class.TotalArsip}}</td><td>{{if ne $class.OverdueDisposal 0}}<span class="badge bg-danger">{{$class.OverdueDisposal}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td><td>{{if ne $class.ReadyForDisposal 0}}<span class="badge bg-warning">{{$class.ReadyForDisposal}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td><td><span class="badge bg-{{if ge $class.DisposalUrgencyScore 80}}danger{{else if ge $class.DisposalUrgencyScore 60}}warning{{else}}success{{end}}">{{$class.DisposalUrgencyScore}}%</span></td><td><div class="btn-group btn-group-sm"><a href="/disposal/classification/{{$class.KodeKlasifikasi}}" class="btn btn-outline-primary" title="Detail"><i class="bi bi-eye"></i></a><a href="/disposal/classification/{{$class.KodeKlasifikasi}}/archives" class="btn btn-outline-info" title="List Arsip"><i class="bi bi-list-ul"></i></a></div></td></tr>{{end}}{{end}}</tbody></table></div></div></div>
+        </div>
+    </div>
+</div>
+<style>
+    .stat-card { border: none; border-radius: 16px; }
+    .gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .gradient-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .gradient-danger { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }
+    .gradient-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .stat-card .card-body { padding: 1.5rem; }
+    .stat-icon i { font-size: 2.5rem; color: rgba(255,255,255,0.5); }
+    .text-white-50 { color: rgba(255,255,255,0.7) !important; }
+    .stat-card h3 { color: white; }
+</style>
+{{end}}

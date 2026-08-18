@@ -1,0 +1,115 @@
+{{define "kode-klasifikasi/create.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.create-wrap { max-width: 800px; margin: 0 auto; }
+.create-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--sh); overflow: hidden; animation: slideUp 0.35s ease both; }
+.create-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%); padding: 1.75rem 2rem; position: relative; overflow: hidden; }
+.create-header::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+.create-header h4 { font-weight: 800; color: #fff; margin-bottom: 0.2rem; position: relative; z-index: 1; }
+.create-header p { color: rgba(255,255,255,0.75); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
+.create-body { padding: 2rem; }
+.form-field { margin-bottom: 1.25rem; }
+.form-field label { display: block; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); margin-bottom: 0.4rem; }
+.form-field label .req { color: var(--danger); margin-left: 2px; }
+.form-field .form-control, .form-field .form-select { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 0.85rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit; }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field textarea.form-control { min-height: 80px; resize: vertical; }
+.form-field .form-text { font-size: 0.72rem; color: var(--ink-4); margin-top: 0.2rem; }
+.form-check-custom { display: flex; align-items: center; gap: 0.5rem; }
+.form-check-custom input { width: 18px; height: 18px; accent-color: var(--brand); }
+.form-check-custom label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
+@media (max-width: 768px) { .create-header { padding: 1.25rem; } .create-body { padding: 1.25rem; } }
+</style>
+<div class="container-fluid py-3 py-xl-4">
+    <div class="create-wrap">
+        <div class="create-card shadow-sm">
+            <div class="create-header">
+                <h4><i class="bi bi-tags me-2"></i>Tambah Kode Klasifikasi</h4>
+                <p>Buat kode klasifikasi baru untuk pengelompokan arsip</p>
+            </div>
+            <div class="create-body">
+                <form method="POST" action="/kode-klasifikasi">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Kode Klasifikasi <span class="req">*</span></label>
+                                <input type="text" class="form-control" name="kode_klasifikasi" value="{{.OldKodeKlasifikasi}}" required placeholder="Contoh: ARS-001">
+                                <div class="form-text">Kode unik untuk klasifikasi</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Nama Klasifikasi <span class="req">*</span></label>
+                                <input type="text" class="form-control" name="nama_klasifikasi" value="{{.OldNamaKlasifikasi}}" required placeholder="Contoh: Arsip Kepegawaian">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-field">
+                                <label>Retensi Aktif (tahun) <span class="req">*</span></label>
+                                <input type="number" class="form-control" name="retensi_aktif" value="{{.OldRetensiAktif}}" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-field">
+                                <label>Retensi Inaktif (tahun) <span class="req">*</span></label>
+                                <input type="number" class="form-control" name="retensi_inaktif" value="{{.OldRetensiInaktif}}" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-field">
+                                <label>Penyusutan Arsip <span class="req">*</span></label>
+                                <select class="form-select" name="penyusutan_arsip" required>
+                                    <option value="">Pilih jenis</option>
+                                    <option value="musnah" {{if eq .OldPenyusutanArsip "musnah"}}selected{{end}}>Musnah</option>
+                                    <option value="permanen" {{if eq .OldPenyusutanArsip "permanen"}}selected{{end}}>Permanen</option>
+                                    <option value="dinilai_kembali" {{if eq .OldPenyusutanArsip "dinilai_kembali"}}selected{{end}}>Dinilai Kembali</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Klasifikasi Keamanan <span class="req">*</span></label>
+                                <select class="form-select" name="klasifikasi_keamanan" required>
+                                    <option value="">Pilih klasifikasi</option>
+                                    <option value="terbuka" {{if eq .OldKlasifikasiKeamanan "terbuka"}}selected{{end}}>Terbuka</option>
+                                    <option value="terbatas" {{if eq .OldKlasifikasiKeamanan "terbatas"}}selected{{end}}>Terbatas</option>
+                                    <option value="rahasia" {{if eq .OldKlasifikasiKeamanan "rahasia"}}selected{{end}}>Rahasia</option>
+                                    <option value="sangat_rahasia" {{if eq .OldKlasifikasiKeamanan "sangat_rahasia"}}selected{{end}}>Sangat Rahasia</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Parent Klasifikasi</label>
+                                <select class="form-select" name="parent_id">
+                                    <option value="">Tidak ada parent</option>
+                                    {{range .Opts}}
+                                    <option value="{{.ID}}" {{if eq $.OldParentID .ID}}selected{{end}}>{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label>Dasar Pertimbangan</label>
+                        <textarea class="form-control" name="dasar_pertimbangan" rows="3">{{.OldDasarPertimbangan}}</textarea>
+                    </div>
+                    <div class="form-check-custom mb-4">
+                        <input type="checkbox" id="is_active" name="is_active" value="1" {{if .OldIsActive}}checked{{end}}>
+                        <label for="is_active">Aktif</label>
+                    </div>
+                    <hr style="border-color:var(--border);margin:1.5rem 0;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <a href="/kode-klasifikasi" class="btn btn-secondary rounded-pill fw-700 px-4 btn-sm"><i class="bi bi-arrow-left me-1"></i>Batal</a>
+                        <button type="submit" class="btn btn-primary rounded-pill fw-800 px-5 py-2 shadow-sm"><i class="bi bi-save me-2"></i>Simpan Klasifikasi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

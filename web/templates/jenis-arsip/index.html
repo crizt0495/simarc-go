@@ -1,0 +1,150 @@
+{{define "jenis-arsip/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+    .jenis-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #6d28d9 100%);
+        border-radius: var(--r-xl);
+        padding: 1.75rem 2rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .jenis-hero::after {
+        content: '';
+        position: absolute;
+        top: -40%; right: -5%;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .jenis-hero .hero-title {
+        font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
+    }
+    .jenis-hero .hero-sub {
+        font-size: 0.8rem; opacity: 0.7; font-weight: 500;
+    }
+    .premium-table thead th {
+        background: transparent;
+        border: none;
+        color: var(--ink-4);
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+    .premium-table tbody tr {
+        transition: all 0.15s ease;
+        border-bottom: 1px solid var(--border);
+    }
+    .premium-table tbody tr:hover { background: rgba(26,86,219,0.02); }
+    .premium-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        font-size: 0.85rem;
+        color: var(--ink-2);
+    }
+    .fade-up { animation: fadeUp 0.35s ease both; }
+    .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+    @media (max-width: 768px) {
+        .jenis-hero { padding: 1.25rem; }
+        .jenis-hero .hero-title { font-size: 1.1rem; }
+        .premium-table thead { display: none; }
+        .premium-table tbody tr {
+            display: block; margin-bottom: 0.75rem;
+            border: 1px solid var(--border); border-radius: var(--r);
+            padding: 0.75rem; background: var(--surface);
+        }
+        .premium-table tbody td {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.4rem 0 !important; border: none !important;
+            border-bottom: 1px solid var(--border) !important;
+            text-align: right; font-size: 0.8rem;
+        }
+        .premium-table tbody td:last-child { border-bottom: none !important; }
+        .premium-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700; color: var(--ink-3);
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+            padding-right: 0.75rem;
+        }
+    }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="jenis-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-folder me-2"></i>Jenis Arsip</div>
+                <div class="hero-sub">Kelola kategori dan jenis arsip untuk klasifikasi dokumen</div>
+            </div>
+            <a href="/jenis-arsip/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-plus-lg me-1"></i>Tambah Jenis
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm fade-up-d1" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-body" style="padding:1.25rem;">
+            <form method="GET" action="/jenis-arsip" class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search" placeholder="Cari: Kode, Nama, Keterangan..." value="{{.Search}}" style="font-size:0.85rem;">
+                        <button type="submit" class="btn btn-primary" style="font-size:0.85rem;"><i class="bi bi-search"></i></button>
+                        {{if .Search}}<a href="/jenis-arsip" class="btn btn-outline-secondary" style="font-size:0.85rem;"><i class="bi bi-x-lg"></i></a>{{end}}
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table premium-table mb-0">
+                    <thead>
+                        <tr>
+                            <th width="60">No</th>
+                            <th width="120">Kode</th>
+                            <th>Nama Jenis</th>
+                            <th>Keterangan</th>
+                            <th width="150">Dibuat</th>
+                            <th width="120" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range $i, $v := .List}}
+                        <tr>
+                            <td data-label="No">{{add $i $.FirstItem}}</td>
+                            <td data-label="Kode"><span class="badge-soft badge-soft-primary">{{$v.KodeJenis}}</span></td>
+                            <td data-label="Nama"><strong style="font-size:0.88rem;">{{$v.NamaJenis}}</strong></td>
+                            <td data-label="Keterangan">{{if $v.Keterangan}}<span class="text-muted small">{{$v.Keterangan}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                            <td data-label="Dibuat"><span class="small fw-600" style="color:var(--ink-3);"><i class="bi bi-calendar3 me-1"></i>{{$v.CreatedAt}}</span></td>
+                            <td class="text-center" data-label="Aksi">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="/jenis-arsip/{{$v.ID}}/edit" class="btn-crud btn-crud-edit" title="Edit" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>
+                                    <form action="/jenis-arsip/{{$v.ID}}/delete" method="POST" class="d-inline">
+                                        <button type="button" class="btn-crud btn-crud-del" onclick="if(confirm('Hapus jenis arsip ini?')){this.closest('form').submit()}" title="Hapus" data-bs-toggle="tooltip"><i class="bi bi-trash3"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted"><i class="bi bi-folder-open d-block mb-2" style="font-size:2.5rem;opacity:0.3;"></i><h6 class="fw-700">Belum Ada Data</h6><small>Tidak ada data jenis arsip</small></div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+
+                {{if .HasPages}}
+                <div class="d-flex justify-content-center mt-3">
+                    {{.Pagination}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

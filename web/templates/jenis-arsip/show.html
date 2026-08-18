@@ -1,0 +1,17 @@
+{{define "jenis-arsip/show.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header"><i class="bi bi-tags me-2"></i>Detail Jenis Arsip</div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Kode</dt>
+                <dd class="col-sm-9">{{.item.KodeJenis}}</dd>
+                <dt class="col-sm-3">Nama</dt>
+                <dd class="col-sm-9">{{.item.NamaJenis}}</dd>
+            </dl>
+            <a href="/jenis-arsip" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span></a>
+        </div>
+    </div>
+</div>
+{{end}}

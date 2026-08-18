@@ -1,0 +1,244 @@
+{{define "blockchain/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+
+    .blockchain-container { font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
+    .explorer-hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 30px; padding: 4rem 3rem; color: white; margin-bottom: 2rem; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); } @media (max-width: 576px) { .explorer-hero { padding: 1.5rem 1rem; border-radius: 20px; } }
+    .hero-glow { position: absolute; top: 0; right: 0; width: 300px; height: 300px; background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%); z-index: 1; }
+    .health-badge { display: inline-flex; align-items: center; gap: 10px; padding: 8px 20px; border-radius: 50px; background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 800; font-size: 0.85rem; border: 1px solid rgba(16, 185, 129, 0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.5rem; }
+    .health-badge.broken { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border-color: rgba(244, 63, 94, 0.3); }
+    .stat-box-cyber { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 1.5rem; transition: all 0.3s ease; }
+    .stat-box-cyber:hover { background: rgba(255,255,255,0.05); border-color: var(--brand); }
+    .stat-label-cyber { color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+    .stat-value-cyber { font-size: 1.5rem; font-weight: 800; color: white; }
+    .explorer-grid { display: grid; grid-template-columns: 1fr 400px; gap: 1.5rem; } @media (max-width: 1200px) { .explorer-grid { grid-template-columns: 1fr; } }
+    .card-explorer { background: white; border: 1px solid #e2e8f0; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); overflow: hidden; }
+    .card-header-explorer { padding: 1.5rem 2rem; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+    .block-item { padding: 1.25rem 2rem; border-bottom: 1px solid #f1f5f9; transition: all 0.2s; display: flex; align-items: center; gap: 20px; }
+    .block-item:hover { background: #f8fafc; }
+    .block-icon-box { width: 48px; height: 48px; background: var(--slate-50); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: var(--brand); border: 1px solid var(--slate-100); }
+    .block-hash-text { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--slate-500); } @media (max-width: 576px) { .block-hash-text { font-size: 0.65rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } }
+    .verify-form-box { background: linear-gradient(135deg, var(--brand) 0%, var(--purple-500) 100%); border-radius: 24px; padding: 2.5rem; color: white; margin-bottom: 1.5rem; }
+    .badge-cyber { padding: 5px 12px; border-radius: 8px; font-weight: 800; font-size: 0.65rem; text-transform: uppercase; }
+    @media (max-width: 1200px) { .explorer-grid { grid-template-columns: 1fr; } }
+</style>
+<div class="blockchain-container">
+    <div class="explorer-hero">
+        <div class="hero-glow"></div>
+        <div class="position-relative" style="z-index: 2;">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <div class="health-badge {{if .Integrity.IsValid}}{{else}}broken{{end}}">
+                        <i class="bi {{if .Integrity.IsValid}}bi-shield-fill-check{{else}}bi-shield-fill-exclamation{{end}}"></i>
+                        {{if .Integrity.IsValid}}Chain Integrity: 100% Healthy{{else}}ALERTA: Chain Compromised{{end}}
+                    </div>
+                    <h1 class="display-5 fw-900 mb-3">Blockchain Explorer</h1>
+                    <p class="opacity-75 fs-5 mb-4">Pusat Transparansi Data & Verifikasi Cryptographic Digital Arsip.</p>
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3"><div class="stat-box-cyber"><div class="stat-label-cyber">Total Blok</div><div class="stat-value-cyber">{{.Stats.TotalBlocks}}</div></div></div>
+                        <div class="col-6 col-md-3"><div class="stat-box-cyber"><div class="stat-label-cyber">Terverifikasi</div><div class="stat-value-cyber text-success">{{.Stats.VerifiedBlocks}}</div></div></div>
+                        <div class="col-6 col-md-3"><div class="stat-box-cyber"><div class="stat-label-cyber">Hari Ini</div><div class="stat-value-cyber text-info">{{.Stats.TodayBlocks}}</div></div></div>
+                        <div class="col-6 col-md-3"><div class="stat-box-cyber"><div class="stat-label-cyber">Node Aktif</div><div class="stat-value-cyber">Internal</div></div></div>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-none d-lg-block text-center">
+                    <div class="p-4 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-10 backdrop-blur">
+                        <i class="bi bi-cpu fs-1 mb-2 text-info d-block"></i>
+                        <h6 class="fw-800 text-info">Internal Ledger Active</h6>
+                        <code class="text-white opacity-50 small">SHA-256 Chaining Protocol v2.0</code>
+                        <hr class="border-white opacity-10">
+                        <div class="text-start small opacity-75">
+                            <div><i class="bi bi-clock me-2"></i>Last Block: {{if .Blocks}}{{ (index .Blocks 0).Timestamp }}{{else}}-{{end}}</div>
+                            <div class="text-truncate"><i class="bi bi-hash me-2"></i>Head: {{if .Blocks}}{{ (index .Blocks 0).CurrentHash }}{{else}}-{{end}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="explorer-grid">
+        <div class="explorer-main">
+            <div class="card-explorer">
+                <div class="card-header-explorer">
+                    <h5 class="fw-800 mb-0"><i class="bi bi-list-stars me-2 text-primary"></i>Daftar Blok Terakhir</h5>
+                    <div class="d-flex gap-2">
+                        <a href="/blockchain/export" class="btn btn-light btn-sm rounded-pill px-3 fw-700">EXPORT DATA</a>
+                        <button class="btn btn-primary btn-sm rounded-pill px-3 fw-700" onclick="verifyChain()">VERIFIKASI SEMUA</button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {{range .Blocks}}
+                    <div class="block-item">
+                        <div class="block-icon-box"><i class="bi bi-box"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <a href="/blockchain/{{.BlockNumber}}" class="fw-800 text-decoration-none">Block #{{.BlockNumber}}</a>
+                                <span class="text-muted small fw-600 ts-format">{{.Timestamp}}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <span class="badge-cyber {{if eq .Action "create"}}bg-success{{else if eq .Action "update"}}bg-primary{{else if eq .Action "delete"}}bg-danger{{else if eq .Action "import"}}bg-info{{else}}bg-secondary{{end}} bg-opacity-10 {{if eq .Action "create"}}text-success{{else if eq .Action "update"}}text-primary{{else if eq .Action "delete"}}text-danger{{else if eq .Action "import"}}text-info{{else}}text-secondary{{end}}">
+                                    {{if eq .Action "create"}}MENAMBAH{{else if eq .Action "update"}}MENGUBAH{{else if eq .Action "delete"}}MENGHAPUS{{else if eq .Action "import"}}IMPORT{{else}}{{.Action}}{{end}}
+                                </span>
+                                <span class="small fw-600 text-slate-700" style="font-size:0.72rem">
+                                    {{if eq .EntityType "arsip"}}<i class="bi bi-file-text"></i> {{end}}
+                                    {{if .EntityName}}<span title="{{.EntityID}}">{{truncate .EntityName 30}}</span>{{else}}{{.EntityType}} #{{truncate .EntityID 8}}{{end}}
+                                </span>
+                                <span class="block-hash-text text-truncate hash-preview" style="max-width:130px;cursor:pointer" onclick="copyHash('{{.CurrentHash}}')" title="Klik untuk salin hash">{{truncate .CurrentHash 16}}</span>
+                                {{if .UserName}}<span class="text-muted small" style="font-size:0.7rem"><i class="bi bi-person"></i> {{.UserName}}</span>{{end}}
+                            </div>
+                        </div>
+                        <div class="text-end d-flex flex-column align-items-end gap-1">
+                            <span class="badge-cyber {{if .IsValid}}bg-success bg-opacity-10 text-success{{else}}bg-danger bg-opacity-10 text-danger{{end}}">
+                                <i class="bi {{if .IsValid}}bi-check-circle-fill{{else}}bi-x-circle-fill{{end}} me-1"></i>
+                                {{if .IsValid}}VERIFIED{{else}}INVALID{{end}}
+                            </span>
+                            {{if eq .EntityType "Arsip"}}
+                            <a href="/supervision/certificate/{{.EntityID}}" target="_blank" class="text-warning text-decoration-none small fw-700 mt-1" style="font-size: 0.72rem;">
+                                <i class="bi bi-patch-check-fill me-1"></i>Sertifikat
+                            </a>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{else}}
+                    <div class="p-5 text-center text-muted italic">Belum ada blok tersimpan.</div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        <div class="explorer-side">
+            <div class="verify-form-box shadow-lg">
+                <i class="bi bi-shield-lock-fill fs-1 mb-3 d-block"></i>
+                <h4 class="fw-800 mb-2">Verifikasi Berkas</h4>
+                <p class="small opacity-75 mb-4">Validasi keaslian dokumen digital Anda langsung terhadap ledger blockchain internal kami.</p>
+                <div class="mb-3">
+                    <label class="small fw-800 opacity-75 mb-2">MASUKKAN KODE HASH / CID</label>
+                    <div class="input-group">
+                        <input type="text" id="verifyHash" class="form-control bg-white bg-opacity-10 border-white border-opacity-20 text-white rounded-start-3" placeholder="Contoh: 8a07b81e...">
+                        <button class="btn btn-light rounded-end-3 fw-800" onclick="checkHash()">CEK</button>
+                    </div>
+                </div>
+                <div class="text-center"><div class="vr mx-auto my-2 opacity-25" style="height: 20px;"></div></div>
+                <button class="btn btn-outline-light w-100 rounded-pill fw-800" onclick="showFileVerify()">
+                    <i class="bi bi-file-earmark-arrow-up me-2"></i>UNGGAH FILE UNTUK VERIFIKASI
+                </button>
+            </div>
+            <div class="card-explorer p-4">
+                <h6 class="fw-800 text-slate-800 mb-3"><i class="bi bi-heart-pulse-fill text-danger me-2"></i>Status Keamanan</h6>
+                <div class="d-flex justify-content-between small mb-2"><span class="text-muted fw-600">Protokol</span><span class="fw-800">SHA-256 Chain</span></div>
+                <div class="d-flex justify-content-between small mb-2"><span class="text-muted fw-600">Algoritma</span><span class="fw-800 text-primary">Merkle-Proof Style</span></div>
+                <div class="d-flex justify-content-between small mb-4"><span class="text-muted fw-600">Immutable Check</span><span class="badge bg-success bg-opacity-10 text-success fw-800">AKTIF</span></div>
+                <hr class="opacity-50">
+                <div class="p-3 bg-slate-50 rounded-4 border">
+                    <p class="small text-muted mb-0 fw-500">Sistem ini memastikan setiap perubahan pada arsip dikunci secara permanen. Jika ada akses database ilegal, sistem akan langsung mendeteksi ketidakcocokan hash.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<template data-modal="verifyModal">
+  <div class="sm-header">
+    <div class="sm-header-left">
+      <div class="sm-icon sm-icon-primary">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <div>
+        <h5 class="sm-title">Hasil Verifikasi</h5>
+        <p class="sm-subtitle">Detail verifikasi blockchain</p>
+      </div>
+    </div>
+    <button type="button" class="sm-btn-close" onclick="SimarcModal.hide('verifyModal')" aria-label="Close">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+  <div class="sm-body text-center" id="verifyResultContent"></div>
+  <div class="sm-footer" style="justify-content:center;">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('verifyModal')">
+      <i class="bi bi-x-lg me-1"></i>Tutup
+    </button>
+  </div>
+</template>
+<script>
+    // ── Format timestamps ──
+    document.querySelectorAll('.ts-format').forEach(function(el) {
+        var t = el.textContent.trim();
+        if (t && t.includes('T')) {
+            try {
+                var d = new Date(t);
+                var months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                el.textContent = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ', ' +
+                    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+            } catch(e) {}
+        }
+    });
+    // ── Copy hash ──
+    function copyHash(hash) {
+        navigator.clipboard.writeText(hash).then(function() {
+            if (typeof SimarcModal !== 'undefined' && SimarcModal.toast) {
+                SimarcModal.toast('Hash tersalin!', 'success', 1500);
+            }
+        }).catch(function() {});
+    }
+    // ── Verify all blocks (SimarcModal) ──
+    function verifyChain() {
+        const btn = event.target; const originalText = btn.innerHTML;
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>PROSES...';
+        fetch('/blockchain/verify', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '{{.CSRFToken}}' } })
+        .then(r => r.json()).then(data => {
+            if(typeof SimarcModal === 'undefined') return;
+            if(data.success) {
+                SimarcModal.confirm({ title: 'Blockchain Valid!', message: 'Semua blok (total ' + data.data.total_blocks + ') aman dan tidak ada manipulasi data.', icon: 'check-circle-fill', iconColor: 'success', confirmText: 'MANTAP' });
+            } else {
+                SimarcModal.confirm({ title: 'Waspada!', message: 'Ditemukan manipulasi pada ' + data.data.invalid_blocks + ' blok!', icon: 'exclamation-triangle-fill', iconColor: 'danger', confirmText: 'LIHAT DETAIL', danger: true });
+            }
+        })
+        .finally(() => { btn.disabled = false; btn.innerHTML = originalText; });
+    }
+    // ── Search hash (SimarcModal) ──
+    function checkHash() {
+        const hash = document.getElementById('verifyHash').value;
+        if(!hash || typeof SimarcModal === 'undefined') return;
+        fetch('/blockchain/block/search?hash=' + encodeURIComponent(hash))
+        .then(r => r.json()).then(data => {
+            if(data.found) {
+                SimarcModal.confirm({ title: 'Data Terverifikasi', message: '<div class="text-start small p-3 bg-light rounded-3 mt-3"><strong>Status:</strong> ASLI & TERDAFTAR<br><strong>Blok:</strong> #' + data.block_number + '<br><strong>Aksi:</strong> ' + data.action + '<br><strong>Entitas:</strong> ' + data.entity_type + '<br><strong>Keamanan:</strong> Immutable Log Verified</div>', icon: 'check-circle-fill', iconColor: 'success', confirmText: 'Tutup' });
+            } else {
+                SimarcModal.confirm({ title: 'Hash Tidak Ditemukan', message: 'Tidak ada blok yang cocok dengan hash tersebut di ledger.', icon: 'x-circle-fill', iconColor: 'danger', confirmText: 'Tutup' });
+            }
+        })
+        .catch(function() { if(typeof SimarcModal !== 'undefined') SimarcModal.toast('Gagal verifikasi hash.', 'error'); });
+    }
+    // ── Verify file (SimarcModal + Native File Input) ──
+    function showFileVerify() {
+        if (typeof SimarcModal === 'undefined') return;
+        var input = document.createElement('input');
+        input.type = 'file'; input.accept = '.pdf,.jpg,.jpeg,.png,.txt';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        input.click();
+        input.addEventListener('change', function() {
+            var file = this.files[0];
+            if (!file) { document.body.removeChild(input); return; }
+            if (!crypto.subtle) { SimarcModal.toast('Browser tidak mendukung kriptografi yang diperlukan.', 'error'); document.body.removeChild(input); return; }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                crypto.subtle.digest('SHA-256', e.target.result).then(function(hashBuf) {
+                    var hashArr = Array.from(new Uint8Array(hashBuf));
+                    var hashHex = hashArr.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+                    fetch('/blockchain/block/search?hash=' + encodeURIComponent(hashHex))
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.found) {
+                            SimarcModal.confirm({ title: 'Dokumen 100% Asli', message: '<div class="text-start small p-3 bg-light rounded-3 mt-3"><strong>Hash:</strong> <code style="font-size:0.7rem">' + hashHex.substring(0, 32) + '...</code><br><strong>Status:</strong> TERDAFTAR di Blockchain<br><strong>Blok:</strong> #' + data.block_number + '<br><strong>Aksi:</strong> ' + data.action + '</div>', icon: 'check-circle-fill', iconColor: 'success', confirmText: 'OKE' });
+                        } else {
+                            SimarcModal.confirm({ title: 'Hash Tidak Terdaftar', message: '<div class="text-start small p-3 bg-light rounded-3 mt-3"><strong>Hash:</strong> <code style="font-size:0.7rem">' + hashHex.substring(0, 32) + '...</code><br><strong>Status:</strong> TIDAK DITEMUKAN di ledger<br><em>File ini belum pernah dicatat atau sudah dimodifikasi.</em></div>', icon: 'exclamation-triangle-fill', iconColor: 'warning', confirmText: 'Tutup' });
+                        }
+                    })
+                    .catch(function() { SimarcModal.toast('Gagal verifikasi.', 'error'); });
+                }).catch(function() { SimarcModal.toast('Browser tidak mendukung kriptografi yang diperlukan.', 'error'); });
+            };
+            reader.readAsArrayBuffer(file);
+            document.body.removeChild(input);
+        });
+    }
+</script>
+{{end}}

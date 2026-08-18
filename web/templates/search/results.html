@@ -1,0 +1,87 @@
+{{define "search/results.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h2><i class="bi bi-search me-2"></i>Hasil Pencarian</h2>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" action="/search" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="q" value="{{.Query}}" placeholder="Cari arsip...">
+                                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="status" class="form-select">
+                                <option value="">Semua Status</option>
+                                <option value="aktif" {{if eq .Status "aktif"}}selected{{end}}>Aktif</option>
+                                <option value="inaktif" {{if eq .Status "inaktif"}}selected{{end}}>Inaktif</option>
+                                <option value="siap_penyusutan" {{if eq .Status "siap_penyusutan"}}selected{{end}}>Siap Penyusutan</option>
+                                <option value="musnah" {{if eq .Status "musnah"}}selected{{end}}>Musnah</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="unit_kerja" class="form-select">
+                                <option value="">Semua Unit Kerja</option>
+                                {{range .UnitKerjaOptions}}
+                                <option value="{{.ID}}" {{if eq $.UnitKerjaId .ID}}selected{{end}}>{{.NamaUnit}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nomor Arsip</th>
+                                <th>Nama Arsip</th>
+                                <th>Uraian</th>
+                                <th>Unit Kerja</th>
+                                <th>Kode Klasifikasi</th>
+                                <th>Tanggal Dibuat</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .Results}}
+                            <tr>
+                                <td>{{.NomorArsip}}</td>
+                                <td><a href="/arsip/{{.ID}}">{{.NamaArsip}}</a></td>
+                                <td style="max-width: 500px; white-space: normal; word-wrap: break-word; word-break: break-word;">{{if .Uraian}}{{.Uraian}}{{else}}-{{end}}</td>
+                                <td>{{if .UnitKerja}}{{.UnitKerja.NamaUnit}}{{else}}-{{end}}</td>
+                                <td>{{if .KodeKlasifikasi}}{{.KodeKlasifikasi.KodeKlasifikasi}}{{else}}-{{end}}</td>
+                                <td>{{.TanggalDibuat}}</td>
+                                <td>
+                                    <span class="status-badge
+                                        {{if eq .StatusArsip "aktif"}}status-active
+                                        {{else if eq .StatusArsip "inaktif"}}status-inactive
+                                        {{else if eq .StatusArsip "siap_penyusutan"}}status-ready
+                                        {{else if eq .StatusArsip "musnah"}}status-destroyed
+                                        {{else}}status-inactive
+                                        {{end}}">{{.StatusArsip}}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="/arsip/{{.ID}}" class="btn btn-sm btn-info text-white"><i class="bi bi-eye"></i></a>
+                                        <a href="/arsip/{{.ID}}/download" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="8" class="text-center">Tidak ditemukan hasil untuk pencarian "{{.Query}}"</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-center">{{.Pagination}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

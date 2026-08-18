@@ -1,0 +1,17 @@
+{{define "mobile/settings.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid py-4">
+    <h4 class="mb-4"><i class="bi bi-gear me-2"></i>Pengaturan</h4>
+    <form method="POST" action="/mobile/settings/update">
+        <div class="mb-3">
+            <label class="form-label">Notifikasi</label>
+            <select class="form-select" name="notifications">
+                <option value="all">Semua Notifikasi</option>
+                <option value="important">Penting Saja</option>
+                <option value="none">Nonaktif</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Simpan</button>
+    </form>
+</div>
+{{end}}

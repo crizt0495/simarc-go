@@ -1,0 +1,52 @@
+{{define "unit-kerja/edit.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.edit-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%); border-radius: var(--r-xl); padding: 1.75rem 2rem; position: relative; overflow: hidden; margin-bottom: 1.5rem; animation: slideUp 0.35s ease both; }
+.edit-header::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+.edit-header h4 { color: #fff; font-weight: 800; letter-spacing: -0.03em; position: relative; z-index: 1; margin: 0; }
+.edit-header p { color: rgba(255,255,255,0.65); font-size: 0.8rem; position: relative; z-index: 1; margin: 0.15rem 0 0 0; }
+.edit-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); overflow: hidden; animation: slideUp 0.35s ease 0.08s both; }
+.edit-card .card-body-custom { padding: 1.75rem; }
+.form-field { margin-bottom: 1.25rem; }
+.form-field label { display: block; font-weight: 600; font-size: 0.8rem; color: var(--ink-2); margin-bottom: 0.35rem; }
+.form-field label .required { color: var(--danger); margin-left: 2px; }
+.form-field .form-control, .form-field .form-select { width: 100%; padding: 0.55rem 0.85rem; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 0.85rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit; }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field textarea.form-control { min-height: 90px; resize: vertical; }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="edit-header shadow-sm">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h4><i class="bi bi-building me-2"></i>Edit Unit Kerja</h4>
+                <p>Perbarui informasi unit kerja</p>
+            </div>
+            <a href="/unit-kerja" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="edit-card">
+        <div class="card-body-custom">
+            <form method="POST" action="/unit-kerja/{{.m.ID}}">
+                <div class="form-field">
+                    <label>Nama Unit <span class="required">*</span></label>
+                    <input type="text" name="nama_unit" class="form-control" value="{{.m.NamaUnit}}" required placeholder="Contoh: Bagian Kepegawaian">
+                    <div class="form-text" style="font-size:0.75rem;color:var(--ink-4);margin-top:0.3rem;">Nama lengkap unit kerja</div>
+                </div>
+
+                <div class="d-flex justify-content-between pt-2 border-top" style="border-color:var(--border)!important;">
+                    <a href="/unit-kerja" class="btn btn-secondary btn-sm rounded-pill fw-700 px-3" style="font-size:0.8rem;">
+                        <i class="bi bi-x-circle me-1"></i>Batal
+                    </a>
+                    <button type="submit" class="btn btn-primary rounded-pill fw-800 px-4 py-2 shadow-sm" style="font-size:0.85rem;">
+                        <i class="bi bi-check-circle-fill me-2"></i>Update Unit Kerja
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,12 @@
+{{define "qrcode/scanner.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid py-4">
+    <h4 class="mb-4"><i class="bi bi-qr-code me-2"></i>QR Code Scanner</h4>
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-qr-code-scan" style="font-size: 4rem;color:var(--royal-blue);"></i>
+            <p class="mt-3 text-muted">Arahkan kamera ke QR Code arsip</p>
+        </div>
+    </div>
+</div>
+{{end}}

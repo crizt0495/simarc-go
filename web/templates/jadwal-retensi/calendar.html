@@ -1,0 +1,197 @@
+{{define "jadwal-retensi/calendar.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    Kalender Jadwal Retensi
+                </h2>
+                <div>
+                    <a href="/jadwal-retensi/create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Buat Jadwal
+                    </a>
+                    <button class="btn btn-success" onclick="SimarcModal.show('autoCreateModal')">
+                        <i class="bi bi-magic me-1"></i> Auto Create
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/jadwal-retensi/calendar?month={{.Cal.PrevMonth}}&year={{.Cal.PrevYear}}" class="btn btn-outline-primary">
+                            <i class="bi bi-chevron-left"></i> Prev
+                        </a>
+                        <h4 class="mb-0">{{.Cal.MonthName}}</h4>
+                        <a href="/jadwal-retensi/calendar?month={{.Cal.NextMonth}}&year={{.Cal.NextYear}}" class="btn btn-outline-primary">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>Total Jadwal</h5>
+                    <h2>{{.Cal.TotalSchedules}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5>Overdue</h5>
+                    <h2>{{.Cal.OverdueCount}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>Completed</h5>
+                    <h2>{{.Cal.CompletedCount}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5>In Progress</h5>
+                    <h2>{{.Cal.InProgressCount}}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered calendar-table">
+                            <thead>
+                                <tr>
+                                    <th>Senin</th>
+                                    <th>Selasa</th>
+                                    <th>Rabu</th>
+                                    <th>Kamis</th>
+                                    <th>Jumat</th>
+                                    <th>Sabtu</th>
+                                    <th>Minggu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .Cal.Weeks}}
+                                <tr>
+                                    {{range .}}
+                                    <td class="calendar-day" style="min-height: 120px; vertical-align: top;">
+                                        {{if ne .Day 0}}
+                                            <div class="day-number {{if .IsToday}}bg-primary text-white rounded-circle d-inline-block px-2{{end}}">
+                                                {{.Day}}
+                                            </div>
+                                            
+                                            {{if .IsToday}}
+                                                <span class="badge bg-primary ms-1">Hari Ini</span>
+                                            {{end}}
+
+                                            {{if .IsOverdue}}
+                                                <span class="badge bg-danger ms-1">Overdue</span>
+                                            {{end}}
+
+                                            <div class="mt-1">
+                                                {{range .Schedules}}
+                                                    <a href="/jadwal-retensi/{{.ID}}" 
+                                                       class="badge {{.StatusBadgeClass}} text-decoration-none d-block mb-1 text-truncate"
+                                                       style="max-width: 100%; font-size: 0.75rem;"
+                                                       title="{{.NamaJadwal}}">
+                                                        <i class="bi bi-clock me-1"></i>
+                                                        {{.NamaJadwal}}
+                                                    </a>
+                                                {{end}}
+                                            </div>
+                                        {{end}}
+                                    </td>
+                                    {{end}}
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template data-modal="autoCreateModal">
+  <form action="/jadwal-retensi/auto-create" method="POST" style="display:contents">
+    <div class="sm-header">
+      <div class="sm-header-left">
+        <div class="sm-icon sm-icon-primary">
+          <i class="bi bi-magic"></i>
+        </div>
+        <div>
+          <h5 class="sm-title">Auto Create Jadwal Retensi</h5>
+          <p class="sm-subtitle">Buat jadwal retensi otomatis untuk arsip yang akan berakhir</p>
+        </div>
+      </div>
+      <button type="button" class="sm-btn-close" onclick="SimarcModal.hide('autoCreateModal')" aria-label="Close">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="sm-body">
+      <div class="mb-3">
+        <label class="form-label small fw-700">Hari Sebelum Retensi Berakhir</label>
+        <input type="number" name="days_before" class="form-control" value="30" min="7" max="90">
+        <small class="text-muted">Arsip yang retensinya berakhir dalam periode ini akan dimasukkan</small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-700">Unit Kerja (Opsional)</label>
+        <select name="unit_kerja_id" class="form-select">
+          <option value="">Semua Unit Kerja</option>
+          {{range .UnitKerjaList}}
+          <option value="{{.ID}}">{{.NamaUnit}}</option>
+          {{end}}
+        </select>
+      </div>
+    </div>
+    <div class="sm-footer">
+      <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('autoCreateModal')">
+        <i class="bi bi-x-lg me-1"></i>Batal
+      </button>
+      <button type="submit" class="sm-btn sm-btn-primary">
+        <i class="bi bi-magic me-1"></i>Buat Jadwal
+      </button>
+    </div>
+  </form>
+</template>
+
+<style>
+.calendar-table {
+    table-layout: fixed;
+}
+.calendar-table th {
+    background-color: #f8f9fa;
+    text-align: center;
+    padding: 10px;
+}
+.calendar-day {
+    border: 1px solid #dee2e6;
+    padding: 5px;
+}
+.day-number {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+</style>
+{{end}}

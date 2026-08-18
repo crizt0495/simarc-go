@@ -1,0 +1,99 @@
+{{define "users/create.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.create-wrap { max-width: 720px; margin: 0 auto; }
+.create-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--sh); overflow: hidden; animation: slideUp 0.35s ease both; }
+.create-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%); padding: 1.75rem 2rem; position: relative; overflow: hidden; }
+.create-header::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+.create-header h4 { font-weight: 800; color: #fff; margin-bottom: 0.2rem; position: relative; z-index: 1; }
+.create-header p { color: rgba(255,255,255,0.75); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
+.create-body { padding: 2rem; }
+.form-field { margin-bottom: 1.25rem; }
+.form-field label { display: block; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); margin-bottom: 0.4rem; }
+.form-field label .req { color: var(--danger); margin-left: 2px; }
+.form-field .form-control, .form-field .form-select { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 0.85rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit; }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field .form-text { font-size: 0.72rem; color: var(--ink-4); margin-top: 0.2rem; }
+.form-check-custom { display: flex; align-items: center; gap: 0.5rem; }
+.form-check-custom input { width: 18px; height: 18px; accent-color: var(--brand); }
+.form-check-custom label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
+@media (max-width: 768px) { .create-header { padding: 1.25rem; } .create-body { padding: 1.25rem; } }
+</style>
+<div class="container-fluid py-3 py-xl-4">
+    <div class="create-wrap">
+        <div class="create-card shadow-sm">
+            <div class="create-header">
+                <h4><i class="bi bi-person-plus me-2"></i>Tambah Pengguna</h4>
+                <p>Buat akun pengguna baru untuk akses sistem</p>
+            </div>
+            <div class="create-body">
+                <form method="POST" action="/users">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Username <span class="req">*</span></label>
+                                <input type="text" class="form-control" name="username" required placeholder="username">
+                                <div class="form-text">Username harus unik</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Nama Lengkap <span class="req">*</span></label>
+                                <input type="text" class="form-control" name="name" required placeholder="Nama lengkap pengguna">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Password <span class="req">*</span></label>
+                                <input type="password" class="form-control" name="password" required>
+                                <div class="form-text">Minimal 8 karakter</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Konfirmasi Password <span class="req">*</span></label>
+                                <input type="password" class="form-control" name="password_confirmation" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Role <span class="req">*</span></label>
+                                <select class="form-select" name="role_id" required>
+                                    <option value="">Pilih role</option>
+                                    {{range .Roles}}
+                                    <option value="{{.ID}}">{{.Name}}</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label>Unit Kerja</label>
+                                <select class="form-select" name="unit_kerja_id">
+                                    <option value="">Tidak ada unit kerja</option>
+                                    {{range .UnitKerja}}
+                                    <option value="{{.ID}}">{{.NamaUnit}}</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-check-custom mb-4">
+                        <input type="checkbox" id="is_active" name="is_active" value="1" checked>
+                        <label for="is_active">Aktif</label>
+                    </div>
+                    <hr style="border-color:var(--border);margin:1.5rem 0;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <a href="/users" class="btn btn-secondary rounded-pill fw-700 px-4 btn-sm"><i class="bi bi-arrow-left me-1"></i>Batal</a>
+                        <button type="submit" class="btn btn-primary rounded-pill fw-800 px-5 py-2 shadow-sm"><i class="bi bi-save me-2"></i>Simpan Pengguna</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

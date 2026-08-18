@@ -1,0 +1,234 @@
+{{define "laporan/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="page-title mb-0"><i class="bi bi-graph-up"></i> Dashboard Laporan</h1>
+        <div class="page-actions">
+            <button class="btn btn-outline-primary" onclick="location.reload()"><i class="bi bi-arrow-clockwise me-2"></i>Refresh</button>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card h-100 border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-file-earmark-text text-white"></i></div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-0">Total Arsip</h6>
+                        <h3 class="mb-0 fw-bold">{{.Stats.TotalArsip}}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card h-100 border-start border-4 border-success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-check-circle text-white"></i></div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-0">Arsip Aktif</h6>
+                        <h3 class="mb-0 fw-bold">{{.Stats.ArsipAktif}}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card h-100 border-start border-4 border-secondary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="avatar-sm bg-secondary rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-archive text-white"></i></div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-0">Arsip Inaktif</h6>
+                        <h3 class="mb-0 fw-bold">{{.Stats.ArsipInaktif}}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card h-100 border-start border-4 border-info">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="avatar-sm bg-info rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-folder-check text-white"></i></div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-0">Diberkaskan</h6>
+                        <h3 class="mb-0 fw-bold">{{.Stats.ArsipDiberkaskan}}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card h-100 border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="avatar-sm bg-warning rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-exclamation-triangle text-white"></i></div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-0">Layak Musnah</h6>
+                        <h3 class="mb-0 fw-bold">{{.Stats.LayakMusnah}}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card h-100 border-start border-4 border-danger">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="avatar-sm bg-danger rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-trash text-white"></i></div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-0">Dimusnahkan</h6>
+                        <h3 class="mb-0 fw-bold">{{.Stats.SudahDimusnahkan}}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Grafik Arsip per Unit Kerja</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="unitKerjaChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Distribusi Status Arsip</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tren Input Arsip {{.CurrentYear}}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="trenChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Arsip Terbaru</h5>
+                <a href="/arsip" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr><th>Nomor</th><th>Nama</th><th>Unit Kerja</th></tr>
+                        </thead>
+                        <tbody>
+                            {{range .ArsipTerbaru}}
+                            <tr>
+                                <td><small>{{.NomorArsip}}</small></td>
+                                <td><small>{{limitString .NamaArsip 30}}</small></td>
+                                <td><small>{{.UnitKerja}}</small></td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="3" class="text-center text-muted">Belum ada data</td></tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Akses Cepat Laporan</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="/laporan/arsip" class="btn btn-outline-primary w-100"><i class="bi bi-file-earmark-text me-2"></i>Laporan Arsip</a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/laporan/digital" class="btn btn-outline-info w-100"><i class="bi bi-cloud-check me-2"></i>Laporan Arsip Digital</a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/laporan/pemberkasan" class="btn btn-outline-success w-100"><i class="bi bi-folder me-2"></i>Laporan Pemberkasan</a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/laporan/retensi" class="btn btn-outline-warning w-100"><i class="bi bi-hourglass-split me-2"></i>Laporan Retensi</a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/laporan/pemusnahan" class="btn btn-outline-danger w-100"><i class="bi bi-trash me-2"></i>Laporan Pemusnahan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const unitKerjaCtx=document.getElementById('unitKerjaChart').getContext('2d');
+new Chart(unitKerjaCtx,{
+    type:'bar',
+    data:{
+        labels:[{{range $i,$v:=.ArsipPerUnitKerja}}{{if $i}},{{end}}"{{$v.NamaUnit}}"{{end}}],
+        datasets:[{
+            label:'Jumlah Arsip',
+            data:[{{range $i,$v:=.ArsipPerUnitKerja}}{{if $i}},{{end}}{{$v.Total}}{{end}}],
+            backgroundColor:'rgba(30,58,138,0.8)',borderColor:'rgba(30,58,138,1)',borderWidth:1
+        }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+});
+const statusCtx=document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx,{
+    type:'doughnut',
+    data:{
+        labels:[{{range $i,$v:=.ArsipPerStatus}}{{if $i}},{{end}}"{{$v.StatusArsip}}"{{end}}],
+        datasets:[{
+            data:[{{range $i,$v:=.ArsipPerStatus}}{{if $i}},{{end}}{{$v.Total}}{{end}}],
+            backgroundColor:['rgba(16,185,129,0.8)','rgba(107,114,128,0.8)','rgba(245,158,11,0.8)','rgba(239,68,68,0.8)']
+        }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+});
+const trenCtx=document.getElementById('trenChart').getContext('2d');
+new Chart(trenCtx,{
+    type:'line',
+    data:{
+        labels:['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+        datasets:[{
+            label:'Arsip Input',
+            data:[{{range $i,$v:=.TrenData}}{{if $i}},{{end}}{{$v}}{{end}}],
+            borderColor:'rgba(6,182,212,1)',backgroundColor:'rgba(6,182,212,0.1)',tension:0.4,fill:true
+        }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+});
+</script>
+{{end}}

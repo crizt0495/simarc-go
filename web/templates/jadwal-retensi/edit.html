@@ -1,0 +1,140 @@
+{{define "jadwal-retensi/edit.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit Jadwal Retensi
+                </h2>
+                <a href="/jadwal-retensi/{{.Item.ID}}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{if ne .Item.Status "draft"}}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Perhatian:</strong> Hanya jadwal dengan status draft yang dapat diedit.
+        Status saat ini: <strong>{{.Item.Status}}</strong>
+    </div>
+    {{end}}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="/jadwal-retensi/{{.Item.ID}}" id="editJadwalForm">
+
+                        <div class="mb-3">
+                            <label for="nama_jadwal" class="form-label">Nama Jadwal *</label>
+                            <input type="text" class="form-control" 
+                                   id="nama_jadwal" name="nama_jadwal" value="{{.Item.NamaJadwal}}" required>
+                            <div class="form-text">Contoh: Pemusnahan Arsip Tahun 2025</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="deskripsi" class="form-label">Deskripsi</label>
+                            <textarea class="form-control" 
+                                      id="deskripsi" name="deskripsi" rows="3">{{.Item.Deskripsi}}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tanggal_jadwal" class="form-label">Tanggal Jadwal *</label>
+                                    <input type="date" class="form-control" 
+                                           id="tanggal_jadwal" name="tanggal_jadwal" value="{{.Item.TanggalJadwal}}" required>
+                                    <div class="form-text">Tanggal pelaksanaan jadwal</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="jenis_jadwal" class="form-label">Jenis Jadwal *</label>
+                                    <select class="form-select" id="jenis_jadwal" name="jenis_jadwal" required>
+                                        <option value="">Pilih jenis jadwal</option>
+                                        <option value="pemusnahan" {{if eq .Item.JenisJadwal "pemusnahan"}}selected{{end}}>Pemusnahan Arsip</option>
+                                        <option value="penyusutan" {{if eq .Item.JenisJadwal "penyusutan"}}selected{{end}}>Penyusutan Arsip</option>
+                                        <option value="transfer" {{if eq .Item.JenisJadwal "transfer"}}selected{{end}}>Transfer Arsip</option>
+                                        <option value="review" {{if eq .Item.JenisJadwal "review"}}selected{{end}}>Review Retensi</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="unit_kerja_id" class="form-label">Unit Kerja</label>
+                            <select class="form-select" id="unit_kerja_id" name="unit_kerja_id">
+                                <option value="">Semua Unit Kerja</option>
+                                {{range .UnitKerjaList}}
+                                <option value="{{.ID}}" {{if eq $.Item.UnitKerjaID .ID}}selected{{end}}>
+                                    {{.NamaUnit}}
+                                </option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="catatan" class="form-label">Catatan</label>
+                            <textarea class="form-control" 
+                                      id="catatan" name="catatan" rows="2">{{.Item.Catatan}}</textarea>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="/jadwal-retensi/{{.Item.ID}}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Batal
+                            </a>
+                            <button type="submit" class="btn btn-primary" {{if ne .Item.Status "draft"}}disabled{{end}}>
+                                <i class="bi bi-save me-1"></i>Update Jadwal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Informasi Jadwal</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                <span class="badge bg-{{if eq .Item.Status "draft"}}secondary{{else if eq .Item.Status "scheduled"}}info{{else}}warning{{end}}">
+                                    {{.Item.Status}}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dibuat:</strong></td>
+                            <td>{{.Item.CreatedAt}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Oleh:</strong></td>
+                            <td>{{if .Item.Creator}}{{.Item.Creator.Name}}{{else}}-{{end}}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unit Kerja:</strong></td>
+                            <td>{{if .Item.UnitKerja}}{{.Item.UnitKerja.NamaUnit}}{{else}}Semua Unit{{end}}</td>
+                        </tr>
+                    </table>
+                    <hr>
+                    <h6 class="small text-muted">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Edit hanya tersedia untuk jadwal dengan status draft.
+                    </h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

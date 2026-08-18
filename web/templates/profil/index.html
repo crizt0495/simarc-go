@@ -1,0 +1,149 @@
+{{define "profil/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="page-title mb-0">
+            <i class="bi bi-person-circle"></i> Profil Saya
+        </h1>
+        <div class="page-actions">
+            <a href="/profil/edit" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i>Edit Profil
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <div class="avatar-xl bg-primary rounded-circle d-flex align-items-center justify-content-center text-white mx-auto" style="width: 120px; height: 120px; font-size: 3rem;">
+                        {{upper (slice .AuthUser.Name 0 1)}}
+                    </div>
+                </div>
+                <h4 class="mb-1">{{.AuthUser.Name}}</h4>
+                <p class="text-muted mb-2">{{.AuthUser.Username}}</p>
+                <span class="badge bg-primary">{{if .AuthUser.Role}}{{if .AuthUser.Role.NamaRole}}{{.AuthUser.Role.NamaRole}}{{else}}{{.AuthUser.Role.Name}}{{end}}{{end}}</span>
+                <div class="mt-3">
+                    {{if .AuthUser.IsActive}}
+                        <span class="badge bg-success">Aktif</span>
+                    {{else}}
+                        <span class="badge bg-danger">Tidak Aktif</span>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-shield-lock"></i> Keamanan</h5>
+            </div>
+            <div class="card-body">
+                <a href="/profil/password" class="btn btn-outline-warning w-100 mb-2">
+                    <i class="bi bi-key me-1"></i>Ubah Kata Sandi
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Informasi Pengguna</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="30%">Username</th>
+                        <td>: <strong>{{.AuthUser.Username}}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Nama Lengkap</th>
+                        <td>: {{.AuthUser.Name}}</td>
+                    </tr>
+                    <tr>
+                        <th>Role</th>
+                        <td>: <span class="badge bg-primary">{{if .AuthUser.Role}}{{if .AuthUser.Role.NamaRole}}{{.AuthUser.Role.NamaRole}}{{else}}{{.AuthUser.Role.Name}}{{end}}{{end}}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Unit Kerja</th>
+                        <td>: {{if .AuthUser.UnitKerja}}{{.AuthUser.UnitKerja.NamaUnit}}{{else}}-{{end}}</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>: 
+                            {{if .AuthUser.IsActive}}
+                                <span class="badge bg-success">Aktif</span>
+                            {{else}}
+                                <span class="badge bg-danger">Tidak Aktif</span>
+                            {{end}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Terakhir Login</th>
+                        <td>: 
+                            {{if .AuthUser.LastLoginAt}}
+                                {{.AuthUser.LastLoginAt}}
+                            {{else}}
+                                <span class="text-muted">Belum pernah login</span>
+                            {{end}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Bergabung</th>
+                        <td>: {{.AuthUser.CreatedAt}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informasi Akun</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Username</small>
+                            <strong>{{.AuthUser.Username}}</strong>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Nama Lengkap</small>
+                            <strong>{{.AuthUser.Name}}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Role</small>
+                            <span class="badge bg-primary">{{if .AuthUser.Role}}{{if .AuthUser.Role.NamaRole}}{{.AuthUser.Role.NamaRole}}{{else}}{{.AuthUser.Role.Name}}{{end}}{{end}}</span>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Unit Kerja</small>
+                            <strong>{{if .AuthUser.UnitKerja}}{{.AuthUser.UnitKerja.NamaUnit}}{{else}}-{{end}}</strong>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block mb-1">Bergabung</small>
+                        <strong>{{.AuthUser.CreatedAt}}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block mb-1">Terakhir Login</small>
+                        <strong>
+                            {{if .AuthUser.LastLoginAt}}
+                                {{.AuthUser.LastLoginAt}}
+                            {{else}}
+                                <span class="text-muted">Belum pernah</span>
+                            {{end}}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

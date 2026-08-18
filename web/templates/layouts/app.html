@@ -1,0 +1,804 @@
+{{define "layouts/app.html"}}
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, user-scalable=yes, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="csrf-token" content="{{.CSRFToken}}">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/images/logo-icon.svg">
+  <title>{{.title}} — {{.AppName}}</title>
+
+  <link rel="icon" type="image/svg+xml" href="/images/logo-icon.svg?v={{.AssetVersion}}">
+
+  <!-- ═══════════════════════════════════════════
+       RESOURCE HINTS — Parallel DNS & Connection
+       ═══════════════════════════════════════════ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.datatables.net">
+  <link rel="dns-prefetch" href="https://code.jquery.com">
+  <link rel="preconnect" href="https://cdn.datatables.net" crossorigin>
+  <link rel="preconnect" href="https://code.jquery.com" crossorigin>
+
+  <!-- ═══════════════════════════════════════════
+       CRITICAL CSS (render-blocking, needed immediately)
+       ═══════════════════════════════════════════ -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" fetchpriority="high">
+  <link href="/css/enterprise-premium.css?v={{.AssetVersion}}" rel="stylesheet" fetchpriority="high">
+  <link href="/css/dark-mode.css?v={{.AssetVersion}}" rel="stylesheet">
+
+  <!-- ═══════════════════════════════════════════
+       NON-CRITICAL CSS (loaded async, applied when ready)
+       Bootstrap Icons font file is large (~250KB) — defer it
+       DataTables & Select2 CSS only needed on pages that use them
+       ═══════════════════════════════════════════ -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" media="print" onload="this.media='all';this.onload=null">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+  <noscript>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+  </noscript>
+
+  <style>
+  /* ── DataTables Premium Styling ── */
+  .table-responsive { border-radius: var(--r-lg); overflow-x: auto; box-shadow: var(--sh-sm); }
+  .dataTables_wrapper { padding: 0.25rem 0 0 0; font-family: inherit; }
+  table.dataTable { margin-top: 0 !important; margin-bottom: 0.75rem !important; border-collapse: separate !important; border-spacing: 0 4px !important; width: 100% !important; }
+
+  /* Header */
+  table.dataTable thead th {
+    background: linear-gradient(180deg, var(--slate-50) 0%, var(--slate-100) 100%) !important;
+    color: var(--ink-4) !important; font-weight: 700 !important; text-transform: uppercase;
+    font-size: 0.68rem; letter-spacing: 0.05em; padding: 0.75rem 0.85rem !important;
+    border: none !important; border-bottom: 2px solid var(--border) !important;
+    white-space: nowrap; position: relative; user-select: none;
+  }
+  table.dataTable thead th:first-child { border-radius: var(--r) 0 0 0; }
+  table.dataTable thead th:last-child { border-radius: 0 var(--r) 0 0; }
+
+  /* Sort icons */
+  table.dataTable thead th.sorting { cursor: pointer; }
+  table.dataTable thead th.sorting:hover { background: linear-gradient(180deg, var(--brand-lt) 0%, #e8edf5 100%) !important; color: var(--brand-dk) !important; }
+  table.dataTable thead th.sorting:after,
+  table.dataTable thead th.sorting_asc:after,
+  table.dataTable thead th.sorting_desc:after { display: none !important; }
+  table.dataTable thead th.sorting:before { content: '\f282'; font-family: 'bootstrap-icons'; font-size: 0.6rem; margin-left: 5px; opacity: 0.3; }
+  table.dataTable thead th.sorting_asc:before { content: '\f286'; font-family: 'bootstrap-icons'; font-size: 0.65rem; margin-left: 5px; opacity: 1; color: var(--brand); }
+  table.dataTable thead th.sorting_desc:before { content: '\f282'; font-family: 'bootstrap-icons'; font-size: 0.65rem; margin-left: 5px; opacity: 1; color: var(--brand); }
+  table.dataTable thead th.sorting_asc,
+  table.dataTable thead th.sorting_desc { background: linear-gradient(180deg, var(--brand-lt) 0%, #e0ecff 100%) !important; color: var(--brand-dk) !important; }
+
+  /* Body rows */
+  table.dataTable tbody tr { background: var(--surface); transition: all 0.2s cubic-bezier(0.4,0,0.2,1); border-radius: var(--r); }
+  table.dataTable tbody tr:hover { background: var(--brand-lt) !important; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(59,130,246,0.08); }
+  table.dataTable tbody td {
+    padding: 0.7rem 0.85rem !important; border: none !important; border-bottom: 1px solid var(--border) !important;
+    background: transparent !important; color: var(--ink-3); vertical-align: middle; font-size: 0.85rem; line-height: 1.5;
+  }
+  table.dataTable tbody td:first-child { border-radius: var(--r) 0 0 var(--r); padding-left: 1rem !important; }
+  table.dataTable tbody td:last-child { border-radius: 0 var(--r) var(--r) 0; padding-right: 1rem !important; }
+  table.dataTable tbody tr:nth-child(even) { background: var(--surface-2) !important; }
+
+  /* Empty state */
+  table.dataTable tbody tr td.dataTables_empty { padding: 3rem 1rem !important; text-align: center; color: var(--ink-4); font-size: 0.9rem; border-radius: var(--r) !important; }
+
+  /* Badges & buttons in table */
+  table.dataTable tbody .badge { font-size: 0.7rem; font-weight: 600; padding: 0.35em 0.65em; letter-spacing: 0.02em; border-radius: 6px; }
+  table.dataTable tbody .btn-group .btn, table.dataTable tbody .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; transition: all 0.15s ease; }
+  table.dataTable tbody .btn-group { gap: 3px; }
+  table.dataTable tbody .btn-group .btn:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+  /* Toolbar */
+  .dataTables_length, .dataTables_filter { margin-bottom: 0.75rem; font-size: 0.813rem; color: var(--ink-4); }
+  .dataTables_length label, .dataTables_filter label { font-weight: 500; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; }
+  .dataTables_length select {
+    padding: 0.3rem 1.8rem 0.3rem 0.6rem; font-size: 0.813rem; font-weight: 600; color: var(--ink-3);
+    background-color: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); outline: none; cursor: pointer; min-width: 65px; transition: all 0.2s;
+  }
+  .dataTables_length select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .dataTables_filter input {
+    padding: 0.35rem 0.7rem 0.35rem 2rem; font-size: 0.813rem; color: var(--ink-3); background-color: var(--surface);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 0.6rem center;
+    border: 1px solid var(--border); border-radius: var(--r-sm); outline: none; transition: all 0.2s ease; min-width: 220px; margin-left: 0.3rem;
+  }
+  .dataTables_filter input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .dataTables_filter input::placeholder { color: var(--ink-4); }
+
+  /* Info */
+  .dataTables_info { padding-top: 0.75rem !important; font-size: 0.8rem; color: var(--ink-4); font-weight: 500; }
+
+  /* Pagination */
+  .dataTables_paginate { padding-top: 0.5rem !important; }
+  .dataTables_paginate .pagination { margin-bottom: 0; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+  .dataTables_paginate .page-item .page-link {
+    border: 1px solid var(--border); padding: 0.3rem 0.65rem; font-size: 0.8rem; font-weight: 500;
+    color: var(--ink-4); background-color: var(--surface); border-radius: var(--r-sm); transition: all 0.15s ease;
+    display: inline-flex; align-items: center; justify-content: center; min-width: 34px; line-height: 1.2;
+  }
+  .dataTables_paginate .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--brand), var(--brand-dk)) !important; border-color: var(--brand-dk) !important;
+    color: #fff !important; box-shadow: 0 2px 8px rgba(37,99,235,0.3); font-weight: 700;
+  }
+  .dataTables_paginate .page-item:hover:not(.active) .page-link { background: var(--surface-3); color: var(--ink-2); border-color: var(--border-2); transform: translateY(-1px); }
+  .dataTables_paginate .page-item.disabled .page-link { opacity: 0.4; pointer-events: none; }
+
+  /* Processing */
+  .dataTables_processing { background: rgba(255,255,255,0.9) !important; border: none !important; border-radius: var(--r-lg) !important; padding: 1.5rem !important; font-weight: 600; color: var(--brand); box-shadow: var(--sh-lg); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .dataTables_wrapper { padding: 0; }
+    .dataTables_length, .dataTables_filter { float: none !important; text-align: left !important; display: block !important; width: 100% !important; }
+    .dataTables_filter input { min-width: 100%; margin-left: 0; margin-top: 4px; width: 100% !important; }
+    .dataTables_length select { min-width: 60px; }
+    .dataTables_info { text-align: left; font-size: 0.75rem; }
+    .dataTables_paginate { float: left !important; }
+    .dataTables_paginate .pagination { justify-content: flex-start; }
+    table.dataTable { border-spacing: 0 3px !important; }
+    table.dataTable tbody td { padding: 0.55rem 0.6rem !important; font-size: 0.8rem; }
+    table.dataTable thead th { padding: 0.6rem 0.6rem !important; font-size: 0.62rem; }
+  }
+
+  /* ── Table Premium (server-side tables like Arsip) ── */
+  table.table-premium {
+    border-collapse: separate !important;
+    border-spacing: 0 4px !important;
+    width: 100% !important;
+  }
+  table.table-premium thead th {
+    background: linear-gradient(180deg, var(--slate-50) 0%, var(--slate-100) 100%) !important;
+    color: var(--ink-4) !important; font-weight: 700 !important; text-transform: uppercase;
+    font-size: 0.68rem; letter-spacing: 0.05em; padding: 0.75rem 0.85rem !important;
+    border: none !important; border-bottom: 2px solid var(--border) !important;
+    white-space: nowrap; user-select: none;
+  }
+  table.table-premium thead th:first-child { border-radius: var(--r) 0 0 0; }
+  table.table-premium thead th:last-child { border-radius: 0 var(--r) 0 0; }
+  table.table-premium tbody tr {
+    background: var(--surface); transition: all 0.2s cubic-bezier(0.4,0,0.2,1); border-radius: var(--r);
+  }
+  table.table-premium tbody tr:hover {
+    background: var(--brand-lt) !important; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  }
+  table.table-premium tbody td {
+    padding: 0.7rem 0.85rem !important; border: none !important; border-bottom: 1px solid var(--border) !important;
+    background: transparent !important; color: var(--ink-3); vertical-align: middle; font-size: 0.85rem; line-height: 1.5;
+  }
+  table.table-premium tbody td:first-child { border-radius: var(--r) 0 0 var(--r); padding-left: 1rem !important; }
+  table.table-premium tbody td:last-child { border-radius: 0 var(--r) var(--r) 0; padding-right: 1rem !important; }
+  table.table-premium tbody tr:nth-child(even) { background: var(--surface-2) !important; }
+  table.table-premium tbody .badge { font-size: 0.7rem; font-weight: 600; padding: 0.35em 0.65em; border-radius: 6px; }
+  table.table-premium tbody .btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--r-sm); font-size: 0.8rem; border: none; transition: all 0.15s ease; }
+  table.table-premium tbody .btn-icon:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  table.table-premium tbody .btn-soft-primary { background: var(--brand-lt); color: var(--brand); }
+  table.table-premium tbody .btn-soft-success { background: #f0fdf4; color: #22c55e; }
+  table.table-premium tbody .btn-soft-warning { background: #fffbeb; color: #f59e0b; }
+  table.table-premium tbody .btn-soft-danger { background: #fef2f2; color: #ef4444; }
+  table.table-premium tbody .btn-soft-dark { background: var(--surface-3); color: var(--ink-4); }
+  /* Status badges */
+  .status-badge { display: inline-block; }
+  .status-aktif { background: #f0fdf4; color: #16a34a; }
+  .status-inaktif { background: #fefce8; color: #ca8a04; }
+  .status-siap_penyusutan { background: #fff7ed; color: #ea580c; }
+  .status-musnah { background: #fef2f2; color: #dc2626; }
+  .status-permanen { background: var(--brand-lt); color: var(--brand); }
+  /* File indicator */
+  .file-indicator { width: 32px; height: 32px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+  .file-indicator.bg-success { background: #f0fdf4 !important; color: #22c55e; }
+  .file-indicator.bg-slate-200 { background: var(--surface-3) !important; color: var(--ink-4); }
+  /* Empty state in premium table */
+  table.table-premium tbody td[colspan] { padding: 3rem 1rem !important; text-align: center; border-radius: var(--r) !important; }
+  table.table-premium .empty-state i { font-size: 2.5rem; color: var(--border-2); }
+  table.table-premium .empty-state p { color: var(--ink-4); margin-top: 0.75rem; font-weight: 500; }
+  /* Pagination for server-side tables */
+  .pagination .page-link {
+    border: 1px solid var(--border); padding: 0.3rem 0.65rem; font-size: 0.8rem; font-weight: 500;
+    color: var(--ink-4); background-color: var(--surface); border-radius: var(--r-sm); transition: all 0.15s ease;
+    display: inline-flex; align-items: center; justify-content: center; min-width: 34px; line-height: 1.2;
+    text-decoration: none;
+  }
+  .pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--brand), var(--brand-dk)) !important; border-color: var(--brand-dk) !important;
+    color: #fff !important; box-shadow: 0 2px 8px rgba(37,99,235,0.3); font-weight: 700;
+  }
+  .pagination .page-item:hover:not(.active) .page-link { background: var(--surface-3); color: var(--ink-2); border-color: var(--border-2); }
+  .pagination .page-item { margin: 0 1px; }
+  .pagination .page-item.disabled .page-link { opacity: 0.4; pointer-events: none; }
+
+  /* ═══════════════════════════════════════════
+     MOBILE ENHANCEMENTS
+     ═══════════════════════════════════════════ */
+
+  /* ── iOS Safe Area Support ── */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    .main-content { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important; }
+    .mobile-bottom-nav { padding-bottom: calc(4px + env(safe-area-inset-bottom)) !important; }
+    .top-navbar { padding-top: env(safe-area-inset-top); }
+    body.auth-body { padding-top: calc(20px + env(safe-area-inset-top)); padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .auth-theme-btn { bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
+    .floating-bar { bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important; }
+    .position-fixed.bottom-0.end-0 { bottom: calc(0px + env(safe-area-inset-bottom)) !important; }
+    .toast-container { bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
+  }
+  @supports (padding: constant(safe-area-inset-bottom)) {
+    /* iOS < 11.2 fallback */
+    .main-content { padding-bottom: calc(1.5rem + constant(safe-area-inset-bottom)) !important; }
+    .mobile-bottom-nav { padding-bottom: calc(4px + constant(safe-area-inset-bottom)) !important; }
+  }
+
+  /* ── Touch-Friendly Tap Targets (min 44px) ── */
+  @media (pointer: coarse) {
+    .btn, .btn-crud, .sidebar-link, .dropdown-item, .nav-icon-btn,
+    .page-link, .mobile-bottom-nav-item, .filter-badge,
+    .tag-pill, .badge-soft, .status-badge {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-crud {
+      min-width: 44px;
+    }
+    .sidebar-link {
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
+    }
+    input, select, textarea {
+      font-size: 16px !important; /* Prevents iOS zoom on focus */
+    }
+    .form-control, .form-select {
+      font-size: 16px !important;
+    }
+    .pagination .page-link {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
+  /* ── Momentum Scrolling for iOS ── */
+  .sidebar-nav, .modal-body,
+  .card-body-scroll, [style*="overflow-y:auto"],
+  .explorer-grid, .mon-stat, .progres-stat {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* Horizontal-only containers (tables): contain horizontal overscroll so
+     side-swipes don't chain to the page, but keep the vertical axis
+     propagating — otherwise a vertical swipe starting on a wide table
+     would be swallowed and the page could not be scrolled. */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* ── Mobile Improved Table Horizontal Scroll ── */
+  @media (max-width: 768px) {
+    .table-responsive::-webkit-scrollbar {
+      height: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+
+  /* ── Prevent text selection on mobile buttons ── */
+  .btn, .sidebar-link, .mobile-bottom-nav-item, .nav-icon-btn {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* ── Mobile bottom nav active state ── */
+  .mobile-bottom-nav-item.active {
+    color: var(--brand) !important;
+  }
+  .mobile-bottom-nav-item.active i,
+  .mobile-bottom-nav-item.active span {
+    color: var(--brand);
+  }
+  .mobile-bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: var(--brand);
+    border-radius: 0 0 3px 3px;
+  }
+
+  /* ── Mobile fixed floating bar with safe area ── */
+  @media (max-width: 768px) {
+    .floating-bar {
+      margin-left: -16px !important;
+      margin-right: -16px !important;
+      border-radius: 0 !important;
+      border-left: none !important;
+      border-right: none !important;
+      border-bottom: none !important;
+    }
+  }
+
+  /* ── Mobile page header compact ── */
+  @media (max-width: 576px) {
+    .page-header .page-title {
+      font-size: 1.1rem !important;
+    }
+    .page-actions .btn {
+      padding: 6px 12px !important;
+      font-size: 0.72rem !important;
+    }
+    .hero-title {
+      font-size: 1.1rem !important;
+    }
+    .hero-sub {
+      font-size: 0.72rem !important;
+    }
+    .stat-value, .stat-card-value {
+      font-size: 1.1rem !important;
+    }
+    .stat-card-value {
+      font-size: 1.3rem !important;
+    }
+    .badge-soft, .badge, .st-badge {
+      font-size: 0.6rem !important;
+    }
+    /* Hero padding compact */
+    .arsip-hero, .pinjam-hero, .lokasi-hero, .jenis-hero, .unit-hero,
+    .berkas-hero, .retensi-hero, .mon-hero, .pemusnahan-hero,
+    .users-hero, .role-hero, .show-hero, .edit-hero, .create-header {
+      padding: 1rem 1.25rem !important;
+    }
+  }
+
+  /* Prevent gap on mobile when rotating */
+  html, body {
+    overflow-x: hidden;
+  }
+  </style>
+</head>
+<body>
+
+{{template "components/sidebar.html" .}}
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Mobile Search Bar (sticky) -->
+<div class="mobile-search-bar" id="mobileSearchBar">
+  <form action="/search" method="GET" style="display:contents;flex:1">
+    <div class="mobile-search-inner">
+      <i class="bi bi-search"></i>
+      <input type="search" name="q" placeholder="Cari arsip, nomor, atau kode..." aria-label="Pencarian" autocomplete="off">
+      <button type="button" class="mobile-search-clear" id="mobileSearchClear" onclick="document.getElementById('mobileSearchBar').querySelector('input').value='';this.style.display='none'" style="display:none"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm mobile-search-submit"><i class="bi bi-search"></i></button>
+    <button type="button" class="btn btn-light btn-sm mobile-search-close" onclick="var sb=document.getElementById('mobileSearchBar');sb.classList.add('d-none');document.getElementById('mobileSearchBtn')?.classList.remove('active')" aria-label="Tutup pencarian"><i class="bi bi-x-lg"></i></button>
+  </form>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var msb = document.getElementById('mobileSearchBar');
+  if (!msb) return;
+  var input = msb.querySelector('input');
+  var clear = document.getElementById('mobileSearchClear');
+  if (input && clear) {
+    input.addEventListener('input', function() {
+      clear.style.display = this.value.length > 0 ? 'flex' : 'none';
+    });
+    // Auto-close on Escape
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        msb.classList.add('d-none');
+        document.getElementById('mobileSearchBtn')?.classList.remove('active');
+      }
+    });
+  }
+});
+</script>
+
+<!-- Top Navbar -->
+<header class="top-navbar">
+  <div class="navbar-left">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Menu">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <form action="/search" method="GET" class="nav-search d-none d-md-flex">
+      <i class="bi bi-search" style="color:var(--ink-4);font-size:14px;flex-shrink:0"></i>
+      <input type="search" name="q" placeholder="Cari arsip...">
+      <kbd style="font-size:11px;color:var(--ink-4);background:var(--surface-3);border:1px solid var(--border);border-radius:4px;padding:2px 6px;flex-shrink:0">/</kbd>
+    </form>
+  </div>
+
+  <div class="navbar-right">
+    <button class="nav-icon-btn" id="themeToggle" title="Toggle Dark Mode">
+      <i class="bi bi-moon" id="themeIcon"></i>
+    </button>
+
+    <button class="nav-icon-btn" id="keyboardShortcutBtn" title="Pintasan Keyboard" onclick="SimarcModal.show('kbdModal')">
+      <i class="bi bi-keyboard"></i>
+    </button>
+
+    {{if .AuthUser}}
+    <div class="dropdown">
+      <div class="nav-user" data-bs-toggle="dropdown" aria-expanded="false">
+        <div class="nav-avatar">{{slice .AuthUser.Name 0 1}}</div>
+        <div class="d-none d-sm-block">
+          <div class="nav-user-name">{{.AuthUser.Name}}</div>
+          <div class="nav-user-role">{{if .AuthUser.Role}}{{.AuthUser.Role.Name}}{{else}}Pengguna{{end}}</div>
+        </div>
+        <i class="bi bi-chevron-down" style="font-size:11px;color:var(--ink-4)"></i>
+      </div>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="/profil"><i class="bi bi-person"></i> Profil Saya</a></li>
+        <li><a class="dropdown-item" href="/pengaturan"><i class="bi bi-gear"></i> Pengaturan</a></li>
+        <li><div class="dropdown-divider"></div></li>
+        <li>
+          <button class="dropdown-item danger" onclick="document.getElementById('logout-form').submit()">
+            <i class="bi bi-box-arrow-right"></i> Keluar
+          </button>
+          <form id="logout-form" action="/logout" method="POST" style="display:none">
+            <input type="hidden" name="_token" value="{{.CSRFToken}}">
+          </form>
+        </li>
+      </ul>
+    </div>
+    {{end}}
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main-content">
+  {{block "content" .}}{{end}}
+</main>
+
+<!-- Keyboard Shortcuts Modal — SIMARC V4 -->
+<template data-modal="kbdModal">
+  <div class="sm-header">
+    <div class="sm-header-left">
+      <div class="sm-icon sm-icon-primary">
+        <i class="bi bi-keyboard"></i>
+      </div>
+      <div>
+        <h5 class="sm-title">Pintasan Keyboard</h5>
+        <p class="sm-subtitle">Tekan tombol untuk aksi cepat</p>
+      </div>
+    </div>
+    <button type="button" class="sm-btn-close" onclick="SimarcModal.hide('kbdModal')" aria-label="Close">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+  <div class="sm-body">
+    <div class="d-flex justify-content-between align-items-center py-3 shortcut-row" style="border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Fokus pencarian</span>
+      <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:36px;text-align:center;">/</kbd>
+    </div>
+    <div class="d-flex justify-content-between align-items-center py-3 shortcut-row" style="border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Dark mode</span>
+      <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:36px;text-align:center;">D</kbd>
+    </div>
+    <div class="d-flex justify-content-between align-items-center py-3 shortcut-row" style="border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Tutup modal / sidebar</span>
+      <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:36px;text-align:center;">Esc</kbd>
+    </div>
+    <div class="d-flex justify-content-between align-items-center py-3">
+      <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Sidebar toggle</span>
+      <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:70px;text-align:center;">Ctrl+B</kbd>
+    </div>
+  </div>
+  <div class="sm-footer">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('kbdModal')">
+      <i class="bi bi-x-lg me-1"></i>Tutup
+    </button>
+  </div>
+</template>
+
+<!-- Scripts — All deferred for faster initial paint on mobile -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js" defer></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+<script src="/js/lazy-load.js" defer></script>
+<script src="/js/sidebar.js?v={{.AssetVersion}}" defer></script>
+<script src="/js/modal-manager.js?v={{.AssetVersion}}" defer></script>
+<script src="/js/arsip-download.js?v={{.AssetVersion}}" defer></script>
+
+<script>
+/* ── Mobile Bottom Nav Active State ── */
+document.addEventListener('DOMContentLoaded', function() {
+  var currentPath = window.location.pathname;
+  document.querySelectorAll('.mobile-bottom-nav-item').forEach(function(item) {
+    var href = item.getAttribute('href');
+    if (href && (currentPath === href || currentPath.startsWith(href + '/') || currentPath.startsWith(href + '?'))) {
+      item.classList.add('active');
+    }
+    if (href === '/search' && (currentPath === '/search' || document.querySelector('.mobile-search-bar:not(.d-none)'))) {
+      // keep search active if search bar is open
+    }
+  });
+});
+
+/* ── Theme ── */
+(function() {
+  var html = document.documentElement;
+  var saved = localStorage.getItem('theme') || 'light';
+  html.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', function() {
+    var icon = document.getElementById('themeIcon');
+    if (icon) icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+    document.getElementById('themeToggle').addEventListener('click', function() {
+      var t = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      icon.className = t === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: t } }));
+    });
+  });
+})();
+
+/* ── Keyboard Shortcuts ── */
+document.addEventListener('keydown', function(e) {
+  // / to focus search
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.target.matches('input, textarea, select')) {
+    e.preventDefault();
+    var searchInput = document.querySelector('.nav-search input, .mobile-search-bar input');
+    if (searchInput) searchInput.focus();
+  }
+  // D to toggle dark mode (not in input)
+  if ((e.key === 'd' || e.key === 'D') && !e.ctrlKey && !e.metaKey && !e.target.matches('input, textarea, select')) {
+    e.preventDefault();
+    document.getElementById('themeToggle')?.click();
+  }
+  // Ctrl+B to toggle sidebar
+  if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    document.getElementById('sidebarToggle')?.click();
+  }
+});
+
+/* ── CSRF injection ── */
+(function() {
+  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  if (!csrfMeta) return;
+  var csrf = csrfMeta.getAttribute('content');
+  document.addEventListener('submit', function(e) {
+    var f = e.target;
+    if (!f.querySelector('[name="_token"]') && f.method && f.method.toUpperCase() === 'POST') {
+      var i = document.createElement('input');
+      i.type = 'hidden'; i.name = '_token'; i.value = csrf;
+      f.appendChild(i);
+    }
+  });
+  var origFetch = window.fetch;
+  window.fetch = function(url, opts) {
+    opts = opts || {}; opts.headers = opts.headers || {};
+    if (opts.method && opts.method.toUpperCase() !== 'GET') opts.headers['X-CSRF-Token'] = csrf;
+    return origFetch.call(this, url, opts);
+  };
+})();
+
+/* ── Global Tooltip Initialization ── */
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+      new bootstrap.Tooltip(el);
+    });
+  }
+});
+
+/* ── Auto-dismiss alerts ── */
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[data-auto-dismiss]').forEach(function(btn) {
+    btn.addEventListener('click', function() { this.closest('.alert').remove(); });
+  });
+  document.querySelectorAll('.alert').forEach(function(a) {
+    setTimeout(function() { a.style.opacity = '0'; setTimeout(function() { a.remove(); }, 300); }, 5000);
+  });
+});
+
+/* ── Global Select2 for all dropdowns ── */
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.jQuery && $.fn.select2) {
+    $('select.form-select:not(.no-select2), select.select2-search').each(function() {
+      var $this = $(this);
+      if ($this.data('s2-icons') || $this.attr('onchange')) return;
+      var optsCount = $this.find('option').length;
+      if (optsCount <= 1) return;
+      $this.select2({
+        width: '100%',
+        placeholder: $this.find('option:first').text() || '-- Pilih --',
+        allowClear: true,
+        language: 'id',
+        minimumResultsForSearch: 3
+      });
+    });
+    /* Fix form-select-sm height after select2 renders */
+    setTimeout(function() {
+      $('select.form-select-sm.select2-search').each(function() {
+        var $this = $(this);
+        var $c = $this.next('.select2-container');
+        if ($c.length) {
+          $c.find('.select2-selection--single').css({ 'height': '32px', 'border-radius': '6px' });
+          $c.find('.select2-selection__rendered').css({ 'line-height': '30px', 'font-size': '13px' });
+          $c.find('.select2-selection__arrow').css({ 'height': '30px' });
+        }
+      });
+    }, 200);
+    /* Modal event handlers moved to modal-manager.js */
+  }
+});
+
+/* ── Global DataTables Initialization ── */
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.jQuery && $.fn.DataTable) {
+    var commonOpts = {
+      "language": {
+        "sEmptyTable":   "Tidak ada data",
+        "sProcessing":   "Memproses...",
+        "sLengthMenu":   "_MENU_",
+        "sZeroRecords":  "Data tidak ditemukan",
+        "sInfo":         "_START_–_END_ dari <strong>_TOTAL_</strong>",
+        "sInfoEmpty":    "0 entri",
+        "sInfoFiltered": "(filter _MAX_)",
+        "sSearch":       "",
+        "oPaginate": {
+          "sFirst":    "<i class='bi bi-chevron-double-left'></i>",
+          "sPrevious": "<i class='bi bi-chevron-left'></i>",
+          "sNext":     "<i class='bi bi-chevron-right'></i>",
+          "sLast":     "<i class='bi bi-chevron-double-right'></i>"
+        }
+      },
+      "pageLength": 10,
+      "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+      "autoWidth": false,
+      "deferRender": true,
+      "order": [],
+      "stateSave": true,
+      "stateDuration": 3600,
+      "dom": "<'row align-items-center'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-8'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+      "drawCallback": function() {
+        var $w = $(this.nTableWrapper);
+        $w.find('.dataTables_filter input').attr('placeholder', 'Ketik untuk mencari...');
+        $w.find('tbody tr').each(function(i) {
+          var $r = $(this);
+          $r.css({opacity:0, transform:'translateY(6px)'});
+          setTimeout(function(){ $r.css({transition:'all 0.2s ease',opacity:1,transform:'translateY(0)'}); }, Math.min(i*15, 300));
+        });
+      },
+      "initComplete": function() {
+        $(this.nTableWrapper).find('.dataTables_filter input').attr('placeholder', 'Ketik untuk mencari...');
+      }
+    };
+    $('.datatable').each(function() {
+      if (!$.fn.DataTable.isDataTable(this)) {
+        var opts = $.extend({}, commonOpts);
+        if ($(this).data('pagination') === 'server') {
+          opts.paging = false;
+          opts.info = false;
+          opts.dom = opts.dom.replace(/[pi]/g, '');
+        }
+        $(this).DataTable(opts);
+      }
+    });
+  }
+});
+</script>
+
+<!-- Flash Message — SIMARC V4 Modal (Portal-rendered) -->
+<template data-modal="flashModal">
+  <div class="sm-header" style="justify-content:center;padding:32px 24px 8px;border:none;">
+    {{if .Success}}
+    <div class="sm-confirm-icon sm-icon-success" style="margin:0 auto;">
+      <i class="bi bi-check-circle-fill"></i>
+    </div>
+    {{else if .Error}}
+    <div class="sm-confirm-icon sm-icon-danger" style="margin:0 auto;">
+      <i class="bi bi-x-circle-fill"></i>
+    </div>
+    {{else if .Errors}}
+    <div class="sm-confirm-icon sm-icon-warning" style="margin:0 auto;">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+    </div>
+    {{end}}
+  </div>
+  <div class="sm-body" style="text-align:center;padding:8px 24px 16px;">
+    {{if .Success}}
+    <h5 class="sm-confirm-title">Berhasil</h5>
+    <p class="sm-confirm-message">{{.Success}}</p>
+    {{else if .Error}}
+    <h5 class="sm-confirm-title">Gagal</h5>
+    <p class="sm-confirm-message">{{.Error}}</p>
+    {{else if .Errors}}
+    <h5 class="sm-confirm-title">Terjadi Kesalahan</h5>
+    <p class="sm-confirm-message">{{.Errors}}</p>
+    {{end}}
+  </div>
+  <div class="sm-footer" style="justify-content:center;">
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('flashModal')">
+      <i class="bi bi-x-lg me-1"></i>Tutup
+    </button>
+  </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var hasFlash = {{if .Success}}true{{else if .Error}}true{{else if .Errors}}true{{else}}false{{end}};
+  if (hasFlash && typeof SimarcModal !== 'undefined' && SimarcModal.show) {
+    SimarcModal.show('flashModal', { size: 'sm' });
+    setTimeout(function() { SimarcModal.hide('flashModal'); }, 5000);
+  }
+});
+</script>
+
+<!-- SIMARC V4 Modal Portal Mount (position:fixed; rendered at body level) -->
+<div id="sm-portal" style="position:fixed;inset:0;pointer-events:none;z-index:var(--z-modal,1080);overflow:visible;visibility:hidden;"></div>
+
+{{block "scripts" .}}{{end}}
+
+<!-- Mobile Bottom Navigation -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+  <a href="/dashboard" class="mobile-bottom-nav-item">
+    <i class="bi bi-speedometer2"></i>
+    <span>Dashboard</span>
+  </a>
+  <a href="/arsip" class="mobile-bottom-nav-item">
+    <i class="bi bi-file-earmark-text"></i>
+    <span>Arsip</span>
+  </a>
+  <a href="/search" class="mobile-bottom-nav-item" id="mobileSearchBtn" onclick="event.preventDefault();var sb=document.getElementById('mobileSearchBar');sb.classList.toggle('d-none');if(!sb.classList.contains('d-none')){var inp=sb.querySelector('input');if(inp)setTimeout(function(){inp.focus()},300)};this.classList.toggle('active');">
+    <i class="bi bi-search"></i>
+    <span>Cari</span>
+  </a>
+  <a href="/peminjaman" class="mobile-bottom-nav-item">
+    <i class="bi bi-journal-check"></i>
+    <span>Pinjam</span>
+  </a>
+  <a href="/profil" class="mobile-bottom-nav-item">
+    <i class="bi bi-person"></i>
+    <span>Profil</span>
+  </a>
+</nav>
+
+<script>
+/* ── Prevent pull-to-refresh via CSS (better perf) ── */
+document.documentElement.style.overscrollBehavior = 'none';
+
+/* ── Smooth scroll for mobile ── */
+if ('scrollBehavior' in document.documentElement.style) {
+  document.documentElement.style.scrollBehavior = 'smooth';
+}
+
+/* ── Fix 300ms tap delay removal ── */
+document.addEventListener('touchstart', function() {}, { passive: true });
+</script>
+
+<script>
+// Button ripple effect
+document.addEventListener('mousemove', function(e) {
+  var btn = e.target.closest('.btn-primary');
+  if (btn) {
+    var rect = btn.getBoundingClientRect();
+    btn.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
+    btn.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
+  }
+});
+</script>
+</body>
+</html>
+{{end}}

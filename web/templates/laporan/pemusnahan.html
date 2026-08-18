@@ -1,0 +1,69 @@
+{{define "laporan/pemusnahan.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="page-title mb-0"><i class="bi bi-trash"></i> Laporan Pemusnahan Arsip</h1>
+        <div class="page-actions">
+            <div class="btn-group">
+                <a href="/laporan/pemusnahan/export/pdf" target="_blank" class="btn btn-outline-danger"><i class="bi bi-file-pdf me-1"></i>Export PDF</a>
+                <a href="/laporan/pemusnahan/export/excel" class="btn btn-outline-success"><i class="bi bi-file-excel me-1"></i>Export Excel</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="/laporan/pemusnahan" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="">Semua Status</option>
+                    <option value="diajukan"{{if eq .RequestStatus "diajukan"}} selected{{end}}>Diajukan</option>
+                    <option value="disetujui"{{if eq .RequestStatus "disetujui"}} selected{{end}}>Disetujui</option>
+                    <option value="ditolak"{{if eq .RequestStatus "ditolak"}} selected{{end}}>Ditolak</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-premium table-hover">
+                <thead class="table-light">
+                    <tr><th width="5%">No</th><th>Nomor Arsip</th><th>Nama Arsip</th><th>Alasan</th><th>Status</th><th>Tanggal Pengajuan</th><th>Pengaju</th><th>Persetujuan</th></tr>
+                </thead>
+                <tbody>
+                    {{range $idx,$p := .PemusnahanList}}
+                    <tr>
+                        <td>{{add $.PemusnahanListFirstItem $idx}}</td>
+                        <td>{{if $p.Arsip}}{{$p.Arsip.NomorArsip}}{{else if $p.ArsipID}}{{$p.ArsipID}}{{else}}-{{end}}</td>
+                        <td>{{if $p.Arsip}}{{$p.Arsip.NamaArsip}}{{else}}{{$p.NamaKegiatan}}{{end}}</td>
+                        <td>{{limitString $p.AlasanPengajuan 50}}</td>
+                        <td><span class="badge bg-{{if eq $p.Status "disetujui"}}success{{else if eq $p.Status "diajukan"}}warning{{else}}danger{{end}}">{{$p.Status}}</span></td>
+                        <td>{{$p.TanggalPengajuan}}</td>
+                        <td>{{if $p.Creator}}{{$p.Creator.Name}}{{else}}-{{end}}</td>
+                        <td>{{if $p.TanggalApprove}}{{$p.ApprovedBy}}<br><small class="text-muted">{{$p.TanggalApprove}}</small>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="8" class="text-center py-4"><i class="bi bi-inbox display-4 text-muted"></i><p class="mt-2 text-muted">Belum ada data pemusnahan</p></td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{if .PemusnahanListHasPages}}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top">
+            <div class="text-muted small">Menampilkan {{.PemusnahanListFirstItem}}–{{.PemusnahanListLastItem}} dari {{.PemusnahanListTotal}} data</div>
+            <div>{{.Pagination}}</div>
+        </div>
+        {{else if gt (len .PemusnahanList) 0}}
+        <div class="d-flex justify-content-end px-3 py-3 border-top">
+            <div class="text-muted small">Total: <strong>{{len .PemusnahanList}}</strong> data</div>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

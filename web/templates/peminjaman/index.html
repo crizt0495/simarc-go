@@ -1,0 +1,243 @@
+{{define "peminjaman/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+/* ═══════════════════════════════════════
+   PEMINJAMAN — PREMIUM LIST
+   ═══════════════════════════════════════ */
+
+.pinjam-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    border-radius: var(--r-xl);
+    padding: 1.75rem 2rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.pinjam-hero::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -5%;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.pinjam-hero .hero-title {
+    font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
+}
+.pinjam-hero .hero-sub {
+    font-size: 0.8rem; opacity: 0.7; font-weight: 500;
+}
+
+.stat-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 0.85rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    transition: all 0.2s ease;
+}
+.stat-mini:hover { border-color: var(--brand); box-shadow: var(--sh-sm); }
+.stat-mini-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--r);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem; flex-shrink: 0;
+}
+.stat-mini-value {
+    font-size: 1.25rem; font-weight: 800; color: var(--ink-2); line-height: 1.2;
+}
+.stat-mini-label {
+    font-size: 0.65rem; font-weight: 600; color: var(--ink-4);
+    text-transform: uppercase; letter-spacing: 0.04em;
+}
+
+/* ── Status Badges ── */
+.st-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 50px; font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.st-badge.pending { background: #fef3c7; color: #b45309; }
+.st-badge.disetujui { background: #dcfce7; color: #15803d; }
+.st-badge.dipinjam, .st-badge.borrowed { background: #dbeafe; color: #2563eb; }
+.st-badge.dikembalikan, .st-badge.returned { background: #f0fdf4; color: #059669; }
+.st-badge.ditolak, .st-badge.rejected { background: #fee2e2; color: #b91c1c; }
+.st-badge.overdue { background: #1e293b; color: #fff; }
+
+/* ── Premium Table ── */
+.premium-table thead th {
+    background: transparent;
+    border: none;
+    color: var(--ink-4);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 1rem;
+    border-bottom: 2px solid var(--border);
+}
+.premium-table tbody tr {
+    transition: all 0.15s ease;
+    border-bottom: 1px solid var(--border);
+}
+.premium-table tbody tr:hover { background: rgba(26,86,219,0.02); }
+.premium-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    font-size: 0.85rem;
+    color: var(--ink-2);
+}    /* ── Action Buttons (using global .btn-crud from enterprise-premium.css) ── */
+
+/* ── Animations ── */
+.fade-up { animation: fadeUp 0.35s ease both; }
+.fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+.fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
+
+
+@media (max-width: 768px) {
+    .pinjam-hero { padding: 1.25rem; }
+    .pinjam-hero .hero-title { font-size: 1.1rem; }
+    .stat-mini { padding: 0.65rem 0.85rem; }
+    .stat-mini-value { font-size: 1.05rem; }
+    .stat-mini-icon { width: 34px; height: 34px; font-size: 0.9rem; }
+    .premium-table thead { display: none; }
+    .premium-table tbody tr {
+        display: block; margin-bottom: 0.75rem;
+        border: 1px solid var(--border); border-radius: var(--r);
+        padding: 0.75rem; background: var(--surface);
+    }
+    .premium-table tbody td {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0.4rem 0 !important; border: none !important;
+        border-bottom: 1px solid var(--border) !important;
+        text-align: right; font-size: 0.8rem;
+    }
+    .premium-table tbody td:last-child { border-bottom: none !important; }
+    .premium-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 700; color: var(--ink-3);
+        font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+        padding-right: 0.75rem;
+    }
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- ZONE 1: HERO -->
+    <div class="pinjam-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-journal-check me-2"></i>Peminjaman Arsip</div>
+                <div class="hero-sub">Kelola permohonan peminjaman dan pengembalian arsip</div>
+            </div>
+            <a href="/peminjaman/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-plus-lg me-1"></i>Ajukan Pinjam
+            </a>
+        </div>
+    </div>
+
+    <!-- ZONE 2: STATS -->
+    <div class="row g-2 mb-3 fade-up-d1">
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:#eff6ff;color:var(--brand);"><i class="bi bi-journal-check"></i></div><div><div class="stat-mini-value">{{len .List}}</div><div class="stat-mini-label">Total Peminjaman</div></div></div>
+        </div>
+        {{$pending := 0}}{{$dipinjam := 0}}{{$kembali := 0}}{{$overdue := 0}}
+        {{range .List}}{{if eq .Status "pending"}}{{$pending = add $pending 1}}{{end}}{{if or (eq .Status "borrowed") (eq .Status "disetujui") (eq .Status "dipinjam")}}{{$dipinjam = add $dipinjam 1}}{{end}}{{if or (eq .Status "returned") (eq .Status "dikembalikan")}}{{$kembali = add $kembali 1}}{{end}}{{if eq .Status "overdue"}}{{$overdue = add $overdue 1}}{{end}}{{end}}
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:#fef3c7;color:#b45309;"><i class="bi bi-clock"></i></div><div><div class="stat-mini-value">{{$pending}}</div><div class="stat-mini-label">Menunggu</div></div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-box-arrow-right"></i></div><div><div class="stat-mini-value">{{$dipinjam}}</div><div class="stat-mini-label">Dipinjam</div></div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:#dcfce7;color:#059669;"><i class="bi bi-check-circle"></i></div><div><div class="stat-mini-value">{{$kembali}}</div><div class="stat-mini-label">Dikembalikan</div></div></div>
+        </div>
+    </div>
+
+    <!-- ZONE 3: TABLE -->
+    <div class="card border-0 shadow-sm fade-up-d2" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="table-responsive">
+            <table class="table premium-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="min-width:180px">Arsip</th>
+                        <th>Peminjam</th>
+                        <th>Keperluan</th>
+                        <th class="text-center">Status</th>
+                        <th>Batas Kembali</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $p := .List}}
+                    <tr>
+                        <td data-label="Arsip">
+                            <div class="fw-700 small">{{if $p.Arsip}}{{$p.Arsip.NamaArsip}}{{else}}<span class="text-muted">Arsip Tidak Ditemukan</span>{{end}}</div>
+                            <small class="text-muted">{{if $p.Arsip}}{{$p.Arsip.NomorArsip}}{{else}}-{{end}}</small>
+                        </td>
+                        <td data-label="Peminjam"><span class="fw-600">{{if $p.User}}{{$p.User.Name}}{{else}}<span class="text-muted">-</span>{{end}}</span></td>
+                        <td data-label="Keperluan"><span class="small">{{$p.Keperluan}}</span></td>
+                        <td class="text-center" data-label="Status">
+                            <span class="st-badge {{$p.Status}}">
+                                <i class="bi bi-{{if eq $p.Status "pending"}}clock{{else if or (eq $p.Status "disetujui") (eq $p.Status "borrowed") (eq $p.Status "dipinjam")}}check-circle{{else if or (eq $p.Status "dikembalikan") (eq $p.Status "returned")}}arrow-return-left{{else if or (eq $p.Status "ditolak") (eq $p.Status "rejected")}}x-circle{{else if eq $p.Status "overdue"}}exclamation-triangle{{else}}question-circle{{end}}"></i>
+                                {{replaceUnderscore $p.Status}}
+                            </span>
+                        </td>
+                        <td data-label="Batas Kembali">{{if $p.TanggalDueDate}}{{$p.TanggalDueDate}}{{else}}<span class="text-muted">-</span>{{end}}</td>
+                        <td class="text-center" data-label="Aksi">
+                            <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                {{if and $.AuthUser $.AuthUser.IsAdmin}}
+                                    {{if eq $p.Status "pending"}}
+                                        <form action="/peminjaman/{{$p.ID}}/approve" method="POST" class="d-inline" onsubmit="return confirm('Setujui peminjaman ini?')">
+                                            <button type="submit" class="btn-crud btn-crud-success" title="Setujui" data-bs-toggle="tooltip"><i class="bi bi-check-lg"></i></button>
+                                        </form>
+                                        <button type="button" class="btn-crud btn-crud-del" title="Tolak" onclick="SimarcModal.show('rejectModal{{$p.ID}}', { size: 'sm' })"><i class="bi bi-x-lg"></i></button>
+
+                                        <template data-modal="rejectModal{{$p.ID}}">
+                                          <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Tolak Peminjaman</h5><p class="sm-subtitle">Masukkan alasan penolakan</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('rejectModal{{$p.ID}}')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
+                                          <form action="/peminjaman/{{$p.ID}}/reject" method="POST">
+                                            <div class="sm-body">
+                                              <div class="mb-3"><label class="form-label small fw-700">Alasan Penolakan</label><textarea name="keterangan_admin" class="form-control" rows="3" required></textarea></div>
+                                            </div>
+                                            <div class="sm-footer">
+                                              <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('rejectModal{{$p.ID}}')"><i class="bi bi-x-lg me-1"></i>Batal</button>
+                                              <button type="submit" class="sm-btn sm-btn-danger"><i class="bi bi-x-lg me-1"></i>Tolak</button>
+                                            </div>
+                                          </form>
+                                        </template>
+                                    {{else if or (eq $p.Status "disetujui") (eq $p.Status "borrowed")}}
+                                        <form action="/peminjaman/{{$p.ID}}/return" method="POST" class="d-inline" onsubmit="return confirm('Konfirmasi pengembalian arsip?')">
+                                            <button type="submit" class="btn-crud btn-crud-view" title="Selesai / Kembali" data-bs-toggle="tooltip"><i class="bi bi-arrow-return-left"></i></button>
+                                        </form>
+                                    {{end}}
+                                {{end}}
+                                <a href="/blockchain/entity/PeminjamanArsip/{{$p.ID}}" class="btn-crud btn-crud-primary" title="Audit Blockchain" data-bs-toggle="tooltip"><i class="bi bi-shield-check"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="6" class="text-center py-5"><div class="text-muted"><i class="bi bi-inbox d-block mb-2" style="font-size:2.5rem;opacity:0.3;"></i><h6 class="fw-700">Belum Ada Peminjaman</h6><small>Belum ada data peminjaman arsip.</small></div></td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{if .Pagination}}
+        <div class="border-top px-3 py-2 d-flex justify-content-center" style="background:var(--surface-2);">{{.Pagination}}</div>
+        {{end}}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
+    }
+});
+</script>
+{{end}}

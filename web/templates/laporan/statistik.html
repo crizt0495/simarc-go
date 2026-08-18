@@ -1,0 +1,175 @@
+{{define "laporan/statistik.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="page-title mb-0">Laporan Statistik Arsip</h4>
+            </div>
+        </div>
+    </div>
+    <!-- Stat Cards Row 1 -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-file-earmark-archive text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Total Arsip</p><h5 class="mb-0">{{.TotalArsip}}</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-check-circle-fill text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Arsip Aktif</p><h5 class="mb-0">{{.TotalArsipAktif}}</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-warning rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-clock text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Arsip Inaktif</p><h5 class="mb-0">{{.TotalArsipInaktif}}</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-danger rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-exclamation-triangle text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Siap Musnah</p><h5 class="mb-0">{{.TotalSiapMusnah}}</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Stat Cards Row 2 -->
+    <div class="row mt-3">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-info rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-trash3 text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Pemusnahan Diajukan</p><h5 class="mb-0">{{.TotalPemusnahan}}</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-secondary rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-archive text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Arsip Musnah</p><h5 class="mb-0">{{.TotalArsipMusnah}}</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-purple rounded-circle d-flex align-items-center justify-content-center" style="background:#6f42c1"><i class="bi bi-shield-check text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Arsip Permanen</p><h5 class="mb-0">{{.TotalArsipPermanen}}</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0"><div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center" style="background:#0d9488"><i class="bi bi-cloud-upload text-white font-size-20"></i></div></div>
+                        <div class="flex-grow-1 ms-3"><p class="text-muted mb-1">Digitalisasi</p><h5 class="mb-0">{{.PersenDigitalisasi}}%</h5></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Charts -->
+    <div class="row mt-3">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Statistik Arsip per Unit Kerja</h5></div>
+                <div class="card-body"><canvas id="arsipPerUnitChart" height="200"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Statistik Arsip per Klasifikasi</h5></div>
+                <div class="card-body"><canvas id="arsipPerKlasifikasiChart" height="200"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <!-- Detail Table -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Detail Statistik</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-premium">
+                            <thead><tr><th>Parameter</th><th>Jumlah</th></tr></thead>
+                            <tbody>
+                                <tr><td>Total Arsip</td><td><strong>{{.TotalArsip}}</strong></td></tr>
+                                <tr><td>Arsip Aktif</td><td><strong>{{.TotalArsipAktif}}</strong></td></tr>
+                                <tr><td>Arsip Inaktif</td><td><strong>{{.TotalArsipInaktif}}</strong></td></tr>
+                                <tr><td>Arsip Siap Musnah</td><td><strong>{{.TotalSiapMusnah}}</strong></td></tr>
+                                <tr><td>Arsip Musnah</td><td><strong>{{.TotalArsipMusnah}}</strong></td></tr>
+                                <tr><td>Arsip Permanen</td><td><strong>{{.TotalArsipPermanen}}</strong></td></tr>
+                                <tr><td>Arsip Digital (dengan berkas)</td><td><strong>{{.TotalArsipDigital}}</strong></td></tr>
+                                <tr><td>Arsip Belum Digital</td><td><strong>{{.TotalArsipBelumDigital}}</strong></td></tr>
+                                <tr><td>Persentase Digitalisasi</td><td><strong>{{.PersenDigitalisasi}}%</strong></td></tr>
+                                <tr><td>Arsip SPJ</td><td><strong>{{.TotalArsipSpj}}</strong></td></tr>
+                                <tr><td>Arsip Non SPJ</td><td><strong>{{.TotalArsipNonSpj}}</strong></td></tr>
+                                <tr><td>Arsip Belum Terklasifikasi</td><td><strong>{{.TotalArsipBelumTerklas}}</strong></td></tr>
+                                <tr class="table-light"><td colspan="2" class="fw-bold">Pengajuan Pemusnahan</td></tr>
+                                <tr><td>Total Pengajuan Pemusnahan</td><td><strong>{{.TotalPemusnahan}}</strong></td></tr>
+                                <tr><td>Pemusnahan Disetujui</td><td><strong>{{.TotalPemusnahanDisetujui}}</strong></td></tr>
+                                <tr><td>Pemusnahan Menunggu Persetujuan</td><td><strong>{{.TotalPemusnahanPending}}</strong></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    // Chart 1: Arsip per Unit Kerja
+    var ctx1=document.getElementById('arsipPerUnitChart').getContext('2d');
+    var labels1=[{{range $i,$v:=.ArsipPerUnit}}{{if $i}},{{end}}"{{$v.NamaUnit}}"{{end}}];
+    var data1=[{{range $i,$v:=.ArsipPerUnit}}{{if $i}},{{end}}{{$v.JumlahArsip}}{{end}}];
+    new Chart(ctx1,{
+        type:'bar',
+        data:{
+            labels:labels1,
+            datasets:[{label:'Jumlah Arsip',data:data1,backgroundColor:'rgba(54,162,235,0.2)',borderColor:'rgba(54,162,235,1)',borderWidth:1}]
+        },
+        options:{responsive:true,scales:{y:{beginAtZero:true}}}
+    });
+    // Chart 2: Arsip per Klasifikasi
+    var ctx2=document.getElementById('arsipPerKlasifikasiChart').getContext('2d');
+    var labels2=[{{range $i,$v:=.ArsipPerKlasifikasi}}{{if $i}},{{end}}"{{$v.NamaKlasifikasi}}"{{end}}];
+    var data2=[{{range $i,$v:=.ArsipPerKlasifikasi}}{{if $i}},{{end}}{{$v.JumlahArsip}}{{end}}];
+    new Chart(ctx2,{
+        type:'doughnut',
+        data:{
+            labels:labels2,
+            datasets:[{data:data2,backgroundColor:['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#FF6384','#C9CBCF'],borderWidth:1}]
+        },
+        options:{responsive:true,plugins:{legend:{position:'bottom'}}}
+    });
+});
+</script>
+{{end}}

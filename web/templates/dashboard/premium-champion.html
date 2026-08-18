@@ -1,0 +1,207 @@
+{{define "dashboard/premium-champion.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.dashboard-welcome-card{background:linear-gradient(135deg,#1e293b,#0f172a)}
+.trophy-badge{font-size:150px;color:#fbbf24}
+.glass{background:rgba(255,255,255,0.1);backdrop-filter:blur(10px)}
+.hover-up:hover{transform:translateY(-5px);box-shadow:0 1rem 3rem rgba(0,0,0,.175)!important}
+.transition-all{transition:all 0.3s ease}
+.backdrop-blur{backdrop-filter:blur(8px)}
+.badge{font-weight:600;letter-spacing:0.5px}
+</style>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass border-0 overflow-hidden shadow-lg dashboard-welcome-card">
+                <div class="card-body p-5 position-relative">
+                    <div class="position-absolute top-0 end-0 p-4 opacity-10">
+                        <i class="bi bi-trophy-fill trophy-badge"></i>
+                    </div>
+                    <div class="row align-items-center position-relative">
+                        <div class="col-lg-8 text-white">
+                            <h1 class="display-5 fw-bold mb-2">Selamat Datang, {{.AuthUser.Name}}! 🏆</h1>
+                            <p class="lead mb-4 opacity-75">Status Pengawasan Kearsipan Instansi Hari Ini:
+                                <span class="badge bg-success p-2 px-3 ms-2 shadow-sm">
+                                    <i class="bi bi-shield-check me-2"></i>SANGAT BAIK
+                                </span>
+                            </p>
+                            <div class="d-flex gap-3">
+                                <div class="p-3 bg-white bg-opacity-10 rounded-3 backdrop-blur border border-white border-opacity-10">
+                                    <div class="small opacity-75 mb-1">Compliance Score Instansi</div>
+                                    <div class="h3 mb-0 fw-bold text-warning">{{.AverageCompliance}}%</div>
+                                </div>
+                                <div class="p-3 bg-white bg-opacity-10 rounded-3 backdrop-blur border border-white border-opacity-10">
+                                    <div class="small opacity-75 mb-1">Data Blockchain Terkunci</div>
+                                    <div class="h3 mb-0 fw-bold text-info">{{.PremiumStats.BlockchainRecords}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="p-3 rounded-3 bg-primary bg-opacity-10">
+                            <i class="bi bi-file-earmark-zip text-primary fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-success small fw-bold">+12.5%</span>
+                            <div class="text-muted small">vs bulan lalu</div>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{.Stats.Total}}</h3>
+                    <p class="text-muted mb-0">Total Arsip Terkelola</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="p-3 rounded-3 bg-success bg-opacity-10">
+                            <i class="bi bi-hdd-network text-success fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-success small fw-bold">{{.DigitalFileStats.Percentage}}%</span>
+                            <div class="text-muted small">Digitalisasi</div>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{.DigitalFileStats.WithDigitalFile}}</h3>
+                    <p class="text-muted mb-0">Arsip Digital</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="p-3 rounded-3 bg-warning bg-opacity-10">
+                            <i class="bi bi-hourglass-split text-warning fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-danger small fw-bold">{{.Stats.SiapPenyusutan}}</span>
+                            <div class="text-muted small">Menunggu JRA</div>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{.Stats.Inaktif}}</h3>
+                    <p class="text-muted mb-0">Arsip Inaktif</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white hover-up transition-all">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="p-3 rounded-3 bg-danger bg-opacity-10">
+                            <i class="bi bi-shield-lock text-danger fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-info small fw-bold">100% Secure</span>
+                            <div class="text-muted small">Encryption Active</div>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{.PremiumStats.BlockchainRecords}}</h3>
+                    <p class="text-muted mb-0">Audit Logs (Blockchain)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 py-4 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">Trend Pertumbuhan Arsip</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Tahun 2026</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">2025</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="archiveTrendChart" style="height:350px"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 py-4 px-4">
+                    <h5 class="fw-bold mb-0">Leaderboard Kearsipan 🏆</h5>
+                </div>
+                <div class="card-body p-4 pt-0">
+                    <div class="list-group list-group-flush">
+                        {{range $idx,$unit := .Leaderboard}}
+                        <div class="list-group-item px-0 py-3 border-0 d-flex align-items-center">
+                            <div class="me-3 position-relative">
+                                {{if eq $idx 0}}
+                                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-warning text-dark border border-white">#1</span>
+                                <div class="p-3 rounded-circle bg-warning bg-opacity-10 text-warning border border-warning border-opacity-20">
+                                    <i class="bi bi-trophy fs-4"></i>
+                                </div>
+                                {{else if eq $idx 1}}
+                                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary border border-white">#2</span>
+                                <div class="p-3 rounded-circle bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-20">
+                                    <i class="bi bi-award fs-4"></i>
+                                </div>
+                                {{else}}
+                                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-light text-dark border border-white">#{{add $idx 1}}</span>
+                                <div class="p-3 rounded-circle bg-light text-muted border border-light">
+                                    <i class="bi bi-building fs-4"></i>
+                                </div>
+                                {{end}}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fw-bold">{{$unit.NamaUnit}}</h6>
+                                <small class="text-muted">{{$unit.Badge}}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-primary">{{$unit.TotalPoints}}</div>
+                                <small class="text-muted">Poin</small>
+                            </div>
+                        </div>
+                        {{else}}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-award fs-1 mb-2"></i>
+                            <p>Data leaderboard belum tersedia.</p>
+                        </div>
+                        {{end}}
+                    </div>
+                    <div class="mt-4">
+                        <button class="btn btn-light w-100 rounded-pill" disabled>Statistik Terverifikasi <i class="bi bi-shield-check ms-2 text-success"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    const ctx=document.getElementById('archiveTrendChart').getContext('2d');
+    const gradient=ctx.createLinearGradient(0,0,0,400);
+    gradient.addColorStop(0,'rgba(79,70,229,0.4)');
+    gradient.addColorStop(1,'rgba(79,70,229,0)');
+    new Chart(ctx,{
+        type:'line',
+        data:{
+            labels:['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+            datasets:[{
+                label:'Volume Arsip',
+                data:[65,78,90,115,142,160,185,210,240,265,290,315],
+                borderColor:'#4f46e5',borderWidth:4,tension:0.4,fill:true,
+                backgroundColor:gradient,pointBackgroundColor:'#4f46e5',pointBorderColor:'#fff',
+                pointBorderWidth:2,pointRadius:6,pointHoverRadius:8
+            }]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{padding:12,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{size:14,weight:'bold'},bodyFont:{size:13},displayColors:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)',drawBorder:false},ticks:{padding:10}},x:{grid:{display:false},ticks:{padding:10}}}}
+    });
+});
+</script>
+{{end}}

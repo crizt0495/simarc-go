@@ -1,0 +1,889 @@
+{{define "arsip/pemindahan.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+{{template "components/select2.html"}}
+<style>
+/* ═══════════════════════════════════════
+   PEMINDAHAN ARSIP — PREMIUM
+   ═══════════════════════════════════════ */
+
+/* ── Hero Header ── */
+.pindah-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    border-radius: var(--r-xl);
+    padding: 1.75rem 2rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.pindah-hero::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -5%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.pindah-hero .hero-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.2rem;
+}
+.pindah-hero .hero-sub {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+/* ── Step Wizard ── */
+.step-wizard {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.step-wizard .step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    background: var(--surface-3);
+    transition: all 0.2s ease;
+}
+.step-wizard .step .sn {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    background: rgba(0,0,0,0.08);
+    flex-shrink: 0;
+}
+.step-wizard .step.active {
+    background: var(--brand);
+    color: #fff;
+}
+.step-wizard .step.active .sn {
+    background: rgba(255,255,255,0.25);
+}
+.step-wizard .step.done {
+    background: rgba(5,150,105,0.1);
+    color: var(--success);
+}
+.step-wizard .step.done .sn {
+    background: rgba(5,150,105,0.15);
+}
+
+/* ── Stat Cards ── */
+.stat-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.stat-mini-icon {
+    width: 42px; height: 42px;
+    border-radius: var(--r);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.stat-mini-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--ink-2);
+    line-height: 1.2;
+}
+.stat-mini-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ink-4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── Content Card ── */
+.content-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+.content-card:hover {
+    border-color: var(--brand);
+    box-shadow: var(--sh-sm);
+}
+.content-card .card-hd {
+    padding: 0.85rem 1.25rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--ink-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.content-card .card-bd {
+    padding: 1rem;
+}
+
+/* ── Archive Item ── */
+.arsip-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    margin-bottom: 0.35rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    background: var(--surface);
+}
+.arsip-item:hover {
+    border-color: var(--brand);
+    background: rgba(26,86,219,0.03);
+    transform: translateX(2px);
+}
+.arsip-item.selected {
+    border-color: var(--brand);
+    background: #eff6ff;
+    box-shadow: 0 0 0 1px rgba(26,86,219,0.1);
+}
+.arsip-item .form-check-input:checked {
+    background-color: var(--brand);
+    border-color: var(--brand);
+}
+.arsip-item .arsip-jenis {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 50px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.arsip-item .arsip-jenis.spj {
+    background: rgba(245,158,11,0.1);
+    color: #d97706;
+}
+.arsip-item .arsip-jenis.non-spj {
+    background: rgba(5,150,105,0.1);
+    color: #059669;
+}
+
+/* ── Selection badge ── */
+.sel-badge {
+    background: var(--brand);
+    color: #fff;
+    border-radius: 50px;
+    padding: 0.15rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ── Filter button pill ── */
+.filter-pill {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.filter-pill:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+    background: rgba(26,86,219,0.04);
+}
+.filter-pill.active {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+}
+
+/* ── Log item ── */
+.log-item {
+    padding: 0.65rem 0.85rem;
+    border-left: 3px solid var(--brand);
+    margin-bottom: 0.4rem;
+    background: var(--surface-2);
+    border-radius: 0 var(--r) var(--r) 0;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
+}
+.log-item:hover {
+    border-left-color: var(--brand-dk);
+    background: rgba(26,86,219,0.03);
+}
+.log-item .log-meta {
+    font-size: 0.65rem;
+    color: var(--ink-4);
+    margin-top: 0.2rem;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ── Summary chip ── */
+.summary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, var(--brand), #7c3aed);
+    color: #fff;
+    padding: 0.2rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* ── Summary bar ── */
+.summary-bar {
+    background: rgba(26,86,219,0.04);
+    border: 1px solid rgba(26,86,219,0.1);
+    border-radius: var(--r);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* ── Toast ── */
+.toast-premium {
+    background: var(--ink);
+    color: #fff;
+    padding: 0.75rem 1rem;
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-lg);
+    font-size: 0.85rem;
+    min-width: 280px;
+    animation: toastSlide 0.3s ease both;
+}
+.toast-premium .toast-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    line-height: 1;
+}
+.toast-premium .toast-close:hover { color: #fff; }
+@keyframes toastSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Fade animation ── */
+.fade-up { animation: fadeUp 0.35s ease both; }
+.fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+.fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
+.fade-up-d3 { animation: fadeUp 0.35s ease 0.2s both; }
+.fade-up-d4 { animation: fadeUp 0.35s ease 0.26s both; }
+
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .pindah-hero { padding: 1.25rem; }
+    .pindah-hero .hero-title { font-size: 1.1rem; }
+    .stat-mini { padding: 0.75rem 1rem; }
+    .stat-mini-value { font-size: 1.1rem; }
+    .stat-mini-icon { width: 36px; height: 36px; font-size: 0.95rem; }
+    .content-card .card-hd { padding: 0.7rem 1rem; font-size: 0.8rem; }
+    .content-card .card-bd { padding: 0.75rem; }
+    .arsip-item { padding: 0.55rem 0.7rem; }
+    .step-wizard .step { font-size: 0.7rem; padding: 0.35rem 0.75rem; }
+}
+
+/* ── BA Modal ── */
+.ba-form-section {
+    background: var(--surface-2);
+    border-radius: var(--r);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+.ba-form-section h6 {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- ZONE 1: HERO HEADER -->
+    <div class="pindah-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-map me-2"></i>Pemindahan Arsip</div>
+                <div class="hero-sub">Pilih arsip, tentukan lokasi tujuan, dan proses pemindahan secara batch</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/arsip/pemindahan/ba" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                    <i class="bi bi-journal-text me-1"></i>Riwayat BA
+                </a>
+                <button class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{if .moveMode}}{{else}}
+    <!-- ZONE 2: STEP WIZARD -->
+    <div class="step-wizard fade-up-d1">
+        <div class="step active" id="s1"><span class="sn">1</span> Pilih Arsip</div>
+        <div class="step" id="s2"><span class="sn">2</span> Pilih Lokasi</div>
+        <div class="step" id="s3"><span class="sn">3</span> Konfirmasi</div>
+    </div>
+
+    <!-- ZONE 3: STATS ROW -->
+    <div class="row g-2 mb-3 fade-up-d1">
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#eff6ff;color:var(--brand);"><i class="bi bi-archive"></i></div><div><div class="stat-mini-value">{{.TotalArsip}}</div><div class="stat-mini-label">Total Arsip</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#f0fdf4;color:var(--success);"><i class="bi bi-geo-alt"></i></div><div><div class="stat-mini-value">{{.TotalLokasi}}</div><div class="stat-mini-label">Lokasi Tersedia</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#fffbeb;color:var(--warning);"><i class="bi bi-arrow-left-right"></i></div><div><div class="stat-mini-value">{{.TotalMutasi}}</div><div class="stat-mini-label">Total Pemindahan</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#fef2f2;color:var(--danger);"><i class="bi bi-clock-history"></i></div><div><div class="stat-mini-value">{{.MutasiBulanIni}}</div><div class="stat-mini-label">Bulan Ini</div></div></div></div>
+    </div>
+
+    <!-- ZONE 4: MAIN CONTENT -->
+    <div class="row g-3">
+        <div class="col-lg-8 fade-up-d2">
+            <div class="content-card shadow-sm">
+                <div class="card-hd">
+                    <i class="bi bi-list-check"></i> Pilih Arsip
+                    <span class="sel-badge ms-auto" id="cntBadge">0 terpilih</span>
+                </div>
+                <div class="card-bd">
+                    <form id="moveForm" method="POST" action="/arsip/pemindahan">
+                        <input type="hidden" name="_token" value="{{.CSRFToken}}">
+
+                        <!-- Filters -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4">
+                                <div class="position-relative">
+                                    <i class="bi bi-search position-absolute" style="left:0.75rem;top:50%;transform:translateY(-50%);color:var(--ink-4);font-size:0.85rem;pointer-events:none;"></i>
+                                    <input type="text" class="form-control" id="srcArsip" placeholder="Cari nomor/nama/unit..."
+                                           style="padding-left:2.2rem;font-size:0.85rem;border-radius:var(--r);">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm no-select2" id="fltUnit" onchange="filterArsip()">
+                                    <option value="">Semua Unit</option>
+                                    {{range .UnitOpts}}<option value="{{.NamaUnit}}">{{.NamaUnit}}</option>{{end}}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm no-select2" id="fltJenis" onchange="filterArsip()">
+                                    <option value="">SPJ & Non SPJ</option>
+                                    <option value="SPJ">SPJ</option>
+                                    <option value="Non SPJ">Non SPJ</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm no-select2" id="fltLokasi" onchange="filterArsip()">
+                                    <option value="">Semua Lokasi</option>
+                                    {{range .LokasiOpts}}<option value="{{.NamaLokasi}}">{{.NamaLokasi}}</option>{{end}}
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex gap-1">
+                                <button type="button" class="filter-pill flex-fill text-center" id="selAllBtn" onclick="toggleSelectAll()"><i class="bi bi-check-all"></i> Semua</button>
+                            </div>
+                        </div>
+
+                        <!-- Archive List -->
+                        <div id="arsipContainer" style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);padding:0.35rem;">
+                            <div class="text-center py-5 text-muted" id="arsipPlaceholder">
+                                <i class="bi bi-search d-block mb-2" style="font-size:2rem;opacity:0.4;"></i>
+                                <small>Gunakan filter di atas untuk mencari arsip</small>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-between align-items-center mt-2" id="arsipNav" style="display:none">
+                            <small class="text-muted" id="resultInfo"></small>
+                            <div class="d-flex gap-1">
+                                <button class="filter-pill" id="prevPage" onclick="loadPage(currentPage-1)" style="display:none"><i class="bi bi-chevron-left"></i> Sebelum</button>
+                                <button class="filter-pill" id="nextPage" onclick="loadPage(currentPage+1)" style="display:none">Berikut <i class="bi bi-chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <hr class="my-3" style="border-color:var(--border);">
+
+                        <!-- Lokasi Tujuan -->
+                        <h6 class="fw-700 mb-2" style="font-size:0.85rem;"><i class="bi bi-geo-alt text-primary me-1"></i> Lokasi Tujuan</h6>
+                        <select class="form-select no-select2" id="lokasiSelect" name="lokasi_arsip_id" onchange="onLokasiChange(this)" style="font-size:0.85rem;border-radius:var(--r);">
+                            <option value="">— Pilih Lokasi Tujuan —</option>
+                            {{range .LokasiOpts}}
+                            <option value="{{.ID}}" data-info="{{if .Deskripsi}}{{.Deskripsi}}{{end}}">{{.NamaLokasi}}</option>
+                            {{end}}
+                        </select>
+                        <div id="lokasiInfo" class="mt-1 small text-muted" style="font-size:0.75rem;"></div>
+
+                        <hr class="my-3" style="border-color:var(--border);">
+
+                        <!-- Catatan -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-600" style="font-size:0.75rem;"><i class="bi bi-journal-text me-1"></i> Catatan (opsional)</label>
+                            <textarea class="form-control" name="catatan" id="moveCatatan" rows="2" placeholder="Contoh: Pemindahan berkala ke Record Center..." style="font-size:0.85rem;border-radius:var(--r);"></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1" id="submitMoveBtn" disabled style="border-radius:var(--r);padding:0.7rem;">
+                                <i class="bi bi-arrow-right-circle me-1"></i> <span id="submitText">Pindahkan Arsip</span>
+                            </button>
+                            <button type="button" class="btn btn-success" id="baBtn" disabled onclick="openBAModal()" style="border-radius:var(--r);padding:0.7rem;">
+                                <i class="bi bi-journal-text me-1"></i> BA
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 5: SIDEBAR -->
+        <div class="col-lg-4 fade-up-d3">
+            <!-- Riwayat -->
+            <div class="content-card shadow-sm mb-3">
+                <div class="card-hd"><i class="bi bi-clock-history"></i> Riwayat Pemindahan</div>
+                <div class="card-bd" style="max-height:400px;overflow-y:auto;">
+                    {{range .MutasiLogs}}
+                    <div class="log-item">
+                        <div class="fw-600">{{.Description}}</div>
+                        <div class="log-meta">
+                            <span><i class="bi bi-person"></i> {{if .User}}{{.User.Name}}{{else}}System{{end}}</span>
+                            <span><i class="bi bi-clock"></i> {{.CreatedAt.Format "02 Jan 15:04"}}</span>
+                        </div>
+                    </div>
+                    {{else}}<div class="text-center py-4 text-muted"><i class="bi bi-inbox d-block mb-1" style="font-size:1.5rem;"></i><small>Belum ada riwayat</small></div>{{end}}
+                </div>
+            </div>
+
+            <!-- Summary Card -->
+            <div class="content-card shadow-sm" id="summaryCard" style="display:none">
+                <div class="card-hd"><i class="bi bi-info-circle"></i> Ringkasan Pemindahan</div>
+                <div class="card-bd">
+                    <div id="summaryContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+        <div id="liveToast" class="toast-premium" style="display:none;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle text-success" id="toastIcon"></i>
+                <span class="flex-grow-1" id="toastMessage"></span>
+                <button type="button" class="toast-close" onclick="hideToast()">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BA MODAL -->
+<template data-modal="baModal">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Berita Acara Pemindahan</h5>
+      <p class="sm-subtitle">Buat berita acara untuk pemindahan arsip</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('baModal')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <form id="baForm" method="POST" action="/arsip/pemindahan/ba/generate">
+    <input type="hidden" name="_token" value="{{.CSRFToken}}">
+    <div class="sm-body">
+                        <div class="alert alert-info py-2 d-flex align-items-center gap-2" style="font-size:0.85rem;border-radius:var(--r);">
+                            <i class="bi bi-info-circle"></i>
+                            <strong id="baArsipCount">0</strong> arsip akan dicatat dalam Berita Acara
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Nomor BA</label>
+                                <input type="text" class="form-control" name="nomor_ba" id="baNomor" placeholder="Otomatis" style="font-size:0.85rem;">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Tanggal <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="tanggal" id="baTanggal" required style="font-size:0.85rem;">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Tempat</label>
+                                <input type="text" class="form-control" name="tempat" id="baTempat" placeholder="Tempat" style="font-size:0.85rem;">
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="ba-form-section">
+                                    <h6><i class="bi bi-person"></i> Pihak Pertama (Unit Pengolah)</h6>
+                                    <div class="row g-2">
+                                        <div class="col-12"><input type="text" class="form-control form-control-sm" name="pihak1_nama" id="p1Nama" placeholder="Nama *" required></div>
+                                        <div class="col-6"><input type="text" class="form-control form-control-sm" name="pihak1_nip" id="p1NIP" placeholder="NIP"></div>
+                                        <div class="col-6"><input type="text" class="form-control form-control-sm" name="pihak1_jabatan" id="p1Jabatan" placeholder="Jabatan"></div>
+                                        <div class="col-12"><input type="text" class="form-control form-control-sm" name="pihak1_unit" id="p1Unit" placeholder="Unit Kerja"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="ba-form-section">
+                                    <h6><i class="bi bi-person-check"></i> Pihak Kedua (Unit Kearsipan)</h6>
+                                    <div class="row g-2">
+                                        <div class="col-12"><input type="text" class="form-control form-control-sm" name="pihak2_nama" id="p2Nama" placeholder="Nama *" required></div>
+                                        <div class="col-6"><input type="text" class="form-control form-control-sm" name="pihak2_nip" id="p2NIP" placeholder="NIP"></div>
+                                        <div class="col-6"><input type="text" class="form-control form-control-sm" name="pihak2_jabatan" id="p2Jabatan" placeholder="Jabatan"></div>
+                                        <div class="col-12"><input type="text" class="form-control form-control-sm" name="pihak2_unit" id="p2Unit" placeholder="Unit Kerja"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Lokasi Asal</label>
+                                <select class="form-select form-select-sm" name="lokasi_asal_id" id="baLokasiAsal">
+                                    <option value="">-- Pilih --</option>
+                                    {{range .LokasiOpts}}<option value="{{.ID}}">{{.NamaLokasi}}</option>{{end}}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Lokasi Tujuan</label>
+                                <select class="form-select form-select-sm" name="lokasi_tujuan_id" id="baLokasiTujuan">
+                                    <option value="">-- Pilih --</option>
+                                    {{range .LokasiOpts}}<option value="{{.ID}}">{{.NamaLokasi}}</option>{{end}}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">Catatan</label>
+                                <input type="text" class="form-control form-control-sm" name="catatan" placeholder="Catatan tambahan...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sm-footer">
+                        <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('baModal')">
+                            <i class="bi bi-x-lg me-1"></i>Batal
+                        </button>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-700 shadow-sm" id="submitBABtn">
+                            <i class="bi bi-file-pdf me-1"></i> Generate & Cetak PDF
+                        </button>
+                    </div>
+                </form>
+                </template>
+    {{end}}
+</div>
+
+<script>
+let selected = new Set();
+let currentPage = 1, totalPages = 0, searchTimer;
+
+function toggleArsip(el) {
+    const cb = el.querySelector('.arsip-cb');
+    cb.checked = !cb.checked;
+    el.classList.toggle('selected', cb.checked);
+    cb.checked ? selected.add(cb.value) : selected.delete(cb.value);
+    updateUI();
+}
+
+function filterArsip() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { currentPage = 1; loadArsip(); }, 250);
+}
+
+function loadPage(p) {
+    if (p < 1 || (totalPages > 0 && p > totalPages)) return;
+    currentPage = p;
+    loadArsip();
+}
+
+function loadArsip() {
+    const q = document.getElementById('srcArsip').value;
+    const u = document.getElementById('fltUnit').value;
+    const j = document.getElementById('fltJenis').value;
+    const l = document.getElementById('fltLokasi').value;
+    const container = document.getElementById('arsipContainer');
+    const nav = document.getElementById('arsipNav');
+
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div><div class="text-muted small">Memuat data...</div></div>';
+
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (u) params.set('unit', u);
+    if (j) params.set('jenis', j);
+    if (l) params.set('lokasi', l);
+    params.set('page', currentPage);
+
+    fetch('/arsip/pemindahan/search?' + params.toString())
+        .then(r => r.json())
+        .then(res => {
+            if (!res.success || !res.data.length) {
+                container.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-inbox d-block mb-2" style="font-size:2.5rem;opacity:0.4;"></i><small>Tidak ada arsip ditemukan</small></div>';
+                nav.style.display = 'none'; lastVisibleCount = 0; updateUI(); return;
+            }
+            totalPages = res.pages;
+            lastVisibleCount = res.data.length;
+            let html = '';
+            res.data.forEach(a => {
+                const cls = a.jenis === 'SPJ' ? 'spj' : 'non-spj';
+                const ckd = selected.has(a.id) ? 'checked' : '';
+                const sl = selected.has(a.id) ? ' selected' : '';
+                html += '<label class="arsip-item' + sl + '" onclick="toggleArsip(this)" data-id="' + a.id + '" data-jenis="' + a.jenis + '" data-lokasi="' + (a.lokasi_id || '') + '">'
+                    + '<div class="form-check mb-0 me-2"><input class="form-check-input arsip-cb" type="checkbox" name="arsip_ids[]" value="' + a.id + '" ' + ckd + '></div>'
+                    + '<div class="flex-grow-1 min-w-0"><div class="d-flex align-items-center gap-2">'
+                    + '<span class="fw-600 small text-truncate">' + (a.nomor ? escHtml(a.nomor) + ' — ' : '') + escHtml(a.nama) + '</span>'
+                    + '<span class="arsip-jenis ' + cls + '">' + a.jenis + '</span></div>'
+                    + '<small class="text-muted d-flex gap-2 flex-wrap" style="font-size:0.65rem;">'
+                    + '<span><i class="bi bi-geo-alt"></i> ' + (a.lokasi || '<em>-</em>') + '</span>'
+                    + (a.unit ? '<span><i class="bi bi-building"></i> ' + escHtml(a.unit) + '</span>' : '')
+                    + (a.kk ? '<span><i class="bi bi-tag"></i> ' + escHtml(a.kk) + '</span>' : '')
+                    + '</small></div></label>';
+            });
+            container.innerHTML = html;
+
+            if (res.total > res.data.length) {
+                nav.style.display = 'flex';
+                document.getElementById('resultInfo').textContent = ((currentPage-1)*res.limit+1) + '-' + Math.min(currentPage*res.limit, res.total) + ' dari ' + res.total;
+                document.getElementById('prevPage').style.display = currentPage > 1 ? '' : 'none';
+                document.getElementById('nextPage').style.display = currentPage < totalPages ? '' : 'none';
+            } else nav.style.display = 'none';
+            updateUI();
+        })
+        .catch(() => {
+            container.innerHTML = '<div class="text-center py-5 text-danger"><i class="bi bi-exclamation-circle d-block mb-2" style="font-size:2rem;"></i><small>Gagal memuat data</small></div>';
+        });
+}
+
+document.getElementById('srcArsip').addEventListener('input', filterArsip);
+document.getElementById('srcArsip').addEventListener('keydown', function(e) { if (e.key === 'Enter') filterArsip(); });
+document.querySelectorAll('#fltUnit,#fltJenis,#fltLokasi').forEach(el => el.addEventListener('change', filterArsip));
+
+// Keyboard shortcut: Escape clears selection
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) {
+        document.querySelectorAll('.arsip-cb:checked').forEach(cb => { cb.checked = false; cb.closest('.arsip-item').classList.remove('selected'); });
+        selected.clear();
+        updateUI();
+        showToast('Pilihan dibatalkan', 'info');
+    }
+});
+
+function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'); }
+
+function showToast(message, type) {
+    const el = document.getElementById('liveToast');
+    if (!el) { alert(message.replace(/<[^>]*>/g,'')); return; }
+    const body = document.getElementById('toastMessage');
+    const icon = document.getElementById('toastIcon');
+    if (body) body.textContent = message.replace(/<[^>]*>/g, '');
+    if (icon) icon.className = 'bi bi-' + (type === 'success' ? 'check-circle text-success' : type === 'warning' ? 'exclamation-triangle text-warning' : type === 'info' ? 'info-circle text-info' : 'x-circle text-danger');
+    el.style.display = 'block';
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(hideToast, 5000);
+}
+
+function hideToast() {
+    const el = document.getElementById('liveToast');
+    if (el) el.style.display = 'none';
+}
+
+function toggleSelectAll() {
+    const items = document.querySelectorAll('.arsip-item');
+    const allCkd = items.length > 0 && items.length === document.querySelectorAll('.arsip-item .arsip-cb:checked').length;
+    items.forEach(el => {
+        const cb = el.querySelector('.arsip-cb');
+        cb.checked = !allCkd;
+        el.classList.toggle('selected', !allCkd);
+        if (!allCkd) selected.add(cb.value); else selected.delete(cb.value);
+    });
+    updateUI();
+}
+
+function onLokasiChange(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    document.getElementById('lokasiInfo').innerHTML = opt.value
+        ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' + escHtml(opt.text) + (opt.getAttribute('data-info') ? ' <small class="text-muted">(' + opt.getAttribute('data-info') + ')</small>' : '') + '</span>'
+        : '';
+    updateUI();
+    updateStep(2);
+}
+
+function updateStep(n) {
+    for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById('s' + i);
+        if (!el) continue;
+        el.classList.toggle('active', i === n);
+        el.classList.toggle('done', i < n);
+    }
+}
+
+let lastVisibleCount = 0;
+function updateUI() {
+    const btn = document.getElementById('submitMoveBtn');
+    const baBtn = document.getElementById('baBtn');
+    const cnt = document.querySelectorAll('.arsip-cb:checked').length;
+    const hasLokasi = document.getElementById('lokasiSelect').value !== '';
+    document.getElementById('cntBadge').textContent = cnt + ' terpilih' + (lastVisibleCount > 0 ? ' \u00b7 ' + lastVisibleCount + ' tampil' : '');
+    btn.disabled = !(cnt > 0 && hasLokasi);
+    baBtn.disabled = cnt === 0;
+    document.getElementById('submitText').textContent = cnt > 0 ? 'Pindahkan ' + cnt + ' Arsip' : 'Pindahkan Arsip';
+    if (cnt > 0) updateStep(1);
+    updateSummary(cnt);
+}
+
+function updateSummary(cnt) {
+    const card = document.getElementById('summaryCard');
+    const content = document.getElementById('summaryContent');
+    if (cnt === 0) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    const lokasiEl = document.getElementById('lokasiSelect');
+    const lokasiNama = lokasiEl.value ? lokasiEl.options[lokasiEl.selectedIndex].text : '\u2014';
+    const spj = document.querySelectorAll('.arsip-item.selected .arsip-jenis.spj').length;
+    const nonSpj = document.querySelectorAll('.arsip-item.selected .arsip-jenis.non-spj').length;
+    let html = '<div class="d-flex align-items-center gap-2 mb-2"><span class="summary-chip"><i class="bi bi-archive"></i> ' + cnt + ' arsip</span></div>';
+    if (spj > 0 || nonSpj > 0) html += '<div class="d-flex gap-2 mb-2">' + (spj > 0 ? '<span class="arsip-jenis spj">SPJ: ' + spj + '</span>' : '') + (nonSpj > 0 ? '<span class="arsip-jenis non-spj">Non SPJ: ' + nonSpj + '</span>' : '') + '</div>';
+    html += '<div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>Tujuan: <strong class="text-dark">' + escHtml(lokasiNama) + '</strong></div>';
+    content.innerHTML = html;
+}
+
+let pendingBA = [], moveReloadTimer;
+function afterMoveBA(ids, lokasi, lokasiAsalId, lokasiAsal) {
+    clearTimeout(moveReloadTimer);
+    pendingBA = ids.split(',');
+    // Clone template ke DOM dulu — elemen form BA ada di dalam template baModal
+    if (!SimarcModal.show('baModal')) { showToast('Gagal membuka modal BA','error'); return; }
+    document.getElementById('baArsipCount').textContent = pendingBA.length;
+    document.getElementById('baTanggal').value = new Date().toISOString().split('T')[0];
+    document.getElementById('baTempat').value = '{{.TempatDefault}}';
+    const sel = document.getElementById('baLokasiTujuan');
+    const lokasiSelect = document.getElementById('lokasiSelect');
+    if (lokasiSelect.value) sel.value = lokasiSelect.value;
+    if (lokasiAsalId) {
+        const baLokasiAsal = document.getElementById('baLokasiAsal');
+        if (baLokasiAsal) { [...baLokasiAsal.options].forEach(function(opt) { if (opt.value === lokasiAsalId) { opt.selected = true; } }); }
+    }
+}
+
+function openBAModal() {
+    const cnt = document.querySelectorAll('.arsip-cb:checked').length;
+    if (cnt === 0) { showToast('Pilih arsip terlebih dahulu', 'warning'); return; }
+    // Clone template ke DOM dulu — elemen form BA ada di dalam template baModal
+    if (!SimarcModal.show('baModal')) { showToast('Gagal membuka modal BA','error'); return; }
+    document.getElementById('baArsipCount').textContent = cnt;
+    document.getElementById('baTanggal').value = new Date().toISOString().split('T')[0];
+    document.getElementById('baTempat').value = '{{.TempatDefault}}';
+    const l = document.getElementById('lokasiSelect').value;
+    if (l) document.getElementById('baLokasiTujuan').value = l;
+    const firstCkd = document.querySelector('.arsip-cb:checked');
+    if (firstCkd) {
+        const item = firstCkd.closest('.arsip-item');
+        const lokasiVal = item ? item.getAttribute('data-lokasi') : '';
+        const baLokasiAsal = document.getElementById('baLokasiAsal');
+        if (lokasiVal && baLokasiAsal) { [...baLokasiAsal.options].forEach(function(opt) { if (opt.value === lokasiVal) { opt.selected = true; } }); }
+    }
+}
+
+document.getElementById('baForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBABtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+    const fd = new FormData();
+    fd.append('_token', document.querySelector('input[name="_token"]').value);
+    fd.append('nomor_ba', document.getElementById('baNomor').value);
+    fd.append('tanggal', document.getElementById('baTanggal').value);
+    fd.append('tempat', document.getElementById('baTempat').value);
+    fd.append('pihak1_nama', document.getElementById('p1Nama').value);
+    fd.append('pihak1_nip', document.getElementById('p1NIP').value);
+    fd.append('pihak1_jabatan', document.getElementById('p1Jabatan').value);
+    fd.append('pihak1_unit', document.getElementById('p1Unit').value);
+    fd.append('pihak2_nama', document.getElementById('p2Nama').value);
+    fd.append('pihak2_nip', document.getElementById('p2NIP').value);
+    fd.append('pihak2_jabatan', document.getElementById('p2Jabatan').value);
+    fd.append('pihak2_unit', document.getElementById('p2Unit').value);
+    fd.append('lokasi_asal_id', document.getElementById('baLokasiAsal').value);
+    fd.append('lokasi_tujuan_id', document.getElementById('baLokasiTujuan').value);
+    fd.append('catatan', document.querySelector('#baForm input[name="catatan"]')?.value || '');
+    const ckd = document.querySelectorAll('.arsip-cb:checked');
+    if (ckd.length > 0) fd.append('arsip_data', JSON.stringify([...ckd].map(cb => cb.value)));
+    else if (pendingBA.length > 0) fd.append('arsip_data', JSON.stringify(pendingBA));
+    fetch(this.action, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            showToast('Berita Acara berhasil dibuat', 'success');
+            SimarcModal.hide('baModal')
+            pendingBA = [];
+            window.open('/arsip/pemindahan/ba/' + d.data.id + '/pdf', '_blank');
+            setTimeout(() => { location.href = '/arsip/pemindahan'; }, 1500);
+        } else {
+            showToast(d.error || 'Gagal membuat BA', 'error');
+            btn.disabled = false; btn.innerHTML = '<i class="bi bi-file-pdf me-1"></i> Generate & Cetak PDF';
+        }
+    })
+    .catch(() => { showToast('Gagal menyimpan BA', 'error'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-file-pdf me-1"></i> Generate & Cetak PDF'; });
+});
+
+document.getElementById('moveForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const cnt = document.querySelectorAll('.arsip-cb:checked').length;
+    if (!confirm('Pindahkan ' + cnt + ' arsip ke lokasi tujuan?')) return;
+    const btn = document.getElementById('submitMoveBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memindahkan...';
+    updateStep(3);
+    const ids = [...document.querySelectorAll('.arsip-cb:checked')].map(cb => cb.value);
+    const fd = new FormData();
+    fd.append('_token', document.querySelector('input[name="_token"]').value);
+    fd.append('lokasi_arsip_id', document.getElementById('lokasiSelect').value);
+    fd.append('catatan', document.getElementById('moveCatatan').value);
+    fd.append('arsip_data', JSON.stringify(ids));
+    fetch(this.action, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            var asalId = d.data.lokasi_asal_id || ''; var asalNama = d.data.lokasi_asal || '';
+            showToast(d.message, 'success');
+            // Show BA prompt after move
+            const baLink = document.createElement('div');
+            baLink.className = 'alert alert-info py-2 mb-0 mt-2 d-flex align-items-center gap-2';
+            baLink.style.cssText = 'border-radius:var(--r);font-size:0.8rem;';
+            baLink.innerHTML = '<i class="bi bi-journal-text"></i><span>Buat Berita Acara untuk arsip yang dipindahkan?</span>'
+                + '<a href="#" class="btn btn-sm btn-success rounded-pill fw-700 ms-auto px-3" onclick="afterMoveBA(\'' 
+                + (d.data.arsip_ids || []).join(',') + '\',\'' + d.data.lokasi_tujuan + '\',\'' + asalId + '\',\'' + asalNama 
+                + '\');hideToast();return false"><i class="bi bi-file-pdf me-1"></i>Buat BA</a>';
+            document.getElementById('liveToast').after(baLink);
+            setTimeout(() => { if (baLink.parentNode) baLink.remove(); }, 8000);
+            moveReloadTimer = setTimeout(() => location.reload(), 8000);
+        } else {
+            showToast(d.error || 'Gagal memindahkan', 'error');
+            btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-right-circle me-1"></i> Pindahkan Arsip';
+        }
+    })
+    .catch(() => {
+        showToast('Terjadi kesalahan', 'error');
+        btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-right-circle me-1"></i> Pindahkan Arsip';
+    });
+});
+</script>
+{{end}}

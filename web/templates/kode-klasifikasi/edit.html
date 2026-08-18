@@ -1,0 +1,169 @@
+{{define "kode-klasifikasi/edit.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.edit-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%); border-radius: var(--r-xl); padding: 1.75rem 2rem; position: relative; overflow: hidden; margin-bottom: 1.5rem; animation: slideUp 0.35s ease both; }
+.edit-header::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+.edit-header h4 { color: #fff; font-weight: 800; letter-spacing: -0.03em; position: relative; z-index: 1; margin: 0; }
+.edit-header p { color: rgba(255,255,255,0.65); font-size: 0.8rem; position: relative; z-index: 1; margin: 0.15rem 0 0 0; }
+.edit-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); overflow: hidden; animation: slideUp 0.35s ease 0.08s both; }
+.edit-card .card-body-custom { padding: 1.75rem; }
+.form-field { margin-bottom: 1.25rem; }
+.form-field label { display: block; font-weight: 600; font-size: 0.8rem; color: var(--ink-2); margin-bottom: 0.35rem; }
+.form-field label .required { color: var(--danger); margin-left: 2px; }
+.form-field .form-control, .form-field .form-select { width: 100%; padding: 0.55rem 0.85rem; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 0.85rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit; }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field textarea.form-control { min-height: 80px; resize: vertical; }
+@media (max-width:768px) { .edit-header { padding: 1.25rem; } .edit-card .card-body-custom { padding: 1rem; } }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="edit-header shadow-sm">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h4><i class="bi bi-tags me-2"></i>Edit Kode Klasifikasi</h4>
+                <p>Perbarui kode klasifikasi dan aturan retensi arsip</p>
+            </div>
+            <a href="/kode-klasifikasi" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="edit-card">
+                <div class="card-body-custom">
+                    <form method="POST" action="/kode-klasifikasi/{{.m.ID}}">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-field">
+                                    <label>Kode Klasifikasi <span class="required">*</span></label>
+                                    <input type="text" name="kode_klasifikasi" class="form-control" value="{{.m.KodeKlasifikasi}}" required placeholder="Contoh: ARS-001">
+                                    <div class="form-text" style="font-size:0.75rem;color:var(--ink-4);margin-top:0.3rem;">Kode unik untuk klasifikasi arsip</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-field">
+                                    <label>Nama Klasifikasi <span class="required">*</span></label>
+                                    <input type="text" name="nama_klasifikasi" class="form-control" value="{{.m.NamaKlasifikasi}}" required placeholder="Contoh: Arsip Kepegawaian">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="form-field">
+                                    <label>Retensi Aktif (tahun) <span class="required">*</span></label>
+                                    <input type="number" name="retensi_aktif" class="form-control" value="{{.m.RetensiAktif}}" min="0" required>
+                                    <div class="form-text" style="font-size:0.75rem;color:var(--ink-4);margin-top:0.3rem;">Masa simpan aktif</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-field">
+                                    <label>Retensi Inaktif (tahun) <span class="required">*</span></label>
+                                    <input type="number" name="retensi_inaktif" class="form-control" value="{{.m.RetensiInaktif}}" min="0" required>
+                                    <div class="form-text" style="font-size:0.75rem;color:var(--ink-4);margin-top:0.3rem;">Masa simpan inaktif</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-field">
+                                    <label>Penyusutan Arsip <span class="required">*</span></label>
+                                    <select name="penyusutan_arsip" class="form-select" required>
+                                        <option value="">Pilih jenis penyusutan</option>
+                                        <option value="musnah" {{if eq .m.PenyusutanArsip "musnah"}}selected{{end}}>Musnah</option>
+                                        <option value="permanen" {{if eq .m.PenyusutanArsip "permanen"}}selected{{end}}>Permanen</option>
+                                        <option value="dinilai_kembali" {{if eq .m.PenyusutanArsip "dinilai_kembali"}}selected{{end}}>Dinilai Kembali</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-field">
+                                    <label>Klasifikasi Keamanan <span class="required">*</span></label>
+                                    <select name="klasifikasi_keamanan" class="form-select" required>
+                                        <option value="">Pilih klasifikasi keamanan</option>
+                                        <option value="terbuka" {{if eq .m.KlasifikasiKeamanan "terbuka"}}selected{{end}}>Terbuka</option>
+                                        <option value="terbatas" {{if eq .m.KlasifikasiKeamanan "terbatas"}}selected{{end}}>Terbatas</option>
+                                        <option value="rahasia" {{if eq .m.KlasifikasiKeamanan "rahasia"}}selected{{end}}>Rahasia</option>
+                                        <option value="sangat_rahasia" {{if eq .m.KlasifikasiKeamanan "sangat_rahasia"}}selected{{end}}>Sangat Rahasia</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-field">
+                                    <label>Parent Klasifikasi</label>
+                                    <select name="parent_id" class="form-select">
+                                        <option value="">Tidak ada parent</option>
+                                        {{range $o := .opts}}
+                                        {{if ne $o.ID $.m.ID}}
+                                        <option value="{{$o.ID}}" {{if eq $.m.ParentID $o.ID}}selected{{end}}>
+                                            {{$o.KodeKlasifikasi}} - {{$o.NamaKlasifikasi}}
+                                        </option>
+                                        {{end}}
+                                        {{end}}
+                                    </select>
+                                    <div class="form-text" style="font-size:0.75rem;color:var(--ink-4);margin-top:0.3rem;">Klasifikasi induk (jika ada)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Dasar Pertimbangan</label>
+                            <textarea name="dasar_pertimbangan" class="form-control" placeholder="Alasan dan pertimbangan penetapan retensi">{{.m.DasarPertimbangan}}</textarea>
+                        </div>
+
+                        <div class="mb-3 d-flex align-items-center gap-2">
+                            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="1" style="width:1.1rem;height:1.1rem;margin-top:0;" {{if .m.IsActive}}checked{{end}}>
+                            <label class="form-check-label" for="is_active" style="font-weight:600;font-size:0.8rem;color:var(--ink-2);">Aktif</label>
+                        </div>
+
+                        <div class="d-flex justify-content-between pt-2 border-top" style="border-color:var(--border)!important;">
+                            <a href="/kode-klasifikasi" class="btn btn-secondary btn-sm rounded-pill fw-700 px-3" style="font-size:0.8rem;">
+                                <i class="bi bi-x-circle me-1"></i>Batal
+                            </a>
+                            <button type="submit" class="btn btn-primary rounded-pill fw-800 px-4 py-2 shadow-sm" style="font-size:0.85rem;">
+                                <i class="bi bi-check-circle-fill me-2"></i>Update Klasifikasi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm" style="border-radius:var(--r-lg);background:var(--surface-2);animation:slideUp 0.35s ease 0.14s both;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div style="width:32px;height:32px;border-radius:var(--r);background:var(--brand-lt);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:1rem;">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </div>
+                        <h6 class="fw-800 mb-0" style="color:var(--ink);font-size:0.85rem;">Informasi</h6>
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--ink-3);">
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span style="color:var(--ink-4);">ID</span>
+                            <span class="fw-600" style="color:var(--ink-2);font-size:0.7rem;max-width:180px;text-align:right;word-break:break-all;">{{.m.ID}}</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span style="color:var(--ink-4);">Dibuat</span>
+                            <span class="fw-600" style="color:var(--ink-2);">{{formatDate .m.CreatedAt}}</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span style="color:var(--ink-4);">Diperbarui</span>
+                            <span class="fw-600" style="color:var(--ink-2);">{{formatDate .m.UpdatedAt}}</span>
+                        </div>
+                    </div>
+                    <hr style="border-color:var(--border);">
+                    <ul class="small mb-0" style="color:var(--ink-4);padding-left:1rem;font-size:0.75rem;">
+                        <li class="mb-1">Kode klasifikasi yang sudah digunakan tidak dapat dihapus.</li>
+                        <li class="mb-1">Pastikan kode tidak sama dengan data lain.</li>
+                        <li>Retensi aktif + inaktif = total masa simpan.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

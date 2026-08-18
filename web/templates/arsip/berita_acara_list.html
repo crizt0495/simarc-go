@@ -1,0 +1,353 @@
+{{define "arsip/berita_acara_list.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+/* ═══════════════════════════════════════
+   BERITA ACARA — PREMIUM LIST
+   ═══════════════════════════════════════ */
+
+.ba-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: var(--r-xl);
+    padding: 1.75rem 2rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.ba-hero::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -5%;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.ba-hero .hero-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.2rem;
+}
+.ba-hero .hero-sub {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+/* ── Stat Mini ── */
+.stat-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+}
+.stat-mini:hover {
+    border-color: var(--brand);
+    box-shadow: var(--sh-sm);
+}
+.stat-mini-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--r);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+.stat-mini-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--ink-2);
+    line-height: 1.2;
+}
+.stat-mini-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ink-4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── Premium Table ── */
+.ba-table thead th {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--ink-4);
+    border-bottom: 2px solid var(--border);
+    padding: 0.85rem 1rem;
+    white-space: nowrap;
+}
+.ba-table tbody tr {
+    transition: all 0.12s ease;
+    border-bottom: 1px solid var(--border);
+}
+.ba-table tbody tr:hover {
+    background: rgba(26,86,219,0.02);
+}
+.ba-table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    font-size: 0.85rem;
+    color: var(--ink-2);
+}    /* ── Action Buttons (using global .btn-crud from enterprise-premium.css) ── */
+
+/* ── Empty State ── */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+.empty-state-icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.75rem;
+    color: var(--ink-4);
+}
+
+/* ── Animations ── */
+.fade-up { animation: fadeUp 0.35s ease both; }
+.fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+.fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
+
+
+/* ── Toast ── */
+.toast-premium {
+    background: var(--ink);
+    color: #fff;
+    padding: 0.75rem 1rem;
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-lg);
+    font-size: 0.85rem;
+    min-width: 280px;
+    animation: toastSlide 0.3s ease both;
+}
+.toast-premium .toast-close {
+    background: none; border: none;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer; font-size: 1rem; padding: 0; line-height: 1;
+}
+.toast-premium .toast-close:hover { color: #fff; }
+@keyframes toastSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 768px) {
+    .ba-hero { padding: 1.25rem; }
+    .ba-hero .hero-title { font-size: 1.1rem; }
+    .stat-mini { padding: 0.75rem 1rem; }
+    .stat-mini-value { font-size: 1.1rem; }
+    .stat-mini-icon { width: 36px; height: 36px; font-size: 0.95rem; }
+    .ba-table thead { display: none; }
+    .ba-table tbody tr {
+        display: block;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 0.75rem;
+        background: var(--surface);
+    }
+    .ba-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.35rem 0 !important;
+        border: none !important;
+        border-bottom: 1px solid var(--border) !important;
+        text-align: right;
+        font-size: 0.8rem;
+    }
+    .ba-table tbody td:last-child { border-bottom: none !important; }
+    .ba-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--ink-3);
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding-right: 0.75rem;
+    }
+}
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- ZONE 1: HERO -->
+    <div class="ba-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-journal-text me-2"></i>Berita Acara Pemindahan</div>
+                <div class="hero-sub">Daftar berita acara pemindahan arsip antar lokasi</div>
+            </div>
+            <a href="/arsip/pemindahan" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ZONE 2: STATS -->
+    <div class="row g-2 mb-4 fade-up-d1">
+        <div class="col-md-4">
+            <div class="stat-mini">
+                <div class="stat-mini-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div>
+                    <div class="stat-mini-value">{{.Total}}</div>
+                    <div class="stat-mini-label">Total Berita Acara</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-mini">
+                <div class="stat-mini-icon" style="background:linear-gradient(135deg,#059669,#10b981);color:#fff;">
+                    <i class="bi bi-file-pdf"></i>
+                </div>
+                <div>
+                    <div class="stat-mini-value">{{.Pages}}</div>
+                    <div class="stat-mini-label">Halaman</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-mini">
+                <div class="stat-mini-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;">
+                    <i class="bi bi-archive"></i>
+                </div>
+                <div>
+                    <div class="stat-mini-value">{{.Limit}}</div>
+                    <div class="stat-mini-label">Per Halaman</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ZONE 3: TABLE -->
+    <div class="card border-0 shadow-sm fade-up-d2" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="table-responsive">
+            <table class="table ba-table mb-0" id="baTable">
+                <thead>
+                    <tr>
+                        <th width="50">#</th>
+                        <th>Nomor BA</th>
+                        <th>Tanggal</th>
+                        <th>Pihak Pertama</th>
+                        <th>Pihak Kedua</th>
+                        <th class="text-center">Arsip</th>
+                        <th>Dibuat Oleh</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $i, $v := .List}}
+                    <tr>
+                        <td class="text-center text-muted fw-700" data-label="No">{{add $i 1}}</td>
+                        <td data-label="Nomor BA"><strong class="text-brand">{{$v.NomorBA}}</strong></td>
+                        <td data-label="Tanggal">{{$v.Tanggal.Format "02/01/2006"}}</td>
+                        <td data-label="Pihak Pertama"><span class="small">{{$v.PihakPertamaNama}}</span></td>
+                        <td data-label="Pihak Kedua"><span class="small">{{$v.PihakKeduaNama}}</span></td>
+                        <td class="text-center" data-label="Arsip">
+                            <span class="badge rounded-pill px-3 fw-700" style="background:rgba(2,132,199,0.08);color:var(--info);">
+                                <i class="bi bi-archive me-1"></i>{{len $v.Items}}
+                            </span>
+                        </td>
+                        <td data-label="Dibuat Oleh">{{if $v.Creator}}{{$v.Creator.Name}}{{else}}<span class="text-muted">-</span>{{end}}</td>
+                        <td class="text-center" data-label="Aksi">
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="/arsip/pemindahan/ba/{{$v.ID}}/pdf" class="btn-crud btn-crud-success" title="Download PDF" data-bs-toggle="tooltip"><i class="bi bi-file-pdf"></i></a>
+                                <a href="/arsip/pemindahan/ba/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+                                <button class="btn-crud btn-crud-del" title="Hapus" onclick="deleteBA('{{$v.ID}}')" data-bs-toggle="tooltip"><i class="bi bi-trash3"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-journal-text"></i></div>
+                                <h5 class="fw-800 mb-1">Belum Ada Berita Acara</h5>
+                                <p class="text-muted small">Berita acara akan muncul setelah pemindahan arsip dilakukan melalui menu Pemindahan Arsip.</p>
+                                <a href="/arsip/pemindahan" class="btn btn-primary rounded-pill btn-sm fw-700 px-3 mt-2">
+                                    <i class="bi bi-map me-1"></i>Pindahkan Arsip
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{if gt .Total 0}}
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" style="background:var(--surface-2);">
+            <small class="text-muted fw-600">Halaman {{.Page}} dari {{.Pages}} ({{.Total}} berita acara)</small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {{if gt .Page 1}}
+                    <li class="page-item"><a class="page-link" href="?page={{sub .Page 1}}"><i class="bi bi-chevron-left"></i></a></li>
+                    {{end}}
+                    {{if lt .Page .Pages}}
+                    <li class="page-item"><a class="page-link" href="?page={{add .Page 1}}"><i class="bi bi-chevron-right"></i></a></li>
+                    {{end}}
+                </ul>
+            </nav>
+        </div>
+        {{end}}
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="liveToast" class="toast-premium" style="display:none;">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle text-success" id="toastIcon"></i>
+            <span class="flex-grow-1" id="toastMessage"></span>
+            <button type="button" class="toast-close" onclick="document.getElementById('liveToast').style.display='none'">&times;</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showToast(msg, type) {
+    const el = document.getElementById('liveToast');
+    if (!el) return;
+    document.getElementById('toastMessage').textContent = msg.replace(/<[^>]*>/g,'');
+    const icon = document.getElementById('toastIcon');
+    icon.className = 'bi bi-' + (type === 'success' ? 'check-circle text-success' : type === 'warning' ? 'exclamation-triangle text-warning' : 'x-circle text-danger');
+    el.style.display = 'block';
+    clearTimeout(el._hide);
+    el._hide = setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function deleteBA(id) {
+    if (!confirm('Hapus berita acara ini?')) return;
+    fetch('/arsip/pemindahan/ba/' + id, { method: 'DELETE', headers: { 'X-CSRF-Token': '{{.CSRFToken}}' } })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ ' + data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Gagal menghapus'), 'error');
+        }
+    })
+    .catch(() => showToast('❌ Terjadi kesalahan', 'error'));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        // Tooltip already initialized globally in app.html — no duplicates needed
+    }
+});
+</script>
+{{end}}

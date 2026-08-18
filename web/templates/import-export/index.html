@@ -1,0 +1,59 @@
+{{define "import-export/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.job-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-box{background:white;padding:1rem;border-radius:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.08);text-align:center}
+.stat-box .value{font-size:1.5rem;font-weight:bold;color:#1e293b}
+.stat-box small{color:#64748b}
+.progress-bar{transition:width 0.3s ease}
+</style>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📦 Import/Export Center</h2>
+        <div class="d-flex gap-2">
+            <a href="/advanced/import-export/import" class="btn btn-primary"><i class="bi bi-upload"></i> Import</a>
+            <a href="/advanced/import-export/export" class="btn btn-outline-primary"><i class="bi bi-download"></i> Export</a>
+        </div>
+    </div>
+    <div class="job-stats">
+        <div class="stat-box"><div class="value">{{.Stats.TotalJobs}}</div><small>Total Jobs</small></div>
+        <div class="stat-box"><div class="value" style="color:#d97706">{{.Stats.Pending}}</div><small>Pending</small></div>
+        <div class="stat-box"><div class="value" style="color:#2563eb">{{.Stats.Processing}}</div><small>Processing</small></div>
+        <div class="stat-box"><div class="value" style="color:#16a34a">{{.Stats.Completed}}</div><small>Completed</small></div>
+        <div class="stat-box"><div class="value" style="color:#dc2626">{{.Stats.Failed}}</div><small>Failed</small></div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h5 class="mb-0">Recent Jobs</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr><th>Type</th><th>Format</th><th>Status</th><th>Progress</th><th>Records</th><th>Created</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        {{range .Jobs}}
+                        <tr>
+                            <td><span class="badge bg-{{if eq .Type "import"}}primary{{else}}success{{end}}">{{.Type}}</span></td>
+                            <td>{{.Format}}</td>
+                            <td><span class="badge bg-{{if eq .Status "completed"}}success{{else if eq .Status "failed"}}danger{{else if eq .Status "processing"}}info{{else}}warning{{end}}">{{.Status}}</span></td>
+                            <td style="width:200px"><div class="progress" style="height:6px"><div class="progress-bar" style="width:{{.ProgressPercent}}%"></div></div><small>{{.ProgressPercent}}%</small></td>
+                            <td>{{if ne .TotalRows 0}}{{.SuccessRows}} / {{.TotalRows}}{{if ne .FailedRows 0}} <span class="text-danger">({{.FailedRows}} failed)</span>{{end}}{{else}}-{{end}}</td>
+                            <td>{{.CreatedAt}}</td>
+                            <td>
+                                <a href="/advanced/import-export/job/{{.ID}}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                {{if .IsCompleted}}<a href="/advanced/import-export/job/{{.ID}}/download" class="btn btn-sm btn-outline-success"><i class="bi bi-download"></i></a>{{end}}
+                                {{if .IsFailed}}
+                                <form action="/advanced/import-export/job/{{.ID}}/retry" method="POST" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-warning"><i class="bi bi-arrow-clockwise"></i></button>
+                                </form>
+                                {{end}}
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

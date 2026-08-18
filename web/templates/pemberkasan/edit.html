@@ -1,0 +1,78 @@
+{{define "pemberkasan/edit.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h2><i class="bi bi-folder me-2"></i>Edit Pemberkasan</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="/pemberkasan/{{.Item.ID}}">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="kode_berkas" class="form-label">Kode Berkas *</label>
+                                <input type="text" class="form-control"
+                                       id="kode_berkas" name="kode_berkas" value="{{.Item.KodeBerkas}}" required>
+                                <div class="form-text">Contoh: BERKAS-2026/001</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nama_pemberkasan" class="form-label">Nama Pemberkasan</label>
+                                <input type="text" class="form-control"
+                                       id="nama_pemberkasan" name="nama_pemberkasan" value="{{.Item.NamaPemberkasan}}">
+                                <div class="form-text">Nama untuk mengidentifikasi pemberkasan ini</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="tahun" class="form-label">Tahun *</label>
+                                <input type="number" class="form-control"
+                                       id="tahun" name="tahun" value="{{.Item.Tahun}}" min="1900" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="tanggal_mulai" class="form-label">Tanggal Mulai *</label>
+                                <input type="date" class="form-control"
+                                       id="tanggal_mulai" name="tanggal_mulai" value="{{.Item.TanggalMulai}}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nama_berkas" class="form-label">Nama Berkas</label>
+                                <input type="text" class="form-control"
+                                       id="nama_berkas" name="nama_pemberkasan" value="{{.Item.NamaPemberkasan}}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="tanggal_tutup" class="form-label">Tanggal Tutup</label>
+                                <input type="date" class="form-control"
+                                       id="tanggal_tutup" name="tanggal_tutup" value="{{.Item.TanggalTutup}}">
+                                <div class="form-text">Kosongkan jika belum ditutup</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="/pemberkasan" class="btn btn-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary">Update Pemberkasan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

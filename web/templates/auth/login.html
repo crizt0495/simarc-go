@@ -1,0 +1,98 @@
+{{define "auth/login.html"}}
+{{template "layouts/platinum-auth.html" .}}
+{{end}}
+{{define "content"}}
+
+{{if .Success}}
+<div class="auth-alert auth-alert-success animate-slide-up">
+  <i class="bi bi-check-circle-fill" style="font-size:16px;flex-shrink:0;margin-top:1px;"></i>
+  <span>{{.Success}}</span>
+</div>
+{{end}}
+
+{{if .Error}}
+<div class="auth-alert auth-alert-danger animate-shake">
+  <i class="bi bi-exclamation-triangle-fill" style="font-size:16px;flex-shrink:0;margin-top:1px;"></i>
+  <span>{{.Error}}</span>
+</div>
+{{end}}
+
+{{if .AuthError}}
+<div class="auth-alert auth-alert-danger animate-shake">
+  <i class="bi bi-exclamation-triangle-fill" style="font-size:16px;flex-shrink:0;margin-top:1px;"></i>
+  <span>{{.AuthError}}</span>
+</div>
+{{end}}
+
+<form method="POST" action="/login" id="loginForm">
+  <input type="hidden" name="_token" value="{{.CSRFToken}}">
+
+  <div class="auth-field">
+    <label for="username">Username</label>
+    <div class="auth-input-wrap">
+      <i class="bi bi-person auth-field-icon"></i>
+      <input type="text" class="auth-input" id="username" name="username"
+             value="{{.OldUsername}}" placeholder="Masukkan username" spellcheck="false"
+             required autofocus autocomplete="username" autocapitalize="none">
+    </div>
+  </div>
+
+  <div class="auth-field">
+    <label for="password">Password</label>
+    <div class="auth-input-wrap">
+      <i class="bi bi-key auth-field-icon"></i>
+      <input type="password" class="auth-input" id="password" name="password"
+             placeholder="Masukkan password" required autocomplete="current-password">
+      <button type="button" class="auth-pw-toggle" id="togglePassword" title="Tampilkan password" tabindex="-1">
+        <i class="bi bi-eye" id="eyeIcon"></i>
+      </button>
+    </div>
+  </div>
+
+  <button type="submit" class="auth-btn" id="loginBtn">
+    <span class="spinner"></span>
+    <span class="btn-text">Masuk ke Aplikasi</span>
+    <i class="bi bi-arrow-right-short btn-icon" style="font-size:20px;"></i>
+  </button>
+</form>
+
+<script>
+/* Prevent back navigation */
+if (window.history && window.history.pushState) {
+  window.history.pushState(null, null, window.location.href);
+  window.addEventListener('popstate', function() {
+    window.history.pushState(null, null, window.location.href);
+  });
+}
+
+/* Password visibility toggle & loading */
+document.addEventListener('DOMContentLoaded', function() {
+  var toggleBtn = document.getElementById('togglePassword');
+  var passwordInput = document.getElementById('password');
+  var eyeIcon = document.getElementById('eyeIcon');
+
+  if (toggleBtn && passwordInput && eyeIcon) {
+    toggleBtn.addEventListener('click', function() {
+      var type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      if (type === 'text') {
+        eyeIcon.className = 'bi bi-eye-slash';
+        toggleBtn.setAttribute('title', 'Sembunyikan password');
+      } else {
+        eyeIcon.className = 'bi bi-eye';
+        toggleBtn.setAttribute('title', 'Tampilkan password');
+      }
+    });
+  }
+
+  var loginForm = document.getElementById('loginForm');
+  var loginBtn = document.getElementById('loginBtn');
+  if (loginForm && loginBtn) {
+    loginForm.addEventListener('submit', function() {
+      loginBtn.classList.add('loading');
+      loginBtn.disabled = true;
+    });
+  }
+});
+</script>
+{{end}}

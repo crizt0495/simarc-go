@@ -1,0 +1,590 @@
+{{define "arsip/show.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+/* ═══════════════════════════════════════════
+   ARSIP SHOW — PREMIUM DETAIL
+   ═══════════════════════════════════════════ */
+
+.show-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    border-radius: var(--r-xl);
+    padding: 2rem 2.5rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.show-hero::before {
+    content: '';
+    position: absolute;
+    top: -60%; right: -8%;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.show-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40%; left: -5%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.show-hero .hero-nomor {
+    font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
+}
+.show-hero .hero-nama {
+    font-size: 0.95rem; opacity: 0.85; font-weight: 500;
+}
+.show-hero .hero-meta {
+    display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.75rem;
+}
+.show-hero .hero-meta-item {
+    font-size: 0.75rem; color: rgba(255,255,255,0.8);
+    display: flex; align-items: center; gap: 0.3rem;
+}
+.show-hero .hero-meta-item strong { color: #fff; }
+
+.st-badge-v2 {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 50px;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.st-badge-v2.aktif { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+.st-badge-v2.inaktif { background: rgba(234,179,8,0.15); color: #fbbf24; border: 1px solid rgba(234,179,8,0.25); }
+.st-badge-v2.siap_penyusutan { background: rgba(251,146,60,0.15); color: #fb923c; border: 1px solid rgba(251,146,60,0.25); }
+.st-badge-v2.musnah { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+.st-badge-v2.permanen { background: rgba(96,165,250,0.15); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+.st-badge-v2.diberkaskan { background: rgba(129,140,248,0.15); color: #818cf8; border: 1px solid rgba(129,140,248,0.25); }
+
+.detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-sm);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    animation: fadeUp 0.35s ease both;
+}
+.detail-card-d1 { animation: fadeUp 0.35s ease 0.06s both; }
+.detail-card-d2 { animation: fadeUp 0.35s ease 0.1s both; }
+.detail-card-d3 { animation: fadeUp 0.35s ease 0.14s both; }
+
+
+.detail-card .card-head {
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.detail-card .card-head i { font-size: 1rem; color: var(--brand); }
+.detail-card .card-head .head-label {
+    font-size: 0.7rem; font-weight: 700;
+    color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.detail-card .card-body-custom { padding: 1.25rem; }
+
+.info-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.15s ease;
+}
+.info-item:hover { border-color: var(--brand); box-shadow: var(--sh-sm); }
+.info-item .label {
+    display: block;
+    font-size: 0.68rem; font-weight: 700;
+    color: var(--ink-4);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 0.3rem;
+}
+.info-item .value {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--ink-2); word-break: break-word;
+}
+
+.uraian-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1.25rem 1.5rem;
+    position: relative;
+}
+.uraian-box::before {
+    content: '“';
+    position: absolute;
+    top: -6px; left: 14px;
+    font-size: 3rem; color: var(--brand); opacity: 0.1;
+    font-family: Georgia, serif; line-height: 1;
+}
+.uraian-box .text {
+    color: var(--ink-3);
+    line-height: 1.8;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+.tags-wrap {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.2rem;
+}
+.tag-pill {
+    background: var(--brand-lt);
+    color: var(--brand);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--r-sm);
+    font-size: 0.7rem; font-weight: 600;
+    border: 1px solid rgba(26,86,219,0.12);
+}
+
+.file-card {
+    background: linear-gradient(135deg, var(--surface-2), var(--brand-lt));
+    border: 1.5px solid rgba(26,86,219,0.12);
+    border-radius: var(--r-lg);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.file-card:hover { border-color: var(--brand); box-shadow: var(--sh); }
+.file-card .file-icon {
+    width: 56px; height: 56px;
+    border-radius: var(--r);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.5rem;
+    margin: 0 auto 0.65rem;
+}
+.file-icon.pdf { background: linear-gradient(135deg,#ef4444,#dc2626); }
+.file-icon.img { background: linear-gradient(135deg,var(--brand),var(--brand-dk)); }
+.file-icon.doc { background: linear-gradient(135deg,#2563eb,#1d4ed8); }
+.file-icon.xls { background: linear-gradient(135deg,#16a34a,#15803d); }
+.file-icon.other { background: linear-gradient(135deg,#6366f1,#4f46e5); }
+
+/* ── Sidebar ── */
+.side-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    box-shadow: var(--sh-sm);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    animation: fadeUp 0.35s ease 0.12s both;
+}
+.side-stat .side-head {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex; align-items: center; gap: 0.4rem;
+}
+.side-stat .side-head i { color: var(--brand); font-size: 0.9rem; }
+.side-stat .side-head .label {
+    font-size: 0.65rem; font-weight: 700;
+    color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.side-stat .side-body { padding: 1rem; }
+
+.qr-box {
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 0.85rem;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+.qr-box:hover { border-color: var(--brand); box-shadow: var(--sh-sm); }
+.qr-box img { max-width: 110px; border-radius: 6px; }
+
+.meta-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.78rem;
+}
+.meta-row:last-child { border-bottom: none; }
+.meta-row .m-label { color: var(--ink-4); font-weight: 600; }
+.meta-row .m-value { color: var(--ink-2); font-weight: 600; text-align: right; word-break: break-all; font-size: 0.72rem; }
+.meta-row code { font-size: 0.68rem; }
+
+/* ── Buttons ── */
+.action-bar-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--r);
+    font-size: 0.78rem; font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-3);
+    text-decoration: none; cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.action-bar-btn:hover {
+    border-color: var(--brand); color: var(--brand); background: var(--brand-lt);
+}
+.action-bar-btn.primary {
+    background: var(--brand); color: #fff; border-color: var(--brand);
+}
+.action-bar-btn.primary:hover { background: var(--brand-dk); }
+.action-bar-btn.success {
+    background: var(--success); color: #fff; border-color: var(--success);
+}
+.action-bar-btn.success:hover { background: #047857; }
+.action-bar-btn.danger {
+    background: transparent; color: var(--danger); border-color: var(--danger);
+}
+.action-bar-btn.danger:hover { background: var(--danger); color: #fff; }
+
+/* ── History Modal ── */
+.hist-timeline { position: relative; padding-left: 2.5rem; }
+.hist-timeline::before {
+    content: ''; position: absolute; left: 12px; top: 4px; bottom: 4px;
+    width: 2px; background: var(--border);
+}
+.hist-item {
+    position: relative; padding-bottom: 1.25rem;
+}
+.hist-item:last-child { padding-bottom: 0; }
+.hist-item::before {
+    content: ''; position: absolute; left: -1.5rem; top: 2px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--brand);
+    border: 2px solid var(--surface);
+}
+.hist-item.success::before { background: var(--success); }
+.hist-item.warning::before { background: var(--warning); }
+.hist-item.danger::before { background: var(--danger); }
+.hist-item.info::before { background: var(--info); }
+.hist-item .hist-title { font-weight: 700; font-size: 0.85rem; color: var(--ink-2); }
+.hist-item .hist-time { font-size: 0.7rem; color: var(--ink-4); }
+.hist-item .hist-desc { font-size: 0.78rem; color: var(--ink-3); margin-top: 0.15rem; }
+
+@media (max-width: 768px) {
+    .show-hero { padding: 1.25rem; }
+    .show-hero .hero-nomor { font-size: 1.15rem; }
+    .detail-card .card-body-custom { padding: 0.85rem; }
+    .info-item { padding: 0.65rem; }
+    .action-bar-btn { font-size: 0.72rem; padding: 0.4rem 0.7rem; }
+}
+</style>
+
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 fade-up">
+    <a href="/arsip" class="action-bar-btn"><i class="bi bi-arrow-left"></i><span class="d-none d-sm-inline ms-1"> Kembali</span></a>
+    <div class="d-flex gap-1 flex-wrap">
+        <button class="action-bar-btn" data-history-id="{{.arsip.ID}}"><i class="bi bi-clock-history"></i> Riwayat</button>
+        {{if .CanEdit}}<a href="/arsip/{{.arsip.ID}}/edit" class="action-bar-btn"><i class="bi bi-pencil"></i> Edit</a>{{end}}
+        {{if and .arsip.FilePath (eq (ext .arsip.FilePath) "pdf")}}<a href="/arsip/{{.arsip.ID}}/view" target="_blank" class="action-bar-btn"><i class="bi bi-eye"></i> Lihat PDF</a>{{end}}
+        <a href="/arsip/{{.arsip.ID}}/download" class="action-bar-btn primary"><i class="bi bi-download"></i> Unduh</a>
+        {{if .CanDelete}}
+        <form action="/arsip/{{.arsip.ID}}/delete" method="POST" class="d-inline" onsubmit="return confirm('Hapus arsip {{.arsip.NomorArsip}}?')">
+            <button type="submit" class="action-bar-btn danger"><i class="bi bi-trash3"></i> Hapus</button>
+        </form>
+        {{end}}
+    </div>
+</div>
+
+<div class="row">
+    <!-- MAIN CONTENT -->
+    <div class="col-lg-8">
+        <!-- Hero Header -->
+        <div class="show-hero shadow-sm">
+            <div class="position-relative" style="z-index:1">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="flex-grow-1">
+                        <div class="hero-nomor"><i class="bi bi-file-earmark-text me-2" style="opacity:0.7"></i>{{if .arsip.NomorArsip}}{{.arsip.NomorArsip}}{{else}}<span class="opacity-50">—</span>{{end}}</div>
+                        <div class="hero-nama">{{.arsip.NamaArsip}}</div>
+                        <div class="hero-meta">
+                            <span class="hero-meta-item"><i class="bi bi-calendar3"></i> Dibuat: <strong>{{formatDateDMY .arsip.TanggalDibuat}}</strong></span>
+                            <span class="hero-meta-item"><i class="bi bi-clock"></i> <strong>{{.DaysSinceCreated}}</strong> hari lalu</span>
+                            {{if .arsip.Pemberkasan}}<span class="hero-meta-item"><i class="bi bi-folder2-open"></i> Berkas: <strong>{{.arsip.Pemberkasan.NamaPemberkasan}}</strong></span>{{end}}
+                        </div>
+                    </div>
+                    <div class="text-end flex-shrink-0">
+                        <span class="st-badge-v2 {{.arsip.StatusArsip}}" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)">{{replaceUnderscore .arsip.StatusArsip}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informasi Dasar -->
+        <div class="detail-card">
+            <div class="card-head"><i class="bi bi-info-circle"></i><span class="head-label">Informasi Dasar</span></div>
+            <div class="card-body-custom">
+                <div class="row g-1">
+                    <div class="col-md-6"><div class="info-item"><span class="label">Tingkat Perkembangan</span><span class="value">{{if .arsip.TingkatPerkembangan}}<span class="badge-soft badge-soft-primary">{{.arsip.TingkatPerkembangan}}</span>{{else}}<span class="text-muted">—</span>{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Jenis Arsip</span><span class="value">{{if .arsip.JenisArsipRel}}{{.arsip.JenisArsipRel.KodeJenis}} — {{.arsip.JenisArsipRel.NamaJenis}}{{else}}{{if .arsip.JenisArsip}}{{.arsip.JenisArsip}}{{else}}<span class="text-muted">—</span>{{end}}{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Nominal</span><span class="value">{{if .arsip.NilaiAnggaran}}<span class="text-success fw-bold">Rp {{formatNumber .arsip.NilaiAnggaran}}</span>{{else}}<span class="text-muted">—</span>{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Status Arsip</span><span class="value"><span class="st-badge-v2 {{.arsip.StatusArsip}}">{{replaceUnderscore .arsip.StatusArsip}}</span></span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Nomor SPM</span><span class="value">{{if .arsip.NomorSPM}}<span class="fw-bold">{{.arsip.NomorSPM}}</span>{{else}}<span class="text-muted">—</span>{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Jumlah</span><span class="value fw-bold">{{.arsip.Jumlah}} {{.arsip.Satuan}}</span></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Klasifikasi & Organisasi -->
+        <div class="detail-card detail-card-d1">
+            <div class="card-head"><i class="bi bi-diagram-3"></i><span class="head-label">Klasifikasi &amp; Organisasi</span></div>
+            <div class="card-body-custom">
+                <div class="row g-1">
+                    <div class="col-md-6"><div class="info-item"><span class="label">Kode Klasifikasi</span><span class="value">{{if .arsip.KodeKlasifikasi}}<code style="font-size:0.85rem">{{.arsip.KodeKlasifikasi.KodeKlasifikasi}}</code> — {{.arsip.KodeKlasifikasi.NamaKlasifikasi}}{{else}}<span class="text-muted">—</span>{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Unit Kerja</span><span class="value"><i class="bi bi-building text-primary me-1"></i>{{if .arsip.UnitKerja}}{{.arsip.UnitKerja.NamaUnit}}{{else}}<span class="text-muted">—</span>{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Lokasi Fisik</span><span class="value"><i class="bi bi-geo-alt text-danger me-1"></i>{{if .arsip.LokasiArsip}}{{.arsip.LokasiArsip.NamaLokasi}}<small class="text-muted d-block" style="font-size:0.72rem;">{{if .arsip.LokasiArsip.Deskripsi}}{{.arsip.LokasiArsip.Deskripsi}}{{end}}</small>{{else}}<span class="text-muted">—</span>{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Berkas (Pemberkasan)</span><span class="value"><i class="bi bi-folder2 text-warning me-1"></i>{{if .arsip.Pemberkasan}}<a href="/pemberkasan/{{.arsip.PemberkasanID}}" class="text-decoration-none fw-600">{{.arsip.Pemberkasan.NamaPemberkasan}}</a>{{else}}<span class="text-muted">Belum diberkaskan</span>{{end}}</span></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jadwal Retensi -->
+        <div class="detail-card detail-card-d1">
+            <div class="card-head"><i class="bi bi-calendar-event"></i><span class="head-label">Jadwal Retensi</span></div>
+            <div class="card-body-custom">
+                <div class="row g-1">
+                    <div class="col-md-6"><div class="info-item"><span class="label">Tanggal Retensi Berakhir</span><span class="value">{{if .arsip.TanggalRetensiAkhir}}<i class="bi bi-calendar-x text-warning me-1"></i>{{formatDateDMY .arsip.TanggalRetensiAkhir}}{{else}}<span class="text-muted">Tidak ditentukan</span>{{end}}</span></div></div>
+                    <div class="col-md-6"><div class="info-item"><span class="label">Terakhir Diperbarui</span><span class="value"><i class="bi bi-clock text-info me-1"></i>{{formatDateDMY .arsip.UpdatedAt}} <small class="text-muted" style="font-size:0.7rem;">({{.DaysSinceUpdated}} hari lalu)</small></span></div></div>
+                </div>
+            </div>
+        </div>
+
+        {{if .arsip.Tags}}
+        <!-- Tags -->
+        <div class="detail-card detail-card-d1">
+            <div class="card-head"><i class="bi bi-tags"></i><span class="head-label">Tags</span></div>
+            <div class="card-body-custom">
+                <div class="tags-wrap">
+                    {{range $tag := splitTags .arsip.Tags}}<span class="tag-pill"><i class="bi bi-hash"></i>{{$tag}}</span>{{end}}
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Uraian -->
+        <div class="detail-card detail-card-d2">
+            <div class="card-head"><i class="bi bi-card-text"></i><span class="head-label">Uraian</span></div>
+            <div class="card-body-custom">
+                <div class="uraian-box">
+                    <p class="text">{{if .arsip.Uraian}}{{.arsip.Uraian}}{{else}}<span class="text-muted fst-italic">Belum ada uraian</span>{{end}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Berkas Digital -->
+        <div class="detail-card detail-card-d3">
+            <div class="card-head"><i class="bi bi-cloud-upload"></i><span class="head-label">Berkas Digital</span></div>
+            <div class="card-body-custom">
+                {{if not .arsip.FilePath}}
+                <div class="alert" style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:var(--r);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-5" style="color:#d97706;"></i>
+                        <div><strong class="d-block" style="font-size:0.85rem;">Tidak ada berkas digital</strong><span style="font-size:0.78rem;">Upload berkas melalui tombol <strong>Edit</strong> di atas.</span></div>
+                    </div>
+                </div>
+                {{else}}
+                {{$ext := .Extension}}{{$fileSize := .FileSize}}{{$fileInfo := .FileInfo}}
+                {{$iconClass := "other"}}{{$icon := "bi-file-earmark"}}
+                {{if eq $ext "pdf"}}{{$iconClass = "pdf"}}{{$icon = "bi-file-earmark-pdf-fill"}}{{else if or (eq $ext "jpg") (eq $ext "jpeg") (eq $ext "png")}}{{$iconClass = "img"}}{{$icon = "bi-file-earmark-image-fill"}}{{else if or (eq $ext "doc") (eq $ext "docx")}}{{$iconClass = "doc"}}{{$icon = "bi-file-earmark-word-fill"}}{{else if or (eq $ext "xls") (eq $ext "xlsx")}}{{$iconClass = "xls"}}{{$icon = "bi-file-earmark-excel-fill"}}{{end}}
+                <div class="file-card">
+                    <div class="file-icon {{$iconClass}}"><i class="bi {{$icon}}"></i></div>
+                    <div class="fw-bold mb-1" style="font-size:0.85rem;color:var(--ink-2);">{{if $fileInfo.Filename}}{{$fileInfo.Filename}}{{else}}File Arsip{{end}}</div>
+                    <div class="text-muted mb-2" style="font-size:0.75rem;">{{.FileType}} &bull; {{formatFileSize $fileSize}}</div>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="/arsip/{{.arsip.ID}}/download" class="action-bar-btn primary" style="padding:0.35rem 0.9rem;font-size:0.75rem;"><i class="bi bi-download"></i> Unduh</a>
+                        {{if eq $ext "pdf"}}<a href="/arsip/{{.arsip.ID}}/view" target="_blank" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;"><i class="bi bi-eye"></i> Preview</a>{{end}}
+                    </div>
+                    {{if and .IsOcrProcessed $fileInfo.OcrText}}
+                    <div class="mt-3 text-start" style="max-height:110px;overflow-y:auto;background:var(--surface-2);border-radius:var(--r-sm);padding:0.65rem;font-size:0.72rem;color:var(--ink-4);border:1px solid var(--border);">
+                        <strong class="d-block mb-1" style="color:var(--ink-2);font-size:0.72rem;"><i class="bi bi-eye me-1"></i>OCR Preview:</strong>{{truncate $fileInfo.OcrText 300}}
+                    </div>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-lg-4">
+        <!-- Quick Stats -->
+        <div class="side-stat">
+            <div class="side-head"><i class="bi bi-bar-chart"></i><span class="label">Statistik</span></div>
+            <div class="side-body">
+                <div class="row g-1 text-center">
+                    <div class="col-4"><div class="p-2 rounded" style="background:var(--brand-lt);"><div class="fw-bold" style="font-size:1.2rem;color:var(--brand);">{{.DaysSinceCreated}}</div><small class="text-muted" style="font-size:0.65rem;">Hari</small></div></div>
+                    <div class="col-4"><div class="p-2 rounded" style="background:#f0fdf4;"><div class="fw-bold text-success" style="font-size:1.2rem;">{{.VersionCount}}</div><small class="text-muted" style="font-size:0.65rem;">Versi</small></div></div>
+                    <div class="col-4"><div class="p-2 rounded" style="background:#fffbeb;"><div class="fw-bold" style="font-size:1.2rem;color:var(--warning);">{{if .arsip.LokasiArsip}}<i class="bi bi-geo-alt-fill"></i>{{else}}<i class="bi bi-dash"></i>{{end}}</div><small class="text-muted" style="font-size:0.65rem;">Lokasi</small></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="side-stat">
+            <div class="side-head"><i class="bi bi-qr-code"></i><span class="label">QR Code</span></div>
+            <div class="side-body text-center">
+                {{if .qrCode.ID}}
+                <div class="qr-box mb-2">
+                    <img src="/arsip/{{.arsip.ID}}/qrcode" alt="QR Code" class="img-fluid">
+                </div>
+                <a href="/arsip/{{.arsip.ID}}/qrcode/download" class="action-bar-btn w-100 justify-content-center" style="font-size:0.75rem;"><i class="bi bi-download"></i> Unduh QR</a>
+                {{else}}
+                <div class="text-muted py-3"><i class="bi bi-qr-code d-block mb-2" style="font-size:2rem;opacity:0.3"></i><small>QR Code belum tersedia</small></div>
+                {{end}}
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="side-stat">
+            <div class="side-head"><i class="bi bi-info-circle"></i><span class="label">Metadata</span></div>
+            <div class="side-body" style="padding:0.75rem 1rem;">
+                <div class="meta-row"><span class="m-label">ID</span><code>{{.arsip.ID}}</code></div>
+                <div class="meta-row"><span class="m-label">Dibuat</span><span class="m-value" style="font-size:0.78rem;">{{formatDateDMY .arsip.CreatedAt}}</span></div>
+                <div class="meta-row"><span class="m-label">Diperbarui</span><span class="m-value" style="font-size:0.78rem;">{{formatDateDMY .arsip.UpdatedAt}}</span></div>
+                {{if .arsip.OcrProcessed}}<div class="meta-row"><span class="m-label">OCR</span><span class="badge-soft badge-soft-success" style="font-size:0.65rem;">Processed</span></div>{{end}}
+                {{if .arsip.GoogleDriveFileID}}<div class="meta-row"><span class="m-label">GDrive</span><span class="badge-soft badge-soft-info" style="font-size:0.65rem;">Synced</span></div>{{end}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<template data-modal="historyModal">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Riwayat Arsip</h5>
+      <p class="sm-subtitle">Timeline aktivitas dan versi file arsip</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('historyModal')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sm-body p-0">
+    <div id="historyLoading" class="text-center py-5"><div class="spinner-border text-primary"></div><p class="text-muted mt-2 small">Memuat riwayat...</p></div>
+    <div id="historyContent" class="d-none">
+      <div class="p-4" style="background:var(--surface-2);border-bottom:1px solid var(--border);">
+        <div class="row g-2">
+          <div class="col-md-6"><small class="text-muted d-block" style="font-size:0.7rem;">Nomor Arsip</small><strong id="historyArsipNomor" style="font-size:0.9rem;"></strong></div>
+          <div class="col-md-6"><small class="text-muted d-block" style="font-size:0.7rem;">Nama Arsip</small><strong id="historyArsipNama" style="font-size:0.9rem;"></strong></div>
+        </div>
+        <div class="row g-2 mt-3">
+          <div class="col-3 text-center"><div class="p-2 rounded" style="background:var(--brand-lt);"><div class="fw-bold text-brand" id="statTotalVersions" style="font-size:1.1rem;">0</div><small class="text-muted" style="font-size:0.62rem;">Versi</small></div></div>
+          <div class="col-3 text-center"><div class="p-2 rounded" style="background:#f0fdf4;"><div class="fw-bold text-success" id="statTotalActions" style="font-size:1.1rem;">0</div><small class="text-muted" style="font-size:0.62rem;">Aksi</small></div></div>
+          <div class="col-3 text-center"><div class="p-2 rounded" style="background:#fffbeb;"><div class="fw-bold" id="statLocationChanges" style="font-size:1.1rem;color:var(--warning);">0</div><small class="text-muted" style="font-size:0.62rem;">Pindah</small></div></div>
+          <div class="col-3 text-center"><div class="p-2 rounded" style="background:#f0fdf4;"><div class="fw-bold text-success" id="statBlockchainVerified" style="font-size:1.1rem;">0</div><small class="text-muted" style="font-size:0.62rem;">Verified</small></div></div>
+        </div>
+      </div>
+      <div class="p-4"><h6 class="fw-bold mb-3" style="font-size:0.85rem;"><i class="bi bi-timeline text-brand me-2"></i>Timeline</h6><div id="timelineContainer" class="hist-timeline"></div></div>
+      <div class="p-4 border-top"><h6 class="fw-bold mb-3" style="font-size:0.85rem;"><i class="bi bi-layers text-brand me-2"></i>Versi File</h6><div class="table-responsive"><table class="table table-sm table-hover mb-0"><thead><tr><th width="60">Versi</th><th>File</th><th>Diubah Oleh</th><th>Catatan</th><th width="130">Tanggal</th><th width="60">Aksi</th></tr></thead><tbody id="versionsTableBody"></tbody></table></div></div>
+    </div>
+  </div>
+  <div class="sm-footer">
+    <a id="exportPdfBtn" href="#" class="sm-btn sm-btn-cancel"><i class="bi bi-file-pdf me-1"></i>Export PDF</a>
+    <button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('historyModal')"><i class="bi bi-x-lg me-1"></i>Tutup</button>
+  </div>
+</template>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="liveToast" class="toast" role="alert" style="background:var(--ink);color:#fff;border:none;border-radius:var(--r);">
+        <div class="d-flex align-items-center px-3 py-2 gap-2">
+            <i class="bi bi-check-circle text-success" id="toastIcon"></i>
+            <span class="flex-grow-1 small" id="toastMessage"></span>
+            <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="toast" style="font-size:0.6rem;"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+let currentHistoryArsipId=null;
+
+document.addEventListener('click',function(e){
+    if(e.target.closest('[data-history-id]')){
+        const btn=e.target.closest('[data-history-id]');
+        currentHistoryArsipId=btn.getAttribute('data-history-id');
+        // Clone template ke DOM dulu — elemen riwayat ada di dalam template historyModal
+        if (SimarcModal.show('historyModal')) {
+            const loadingEl=document.getElementById('historyLoading');
+            const contentEl=document.getElementById('historyContent');
+            if (loadingEl) loadingEl.classList.remove('d-none');
+            if (contentEl) contentEl.classList.add('d-none');
+            loadHistoryData(currentHistoryArsipId);
+        } else {
+            showToast('Error','Gagal membuka modal riwayat','danger');
+        }
+    }
+});
+
+function loadHistoryData(id){
+    fetch('/arsip/'+id+'/history/json')
+        .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t)});return r.json()})
+        .then(function(data){
+            var loadingEl=document.getElementById('historyLoading');
+            var contentEl=document.getElementById('historyContent');
+            if(loadingEl)loadingEl.classList.add('d-none');
+            if(contentEl)contentEl.classList.remove('d-none');
+            if(data.success){
+                const h=data.data;
+                var el;
+                el=document.getElementById('historyArsipNomor');if(el)el.textContent=h.arsip.nomor_arsip;
+                el=document.getElementById('historyArsipNama');if(el)el.textContent=h.arsip.nama_arsip;
+                el=document.getElementById('exportPdfBtn');if(el)el.href='/arsip/'+id+'/history/export-pdf';
+                el=document.getElementById('statTotalVersions');if(el)el.textContent=h.statistics.total_versions;
+                el=document.getElementById('statTotalActions');if(el)el.textContent=h.statistics.total_actions;
+                el=document.getElementById('statLocationChanges');if(el)el.textContent=h.statistics.location_changes;
+                el=document.getElementById('statBlockchainVerified');if(el)el.textContent=h.statistics.blockchain_verified;
+                renderTimeline(h.timeline);
+                renderVersionsTable(h.versions);
+            } else {
+                showToast('Error',data.message||'Gagal memuat','danger');
+            }
+        })
+        .catch(function(err){
+            var loadingEl=document.getElementById('historyLoading');
+            if(loadingEl)loadingEl.classList.add('d-none');
+            showToast('Error',err.message,'danger');
+        });
+}
+
+function renderTimeline(tl){
+    const c=document.getElementById('timelineContainer');
+    if(!c)return;
+    c.innerHTML='';
+    if(!tl.length){c.innerHTML='<div class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Belum ada riwayat</div>';return}
+    tl.forEach(function(item){
+        const d=document.createElement('div');
+        d.className='hist-item' + (item.color ? ' ' + item.color : '');
+        let bc='';
+        if(item.blockchain_verified)bc='<span class="badge-soft badge-soft-success ms-2" style="font-size:0.6rem;"><i class="bi bi-shield-check me-1"></i>VERIFIED</span>';
+        d.innerHTML='<div class="d-flex justify-content-between align-items-start"><div class="hist-title">'+item.title+bc+'</div><span class="hist-time"><i class="bi bi-clock me-1"></i>'+item.formatted_time+'</span></div><div class="hist-desc">'+(item.description||'-')+'</div><div class="mt-1 d-flex gap-2 flex-wrap"><span class="small text-muted"><i class="bi bi-person me-1"></i>'+(item.user||'System')+'</span>'+(item.bc_hash?'<span class="text-muted font-monospace small"><i class="bi bi-shield me-1"></i>'+item.bc_hash.slice(0,12)+'...</span>':'')+'</div>';
+        c.appendChild(d);
+    });
+}
+
+function renderVersionsTable(v){
+    const t=document.getElementById('versionsTableBody');
+    if(!t)return;
+    t.innerHTML='';
+    if(!v.length){t.innerHTML='<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Belum ada versi</td></tr>';return}
+    v.forEach(function(item){
+        const tr=document.createElement('tr');
+        tr.innerHTML='<td><span class="badge-soft badge-soft-primary">v'+item.nomor_versi+'</span></td><td style="font-size:0.8rem;">'+(item.file_path?item.file_path.split('/').pop():'File')+'</td><td style="font-size:0.8rem;">'+item.diubah_oleh+'</td><td style="font-size:0.8rem;">'+(item.catatan_perubahan||'-')+'</td><td style="font-size:0.75rem;">'+item.created_at+'</td><td><a href="/arsip/version/'+item.id+'/download" class="btn btn-sm btn-outline-primary border-0" title="Unduh" style="font-size:0.8rem;"><i class="bi bi-download"></i></a></td>';
+        t.appendChild(tr);
+    });
+}
+
+function showToast(t,m,type){
+    type=type||'success';
+    const el=document.getElementById('liveToast');
+    if(!el)return;
+    document.getElementById('toastMessage').textContent=m;
+    const icon=document.getElementById('toastIcon');
+    if(icon) icon.className='bi bi-'+(type==='success'?'check-circle text-success':type==='warning'?'exclamation-triangle text-warning':'x-circle text-danger');
+    try{new bootstrap.Toast(el).show()}catch(e){alert(m)}
+}
+});
+</script>
+{{end}}

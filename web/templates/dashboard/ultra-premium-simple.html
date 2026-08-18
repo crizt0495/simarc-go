@@ -1,0 +1,84 @@
+{{define "dashboard/ultra-premium-simple.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+.dashboard-container{padding:2rem;max-width:1400px;margin:0 auto}
+.dashboard-header{margin-bottom:2rem}
+.dashboard-title{font-size:2.5rem;font-weight:700;background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.5rem}
+.dashboard-subtitle{color:#6c757d;font-size:1.1rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-bottom:2rem}
+.stat-card{background:white;border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow-md);transition:all 0.3s ease;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--gradient-primary)}
+.stat-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-xl)}
+.stat-card.gold::before{background:var(--gradient-gold)}
+.stat-card.success::before{background:var(--gradient-success)}
+.stat-icon{width:60px;height:60px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;font-size:1.5rem}
+.stat-card .stat-icon{background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(37,99,235,0.05));color:var(--royal-blue)}
+.stat-card.gold .stat-icon{background:linear-gradient(135deg,rgba(212,175,55,0.1),rgba(240,230,210,0.05));color:var(--gold)}
+.stat-card.success .stat-icon{background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(5,150,105,0.05));color:var(--success)}
+.stat-value{font-size:2.5rem;font-weight:700;color:var(--platinum-navy);margin-bottom:0.25rem}
+.stat-label{color:#6c757d;font-size:0.9rem;font-weight:500}
+.stat-change{display:inline-flex;align-items:center;gap:0.25rem;font-size:0.85rem;font-weight:600;margin-top:0.5rem}
+.stat-change.positive{color:var(--success)}
+.stat-change.negative{color:var(--danger)}
+.activity-section{background:white;border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow-md)}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid rgba(0,0,0,0.05)}
+.section-title{font-size:1.5rem;font-weight:700;color:var(--platinum-navy)}
+</style>
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Dashboard</h1>
+        <p class="dashboard-subtitle">Selamat datang di ArsipPro Enterprise - Ultra Premium Edition</p>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📄</div>
+            <div class="stat-value">{{.TotalArsip}}</div>
+            <div class="stat-label">Total Arsip</div>
+            <div class="stat-change positive"><span>↑</span><span>+12% dari bulan lalu</span></div>
+        </div>
+        <div class="stat-card gold">
+            <div class="stat-icon">✨</div>
+            <div class="stat-value">{{.DigitalArsip}}</div>
+            <div class="stat-label">Arsip Digital</div>
+            <div class="stat-change positive"><span>↑</span><span>+8% dari bulan lalu</span></div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value">{{.PeminjamanAktif}}</div>
+            <div class="stat-label">Peminjaman Aktif</div>
+            <div class="stat-change positive"><span>↑</span><span>+5% dari minggu lalu</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🏢</div>
+            <div class="stat-value">{{.UnitKerja}}</div>
+            <div class="stat-label">Unit Kerja</div>
+            <div class="stat-change" style="color:var(--royal-blue)"><span>→</span><span>Stabil</span></div>
+        </div>
+    </div>
+    <div class="activity-section">
+        <div class="section-header">
+            <h3 class="section-title">Aktivitas Terbaru</h3>
+            <a href="/laporan/aktivitas" class="btn-premium btn-sm">Lihat Semua</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table-premium">
+                <thead>
+                    <tr><th>Aktivitas</th><th>User</th><th>Waktu</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {{range .RecentActivities}}
+                    <tr>
+                        <td>{{.Description}}</td>
+                        <td>{{.UserName}}</td>
+                        <td>{{.CreatedAt}}</td>
+                        <td><span class="badge-premium badge-blue">Selesai</span></td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="4" style="text-align:center;padding:2rem;color:#6c757d">Belum ada aktivitas terbaru</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{{end}}

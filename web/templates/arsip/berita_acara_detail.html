@@ -1,0 +1,319 @@
+{{define "arsip/berita_acara_detail.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+/* ═══════════════════════════════════════
+   BERITA ACARA — PREMIUM DETAIL
+   ═══════════════════════════════════════ */
+
+.ba-detail-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    border-radius: var(--r-xl);
+    padding: 2rem 2.5rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.ba-detail-hero::after {
+    content: '';
+    position: absolute;
+    top: -30%; right: -5%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.ba-detail-hero .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.75rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.ba-detail-hero .hero-nomor {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.15rem;
+    position: relative;
+    z-index: 1;
+}
+.ba-detail-hero .hero-sub {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Detail Card ── */
+.detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+.detail-card:hover {
+    border-color: var(--brand);
+    box-shadow: var(--sh-sm);
+}
+.detail-card .dc-header {
+    padding: 0.85rem 1.25rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--ink-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.detail-card .dc-body {
+    padding: 1.25rem;
+}
+
+/* ── Info Row ── */
+.info-row {
+    display: flex;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+.info-row:last-child { border-bottom: none; }
+.info-row .info-label {
+    width: 130px;
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--ink-3);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.info-row .info-value {
+    flex: 1;
+    color: var(--ink-2);
+    font-weight: 500;
+}
+
+/* ── Party Card ── */
+.party-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1rem 1.25rem;
+    height: 100%;
+}
+.party-card .party-role {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.party-field {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+    font-size: 0.85rem;
+}
+.party-field .pf-label {
+    font-weight: 600;
+    color: var(--ink-4);
+    min-width: 60px;
+    flex-shrink: 0;
+}
+.party-field .pf-value {
+    color: var(--ink-2);
+    font-weight: 500;
+}
+
+/* ── Archive Item ── */
+.arsip-mini-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    margin-bottom: 0.4rem;
+    transition: all 0.12s ease;
+}
+.arsip-mini-item:hover {
+    border-color: var(--brand);
+    background: rgba(26,86,219,0.02);
+}
+.arsip-mini-item .ami-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--ink-4);
+    flex-shrink: 0;
+}
+.arsip-mini-item .ami-name {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--ink-2);
+}
+.arsip-mini-item .ami-meta {
+    font-size: 0.65rem;
+    color: var(--ink-4);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.arsip-mini-item .ami-meta span { display: inline-flex; align-items: center; gap: 0.2rem; }
+
+/* ── Animations ── */
+.fade-up { animation: fadeUp 0.35s ease both; }
+.fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+.fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
+.fade-up-d3 { animation: fadeUp 0.35s ease 0.2s both; }
+.fade-up-d4 { animation: fadeUp 0.35s ease 0.26s both; }
+
+
+@media (max-width: 768px) {
+    .ba-detail-hero { padding: 1.25rem; }
+    .ba-detail-hero .hero-nomor { font-size: 1.1rem; }
+    .detail-card .dc-body { padding: 0.85rem; }
+    .info-row { flex-direction: column; gap: 0.15rem; }
+    .info-row .info-label { width: auto; }
+    .party-card { padding: 0.85rem; }
+}
+</style>
+
+{{$ba := .BA}}
+
+<div class="container-fluid py-3 py-xl-4">
+    <!-- ZONE 1: HERO HEADER -->
+    <div class="ba-detail-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-badge"><i class="bi bi-journal-text"></i> Berita Acara Pemindahan</div>
+                <div class="hero-nomor">{{$ba.NomorBA}}</div>
+                <div class="hero-sub">{{$ba.Tanggal.Format "02 January 2006"}} {{if $ba.Tempat}}· {{$ba.Tempat}}{{end}}</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/arsip/pemindahan/ba/{{$ba.ID}}/pdf" class="btn btn-success btn-sm rounded-pill fw-800 px-3 shadow-sm" style="font-size:0.75rem;">
+                    <i class="bi bi-file-pdf me-1"></i>Download PDF
+                </a>
+                <a href="/arsip/pemindahan/ba" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
+                    <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- ZONE 2: INFO & PARTIES -->
+        <div class="col-lg-8">
+            <!-- Info BA -->
+            <div class="detail-card shadow-sm fade-up-d1">
+                <div class="dc-header"><i class="bi bi-info-circle text-primary"></i> Informasi Berita Acara</div>
+                <div class="dc-body">
+                    <div class="info-row"><div class="info-label">Nomor BA</div><div class="info-value"><strong>{{$ba.NomorBA}}</strong></div></div>
+                    <div class="info-row"><div class="info-label">Tanggal</div><div class="info-value">{{$ba.Tanggal.Format "02 January 2006"}}</div></div>
+                    <div class="info-row"><div class="info-label">Tempat</div><div class="info-value">{{if $ba.Tempat}}{{$ba.Tempat}}{{else}}<span class="text-muted">-</span>{{end}}</div></div>
+                    <div class="info-row"><div class="info-label">Lokasi Asal</div><div class="info-value">{{if $ba.LokasiAsal}}{{$ba.LokasiAsal.NamaLokasi}}{{else}}<span class="text-muted">-</span>{{end}}</div></div>
+                    <div class="info-row"><div class="info-label">Lokasi Tujuan</div><div class="info-value">{{if $ba.LokasiTujuan}}{{$ba.LokasiTujuan.NamaLokasi}}{{else}}<span class="text-muted">-</span>{{end}}</div></div>
+                    <div class="info-row"><div class="info-label">Catatan</div><div class="info-value">{{if $ba.Catatan}}{{$ba.Catatan}}{{else}}<span class="text-muted">-</span>{{end}}</div></div>
+                    <div class="info-row"><div class="info-label">Dibuat Oleh</div><div class="info-value">{{if $ba.Creator}}{{$ba.Creator.Name}}{{else}}<span class="text-muted">-</span>{{end}}</div></div>
+                </div>
+            </div>
+
+            <!-- Pihak Terlibat -->
+            <div class="detail-card shadow-sm mt-3 fade-up-d2">
+                <div class="dc-header"><i class="bi bi-people text-primary"></i> Pihak Terlibat</div>
+                <div class="dc-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="party-card">
+                                <div class="party-role"><i class="bi bi-person"></i> Pihak Pertama</div>
+                                <div class="party-field"><span class="pf-label">Nama</span><span class="pf-value">{{$ba.PihakPertamaNama}}</span></div>
+                                {{if $ba.PihakPertamaNIP}}<div class="party-field"><span class="pf-label">NIP</span><span class="pf-value">{{$ba.PihakPertamaNIP}}</span></div>{{end}}
+                                {{if $ba.PihakPertamaJabatan}}<div class="party-field"><span class="pf-label">Jabatan</span><span class="pf-value">{{$ba.PihakPertamaJabatan}}</span></div>{{end}}
+                                {{if $ba.PihakPertamaUnit}}<div class="party-field"><span class="pf-label">Unit</span><span class="pf-value">{{$ba.PihakPertamaUnit}}</span></div>{{end}}
+                                <div class="mt-2"><span class="badge rounded-pill fw-700" style="font-size:0.6rem;background:rgba(217,119,6,0.1);color:#d97706;"><i class="bi bi-shield me-1"></i>Unit Pengolah</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="party-card">
+                                <div class="party-role"><i class="bi bi-person-check"></i> Pihak Kedua</div>
+                                <div class="party-field"><span class="pf-label">Nama</span><span class="pf-value">{{$ba.PihakKeduaNama}}</span></div>
+                                {{if $ba.PihakKeduaNIP}}<div class="party-field"><span class="pf-label">NIP</span><span class="pf-value">{{$ba.PihakKeduaNIP}}</span></div>{{end}}
+                                {{if $ba.PihakKeduaJabatan}}<div class="party-field"><span class="pf-label">Jabatan</span><span class="pf-value">{{$ba.PihakKeduaJabatan}}</span></div>{{end}}
+                                {{if $ba.PihakKeduaUnit}}<div class="party-field"><span class="pf-label">Unit</span><span class="pf-value">{{$ba.PihakKeduaUnit}}</span></div>{{end}}
+                                <div class="mt-2"><span class="badge rounded-pill fw-700" style="font-size:0.6rem;background:rgba(2,132,199,0.1);color:var(--info);"><i class="bi bi-shield-check me-1"></i>Unit Kearsipan</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 3: ARCHIVE LIST -->
+        <div class="col-lg-4">
+            <div class="detail-card shadow-sm fade-up-d3">
+                <div class="dc-header">
+                    <i class="bi bi-list-check text-primary"></i> Daftar Arsip
+                    <span class="badge rounded-pill fw-700 ms-auto" style="background:rgba(26,86,219,0.1);color:var(--brand);font-size:0.65rem;">{{len $ba.Items}}</span>
+                </div>
+                <div class="dc-body" style="max-height:560px;overflow-y:auto;">
+                    {{range $i, $item := $ba.Items}}
+                    <div class="arsip-mini-item">
+                        <div class="ami-num">{{add $i 1}}</div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="ami-name text-truncate">{{if $item.Arsip}}{{$item.Arsip.NamaArsip}}{{else}}<span class="text-muted">Arsip tidak tersedia</span>{{end}}</div>
+                            <div class="ami-meta">
+                                {{if $item.Arsip.NomorArsip}}<span><i class="bi bi-hash"></i>{{$item.Arsip.NomorArsip}}</span>{{end}}
+                                {{if $item.Arsip.KodeKlasifikasi}}<span><i class="bi bi-tag"></i>{{$item.Arsip.KodeKlasifikasi.KodeKlasifikasi}}</span>{{end}}
+                                {{if $item.Arsip.LokasiArsip}}<span><i class="bi bi-geo-alt"></i>{{$item.Arsip.LokasiArsip.NamaLokasi}}</span>{{end}}
+                            </div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox d-block mb-1" style="font-size:1.5rem;"></i>
+                        <small>Tidak ada arsip</small>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="detail-card shadow-sm mt-3 fade-up-d4">
+                <div class="dc-body">
+                    <h6 class="fw-800 mb-3" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);">
+                        <i class="bi bi-lightning me-1"></i> Aksi Cepat
+                    </h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="/arsip/pemindahan/ba/{{$ba.ID}}/pdf" class="btn btn-success btn-sm rounded-pill fw-700">
+                            <i class="bi bi-file-pdf me-2"></i>Download PDF
+                        </a>
+                        <a href="/arsip/pemindahan" class="btn btn-outline-primary btn-sm rounded-pill fw-700">
+                            <i class="bi bi-map me-2"></i>Pemindahan Arsip
+                        </a>
+                        <a href="/arsip/pemindahan/ba" class="btn btn-link text-muted fw-700 text-decoration-none btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Kembali ke Daftar BA</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

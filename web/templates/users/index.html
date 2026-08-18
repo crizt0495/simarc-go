@@ -1,0 +1,155 @@
+{{define "users/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+    .users-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #7c3aed 100%);
+        border-radius: var(--r-xl);
+        padding: 1.75rem 2rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .users-hero::after {
+        content: '';
+        position: absolute;
+        top: -40%; right: -5%;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .users-hero .hero-title {
+        font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
+    }
+    .users-hero .hero-sub {
+        font-size: 0.8rem; opacity: 0.7; font-weight: 500;
+    }
+    .premium-table thead th {
+        background: transparent;
+        border: none;
+        color: var(--ink-4);
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+    .premium-table tbody tr {
+        transition: all 0.15s ease;
+        border-bottom: 1px solid var(--border);
+    }
+    .premium-table tbody tr:hover { background: rgba(26,86,219,0.02); }
+    .premium-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        font-size: 0.85rem;
+        color: var(--ink-2);
+    }
+    .fade-up { animation: fadeUp 0.35s ease both; }
+    .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+    @media (max-width: 768px) {
+        .users-hero { padding: 1.25rem; }
+        .users-hero .hero-title { font-size: 1.1rem; }
+        .premium-table thead { display: none; }
+        .premium-table tbody tr {
+            display: block; margin-bottom: 0.75rem;
+            border: 1px solid var(--border); border-radius: var(--r);
+            padding: 0.75rem; background: var(--surface);
+        }
+        .premium-table tbody td {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.4rem 0 !important; border: none !important;
+            border-bottom: 1px solid var(--border) !important;
+            text-align: right; font-size: 0.8rem;
+        }
+        .premium-table tbody td:last-child { border-bottom: none !important; }
+        .premium-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700; color: var(--ink-3);
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+            padding-right: 0.75rem;
+        }
+    }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="users-hero shadow-sm fade-up">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="hero-title"><i class="bi bi-people me-2"></i>Pengguna Sistem</div>
+                <div class="hero-sub">Kelola akun pengguna dan hak akses sistem kearsipan elektronik</div>
+            </div>
+            <a href="/users/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;">
+                <i class="bi bi-plus-lg me-1"></i>Tambah Pengguna
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm fade-up-d1" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-body" style="padding:1.25rem;">
+            <div class="table-responsive">
+                <table class="table premium-table mb-0">
+                    <thead>
+                        <tr>
+                            <th width="60">No</th>
+                            <th>Username</th>
+                            <th>Nama</th>
+                            <th>Role</th>
+                            <th>Unit Kerja</th>
+                            <th>Status</th>
+                            <th>Terakhir Login</th>
+                            <th width="130" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range $idx, $user := .Users}}
+                        <tr>
+                            <td class="text-muted fw-700" data-label="No">{{add $.FirstItem $idx}}</td>
+                            <td data-label="Username"><span class="fw-600 font-monospace small">{{$user.Username}}</span></td>
+                            <td data-label="Nama"><strong style="font-size:0.88rem;">{{$user.Name}}</strong></td>
+                            <td data-label="Role">
+                                {{if $user.Role}}
+                                <span class="badge-soft {{if eq $user.Role.Name "Admin"}}badge-soft-primary{{else if eq $user.Role.Name "Pimpinan"}}badge-soft-success{{else}}badge-soft-info{{end}}">
+                                    <i class="bi bi-{{if eq $user.Role.Name "Admin"}}shield-lock{{else if eq $user.Role.Name "Pimpinan"}}award{{else}}person-badge{{end}} me-1"></i>{{$user.Role.Name}}
+                                </span>
+                                {{end}}
+                            </td>
+                            <td data-label="Unit">{{if $user.UnitKerja}}<span class="small"><i class="bi bi-building text-primary me-1"></i>{{$user.UnitKerja.NamaUnit}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                            <td data-label="Status">
+                                <span class="badge-soft {{if $user.IsActive}}badge-soft-success{{else}}badge-soft-danger{{end}}">
+                                    {{if $user.IsActive}}Aktif{{else}}Non-Aktif{{end}}
+                                </span>
+                            </td>
+                            <td data-label="Login"><span class="small fw-600" style="color:var(--ink-3);">{{if $user.LastLoginAt}}{{$user.LastLoginAt}}{{else}}<span class="text-muted">-</span>{{end}}</span></td>
+                            <td class="text-center" data-label="Aksi">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="/users/{{$user.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+                                    <a href="/users/{{$user.ID}}/edit" class="btn-crud btn-crud-edit" title="Edit" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>
+                                    <form action="/users/{{$user.ID}}/delete" method="POST" class="d-inline">
+                                        <button type="button" class="btn-crud btn-crud-del" onclick="if(confirm('Hapus pengguna {{$user.Name}}?')){this.closest('form').submit()}" title="Hapus" data-bs-toggle="tooltip"><i class="bi bi-trash3"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="text-muted"><i class="bi bi-people d-block mb-2" style="font-size:2.5rem;opacity:0.3;"></i><h6 class="fw-700">Belum Ada Pengguna</h6><small>Tidak ada data pengguna</small></div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+
+                {{if .Pagination}}
+                <div class="d-flex justify-content-center mt-3">
+                    {{.Pagination}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

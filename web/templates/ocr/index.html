@@ -1,0 +1,284 @@
+{{define "ocr/index.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title mb-1 text-white">
+                <i class="bi bi-file-earmark-text"></i>
+                OCR - Text Extraction
+            </h1>
+            <p class="text-white-50 mb-0">Extract text from images and PDF documents using advanced AI</p>
+        </div>
+    </div>
+</div>
+<div id="alertContainer"></div>
+<div id="serviceStatusBanner" class="alert alert-warning d-none mb-4" style="border-radius: 12px; border-left: 5px solid #ffc107;">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+        <div>
+            <h6 class="alert-heading fw-bold mb-1">OCR Engine Not Fully Configured</h6>
+            <p class="mb-0 small" id="statusMessage">OCR and PDF extraction are available, but Tesseract OCR is not installed. Scanned documents may not be processed correctly.</p>
+        </div>
+    </div>
+    <div class="mt-2 pt-2 border-top border-warning small">
+        Run: <code class="bg-dark text-white px-2 py-1 rounded">sudo apt install tesseract-ocr tesseract-ocr-ind tesseract-ocr-eng</code> to fix.
+    </div>
+</div>
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px 16px 0 0; padding: 1.5rem 2rem;">
+        <h5 class="mb-0 text-white">
+            <i class="bi bi-cloud-upload me-2"></i>Upload Document
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+                <i class="bi bi-folder2-open display-1"></i>
+            </div>
+            <div class="upload-text">Drag & Drop your file here</div>
+            <div class="upload-subtext">or click to browse</div>
+            <div class="upload-subtext mt-2">
+                <span class="badge bg-info me-1">JPG</span>
+                <span class="badge bg-info me-1">JPEG</span>
+                <span class="badge bg-info me-1">PNG</span>
+                <span class="badge bg-info me-1">BMP</span>
+                <span class="badge bg-info me-1">TIFF</span>
+                <span class="badge bg-info me-1">GIF</span>
+                <span class="badge bg-danger">PDF</span>
+                <span class="d-block mt-2">Max: 50MB</span>
+            </div>
+            <button type="button" class="btn btn-primary mt-3" onclick="document.getElementById('fileInput').click()">
+                <i class="bi bi-folder2-open me-2"></i>Choose File
+            </button>
+            <input type="file" id="fileInput" class="d-none" accept=".jpg,.jpeg,.png,.bmp,.tiff,.gif,.pdf">
+        </div>
+        <div class="file-preview" id="filePreview">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-file-earmark-text display-4 text-primary"></i>
+                    <div>
+                        <div class="fw-semibold" id="fileName">document.jpg</div>
+                        <div class="text-muted small" id="fileSize">2.5 MB</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeFile()">
+                    <i class="bi bi-x-lg"></i> Remove
+                </button>
+            </div>
+        </div>
+        <form id="ocrForm" class="mt-4" onsubmit="return false;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Language</label>
+                        <select class="form-select" id="language" name="language">
+                            {{range .Languages}}
+                            <option value="{{.Code}}" {{if eq .Code "eng+ind"}}selected{{end}}>
+                                {{.Name}}
+                            </option>
+                            {{end}}
+                        </select>
+                        <small class="text-muted">Select language for OCR recognition</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">DPI (for PDF)</label>
+                        <input type="number" class="form-control" id="dpi" name="dpi" value="300" min="100" max="600">
+                        <small class="text-muted">Higher DPI = better quality but slower</small>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="preprocess" name="preprocess" checked>
+                    <label class="form-check-label" for="preprocess">
+                        Enable image preprocessing (recommended for better accuracy)
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-lg w-100" id="btnProcess" disabled>
+                <i class="bi bi-rocket-takeoff me-2"></i>Start OCR Processing
+            </button>
+        </form>
+    </div>
+</div>
+<div class="result-section" id="resultSection">
+    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+        <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 16px 16px 0 0; padding: 1.5rem 2rem;">
+            <h5 class="mb-0 text-white">
+                <i class="bi bi-check-circle me-2"></i>OCR Result
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h6 class="mb-0">Extracted Text</h6>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="createArchive()">
+                        <i class="bi bi-file-earmark-plus me-1"></i>Buat Arsip
+                    </button>
+                    <button class="btn btn-info btn-sm text-white" onclick="copyText()">
+                        <i class="bi bi-clipboard me-1"></i>Salin
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="downloadText()">
+                        <i class="bi bi-download me-1"></i>Unduh
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="resetOCR()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Baru
+                    </button>
+                </div>
+            </div>
+            <div class="row g-3 mb-4" id="resultStats"></div>
+            <textarea class="form-control" id="resultText" rows="15" style="font-family: 'Courier New', monospace; resize: vertical;" placeholder="Extracted text will appear here..."></textarea>
+        </div>
+    </div>
+</div>
+<style>
+    .upload-area { border: 3px dashed #dee2e6; border-radius: 1rem; padding: 3rem 2rem; text-align: center; transition: all 0.3s ease; cursor: pointer; background: #f8f9fa; }
+    .upload-area:hover, .upload-area.drag-over { border-color: #667eea; background: #f0f0ff; transform: translateY(-2px); }
+    .upload-area.has-file { border-color: #28a745; background: #d4edda; }
+    .upload-icon { font-size: 4rem; color: #667eea; margin-bottom: 1rem; }
+    .upload-area.has-file .upload-icon { color: #28a745; }
+    .upload-text { font-size: 1.2rem; font-weight: 600; color: #495057; margin-bottom: 0.5rem; }
+    .upload-subtext { color: #6c757d; font-size: 0.9rem; }
+    .file-preview { display: none; margin-top: 1.5rem; padding: 1.5rem; background: #f8f9fa; border-radius: 0.5rem; border: 1px solid #dee2e6; }
+    .file-preview.show { display: block; animation: slideDown 0.3s ease; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .result-section { display: none; margin-top: 2rem; }
+    .result-section.show { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .stat-label { font-size: 0.85rem; opacity: 0.9; }
+    .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+    .loading-overlay.show { display: flex; }
+    .spinner { width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text { color: white; font-size: 1.2rem; margin-top: 1rem; text-align: center; }
+    .loading-subtext { color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-top: 0.5rem; }
+    .alert-custom { border-radius: 0.75rem; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: none; }
+    .alert-custom.show { display: block; animation: slideDown 0.3s ease; }
+</style>
+<script>
+let selectedFile = null;
+let ocrResult = null;
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('drag-over'); });
+uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); const files = e.dataTransfer.files; if (files.length > 0) { handleFile(files[0]); } });
+uploadArea.addEventListener('click', () => { fileInput.click(); });
+fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { handleFile(e.target.files[0]); } });
+function handleFile(file) {
+    const validTypes = ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/gif', 'application/pdf'];
+    if (!validTypes.includes(file.type)) { showAlert('Invalid file type. Please upload an image or PDF.', 'danger'); return; }
+    if (file.size > 50 * 1024 * 1024) { showAlert('File too large. Maximum size is 50MB.', 'danger'); return; }
+    selectedFile = file;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = formatFileSize(file.size);
+    document.getElementById('filePreview').classList.add('show');
+    uploadArea.classList.add('has-file');
+    document.getElementById('btnProcess').disabled = false;
+    hideAlert();
+}
+function removeFile() {
+    selectedFile = null; fileInput.value = '';
+    document.getElementById('filePreview').classList.remove('show');
+    uploadArea.classList.remove('has-file');
+    document.getElementById('btnProcess').disabled = true;
+    hideResult();
+}
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024; const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+document.getElementById('ocrForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!selectedFile) { showAlert('Please select a file first.', 'warning'); return; }
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('language', document.getElementById('language').value);
+    formData.append('preprocess', document.getElementById('preprocess').checked ? '1' : '0');
+    formData.append('dpi', document.getElementById('dpi').value);
+    showLoading();
+    try {
+        const response = await fetch('/ocr/process', { method: 'POST', body: formData, headers: { 'Accept': 'application/json' } });
+        const result = await response.json();
+        hideLoading();
+        if (result.success) { ocrResult = result; displayResult(result); showAlert('OCR processing completed successfully!', 'success'); }
+        else { showAlert('OCR processing failed: ' + (result.error || 'Unknown error'), 'danger'); }
+    } catch (error) { hideLoading(); showAlert('An error occurred: ' + error.message, 'danger'); }
+});
+function showLoading() { document.getElementById('loadingOverlay').classList.add('show'); }
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
+function displayResult(result) {
+    const stats = result.stats;
+    document.getElementById('resultStats').innerHTML = `
+        <div class="col-md-4 col-6"><div class="stat-card"><div class="stat-value">${stats.characters}</div><div class="stat-label">Characters</div></div></div>
+        <div class="col-md-4 col-6"><div class="stat-card"><div class="stat-value">${stats.words}</div><div class="stat-label">Words</div></div></div>
+        <div class="col-md-4 col-6"><div class="stat-card"><div class="stat-value">${stats.lines}</div><div class="stat-label">Lines</div></div></div>
+        <div class="col-md-4 col-6"><div class="stat-card"><div class="stat-value">${stats.confidence?.toFixed(1) || 'N/A'}%</div><div class="stat-label">Confidence</div></div></div>
+        <div class="col-md-4 col-6"><div class="stat-card"><div class="stat-value">${stats.pages}</div><div class="stat-label">Pages</div></div></div>
+        <div class="col-md-4 col-6"><div class="stat-card"><div class="stat-value">${(stats.processing_time / 1000).toFixed(2)}s</div><div class="stat-label">Processing Time</div></div></div>`;
+    document.getElementById('resultText').value = result.data.text || '';
+    document.getElementById('resultSection').classList.add('show');
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+}
+function hideResult() { document.getElementById('resultSection').classList.remove('show'); ocrResult = null; }
+function copyText() { const textArea = document.getElementById('resultText'); textArea.select(); document.execCommand('copy'); showAlert('Text copied to clipboard!', 'success'); }
+function downloadText() {
+    if (!ocrResult) return;
+    const filename = selectedFile ? selectedFile.name.split('.')[0] : 'ocr_result';
+    const text = document.getElementById('resultText').value;
+    fetch('/ocr/download', { method: 'POST', body: JSON.stringify({ text, filename }), headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } })
+    .then(response => response.blob())
+    .then(blob => { const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename + '.txt'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); document.body.removeChild(a); });
+}
+function resetOCR() { removeFile(); hideResult(); document.getElementById('resultText').value = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function showAlert(message, type) {
+    const alertClass = { 'success': 'alert-success', 'danger': 'alert-danger', 'warning': 'alert-warning', 'info': 'alert-info' };
+    const icon = { 'success': '<i class="bi bi-check-circle-fill"></i>', 'danger': '<i class="bi bi-x-circle-fill"></i>', 'warning': '<i class="bi bi-exclamation-triangle-fill"></i>', 'info': '<i class="bi bi-info-circle-fill"></i>' };
+    const container = document.getElementById('alertContainer');
+    container.innerHTML = `<div class="alert alert-custom alert-${alertClass[type] || 'info'} show">${icon[type] || ''} <span>${message}</span></div>`;
+    setTimeout(() => { container.innerHTML = ''; }, 5000);
+}
+function hideAlert() { document.getElementById('alertContainer').innerHTML = ''; }
+function createArchive() {
+    if (!ocrResult || !ocrResult.data.text) { showAlert('No text to export.', 'warning'); return; }
+    const text = document.getElementById('resultText').value;
+    const filename = selectedFile ? selectedFile.name : 'ocr_result';
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/arsip/create';
+    const textInput = document.createElement('input');
+    textInput.type = 'hidden'; textInput.name = 'prefilled_uraian'; textInput.value = text;
+    form.appendChild(textInput);
+    const nameInput = document.createElement('input');
+    nameInput.type = 'hidden'; nameInput.name = 'prefilled_name'; nameInput.value = filename;
+    form.appendChild(nameInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+async function checkServiceStatus() {
+    try {
+        const response = await fetch('/ocr/status');
+        const result = await response.json();
+        const banner = document.getElementById('serviceStatusBanner');
+        if (result.status === 'healthy') { banner.classList.add('d-none'); }
+        else {
+            banner.classList.remove('d-none');
+            if (result.details && result.details.tesseract === 'missing') { document.getElementById('statusMessage').textContent = 'Tesseract OCR engine is not installed. Scanned documents cannot be processed.'; }
+            else { document.getElementById('statusMessage').textContent = 'OCR service is currently in limited mode.'; }
+        }
+    } catch (error) { console.log('Could not check service status'); }
+}
+checkServiceStatus();
+</script>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Processing your document...</div>
+    <div class="loading-subtext" id="loadingSubtext">This may take a moment</div>
+</div>
+{{end}}

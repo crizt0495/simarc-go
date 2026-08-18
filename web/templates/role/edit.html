@@ -1,0 +1,232 @@
+{{define "role/edit.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<style>
+    .edit-role-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-xl);
+        box-shadow: var(--sh);
+        overflow: hidden;
+        animation: slideUpCard 0.4s ease both;
+    }
+    @keyframes slideUpCard {
+        from { opacity: 0; transform: translateY(24px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .edit-header {
+        padding: 2rem 2.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .edit-header.system {
+        background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    }
+    .edit-header.custom {
+        background: linear-gradient(135deg, var(--brand) 0%, #7c3aed 100%);
+    }
+    .edit-header::after {
+        content: '';
+        position: absolute;
+        top: -50%; right: -10%;
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .edit-header h4 {
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 0.25rem;
+        position: relative;
+        z-index: 1;
+    }
+    .edit-header p {
+        color: rgba(255,255,255,0.75);
+        font-weight: 500;
+        font-size: 0.85rem;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .form-field {
+        margin-bottom: 1.5rem;
+    }
+    .form-field label {
+        display: block;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-2);
+        margin-bottom: 0.5rem;
+    }
+    .form-field .input-icon {
+        position: relative;
+    }
+    .form-field .input-icon i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--ink-4);
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+    .form-field .input-icon input,
+    .form-field .input-icon textarea {
+        padding-left: 2.6rem;
+    }
+    .form-field input,
+    .form-field textarea {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: 1.5px solid var(--border);
+        border-radius: var(--r);
+        font-size: 0.85rem;
+        color: var(--ink);
+        background: var(--surface);
+        transition: all 0.2s ease;
+        outline: none;
+        font-family: inherit;
+    }
+    .form-field input:focus,
+    .form-field textarea:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    }
+    .form-field input:disabled,
+    .form-field input[readonly] {
+        background: var(--surface-3);
+        cursor: not-allowed;
+        opacity: 0.85;
+    }
+    .form-field textarea {
+        min-height: 110px;
+        resize: vertical;
+    }
+    .system-badge-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.6rem;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .warn-box {
+        background: rgba(245,158,11,0.08);
+        border: 1px solid rgba(245,158,11,0.2);
+        border-radius: var(--r);
+        padding: 1.25rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    .warn-box i {
+        font-size: 1.5rem;
+        color: var(--warning);
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+    }
+    .warn-box h6 {
+        font-weight: 800;
+        color: #92400e;
+        margin-bottom: 0.2rem;
+        font-size: 0.8rem;
+    }
+    .warn-box p {
+        margin-bottom: 0;
+        font-size: 0.8rem;
+        color: #92400e;
+        opacity: 0.85;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+        .edit-header { padding: 1.5rem; }
+        .edit-role-card .card-body { padding: 1.25rem !important; }
+    }
+</style>
+
+<div class="container-fluid py-3 py-xl-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="edit-role-card">
+                {{$isSystem := or (eq .Role.Name "Admin") (eq .Role.Name "Pimpinan") (eq .Role.Name "Petugas") (eq .Role.Name "Viewer")}}
+                <div class="edit-header {{if $isSystem}}system{{else}}custom{{end}}">
+                    <h4><i class="bi bi-pencil-square me-2"></i>Edit Role</h4>
+                    <p class="d-flex align-items-center gap-2">
+                        <span>{{.Role.NamaRole}}</span>
+                        {{if $isSystem}}
+                            <span class="system-badge-tag"><i class="bi bi-shield-fill-check"></i> System Core</span>
+                        {{else}}
+                            <span class="system-badge-tag" style="background:rgba(255,255,255,0.15);"><i class="bi bi-pencil"></i> Custom</span>
+                        {{end}}
+                    </p>
+                </div>
+                <div class="card-body p-4 p-xl-5">
+                    <form method="POST" action="/roles/{{.Role.ID}}">
+                        <div class="row g-3">
+                            <div class="col-md-6 form-field">
+                                <label for="name">Nama Teknis (ID)</label>
+                                <div class="input-icon">
+                                    <i class="bi bi-code-slash"></i>
+                                    <input type="text" id="name" name="name" value="{{.Role.Name}}" required
+                                           {{if $isSystem}}readonly{{end}}
+                                           placeholder="misal: Manager_Arsip">
+                                </div>
+                                {{if $isSystem}}
+                                    <small class="text-muted fw-600" style="font-size:0.7rem;"><i class="bi bi-lock me-1"></i>ID Role sistem bersifat permanen.</small>
+                                {{end}}
+                            </div>
+                            <div class="col-md-6 form-field">
+                                <label for="nama_role">Nama Tampilan</label>
+                                <div class="input-icon">
+                                    <i class="bi bi-person-badge"></i>
+                                    <input type="text" id="nama_role" name="nama_role" value="{{.Role.NamaRole}}" required
+                                           placeholder="misal: Manager Arsip Utama">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="keterangan">Deskripsi Peran</label>
+                            <div class="input-icon">
+                                <i class="bi bi-chat-text" style="top:1rem;transform:none;"></i>
+                                <textarea id="keterangan" name="keterangan" rows="4"
+                                          placeholder="Tuliskan tanggung jawab dan wewenang role ini...">{{.Role.Keterangan}}</textarea>
+                            </div>
+                        </div>
+
+                        {{if $isSystem}}
+                        <div class="warn-box mb-4">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <div>
+                                <h6>Peringatan: Role Sistem</h6>
+                                <p>Anda sedang mengedit role <strong>inti sistem</strong>. Perubahan pada keterangan atau nama tampilan dapat mempengaruhi referensi visual di seluruh aplikasi. Nama teknis (ID) tidak dapat diubah untuk menjaga integritas sistem.</p>
+                            </div>
+                        </div>
+                        {{end}}
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-2">
+                            <a href="/roles" class="btn btn-secondary rounded-pill fw-700 px-4">
+                                <i class="bi bi-arrow-left me-2"></i>KEMBALI
+                            </a>
+                            <button type="submit" class="btn btn-warning rounded-pill fw-800 px-5 py-2 shadow-sm text-dark">
+                                <i class="bi bi-arrow-clockwise me-2"></i>SIMPAN PERUBAHAN
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
