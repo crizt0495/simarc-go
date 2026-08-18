@@ -1,7 +1,7 @@
 # ── Build artifacts ──
 tmp/
-server
-simarc-server
+/server
+/simarc-server
 *.exe
 *.out
 *.test
