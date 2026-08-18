@@ -5,17 +5,5 @@
     "env": {
       "GO_BUILD_FLAGS": "-ldflags '-s -w'"
     }
-  },
-  "functions": {
-    "cmd/server/main.go": {
-      "maxDuration": 30
-    }
-  },
-  "outputDirectory": ".",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
-  ]
+  }
 }
