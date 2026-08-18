@@ -1,6 +1,7 @@
 package main
 
 import (
+	"arsippro"
 	"arsippro/internal/config"
 	"arsippro/internal/database"
 	"arsippro/internal/handlers"
@@ -10,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -27,15 +29,21 @@ import (
 
 // serveStaticFile returns a Gin handler that serves static files with correct Content-Type.
 func serveStaticFile(dir string) gin.HandlerFunc {
-	dir = filepath.Clean(dir)
 	return func(c *gin.Context) {
 		file := c.Param("filepath")
 		if file == "" || file == "/" {
 			c.Status(http.StatusNotFound)
 			return
 		}
+		// Try embedded FS first (Vercel), then disk (local)
+		embedPath := filepath.Join(dir, file)
+		if f, err := arsippro.Embedded.Open(embedPath); err == nil {
+			f.Close()
+			c.FileFromFS(embedPath, http.FS(arsippro.Embedded))
+			return
+		}
+		// Fallback to disk
 		target := filepath.Join(dir, file)
-		// Prevent directory traversal (must be in the dir subdirectory)
 		if !strings.HasPrefix(target, dir+string(filepath.Separator)) {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
@@ -104,6 +112,23 @@ func openBrowser(url string) {
 	}
 }
 
+// listEmbeddedFiles returns file paths from the embedded FS under the given directories.
+func listEmbeddedFiles(dirs ...string) []string {
+	var result []string
+	for _, dir := range dirs {
+		entries, err := fs.ReadDir(arsippro.Embedded, dir)
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".html") {
+				result = append(result, filepath.Join(dir, entry.Name()))
+			}
+		}
+	}
+	return result
+}
+
 func main() {
 	config.Load()
 
@@ -160,13 +185,21 @@ func main() {
 		c.Next()
 	})
 
-	// Get shared layout and component files
+	// Get shared layout and component files — try disk first, then embedded FS
+	useEmbedded := false
 	layoutFiles, _ := filepath.Glob("web/templates/layouts/*.html")
 	compFiles, _ := filepath.Glob("web/templates/components/*.html")
 	sharedFiles := append(layoutFiles, compFiles...)
 
 	if len(sharedFiles) == 0 {
-		log.Println("[WARN] No template files found — template rendering may fail")
+		// Try embedded FS (Vercel)
+		sharedFiles = listEmbeddedFiles("web/templates/layouts", "web/templates/components")
+		if len(sharedFiles) > 0 {
+			useEmbedded = true
+			log.Println("[INFO] Using embedded template files")
+		} else {
+			log.Println("[WARN] No template files found — template rendering may fail")
+		}
 	}
 
 	// Create isolated template sets per page so {{define "content"}} doesn't conflict
@@ -181,29 +214,66 @@ func main() {
 		"backup", "monitoring", "disposal", "import-export",
 		"integrations", "retention", "settings", "mobile", "supervision",
 	}
-	for _, dir := range pageDirs {
-		pageFiles, _ := filepath.Glob("web/templates/" + dir + "/*.html")
-		for _, pf := range pageFiles {
-			allFiles := append([]string{}, sharedFiles...)
-			allFiles = append(allFiles, pf)
-			ts := template.Must(template.New("").Funcs(handlers.TemplateFuncs()).ParseFiles(allFiles...))
-			for _, t := range ts.Templates() {
-				n := t.Name()
-				// Skip file-based names (no "/") to avoid conflict antar direktori
-				// Hanya simpan template dengan path prefix dari {{define}} (contoh: "arsip/show.html")
-				if !strings.Contains(n, "/") {
+
+	if useEmbedded {
+		// Parse templates from embedded FS
+		for _, dir := range pageDirs {
+			pageDir := "web/templates/" + dir
+			pageFiles := listEmbeddedFiles(pageDir)
+			for _, pf := range pageFiles {
+				allFiles := append([]string{}, sharedFiles...)
+				allFiles = append(allFiles, pf)
+				ts, err := template.New("").Funcs(handlers.TemplateFuncs()).ParseFS(arsippro.Embedded, allFiles...)
+				if err != nil {
+					log.Printf("[WARN] Template parse error %s: %v", pf, err)
 					continue
 				}
-				if strings.HasPrefix(n, "layouts/") || strings.HasPrefix(n, "components/") {
-					continue
+				for _, t := range ts.Templates() {
+					n := t.Name()
+					if !strings.Contains(n, "/") {
+						continue
+					}
+					if strings.HasPrefix(n, "layouts/") || strings.HasPrefix(n, "components/") {
+						continue
+					}
+					handlers.TemplateSets[n] = ts
 				}
-				handlers.TemplateSets[n] = ts
 			}
 		}
+		// Fallback template set
+		if len(sharedFiles) > 0 {
+			fallbackTmpl, err := template.New("").Funcs(handlers.TemplateFuncs()).ParseFS(arsippro.Embedded, sharedFiles...)
+			if err != nil {
+				log.Printf("[WARN] Fallback template error: %v", err)
+			} else {
+				r.SetHTMLTemplate(fallbackTmpl)
+			}
+		}
+	} else {
+		for _, dir := range pageDirs {
+			pageFiles, _ := filepath.Glob("web/templates/" + dir + "/*.html")
+			for _, pf := range pageFiles {
+				allFiles := append([]string{}, sharedFiles...)
+				allFiles = append(allFiles, pf)
+				ts := template.Must(template.New("").Funcs(handlers.TemplateFuncs()).ParseFiles(allFiles...))
+				for _, t := range ts.Templates() {
+					n := t.Name()
+					if !strings.Contains(n, "/") {
+						continue
+					}
+					if strings.HasPrefix(n, "layouts/") || strings.HasPrefix(n, "components/") {
+						continue
+					}
+					handlers.TemplateSets[n] = ts
+				}
+			}
+		}
+		// Fallback template set
+		if len(sharedFiles) > 0 {
+			fallbackTmpl := template.Must(template.New("").Funcs(handlers.TemplateFuncs()).ParseFiles(sharedFiles...))
+			r.SetHTMLTemplate(fallbackTmpl)
+		}
 	}
-	// Use a fallback template set with just layouts/components
-	fallbackTmpl := template.Must(template.New("").Funcs(handlers.TemplateFuncs()).ParseFiles(sharedFiles...))
-	r.SetHTMLTemplate(fallbackTmpl)
 
 	// Static files
 	r.GET("/css/*filepath", serveStaticFile("web/static/css"))
@@ -214,8 +284,22 @@ func main() {
 	r.HEAD("/images/*filepath", serveStaticFile("web/static/images"))
 	r.GET("/storage/*filepath", serveStaticFile("public/storage"))
 	r.HEAD("/storage/*filepath", serveStaticFile("public/storage"))
-	r.StaticFile("/sw.js", "web/static/sw.js")
-	r.StaticFile("/manifest.json", "web/static/manifest.json")
+	r.GET("/sw.js", func(c *gin.Context) {
+		if f, err := arsippro.Embedded.Open("web/static/sw.js"); err == nil {
+			f.Close()
+			c.FileFromFS("/web/static/sw.js", http.FS(arsippro.Embedded))
+			return
+		}
+		c.File("web/static/sw.js")
+	})
+	r.GET("/manifest.json", func(c *gin.Context) {
+		if f, err := arsippro.Embedded.Open("web/static/manifest.json"); err == nil {
+			f.Close()
+			c.FileFromFS("/web/static/manifest.json", http.FS(arsippro.Embedded))
+			return
+		}
+		c.File("web/static/manifest.json")
+	})
 
 	// Recovery-mode guard: when the app never connected to its database
 	// (wrong credentials / DB down), keep the server alive and send every
