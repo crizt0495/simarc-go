@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"arsippro/internal/config"
@@ -30,13 +31,31 @@ func Connect() error {
 // openDB opens a GORM PostgreSQL connection from raw parameters.
 func openDB(host, port, name, user, pass string) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
 		host, user, pass, name, port,
 	)
 
-	// Override with DATABASE_URL if set (Neon, PlanetScale, etc.)
+	// Override with DATABASE_URL if set (Neon, Supabase, etc.)
 	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		dsn = dbURL
+		// Neon adds channel_binding=require which pgx doesn't support — strip it
+		cleanURL := dbURL
+		if idx := strings.Index(cleanURL, "channel_binding=require"); idx != -1 {
+			ampBefore := idx - 1
+			if ampBefore >= 0 && cleanURL[ampBefore] == '&' {
+				// Remove &channel_binding=require
+				cleanURL = cleanURL[:ampBefore] + cleanURL[idx+len("channel_binding=require"):]
+			} else {
+				// Remove channel_binding=require&
+				endIdx := idx + len("channel_binding=require")
+				if endIdx < len(cleanURL) && cleanURL[endIdx] == '&' {
+					cleanURL = cleanURL[:idx] + cleanURL[endIdx+1:]
+				} else {
+					cleanURL = cleanURL[:idx]
+				}
+			}
+		}
+		dsn = cleanURL
+		log.Printf("Connecting to database with DATABASE_URL (cleaned)")
 	}
 
 	logLevel := logger.Error

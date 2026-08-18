@@ -52,6 +52,12 @@ func serveStaticFile(dir string) gin.HandlerFunc {
 // getProjectRoot determines the project root directory by looking at the
 // executable location, handling both production binary and Air hot-reload (tmp/) modes.
 func getProjectRoot() string {
+	// Vercel: use /var/task which is the deployment directory
+	if os.Getenv("VERCEL") == "1" {
+		if _, err := os.Stat("/var/task/web/templates"); err == nil {
+			return "/var/task"
+		}
+	}
 	exe, err := os.Executable()
 	if err == nil {
 		dir := filepath.Dir(exe)
@@ -117,9 +123,13 @@ func main() {
 		}
 	} else {
 		if err := database.Migrate(); err != nil {
-			log.Fatalf("Migration failed: %v", err)
+			log.Printf("[WARN] Migration error: %v", err)
+			if !isVercel {
+				log.Fatalf("Migration failed: %v", err)
+			}
+		} else {
+			database.Seed()
 		}
-		database.Seed()
 	}
 	middleware.InitSession()
 	services.InitQueue(3, services.ProcessJob)
@@ -154,6 +164,10 @@ func main() {
 	layoutFiles, _ := filepath.Glob("web/templates/layouts/*.html")
 	compFiles, _ := filepath.Glob("web/templates/components/*.html")
 	sharedFiles := append(layoutFiles, compFiles...)
+
+	if len(sharedFiles) == 0 {
+		log.Println("[WARN] No template files found — template rendering may fail")
+	}
 
 	// Create isolated template sets per page so {{define "content"}} doesn't conflict
 	handlers.TemplateSets = make(map[string]*template.Template)
