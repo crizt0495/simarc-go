@@ -1,11 +1,11 @@
-// Package api — Vercel serverless function adapter for SIMARC.
+// Package handler — Vercel serverless function adapter untuk SIMARC.
 //
-// Vercel's Go runtime compiles each .go file under /api as an independent
-// entry point and expects a `Handler(w, r)` signature. All application
-// bootstrap (config, database pool, migrations, templates, routes) lives in
-// internal/app and is executed once per cold start; warm invocations reuse
-// the existing router and database connections.
-package main
+// Runtime Go Vercel mengompilasi setiap file di /api dan mensyaratkan
+// `package handler` dengan fungsi eksport `Handler(w, r)`. Seluruh bootstrap
+// aplikasi (config, database pool, migrasi, template, routes) ada di
+// internal/app dan dijalankan sekali per cold start; invokasi hangat
+// memakai ulang router dan koneksi database yang sudah ada.
+package handler
 
 import (
 	"net/http"
@@ -13,7 +13,7 @@ import (
 	"arsippro/internal/app"
 )
 
-// Handler is invoked by Vercel for every incoming HTTP request.
+// Handler dipanggil Vercel untuk setiap request HTTP masuk.
 func Handler(w http.ResponseWriter, r *http.Request) {
 	app.Handler(w, r)
 }
