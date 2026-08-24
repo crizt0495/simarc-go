@@ -140,7 +140,8 @@ func Init() (*gin.Engine, error) {
 		if err := database.Migrate(); err != nil {
 			log.Printf("[WARN] Migration error: %v", err)
 		} else {
-			database.Seed()
+			// SeedIfNeeded never overwrites existing users/passwords.
+			database.SeedIfNeeded()
 		}
 	}
 	middleware.InitSession()

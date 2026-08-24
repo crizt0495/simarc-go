@@ -180,6 +180,12 @@
                     <input type="hidden" name="_token" value="{{$csrf}}">
                     <button class="btn btn-sm btn-outline-warning"><i class="bi bi-arrow-repeat"></i> Sync</button>
                 </form>
+                {{if eq .Type "google_sheets"}}
+                <form action="/advanced/integrations/{{.ID}}/push" method="POST" class="d-inline js-integration-push">
+                    <input type="hidden" name="_token" value="{{$csrf}}">
+                    <button class="btn btn-sm btn-outline-info" title="Kirim seluruh data arsip ke Google Sheet"><i class="bi bi-box-arrow-up"></i> Kirim ke Sheet</button>
+                </form>
+                {{end}}
                 <form action="/advanced/integrations/{{.ID}}/delete" method="POST" class="d-inline js-integration-delete">
                     <input type="hidden" name="_token" value="{{$csrf}}">
                     <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
@@ -213,6 +219,24 @@ document.querySelectorAll('.js-integration-test').forEach(function (f) {
             btn.disabled = false;
             alert(d.success ? 'Koneksi OK (HTTP ' + d.status_code + ')' : 'Test gagal (HTTP ' + d.status_code + ')');
         }).catch(function () { btn.disabled = false; alert('Test gagal: kesalahan jaringan'); });
+    });
+});
+document.querySelectorAll('.js-integration-push').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = f.querySelector('button');
+        if (!confirm('Seluruh isi tab pertama di Google Sheet akan DIGANTI dengan data arsip terkini. Lanjutkan?')) return;
+        btn.disabled = true;
+        var label = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengirim...';
+        fetch(f.action, {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': f.querySelector('[name=_token]').value }
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            btn.disabled = false;
+            btn.innerHTML = label;
+            alert(d.success ? 'Berhasil: ' + d.message : 'Gagal: ' + d.error);
+        }).catch(function () { btn.disabled = false; btn.innerHTML = label; alert('Push gagal: kesalahan jaringan'); });
     });
 });
 document.querySelectorAll('.js-integration-delete').forEach(function (f) {

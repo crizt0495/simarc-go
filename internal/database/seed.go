@@ -86,20 +86,10 @@ func seedAdmin() {
 		DB.Create(&user)
 		log.Printf("Default user created: username=admin password=admin")
 	} else {
-		// Reset password for existing admin user
-		log.Println("Resetting admin password...")
-		existing.Password = hashedStr
-		DB.Save(&existing)
-		log.Printf("Admin password reset: username=admin password=admin")
-	}
-
-	// Also ensure chris user has known password
-	result2 := DB.Where("username = ?", "chris").First(&existing)
-	if result2.Error == nil {
-		chrisHashed, _ := bcrypt.GenerateFromPassword([]byte("chris123"), bcrypt.DefaultCost)
-		existing.Password = string(chrisHashed)
-		DB.Save(&existing)
-		log.Printf("Password reset for user: username=chris password=chris123")
+		// Admin already exists — NEVER touch the stored password here.
+		// Overwriting it on every boot used to reset production logins
+		// back to "admin" silently (security + availability issue).
+		log.Println("Admin user already exists, skipping password seed")
 	}
 }
 

@@ -154,6 +154,7 @@
     <h5><i class="bi bi-arrow-counterclockwise"></i> Quick Restore</h5>
     <p class="text-muted mb-3">Upload backup file untuk restore</p>
     <form action="/backup/restore" method="POST" enctype="multipart/form-data" id="restoreForm">
+        <input type="hidden" name="confirm" value="1">
         <div class="row g-3">
             <div class="col-md-6"><input type="file" class="form-control" name="backup_file" accept=".sql,.sql.gz,.enc" required><small class="text-muted">Supported: .sql, .sql.gz, .enc</small></div>
             <div class="col-md-3"><select class="form-select" name="restore_mode"><option value="overwrite">Overwrite Existing</option><option value="merge">Merge (Skip Duplicates)</option></select></div>
@@ -380,7 +381,7 @@ function deleteBackup(filename) {
 function restoreBackup(filename) {
     if (!confirm('PERINGATAN: Restore akan menimpa data existing.\\n\\nFile: ' + filename + '\\n\\nLanjutkan?')) return;
     showProgress('Restoring backup...', 0);
-    fetch('/backup/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backup_file: filename, restore_mode: 'overwrite' }) })
+    fetch('/backup/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backup_file: filename, restore_mode: 'overwrite', confirm: true }) })
     .then(response => response.json()).then(data => {
         updateProgress(70, 'Restoring database...');
         setTimeout(() => { updateProgress(100, 'Restore complete!'); setTimeout(() => { hideProgress(); if (data.success) { showToast('✅ Restore berhasil!<br>' + (data.details || data.message), 'success'); setTimeout(() => location.reload(), 2000); } else { showToast('❌ Restore gagal: ' + (data.error || 'Unknown error'), 'error'); } }, 500); }, 2000);
@@ -431,6 +432,7 @@ function submitImportSql(e) {
     showProgress('Mengimpor Database SQL...', 30);
     const formData = new FormData();
     formData.append('sql_file', fileInput.files[0]);
+    formData.append('confirm', '1');
     
     fetch('/backup/import-sql', {
         method: 'POST',

@@ -353,6 +353,13 @@ func sha256sum(s string) string {
 }
 
 func cleanupFilePaths() {
+	// On Vercel the filesystem is ephemeral: NO uploaded file ever exists on
+	// disk, so os.Stat would report every path as missing and this function
+	// would wipe the file_path column of ALL arsip rows on every schema bump.
+	if os.Getenv("VERCEL") == "1" {
+		return
+	}
+
 	var count int64
 	DB.Raw("SELECT COUNT(*) FROM arsip WHERE file_path IS NOT NULL AND file_path != ''").Scan(&count)
 	if count == 0 {

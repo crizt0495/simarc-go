@@ -550,6 +550,53 @@ func (h *IntegrationHandler) Sync(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/advanced/integrations")
 }
 
+// PushToSheet exports the database arsip table INTO the configured Google
+// Sheet (database → spreadsheet), using the service-account credentials from
+// env/integration. The target tab is replaced with current data.
+func (h *IntegrationHandler) PushToSheet(c *gin.Context) {
+	var m models.Integration
+	database.DB.First(&m, "id = ?", c.Param("id"))
+	now := time.Now()
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 55*time.Second)
+	defer cancel()
+
+	statusCode := http.StatusOK
+	if m.Type != "google_sheets" {
+		h.logIntegration(m.ID, "push", "error", http.StatusBadRequest, start, "Integrasi bukan google_sheets")
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Push hanya tersedia untuk integrasi google_sheets"})
+		return
+	}
+
+	res, err := services.PushArsipToSheet(ctx, &m)
+	detail := ""
+	if err != nil {
+		statusCode = http.StatusBadGateway
+		detail = err.Error()
+		h.logIntegration(m.ID, "push", "error", statusCode, start, detail)
+		database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "push_error"})
+		c.JSON(statusCode, gin.H{"success": false, "error": detail})
+		return
+	}
+	detail = fmt.Sprintf("%d arsip dikirim ke tab \"%s\" (%s)", res.Rows, res.SheetTitle, res.SpreadsheetID)
+	h.logIntegration(m.ID, "push", "success", statusCode, start, detail)
+	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "pushed"})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Database berhasil dikirim ke Google Sheet. " + detail,
+	})
+}
+
+// logIntegration records one integration event and swallows logging errors.
+func (h *IntegrationHandler) logIntegration(id, action, status string, code int, start time.Time, body string) {
+	database.DB.Create(&models.IntegrationLog{
+		IntegrationID: id, Action: action, Status: status,
+		StatusCode: code, DurationMs: int(time.Since(start).Milliseconds()),
+		ResponseBody: truncateString(body, 500),
+	})
+}
+
 func truncateString(s string, n int) string {
 	if len(s) > n {
 		return s[:n]
@@ -1840,8 +1887,31 @@ func (h *LaporanExportHandler) Statistik(c *gin.Context) {
 
 type BackupAdvancedHandler struct{}
 
+// restoreGuard blocks destructive database restores unless the caller is an
+// admin AND explicitly confirmed the action. Restores pipe a mysqldump-style
+// SQL file (containing DROP TABLE statements) straight into the live
+// database, so both checks are mandatory.
+func restoreGuard(c *gin.Context) (bool, string) {
+	user := middleware.GetCurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return false, "Hanya admin yang dapat melakukan restore database."
+	}
+	return true, ""
+}
+
 func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 	isJSON := strings.Contains(c.ContentType(), "application/json")
+
+	if ok, msg := restoreGuard(c); !ok {
+		if isJSON {
+			c.JSON(http.StatusForbidden, gin.H{"success": false, "error": msg})
+		} else {
+			middleware.SetFlash(c, "error", msg)
+			c.Redirect(http.StatusFound, "/backup")
+		}
+		return
+	}
+
 	var restoreFilePath string
 	var filename string
 
@@ -1849,6 +1919,7 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 		var req struct {
 			BackupFile  string `json:"backup_file"`
 			RestoreMode string `json:"restore_mode"`
+			Confirm     bool   `json:"confirm"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Request payload tidak valid"})
@@ -1856,6 +1927,10 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 		}
 		if req.BackupFile == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "File backup tidak ditentukan"})
+			return
+		}
+		if !req.Confirm {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Restore harus dikirim dengan konfirmasi (confirm=true)"})
 			return
 		}
 		filename = req.BackupFile
@@ -1867,6 +1942,11 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 			restoreFilePath = filepath.Join(config.BackupDir(), filename)
 		}
 	} else {
+		if c.PostForm("confirm") != "1" {
+			middleware.SetFlash(c, "error", "Restore harus dikirim dengan konfirmasi (confirm=1).")
+			c.Redirect(http.StatusFound, "/backup")
+			return
+		}
 		// Multipart Form Upload (Try backup_file first, then file)
 		file, err := c.FormFile("backup_file")
 		if err != nil {
@@ -2003,6 +2083,15 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 }
 
 func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
+	if ok, msg := restoreGuard(c); !ok {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": msg})
+		return
+	}
+	if c.PostForm("confirm") != "1" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Import SQL harus dikirim dengan konfirmasi (confirm=1)"})
+		return
+	}
+
 	file, err := c.FormFile("sql_file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "File SQL wajib diunggah: " + err.Error()})
