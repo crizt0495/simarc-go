@@ -1,12 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "builds": [
-    {
-      "src": "api/index.go",
-      "use": "@vercel/go"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
   ],
-  "installCommand": "go mod download",
+  "functions": {
+    "api/index.go": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -42,11 +44,5 @@
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     }
-  ],
-  "functions": {
-    "api/index.go": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  }
+  ]
 }
