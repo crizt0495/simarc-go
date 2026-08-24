@@ -33,7 +33,7 @@ type ArsipService struct{}
 
 func (s *ArsipService) GenerateNomorArsip() string {
 	var last models.Arsip
-	database.DB.Unscoped().Order("(REGEXP_REPLACE(nomor_arsip, '[^0-9]', '', 'g')::bigint) DESC").First(&last)
+	database.DB.Unscoped().Order("(CAST(REGEXP_REPLACE(nomor_arsip, '[^0-9]', '') AS UNSIGNED)) DESC").First(&last)
 	if last.NomorArsip == "" {
 		return "1"
 	}
@@ -357,24 +357,34 @@ func (s *OcrService) ExtractText(filePath, lang string) (string, error) {
 type BackupService struct{}
 
 func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
-	// pg_dump is not available on Vercel serverless
+	// mysqldump is not available on Vercel serverless
 	if config.IsVercel() {
-		return nil, fmt.Errorf("database backup tidak tersedia di Vercel. Gunakan backup dari dashboard database provider (PlanetScale/Neon)")
+		return nil, fmt.Errorf("database backup tidak tersedia di Vercel. Gunakan backup dari dashboard Aiven Console")
 	}
 
 	filename := fmt.Sprintf("backup_%s.sql", time.Now().Format("2006-01-02_150405"))
 
+	host := getEnv("DB_HOST", "127.0.0.1")
+	user := getEnv("DB_USERNAME", "root")
+	port := getEnv("DB_PORT", "3306")
+	dbName := getEnv("DB_DATABASE", "defaultdb")
+
 	args := []string{
-		"-h", getEnv("DB_HOST", "127.0.0.1"),
-		"-U", getEnv("DB_USERNAME", "postgres"),
-		"-F", "p",
+		"--host=" + host,
+		"--port=" + port,
+		"--user=" + user,
+		"--no-tablespaces",
+		"--single-transaction",
+		"--routines",
+		"--triggers",
+		"--events",
+		dbName,
 	}
-	args = append(args, "-d", getEnv("DB_DATABASE", "arsippro"))
 
 	// Dump database langsung ke memory
-	cmd := exec.Command("pg_dump", args...)
+	cmd := exec.Command("mysqldump", args...)
 	if pw := getEnv("DB_PASSWORD", ""); pw != "" {
-		cmd.Env = append(os.Environ(), "PGPASSWORD="+pw)
+		cmd.Env = append(os.Environ(), "MYSQL_PWD="+pw)
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -383,7 +393,7 @@ func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("gagal menjalankan pg_dump: %w", err)
+		return nil, fmt.Errorf("gagal menjalankan mysqldump: %w", err)
 	}
 
 	var buf bytes.Buffer
@@ -393,7 +403,7 @@ func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return nil, fmt.Errorf("pg_dump gagal: %w", err)
+		return nil, fmt.Errorf("mysqldump gagal: %w", err)
 	}
 
 	log := &models.BackupLog{
@@ -484,7 +494,7 @@ type ArsipNumberService struct{}
 
 func (s *ArsipNumberService) Generate(db *gorm.DB) string {
 	var last models.Arsip
-	db.Unscoped().Order("(REGEXP_REPLACE(nomor_arsip, '[^0-9]', '', 'g')::bigint) DESC").First(&last)
+	db.Unscoped().Order("(CAST(REGEXP_REPLACE(nomor_arsip, '[^0-9]', '') AS UNSIGNED)) DESC").First(&last)
 	if last.NomorArsip == "" {
 		return "1"
 	}

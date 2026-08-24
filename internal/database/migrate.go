@@ -8,39 +8,77 @@ import (
 	"os"
 
 	"arsippro/internal/models"
+
+	"gorm.io/gorm/logger"
 )
+
+// MySQL schema helpers — use information_schema with DATABASE() instead of
+// PostgreSQL's current_schema(). Two-space indent for consistency with Go fmt.
+
+// tableExists returns true when a table exists in the current database.
+func tableExists(name string) bool {
+	var n int64
+	DB.Raw("SELECT COUNT(1) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?", name).Scan(&n)
+	return n > 0
+}
+
+// columnExists returns true when a column exists on a table in the current database.
+func columnExists(table, column string) bool {
+	var n int64
+	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?", table, column).Scan(&n)
+	return n > 0
+}
+
+// columnDataType returns the data_type value from information_schema for the given column.
+// Returns empty string if the column does not exist.
+func columnDataType(table, column string) string {
+	var dt string
+	DB.Raw("SELECT data_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?", table, column).Scan(&dt)
+	return dt
+}
 
 // Migrate runs auto-migration for all models. It returns an error instead of
 // crashing the process so runtime reconnects can fail gracefully.
+//
+// Optimized for MySQL: ensures critical performance indexes that AutoMigrate
+// alone does not create, and avoids destructive schema changes.
 func Migrate() error {
+	// Quiet GORM SQL logging for migration step (we explicitly log meaningful events).
+	DB.Logger = logger.Default.LogMode(logger.Error)
+
 	log.Println("[MIGRASI] Memeriksa dan memperbarui skema database...")
 
-	// Create tables manually to avoid GORM FK constraint issues
+	// Create tables manually to avoid GORM FK constraint issues.
+	// MySQL: BIGINT AUTO_INCREMENT PRIMARY KEY (no BIGSERIAL in MySQL).
 	DB.Exec(`CREATE TABLE IF NOT EXISTS pemusnahan_arsip_items (
-		id BIGSERIAL PRIMARY KEY,
+		id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 		pemusnahan_id VARCHAR(36) NOT NULL,
 		arsip_id VARCHAR(36) NOT NULL,
-		created_at TIMESTAMP(3) NULL
-	)`)
+		created_at DATETIME(3) NULL,
+		INDEX idx_pemusnahan_items_pemusnahan (pemusnahan_id),
+		INDEX idx_pemusnahan_items_arsip (arsip_id)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
+
 	DB.Exec(`CREATE TABLE IF NOT EXISTS disposal_schedules (
 		id VARCHAR(36) NOT NULL PRIMARY KEY,
 		kode_klasifikasi_id VARCHAR(36) DEFAULT NULL,
 		arsip_id VARCHAR(36) DEFAULT NULL,
-		scheduled_date TIMESTAMP(3) DEFAULT NULL,
+		scheduled_date DATETIME(3) DEFAULT NULL,
 		action VARCHAR(50) DEFAULT NULL,
 		status VARCHAR(50) DEFAULT 'pending',
-		executed_at TIMESTAMP(3) DEFAULT NULL,
+		executed_at DATETIME(3) DEFAULT NULL,
 		created_by VARCHAR(36) DEFAULT NULL,
-		created_at TIMESTAMP(3) DEFAULT NULL,
-		updated_at TIMESTAMP(3) DEFAULT NULL,
-		deleted_at TIMESTAMP(3) DEFAULT NULL
-	)`)
-	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_disposal_schedules_deleted_at ON disposal_schedules (deleted_at)`)
+		created_at DATETIME(3) DEFAULT NULL,
+		updated_at DATETIME(3) DEFAULT NULL,
+		deleted_at DATETIME(3) DEFAULT NULL,
+		INDEX idx_disposal_schedules_deleted_at (deleted_at),
+		INDEX idx_disposal_schedules_status (status),
+		INDEX idx_disposal_schedules_date (scheduled_date),
+		INDEX idx_disposal_schedules_kk (kode_klasifikasi_id)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
 
-	// Cek apakah tabel roles sudah ada untuk skip AutoMigrate
-	var tableExists int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'roles'").Scan(&tableExists)
-	if tableExists == 0 {
+	// Cek apakah tabel roles sudah ada untuk skip AutoMigrate.
+	if !tableExists("roles") {
 		log.Println("[MIGRASI] Database baru, menjalankan migrasi penuh...")
 		err := DB.AutoMigrate(
 			&models.Role{},
@@ -97,40 +135,133 @@ func Migrate() error {
 		}
 		log.Println("[MIGRASI] Sinkronisasi tabel selesai")
 	} else {
-		log.Println("[MIGRASI] Tabel sudah ada, melewati AutoMigrate (gunakan --rebuild untuk migrasi ulang)")
+		log.Println("[MIGRASI] Tabel sudah ada, melewati AutoMigrate")
 	}
+
 	log.Println("[MIGRASI] Menjalankan post-migration tasks...")
 
-	// Migrate legacy pemusnahan data
+	// Add essential indexes that AutoMigrate doesn't always create. These dramatically
+	// improve performance for the most frequently executed queries (arsip listing,
+	// search by uraian, filter by unit kerja / kode klasifikasi / status).
+	ensureArsipIndexes()
+	ensureCommonIndexes()
+
+	// Migrate legacy pemusnahan data.
 	log.Println("[MIGRASI] Migrasi data pemusnahan...")
 	migratePemusnahanData()
-	// Clean up file_path references to non-existent files
+
+	// Clean up file_path references to non-existent files.
 	log.Println("[MIGRASI] Membersihkan referensi file path...")
 	cleanupFilePaths()
-	// Auto-classify SPJ/Non SPJ for existing records
+
+	// Auto-classify SPJ/Non SPJ for existing records.
 	log.Println("[MIGRASI] Mengklasifikasi SPJ/Non SPJ...")
 	fixSPJClassification()
-	// Verify blockchain data integrity
+
+	// Verify blockchain data integrity.
 	log.Println("[MIGRASI] Memverifikasi hash blockchain...")
 	fixBlockchainHashes()
-	// Add nomor_spm column if missing
+
+	// Add columns that AutoMigrate might miss on legacy databases.
 	addNomorSPMColumn()
 	addJumlahSatuanColumn()
 
-	// Extract SPM numbers from existing records
+	// Extract SPM numbers from existing records.
 	migrateSPMFromUraian()
 	migrateLoginSecurity()
-	dropJenisLokasiColumn()
 	addBackupLogGDriveColumns()
 
+	// jADWAL drop OK karena tidak ada data referensi lagi pada legacy schema.
+	dropJenisLokasiColumnIfUnused()
+
 	return nil
+}
+
+// ensureArsipIndexes adds performance indexes used by common arsip queries.
+// These are guard-checked so they only run once per database.
+func ensureArsipIndexes() {
+	if !tableExists("arsip") {
+		return
+	}
+
+	type indexDef struct {
+		name  string
+		cols  string
+		extra string
+	}
+	indexes := []indexDef{
+		{"idx_arsip_deleted_at", "deleted_at", ""},
+		{"idx_arsip_unit_kerja", "unit_kerja_id", ""},
+		{"idx_arsip_kode_klasifikasi", "kode_klasifikasi_id", ""},
+		{"idx_arsip_lokasi_arsip", "lokasi_arsip_id", ""},
+		{"idx_arsip_status", "status_arsip", ""},
+		{"idx_arsip_tanggal_dibuat", "tanggal_dibuat", ""},
+		{"idx_arsip_tanggal_retensi", "tanggal_retensi_berakhir", ""},
+		{"idx_arsip_pemberkasan", "pemberkasan_id", ""},
+		{"idx_arsip_created_at", "created_at", ""},
+		{"idx_arsip_uraian", "uraian", "FULLTEXT"}, // supports LIKE search optimization in MySQL InnoDB (5.6+)
+	}
+	for _, ix := range indexes {
+		var exists int64
+		DB.Raw(
+			"SELECT COUNT(1) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'arsip' AND index_name = ?",
+			ix.name,
+		).Scan(&exists)
+		if exists == 0 {
+			sql := fmt.Sprintf("CREATE %s INDEX %s ON arsip (%s)", ix.extra, ix.name, ix.cols)
+			if err := DB.Exec(sql).Error; err != nil {
+				log.Printf("[MIGRASI] Skip index %s: %v", ix.name, err)
+			}
+		}
+	}
+}
+
+// ensureCommonIndexes adds indexes for foreign-key / filter columns on tables
+// that are heavily queried in the apps.
+func ensureCommonIndexes() {
+	tableColumnIdx := []struct {
+		table string
+		col   string
+		name  string
+	}{
+		{"login_logs", "username", "idx_login_logs_username"},
+		{"login_logs", "user_id", "idx_login_logs_user"},
+		{"activity_logs", "user_id", "idx_activity_logs_user"},
+		{"activity_logs", "created_at", "idx_activity_logs_created"},
+		{"pemusnahan_arsip", "status", "idx_pemusnahan_status"},
+		{"pemusnahan_arsip", "created_at", "idx_pemusnahan_created"},
+		{"arsip_versions", "arsip_id", "idx_arsip_versions_arsip"},
+		{"qr_codes", "arsip_id", "idx_qr_arsip"},
+		{"qr_codes", "deleted_at", "idx_qr_deleted"},
+		{"peminjaman_arsips", "status", "idx_peminjaman_status"},
+		{"peminjaman_arsips", "arsip_id", "idx_peminjaman_arsip"},
+		{"peminjaman_arsips", "user_id", "idx_peminjaman_user"},
+		{"blockchain_audits", "entity_type", "idx_blockchain_entity_type"},
+		{"blockchain_audits", "entity_id", "idx_blockchain_entity_id"},
+	}
+	for _, ic := range tableColumnIdx {
+		if !tableExists(ic.table) {
+			continue
+		}
+		var exists int64
+		DB.Raw(
+			"SELECT COUNT(1) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?",
+			ic.table, ic.name,
+		).Scan(&exists)
+		if exists == 0 {
+			sql := fmt.Sprintf("CREATE INDEX %s ON %s (%s)", ic.name, ic.table, ic.col)
+			if err := DB.Exec(sql).Error; err != nil {
+				log.Printf("[MIGRASI] Skip index %s: %v", ic.name, err)
+			}
+		}
+	}
 }
 
 func fixSPJClassification() {
 	var total int64
 	DB.Table("arsip").Count(&total)
 
-	// Force-update ALL records: if uraian contains "SPM" → "SPJ", else "Non SPJ"
+	// Force-update ALL records: if uraian contains "SPM" → "SPJ", else "Non SPJ".
 	DB.Table("arsip").Where("uraian LIKE ?", "%SPM%").Update("jenis_arsip", "SPJ")
 	DB.Table("arsip").Where("(uraian NOT LIKE ? OR uraian IS NULL) AND uraian IS NOT NULL", "%SPM%").Update("jenis_arsip", "Non SPJ")
 	DB.Table("arsip").Where("uraian IS NULL").Update("jenis_arsip", "Non SPJ")
@@ -160,7 +291,7 @@ func fixBlockchainHashes() {
 			records[i].Details, prevHash))
 
 		if records[i].CurrentHash != expectedHash || records[i].PreviousHash != prevHash {
-			// Fix both current_hash and previous_hash
+			// Fix both current_hash and previous_hash.
 			DB.Table("blockchain_audits").Where("id = ?", records[i].ID).Updates(map[string]interface{}{
 				"current_hash":  expectedHash,
 				"previous_hash": prevHash,
@@ -189,7 +320,10 @@ func cleanupFilePaths() {
 		return
 	}
 
-	var records []struct{ ID string; FilePath string }
+	var records []struct {
+		ID       string
+		FilePath string
+	}
 	DB.Table("arsip").Select("id, file_path").Where("file_path IS NOT NULL AND file_path != ''").Find(&records)
 
 	cleared := 0
@@ -204,7 +338,7 @@ func cleanupFilePaths() {
 	}
 }
 
-// migratePemusnahanData migrates legacy Laravel pemusnahan_arsip data
+// migratePemusnahanData migrates legacy Laravel pemusnahan_arsip data.
 func migratePemusnahanData() {
 	var count int64
 	DB.Raw(`SELECT COUNT(*) FROM pemusnahan_arsip pa
@@ -249,59 +383,50 @@ func migratePemusnahanData() {
 }
 
 func addNomorSPMColumn() {
-	var colExists int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'arsip' AND column_name = 'nomor_spm'").Scan(&colExists)
-	if colExists == 0 {
+	if !columnExists("arsip", "nomor_spm") {
 		DB.Exec("ALTER TABLE arsip ADD COLUMN nomor_spm VARCHAR(100) DEFAULT NULL")
 		log.Println("[MIGRASI] Menambahkan kolom nomor_spm ke tabel arsip")
 	}
 }
+
 func addJumlahSatuanColumn() {
-	var colJumlah, colSatuan int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'arsip' AND column_name = 'jumlah'").Scan(&colJumlah)
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'arsip' AND column_name = 'satuan'").Scan(&colSatuan)
-	if colJumlah == 0 {
-		DB.Exec("ALTER TABLE arsip ADD COLUMN jumlah INTEGER NOT NULL DEFAULT 1")
+	if !columnExists("arsip", "jumlah") {
+		DB.Exec("ALTER TABLE arsip ADD COLUMN jumlah INT NOT NULL DEFAULT 1")
 		log.Println("[MIGRASI] Menambahkan kolom jumlah ke tabel arsip")
 	}
-	if colSatuan == 0 {
+	if !columnExists("arsip", "satuan") {
 		DB.Exec("ALTER TABLE arsip ADD COLUMN satuan VARCHAR(30) NOT NULL DEFAULT 'Berkas'")
 		log.Println("[MIGRASI] Menambahkan kolom satuan ke tabel arsip")
 	}
 }
 
-
 func migrateLoginSecurity() {
 	log.Println("[MIGRASI] Memeriksa kolom keamanan login...")
 
-	var colExists int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'failed_attempts'").Scan(&colExists)
-	if colExists == 0 {
-		DB.Exec("ALTER TABLE users ADD COLUMN failed_attempts INTEGER DEFAULT 0")
+	if !columnExists("users", "failed_attempts") {
+		DB.Exec("ALTER TABLE users ADD COLUMN failed_attempts INT NOT NULL DEFAULT 0")
 		log.Println("[MIGRASI] Menambahkan kolom failed_attempts ke tabel users")
 	}
-
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'locked_until'").Scan(&colExists)
-	if colExists == 0 {
-		DB.Exec("ALTER TABLE users ADD COLUMN locked_until TIMESTAMP(3) NULL")
+	if !columnExists("users", "locked_until") {
+		DB.Exec("ALTER TABLE users ADD COLUMN locked_until DATETIME(3) NULL")
 		log.Println("[MIGRASI] Menambahkan kolom locked_until ke tabel users")
 	}
 
-	// Ubah tipe kolom model_id di activity_logs jadi TEXT (PostgreSQL TEXT is unlimited)
+	// MySQL: ensure model_id in activity_logs can hold long values (TEXT max 64KB).
+	// We only need to upgrade if it's a smaller VARCHAR.
 	log.Println("[MIGRASI] Memeriksa tipe kolom model_id di activity_logs...")
-	var colType string
-	DB.Raw("SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'activity_logs' AND column_name = 'model_id'").Scan(&colType)
-	if colType != "" && colType != "text" {
-		DB.Exec("ALTER TABLE activity_logs ALTER COLUMN model_id TYPE text")
-		log.Println("[MIGRASI] Kolom model_id di activity_logs diubah ke text")
+	dt := columnDataType("activity_logs", "model_id")
+	if dt != "" && dt != "text" {
+		DB.Exec("ALTER TABLE activity_logs MODIFY COLUMN model_id TEXT")
+		log.Println("[MIGRASI] Kolom model_id di activity_logs diubah ke TEXT")
 	}
 
-	// Juga entity_id di blockchain_audits
+	// Same for blockchain_audits.entity_id.
 	log.Println("[MIGRASI] Memeriksa tipe kolom entity_id di blockchain_audits...")
-	DB.Raw("SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'blockchain_audits' AND column_name = 'entity_id'").Scan(&colType)
-	if colType != "" && colType != "text" {
-		DB.Exec("ALTER TABLE blockchain_audits ALTER COLUMN entity_id TYPE text")
-		log.Println("[MIGRASI] Kolom entity_id di blockchain_audits diubah ke text")
+	dt = columnDataType("blockchain_audits", "entity_id")
+	if dt != "" && dt != "text" {
+		DB.Exec("ALTER TABLE blockchain_audits MODIFY COLUMN entity_id TEXT")
+		log.Println("[MIGRASI] Kolom entity_id di blockchain_audits diubah ke TEXT")
 	}
 }
 
@@ -310,28 +435,29 @@ func migrateLoginSecurity() {
 func addBackupLogGDriveColumns() {
 	log.Println("[MIGRASI] Memeriksa kolom Google Drive di backup_logs...")
 
-	var colExists int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'backup_logs' AND column_name = 'google_drive_file_id'").Scan(&colExists)
-	if colExists == 0 {
+	if !columnExists("backup_logs", "google_drive_file_id") {
 		DB.Exec("ALTER TABLE backup_logs ADD COLUMN google_drive_file_id VARCHAR(255) DEFAULT NULL")
 		log.Println("[MIGRASI] Menambahkan kolom google_drive_file_id ke tabel backup_logs")
 	}
-
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'backup_logs' AND column_name = 'google_drive_url'").Scan(&colExists)
-	if colExists == 0 {
+	if !columnExists("backup_logs", "google_drive_url") {
 		DB.Exec("ALTER TABLE backup_logs ADD COLUMN google_drive_url TEXT DEFAULT NULL")
 		log.Println("[MIGRASI] Menambahkan kolom google_drive_url ke tabel backup_logs")
 	}
 }
 
-func dropJenisLokasiColumn() {
+// dropJenisLokasiColumnIfUnused removed the legacy jenis_lokasi column from lokasi_arsips.
+// SAFE: it was added and removed multiple times historically and is not referenced in code;
+// we drop only if it has been retained by an older schema.
+func dropJenisLokasiColumnIfUnused() {
+	if !tableExists("lokasi_arsips") {
+		return
+	}
 	log.Println("[MIGRASI] Memeriksa kolom jenis_lokasi di lokasi_arsips...")
-	var colExists int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'lokasi_arsips' AND column_name = 'jenis_lokasi'").Scan(&colExists)
-	if colExists > 0 {
+	if columnExists("lokasi_arsips", "jenis_lokasi") {
 		DB.Exec("ALTER TABLE lokasi_arsips DROP COLUMN jenis_lokasi")
 		log.Println("[MIGRASI] Kolom jenis_lokasi berhasil dihapus dari tabel lokasi_arsips")
 	} else {
 		log.Println("[MIGRASI] Kolom jenis_lokasi sudah tidak ada, dilewati")
 	}
 }
+

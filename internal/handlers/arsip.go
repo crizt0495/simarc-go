@@ -158,7 +158,7 @@ func (h *ArsipHandler) Index(c *gin.Context) {
 	}
 	switch sortBy {
 	case "nomor_arsip":
-		db = db.Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) " + sortOrder)
+		db = db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) " + sortOrder)
 	case "nama_arsip":
 		db = db.Order("arsip.nama_arsip " + sortOrder)
 	case "tanggal_dibuat":
@@ -168,7 +168,7 @@ func (h *ArsipHandler) Index(c *gin.Context) {
 	case "unit_kerja":
 		db = db.Order("unit_kerja.nama_unit " + sortOrder)
 	default:
-		db = db.Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) ASC")
+		db = db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC")
 	}
 	if err := db.Limit(perPage).Offset(offset).Find(&arsipList).Error; err != nil {
 		// Silently handle error - show empty results
@@ -987,7 +987,7 @@ func (h *ArsipHandler) ShowMoveLocationForm(c *gin.Context) {
 
 	var arsipList []models.Arsip
 	var lokasiOpts []models.LokasiArsip
-	database.DB.Preload("KodeKlasifikasi").Preload("LokasiArsip").Where("deleted_at IS NULL").Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) ASC, arsip.created_at DESC").Find(&arsipList)
+	database.DB.Preload("KodeKlasifikasi").Preload("LokasiArsip").Where("deleted_at IS NULL").Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC, arsip.created_at DESC").Find(&arsipList)
 	database.DB.Where("is_active = 1").Order("nama_lokasi").Find(&lokasiOpts)
 	Render(c, 200, "arsip/index.html", gin.H{
 		"title": "Pindah Lokasi Arsip", "pageTitle": "Pindah Lokasi Arsip",
@@ -1152,7 +1152,7 @@ func (h *ArsipHandler) PemindahanSearchJSON(c *gin.Context) {
 	db.Count(&total)
 
 	var arsipList []models.Arsip
-	db.Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) ASC, arsip.created_at DESC").
+	db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC, arsip.created_at DESC").
 		Limit(limit).Offset(offset).Find(&arsipList)
 
 	var items []gin.H

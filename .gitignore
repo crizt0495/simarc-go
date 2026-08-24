@@ -7,6 +7,9 @@ tmp/
 *.test
 *.test.exe
 
+# ── Node / frontend tooling ──
+node_modules/
+
 # ── Environment ──
 .env
 

@@ -1285,7 +1285,7 @@ func (h *LaporanExportHandler) LokasiIndex(c *gin.Context) {
 	offset := (page - 1) * perPage
 
 	var arsipList []models.Arsip
-	db.Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) ASC").Offset(offset).Limit(perPage).Find(&arsipList)
+	db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Offset(offset).Limit(perPage).Find(&arsipList)
 
 	firstItem := offset + 1
 	lastItem := offset + len(arsipList)
@@ -1340,7 +1340,7 @@ func (h *LaporanExportHandler) LokasiPDF(c *gin.Context) {
 		}
 		var arsipList []models.Arsip
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip").
-			Where("lokasi_arsip_id = ?", lokasiID).Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) ASC").Find(&arsipList)
+			Where("lokasi_arsip_id = ?", lokasiID).Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Find(&arsipList)
 		headers = []string{"No", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Unit Kerja", "Tanggal Arsip", "Status", "Lokasi"}
 		for i, a := range arsipList {
 			status := a.StatusArsip
@@ -1400,7 +1400,7 @@ func (h *LaporanExportHandler) LokasiExcel(c *gin.Context) {
 		// Export per lokasi
 		var arsipList []models.Arsip
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip").
-			Where("lokasi_arsip_id = ?", lokasiID).Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) ASC").Find(&arsipList)
+			Where("lokasi_arsip_id = ?", lokasiID).Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Find(&arsipList)
 		headers = []string{"No", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Unit Kerja", "Tanggal Arsip", "Status", "Lokasi"}
 		for i, a := range arsipList {
 			status := a.StatusArsip
@@ -1856,13 +1856,17 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 	dbPass := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_DATABASE")
 	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
 	if dbHost == "" {
 		dbHost = "127.0.0.1"
 	}
-	args := []string{"-h", dbHost, "-U", dbUser, "-d", dbName, "-v"}
-	cmd := exec.Command("psql", args...)
+	if dbPort == "" {
+		dbPort = "3306"
+	}
+	args := []string{"--host=" + dbHost, "--port=" + dbPort, "--user=" + dbUser, dbName}
+	cmd := exec.Command("mysql", args...)
 	if dbPass != "" {
-		cmd.Env = append(os.Environ(), "PGPASSWORD="+dbPass)
+		cmd.Env = append(os.Environ(), "MYSQL_PWD="+dbPass)
 	}
 	inFile, err := os.Open(targetSQLPath)
 	if err != nil {
@@ -1878,16 +1882,16 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 	var errBufRestore strings.Builder
 	cmd.Stderr = &errBufRestore
 
-	// Optimasi: disable constraint & autocommit untuk restore cepat
-	optReader := strings.NewReader("SET session_replication_role = 'replica';\nSET synchronous_commit = off;\n")
-	finalReader := strings.NewReader("\nCOMMIT;\nSET session_replication_role = 'origin';\nSET synchronous_commit = on;\n")
+	// Optimasi: disable FK & autocommit untuk restore cepat
+	optReader := strings.NewReader("SET FOREIGN_KEY_CHECKS=0;\nSET unique_checks=0;\nSET autocommit=0;\n")
+	finalReader := strings.NewReader("\nCOMMIT;\nSET FOREIGN_KEY_CHECKS=1;\nSET unique_checks=1;\nSET autocommit=1;\n")
 	cmd.Stdin = io.MultiReader(optReader, inFile, finalReader)
 
 	if err := cmd.Run(); err != nil {
 		if isJSON {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Restore postgresql gagal: " + err.Error() + " - " + errBufRestore.String()})
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Restore MySQL gagal: " + err.Error() + " - " + errBufRestore.String()})
 		} else {
-			middleware.SetFlash(c, "error", "Restore postgresql gagal: "+err.Error()+" - "+errBufRestore.String())
+			middleware.SetFlash(c, "error", "Restore MySQL gagal: "+err.Error()+" - "+errBufRestore.String())
 			c.Redirect(http.StatusFound, "/backup")
 		}
 		return
@@ -1934,17 +1938,17 @@ func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
 	}
 
 	modifiedSQLPath := tempFilePath + ".modified.sql"
-	modifiedContent := "SET session_replication_role = 'replica';\nSET synchronous_commit = off;\n" + string(sqlContent) + "\nCOMMIT;\nSET session_replication_role = 'origin';\nSET synchronous_commit = on;\n"
+	modifiedContent := "SET FOREIGN_KEY_CHECKS=0;\nSET unique_checks=0;\nSET autocommit=0;\n" + string(sqlContent) + "\nCOMMIT;\nSET FOREIGN_KEY_CHECKS=1;\nSET unique_checks=1;\nSET autocommit=1;\n"
 	if err := os.WriteFile(modifiedSQLPath, []byte(modifiedContent), 0644); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal menyiapkan file import: " + err.Error()})
 		return
 	}
 	defer os.Remove(modifiedSQLPath)
 
-	// Run psql restore
-	// psql command is not available on Vercel serverless
+	// Run mysql restore
+	// mysql CLI is not available on Vercel serverless
 	if config.IsVercel() {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "SQL import tidak tersedia di Vercel. Gunakan dashboard database provider untuk import"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "SQL import tidak tersedia di Vercel. Gunakan Aiven Console untuk import"})
 		return
 	}
 
@@ -1952,13 +1956,17 @@ func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
 	dbPass := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_DATABASE")
 	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
 	if dbHost == "" {
 		dbHost = "127.0.0.1"
 	}
-	args := []string{"-h", dbHost, "-U", dbUser, "-d", dbName, "-v"}
-	cmd := exec.Command("psql", args...)
+	if dbPort == "" {
+		dbPort = "3306"
+	}
+	args := []string{"--host=" + dbHost, "--port=" + dbPort, "--user=" + dbUser, dbName}
+	cmd := exec.Command("mysql", args...)
 	if dbPass != "" {
-		cmd.Env = append(os.Environ(), "PGPASSWORD="+dbPass)
+		cmd.Env = append(os.Environ(), "MYSQL_PWD="+dbPass)
 	}
 
 	inFile, err := os.Open(modifiedSQLPath)

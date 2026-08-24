@@ -2,6 +2,8 @@
 
 Aplikasi manajemen arsip berbasis web dengan fitur pemindahan, pemusnahan, peminjaman, pemberkasan, retensi arsip, backup database, dan dukungan blockchain audit trail.
 
+**Stack production:** Vercel (hosting) + Aiven MySQL (database utama / source of truth).
+
 ## ✨ Fitur Utama
 
 - 📁 **Manajemen Arsip** — CRUD, upload file, QR code, OCR
@@ -18,7 +20,7 @@ Aplikasi manajemen arsip berbasis web dengan fitur pemindahan, pemusnahan, pemin
 | Komponen | Minimal |
 |----------|---------|
 | Go | 1.21+ |
-| MySQL / MariaDB | 8.0+ / 10.5+ |
+| MySQL / MariaDB | 8.0+ / 10.5+ (Aiven direkomendasikan untuk production) |
 | RAM | 512 MB |
 | Storage | 100 MB (aplikasi) + data arsip |
 
@@ -69,12 +71,15 @@ APP_PORT=8080
 APP_DEBUG=true
 APP_TIMEZONE=Asia/Jakarta      # WIB / WITA / WIT
 
-# ── Database ──
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=simarc_db
-DB_USERNAME=root
-DB_PASSWORD=
+# ── Database (Aiven MySQL) ──
+DB_HOST=mysql-xxxx-xxx.b.aivencloud.com
+DB_PORT=19160
+DB_DATABASE=defaultdb
+DB_USERNAME=avnadmin
+DB_PASSWORD=••••••
+
+# Wajib di production — gunakan `openssl rand -hex 32`
+SESSION_KEY=
 ```
 
 > Nama aplikasi & zona waktu yang diubah lewat menu **Pengaturan → Umum** ikut

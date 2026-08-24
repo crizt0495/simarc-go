@@ -111,6 +111,9 @@
     <a href="/backup" class="sidebar-link {{if eq .CurrentPath "/backup"}}active{{end}}">
       <i class="bi bi-database"></i> Backup &amp; Restore
     </a>
+    <a href="/advanced/integrations" class="sidebar-link {{if hasPrefix .CurrentPath "/advanced/integrations"}}active{{end}}">
+      <i class="bi bi-table"></i> Integrasi Google Sheet
+    </a>
     <a href="/blockchain" class="sidebar-link {{if eq .CurrentPath "/blockchain"}}active{{end}}">
       <i class="bi bi-shield-check"></i> Blockchain Audit
     </a>

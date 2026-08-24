@@ -10,7 +10,7 @@ import (
 
 	"arsippro/internal/config"
 
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -18,6 +18,7 @@ import (
 var DB *gorm.DB
 
 // Connect opens the database connection using the current application config.
+// Connection pool is tuned for Vercel serverless (short-lived workers).
 func Connect() error {
 	db, err := openDB(config.App.DBHost, config.App.DBPort, config.App.DBName, config.App.DBUser, config.App.DBPass)
 	if err != nil {
@@ -28,41 +29,60 @@ func Connect() error {
 	return nil
 }
 
-// openDB opens a GORM PostgreSQL connection from raw parameters.
+// openDB opens a GORM MySQL connection from raw parameters with sane pooling defaults.
+// DSN format: user:pass@tcp(host:port)/db?charset=utf8mb4&parseTime=True&loc=Asia%2FJakarta
 func openDB(host, port, name, user, pass string) (*gorm.DB, error) {
+	// MySQL DSN; ssl-mode is supported by Aiven's MySQL via the tls parameter.
+	// Use &tls=true for Aiven (it serves TLS by default).
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
-		host, user, pass, name, port,
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s&readTimeout=20s&writeTimeout=20s&multiStatements=true&tls=true",
+		user, pass, host, port, name,
 	)
 
-	// Override with DATABASE_URL if set (Neon, Supabase, etc.)
+	// Support DATABASE_URL if user prefers connection-string style.
 	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		// Neon adds channel_binding=require which pgx doesn't support — strip it
+		// Accept both mysql:// scheme and raw DSN (mysql:// from PlanetScale, Aiven, etc.).
 		cleanURL := dbURL
-		if idx := strings.Index(cleanURL, "channel_binding=require"); idx != -1 {
-			ampBefore := idx - 1
-			if ampBefore >= 0 && cleanURL[ampBefore] == '&' {
-				// Remove &channel_binding=require
-				cleanURL = cleanURL[:ampBefore] + cleanURL[idx+len("channel_binding=require"):]
-			} else {
-				// Remove channel_binding=require&
-				endIdx := idx + len("channel_binding=require")
-				if endIdx < len(cleanURL) && cleanURL[endIdx] == '&' {
-					cleanURL = cleanURL[:idx] + cleanURL[endIdx+1:]
-				} else {
-					cleanURL = cleanURL[:idx]
-				}
-			}
-		}
+		// Strip mysql:// and postgres:// prefixes if any (legacy configs).
+		cleanURL = strings.TrimPrefix(cleanURL, "mysql://")
+		cleanURL = strings.TrimPrefix(cleanURL, "postgresql://")
+		// mysql://user:pass@host:port/db?params → DSN is already in correct form after stripping scheme.
 		dsn = cleanURL
-		log.Printf("Connecting to database with DATABASE_URL (cleaned)")
+		log.Printf("Connecting to database with DATABASE_URL")
 	}
 
 	logLevel := logger.Error
 
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{
+	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logLevel),
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Connection pooling — tuned for Vercel serverless:
+	// Vercel functions are short-lived (a few seconds); we keep a modest pool
+	// that opens fast, recycles frequently, and tolerates restarts.
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	if config.IsVercel() {
+		// Serverless: most functions are cold; pool should be small but resilient.
+		sqlDB.SetMaxOpenConns(10)
+		sqlDB.SetMaxIdleConns(5)
+		sqlDB.SetConnMaxLifetime(2 * time.Minute)
+		sqlDB.SetConnMaxIdleTime(1 * time.Minute)
+	} else {
+		// Local/long-running server.
+		sqlDB.SetMaxOpenConns(25)
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetConnMaxLifetime(30 * time.Minute)
+		sqlDB.SetConnMaxIdleTime(5 * time.Minute)
+	}
+
+	return gormDB, nil
 }
 
 // TestConnection tries to open and ping a database with the given parameters
@@ -142,11 +162,12 @@ func GetInfo() Info {
 		return info
 	}
 	var version string
-	if err := DB.Raw("SELECT version()").Scan(&version).Error; err == nil {
+	if err := DB.Raw("SELECT VERSION()").Scan(&version).Error; err == nil {
 		info.Version = version
 	}
+	// MySQL: DATABASE() returns the current database schema name.
 	var tables int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.tables WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'").Scan(&tables)
+	DB.Raw("SELECT COUNT(1) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'").Scan(&tables)
 	info.Tables = tables
 	return info
 }

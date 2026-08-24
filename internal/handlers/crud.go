@@ -340,7 +340,7 @@ func (h *LokasiArsipHandler) Show(c *gin.Context) {
 	database.DB.First(&m, "id = ?", c.Param("id"))
 	var arsipList []models.Arsip
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("lokasi_arsip_id = ?", m.ID).Order("(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '', 'g')::bigint) ASC, arsip.created_at DESC").Find(&arsipList)
+		Where("lokasi_arsip_id = ?", m.ID).Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC, arsip.created_at DESC").Find(&arsipList)
 	Render(c, 200, "lokasi-arsip/show.html", gin.H{
 		"title": m.NamaLokasi, "pageTitle": "Detail Lokasi Arsip",
 		"LokasiID": m.ID,

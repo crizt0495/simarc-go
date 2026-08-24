@@ -1050,15 +1050,29 @@ func (h *BackupHandler) Create(c *gin.Context) {
 	dbPass := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_DATABASE")
 	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
 	if dbHost == "" {
 		dbHost = "127.0.0.1"
 	}
+	if dbPort == "" {
+		dbPort = "3306"
+	}
 
-	args := []string{"-h", dbHost, "-U", dbUser, "-F", "p", "-d", dbName}
+	args := []string{
+		"--host=" + dbHost,
+		"--port=" + dbPort,
+		"--user=" + dbUser,
+		"--no-tablespaces",
+		"--single-transaction",
+		"--routines",
+		"--triggers",
+		"--events",
+		dbName,
+	}
 
-	cmd := exec.Command("pg_dump", args...)
+	cmd := exec.Command("mysqldump", args...)
 	if dbPass != "" {
-		cmd.Env = append(os.Environ(), "PGPASSWORD="+dbPass)
+		cmd.Env = append(os.Environ(), "MYSQL_PWD="+dbPass)
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -1068,19 +1082,19 @@ func (h *BackupHandler) Create(c *gin.Context) {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		respondError(c, isJSON, "Gagal menjalankan pg_dump: "+err.Error())
+		respondError(c, isJSON, "Gagal menjalankan mysqldump: "+err.Error())
 		return
 	}
 
 	var buf bytes.Buffer
 	written, err := io.Copy(&buf, stdout)
 	if err != nil {
-		respondError(c, isJSON, "Gagal membaca output pg_dump: "+err.Error())
+		respondError(c, isJSON, "Gagal membaca output mysqldump: "+err.Error())
 		return
 	}
 
 	if err := cmd.Wait(); err != nil {
-		respondError(c, isJSON, "pg_dump gagal: "+err.Error())
+		respondError(c, isJSON, "mysqldump gagal: "+err.Error())
 		return
 	}
 

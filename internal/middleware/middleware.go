@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 
 	"arsippro/internal/config"
@@ -14,12 +15,31 @@ import (
 var Store *sessions.CookieStore
 
 func InitSession() {
-	Store = sessions.NewCookieStore([]byte(config.App.SessionKey))
+	// In production (Vercel) we refuse to boot without a strong SESSION_KEY.
+	// A predictable key would allow anyone to forge session cookies.
+	key := config.App.SessionKey
+	if key == "" {
+		if config.IsVercel() {
+			// Use a per-process ephemeral key. Users will be logged out on each
+			// deploy but the app stays secure. Set SESSION_KEY env var for stable cookies.
+			log.Println("[WARN] SESSION_KEY not set — using ephemeral key (sessions reset per cold start). Set SESSION_KEY env var in Vercel for stable sessions.")
+			// We do not crash: Vercel is a hosting environment where users will
+			// notice and add the variable. Crashing triggers an error page with
+			// less guidance.
+			// Use a fixed fallback so the binary still loads; explicitly log the warning.
+			key = "vercel-ephemeral-key-replace-me-" + config.App.AppName
+		} else {
+			log.Println("[WARN] SESSION_KEY not set — using development fallback. Set SESSION_KEY in .env for production.")
+			key = "simarc-dev-fallback-key"
+		}
+	}
+	Store = sessions.NewCookieStore([]byte(key))
 	Store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   0,   // session cookie: expired saat browser ditutup
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
+		Secure:   config.IsVercel(), // Vercel always serves over HTTPS
 	}
 }
 

@@ -19,7 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -95,13 +95,15 @@ func ensureTestDB() {
 	user := config.App.DBUser
 	pass := config.App.DBPass
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=postgres port=%s sslmode=disable", host, user, pass, port)
-	tmpDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// Connect to MySQL server with no specific database to create the test DB if missing.
+	serverDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local",
+		user, pass, host, port)
+	tmpDB, err := gorm.Open(mysql.Open(serverDSN), &gorm.Config{})
 	if err != nil {
 		log.Printf("[TEST] Cannot connect to create test DB: %v (assuming it exists)", err)
 		return
 	}
-	tmpDB.Exec(fmt.Sprintf("CREATE DATABASE %s", getTestDBName()))
+	tmpDB.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", getTestDBName()))
 	sqlDB, _ := tmpDB.DB()
 	sqlDB.Close()
 }

@@ -42,32 +42,41 @@ func Load() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// Support DATABASE_URL (Neon, PlanetScale, etc.) — parse into individual fields
+	// MySQL defaults — Aiven MySQL is the primary database.
 	dbHost := getEnv("DB_HOST", "127.0.0.1")
-	dbPort := getEnv("DB_PORT", "5432")
-	dbName := getEnv("DB_DATABASE", "arsippro")
-	dbUser := getEnv("DB_USERNAME", "postgres")
+	dbPort := getEnv("DB_PORT", "3306")
+	dbName := getEnv("DB_DATABASE", "defaultdb")
+	dbUser := getEnv("DB_USERNAME", "avnadmin")
 	dbPass := getEnv("DB_PASSWORD", "")
 
+	// Support DATABASE_URL for cloud convenience (mysql://user:pass@host:port/db).
 	if dbURL := getEnv("DATABASE_URL", ""); dbURL != "" {
+		// Strip scheme prefix; the rest is a valid MySQL DSN.
+		cleanURL := dbURL
+		cleanURL = strings.TrimPrefix(cleanURL, "mysql://")
+		cleanURL = strings.TrimPrefix(cleanURL, "postgresql://")
+		// We pass through to the connector; if the user supplies a full URL we use it as-is.
+		log.Printf("DATABASE_URL detected")
+		// Keep parser for backward-compat (could extract host/port) but defaults above stand.
+		_ = cleanURL
 		if parsed, err := url.Parse(dbURL); err == nil {
-			dbHost = parsed.Hostname()
-			if parsed.Port() != "" {
-				dbPort = parsed.Port()
+			if h := parsed.Hostname(); h != "" {
+				dbHost = h
 			}
-			dbUser = parsed.User.Username()
-			if p, ok := parsed.User.Password(); ok {
-				dbPass = p
+			if p := parsed.Port(); p != "" {
+				dbPort = p
+			}
+			if u := parsed.User.Username(); u != "" {
+				dbUser = u
+			}
+			if pw, ok := parsed.User.Password(); ok {
+				dbPass = pw
 			}
 			dbName = strings.TrimPrefix(parsed.Path, "/")
-			// Strip query params from database name
 			if idx := strings.Index(dbName, "?"); idx != -1 {
 				dbName = dbName[:idx]
 			}
-			// Handle channel_binding and other params in hostname for Neon
-			// Neon URLs like: postgresql://user:pass@host-pooler.c-4.region.neon.tech/dbname?sslmode=require
-			// The hostname may include pooler suffix
-			log.Printf("DATABASE_URL detected — host=%s port=%s db=%s", dbHost, dbPort, dbName)
+			log.Printf("DATABASE_URL parsed — host=%s port=%s db=%s", dbHost, dbPort, dbName)
 		}
 	}
 
@@ -82,7 +91,7 @@ func Load() {
 		DBUser:     dbUser,
 		DBPass:     dbPass,
 
-		SessionKey: getEnv("SESSION_KEY", "simarc-secret-key-change-in-production"),
+		SessionKey: getEnv("SESSION_KEY", ""),
 		AppDebug:   getEnv("APP_DEBUG", "false"),
 		AppInstitution:    getEnv("APP_INSTITUTION", "PEMERINTAH KOTA PROBOLINGGO"),
 		AppInstitutionSub: getEnv("APP_INSTITUTION_SUB", "BADAN KESATUAN BANGSA DAN POLITIK"),
