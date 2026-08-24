@@ -20,6 +20,7 @@ import (
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
 	"arsippro/internal/models"
+	"arsippro/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -185,6 +186,9 @@ func GetLANIP() string {
 // TemplateFuncs returns common template functions
 func TemplateFuncs() template.FuncMap {
 	return template.FuncMap{
+		"SheetsWebURL": func(m models.Integration) string {
+			return services.SheetsWebURL(&m)
+		},
 		"add": func(a, b interface{}) int {
 			ai, aok := toInt(a)
 			bi, bok := toInt(b)

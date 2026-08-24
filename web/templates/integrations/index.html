@@ -182,6 +182,9 @@
                 </form>
                 {{if eq .Type "google_sheets"}}
                 <a href="/advanced/integrations/{{.ID}}/sheet" target="_blank" class="btn btn-sm btn-outline-secondary" title="Lihat isi sheet"><i class="bi bi-table"></i> Lihat</a>
+                {{if index $.SheetLinks .ID}}
+                <a href="{{index $.SheetLinks .ID}}" target="_blank" rel="noopener" class="btn btn-sm btn-success" title="Buka spreadsheet asli di Google Sheets"><i class="bi bi-box-arrow-up-right"></i> Google Sheets</a>
+                {{end}}
                 <form action="/advanced/integrations/{{.ID}}/push" method="POST" class="d-inline js-integration-push">
                     <input type="hidden" name="_token" value="{{$csrf}}">
                     <button class="btn btn-sm btn-outline-info" title="Kirim seluruh data arsip ke Google Sheet"><i class="bi bi-box-arrow-up"></i> Kirim ke Sheet</button>

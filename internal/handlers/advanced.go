@@ -364,6 +364,17 @@ type IntegrationHandler struct{}
 func (h *IntegrationHandler) Index(c *gin.Context) {
 	var list []models.Integration
 	database.DB.Order("name").Find(&list)
+
+	// External spreadsheet links for google_sheets integrations.
+	sheetLinks := make(map[string]string, len(list))
+	for i := range list {
+		if list[i].Type == "google_sheets" {
+			if u := services.SheetsWebURL(&list[i]); u != "" {
+				sheetLinks[list[i].ID] = u
+			}
+		}
+	}
+
 	var total, active, inactive, errorCount int64
 	database.DB.Model(&models.Integration{}).Count(&total)
 	database.DB.Model(&models.Integration{}).Where("is_active = 1").Count(&active)
@@ -371,6 +382,7 @@ func (h *IntegrationHandler) Index(c *gin.Context) {
 	database.DB.Model(&models.Integration{}).Where("last_status = 'error'").Count(&errorCount)
 	Render(c, 200, "integrations/index.html", gin.H{
 		"title": "Integrasi", "pageTitle": "Integration Hub", "List": list,
+		"SheetLinks": sheetLinks,
 		"Stats": gin.H{
 			"Total":    total,
 			"Active":   active,

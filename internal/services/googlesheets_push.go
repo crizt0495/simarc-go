@@ -241,6 +241,16 @@ func clearSheet(ctx context.Context, client *http.Client, ssID, sheetTitle strin
 	return nil
 }
 
+// SheetsWebURL returns the browser URL of the target spreadsheet, or an empty
+// string when no spreadsheet is resolvable for the integration.
+func SheetsWebURL(m *models.Integration) string {
+	_, ssID, err := ResolveSheetsConfig(m)
+	if err != nil || ssID == "" {
+		return ""
+	}
+	return fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/edit", ssID)
+}
+
 // SheetTable is a read-only preview of one spreadsheet tab.
 type SheetTable struct {
 	SpreadsheetID string
