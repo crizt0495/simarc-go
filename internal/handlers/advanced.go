@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -396,7 +397,12 @@ func (h *IntegrationHandler) Store(c *gin.Context) {
 			m.Config = string(cfg)
 		}
 	}
-	database.DB.Create(&m)
+	if err := database.DB.Create(&m).Error; err != nil {
+		log.Printf("[INTEGRASI] Gagal menyimpan integrasi: %v", err)
+		middleware.SetFlash(c, "error", "Gagal menyimpan integrasi: "+err.Error())
+		c.Redirect(http.StatusFound, "/advanced/integrations")
+		return
+	}
 	middleware.SetFlash(c, "success", "Integrasi berhasil ditambahkan.")
 	c.Redirect(http.StatusFound, "/advanced/integrations")
 }
