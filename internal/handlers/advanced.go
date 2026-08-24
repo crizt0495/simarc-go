@@ -603,6 +603,36 @@ func (h *IntegrationHandler) logIntegration(id, action, status string, code int,
 	})
 }
 
+// ViewSheet renders a read-only preview of the connected Google Sheet tab.
+func (h *IntegrationHandler) ViewSheet(c *gin.Context) {
+	var m models.Integration
+	if err := database.DB.First(&m, "id = ?", c.Param("id")).Error; err != nil {
+		middleware.SetFlash(c, "error", "Integrasi tidak ditemukan.")
+		c.Redirect(http.StatusFound, "/advanced/integrations")
+		return
+	}
+	if m.Type != "google_sheets" {
+		middleware.SetFlash(c, "error", "Pratinjau sheet hanya tersedia untuk integrasi google_sheets.")
+		c.Redirect(http.StatusFound, "/advanced/integrations")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	tbl, err := services.FetchSheetTable(ctx, &m)
+	if err != nil {
+		Render(c, http.StatusBadGateway, "integrations/view.html", gin.H{
+			"title": "Pratinjau Sheet", "pageTitle": "Pratinjau Google Sheet", "Sheet": nil, "Err": err.Error(), "Integration": m,
+		})
+		return
+	}
+	Render(c, 200, "integrations/view.html", gin.H{
+		"title": "Pratinjau Sheet", "pageTitle": "Pratinjau Google Sheet",
+		"Sheet": tbl, "Err": "", "Integration": m,
+	})
+}
+
 func truncateString(s string, n int) string {
 	if len(s) > n {
 		return s[:n]

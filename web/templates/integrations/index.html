@@ -181,6 +181,7 @@
                     <button class="btn btn-sm btn-outline-warning"><i class="bi bi-arrow-repeat"></i> Sync</button>
                 </form>
                 {{if eq .Type "google_sheets"}}
+                <a href="/advanced/integrations/{{.ID}}/sheet" target="_blank" class="btn btn-sm btn-outline-secondary" title="Lihat isi sheet"><i class="bi bi-table"></i> Lihat</a>
                 <form action="/advanced/integrations/{{.ID}}/push" method="POST" class="d-inline js-integration-push">
                     <input type="hidden" name="_token" value="{{$csrf}}">
                     <button class="btn btn-sm btn-outline-info" title="Kirim seluruh data arsip ke Google Sheet"><i class="bi bi-box-arrow-up"></i> Kirim ke Sheet</button>

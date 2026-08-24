@@ -241,6 +241,94 @@ func clearSheet(ctx context.Context, client *http.Client, ssID, sheetTitle strin
 	return nil
 }
 
+// SheetTable is a read-only preview of one spreadsheet tab.
+type SheetTable struct {
+	SpreadsheetID string
+	SheetTitle    string
+	Headers       []string
+	Rows          [][]string
+	TotalDataRows int
+	Truncated     bool
+}
+
+// sheetPreviewLimit caps how many rows are returned for the viewer page.
+const sheetPreviewLimit = 200
+
+// FetchSheetTable downloads the first tab of the configured spreadsheet and
+// returns its contents as strings for rendering.
+func FetchSheetTable(ctx context.Context, m *models.Integration) (*SheetTable, error) {
+	credsJSON, ssID, err := ResolveSheetsConfig(m)
+	if err != nil {
+		return nil, err
+	}
+	client, err := sheetsClient(ctx, credsJSON)
+	if err != nil {
+		return nil, err
+	}
+	sheetTitle, err := firstSheetTitle(ctx, client, ssID)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf(
+		"https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s!A1:ZZ100000?majorDimension=ROWS",
+		ssID, sheetTitle,
+	)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 20<<20))
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("gagal membaca sheet (HTTP %d): %s", resp.StatusCode, truncate(string(body), 200))
+	}
+
+	var parsed struct {
+		Values [][]interface{} `json:"values"`
+	}
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("respons sheet tidak dapat dibaca: %w", err)
+	}
+
+	out := &SheetTable{SpreadsheetID: ssID, SheetTitle: sheetTitle}
+	if len(parsed.Values) == 0 {
+		return out, nil
+	}
+
+	cellStr := func(v interface{}) string {
+		if v == nil {
+			return ""
+		}
+		return fmt.Sprintf("%v", v)
+	}
+
+	headerRow := parsed.Values[0]
+	for _, c := range headerRow {
+		out.Headers = append(out.Headers, cellStr(c))
+	}
+
+	all := parsed.Values[1:]
+	out.TotalDataRows = len(all)
+	if len(all) > sheetPreviewLimit {
+		all = all[:sheetPreviewLimit]
+		out.Truncated = true
+	}
+	for _, row := range all {
+		cells := make([]string, len(out.Headers))
+		for i := range cells {
+			if i < len(row) {
+				cells[i] = cellStr(row[i])
+			}
+		}
+		out.Rows = append(out.Rows, cells)
+	}
+	return out, nil
+}
 // PushArsipToSheet exports the full arsip table to the configured spreadsheet.
 // The target tab is cleared first, then the header and all rows are written in
 // chunks. Existing content of the tab is REPLACED — that is the point of a

@@ -1,0 +1,55 @@
+{{define "integrations/view.html"}}{{template "layouts/app.html" .}}{{end}}
+{{define "content"}}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-table"></i> Pratinjau Google Sheet</h4>
+        <small class="text-muted">{{.Integration.Name}}</small>
+    </div>
+    <a href="/advanced/integrations" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-left"></i> Kembali</a>
+</div>
+
+{{if .Err}}
+<div class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> Gagal membaca sheet: {{.Err}}
+    <hr>
+    <small>Pastikan spreadsheet masih dibagikan ke service account sebagai Editor dan ID spreadsheet valid.</small>
+</div>
+{{else if not .Sheet}}
+<div class="alert alert-warning">Tidak ada data untuk ditampilkan.</div>
+{{else}}
+<div class="card mb-3 border-0 shadow-sm">
+    <div class="card-body py-2 px-3 d-flex flex-wrap gap-4">
+        <span><i class="bi bi-file-earmark-spreadsheet text-success"></i> Tab: <strong>{{.Sheet.SheetTitle}}</strong></span>
+        <span><i class="bi bi-hash"></i> Total baris data: <strong>{{.Sheet.TotalDataRows}}</strong></span>
+        <span class="text-muted"><small>ID: {{.Sheet.SpreadsheetID}}</small></span>
+    </div>
+</div>
+
+{{if .Sheet.Truncated}}
+<div class="alert alert-info py-2"><i class="bi bi-info-circle"></i> Menampilkan {{len .Sheet.Rows}} baris pertama dari {{.Sheet.TotalDataRows}} baris data.</div>
+{{end}}
+
+<div class="table-responsive shadow-sm rounded" style="max-height:65vh;overflow:auto">
+    <table class="table table-striped table-hover table-sm mb-0 bg-white">
+        <thead class="table-dark" style="position:sticky;top:0;z-index:10">
+            <tr>
+                <th style="width:3rem">#</th>
+                {{range .Sheet.Headers}}<th>{{.}}</th>{{end}}
+            </tr>
+        </thead>
+        <tbody>
+            {{$i := 0}}
+            {{range .Sheet.Rows}}
+            {{$i = add $i 1}}
+            <tr>
+                <td class="text-muted">{{$i}}</td>
+                {{range .}}<td>{{.}}</td>{{end}}
+            </tr>
+            {{else}}
+            <tr><td colspan="{{add (len .Sheet.Headers) 1}}" class="text-center text-muted py-4">Tab kosong — klik "Kirim ke Sheet" untuk mengisi data arsip.</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}
+{{end}}

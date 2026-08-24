@@ -463,6 +463,7 @@ func registerRoutes(r *gin.Engine) {
 		advanced.GET("/integrations/create", integrationH.Create)
 		advanced.POST("/integrations/store", integrationH.Store)
 		advanced.GET("/integrations/:id", integrationH.Show)
+		advanced.GET("/integrations/:id/sheet", integrationH.ViewSheet)
 		advanced.GET("/integrations/:id/edit", integrationH.Edit)
 		advanced.PUT("/integrations/:id", integrationH.Update)
 		advanced.POST("/integrations/:id", integrationH.Update)
