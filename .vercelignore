@@ -1,0 +1,16 @@
+# Exclude dari build context Vercel — percepat deployment & hindari error
+node_modules/
+tmp/
+storage/
+docs/
+.git/
+*.md
+!README.md
+run.bat
+run.ps1
+run.sh
+Start SIMARC.command
+.air.toml
+.env
+.env.example
+web/static/js/__tests__/
