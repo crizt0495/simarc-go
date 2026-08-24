@@ -19,10 +19,15 @@ import (
 
 // ShowLogin displays the login form
 func ShowLogin(c *gin.Context) {
-	// If the database is unreachable, send the user to the recovery page
-	// instead of a login form that cannot work.
+	// If the database is unreachable, show a clear error instead of a
+	// login form that cannot work.
 	if !database.Connected() {
-		c.Redirect(http.StatusFound, "/database-setup")
+		Render(c, http.StatusServiceUnavailable, "errors/503.html", gin.H{
+			"title":      "Database Tidak Tersedia",
+			"pageTitle":  "Database Tidak Tersedia",
+			"message":    "Aplikasi tidak dapat terhubung ke database. Hubungi administrator.",
+			"retryAfter": 30,
+		})
 		return
 	}
 

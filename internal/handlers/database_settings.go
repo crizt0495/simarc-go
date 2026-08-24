@@ -13,40 +13,18 @@ import (
 )
 
 // dbSettingsAllowed returns true when the current request may manage the
-// database settings: only admins while the app is connected, or anyone while
-// the app is in recovery mode (database unreachable) so the connection can be
-// repaired from the /database-setup page.
+// database settings: only logged-in admins.
 func dbSettingsAllowed(c *gin.Context) bool {
 	if !database.Connected() {
-		return true
+		return false
 	}
 	user := middleware.GetCurrentUser(c)
 	return user != nil && user.IsAdmin()
 }
 
-// dbSettingsRedirect returns where to send the user after a save attempt,
-// depending on whether they are a logged-in admin or in recovery mode.
-func dbSettingsRedirect(c *gin.Context) string {
-	if user := middleware.GetCurrentUser(c); user != nil && user.IsAdmin() {
-		return "/pengaturan"
-	}
-	return "/database-setup"
-}
-
-// DatabaseSetupPage renders a standalone page (using the auth layout) to fix
-// the database connection when the app cannot reach its database.
-func DatabaseSetupPage(c *gin.Context) {
-	Render(c, http.StatusOK, "auth/database-setup.html", gin.H{
-		"title":     "Konfigurasi Database - SIMARC",
-		"pageTitle": "Konfigurasi Database",
-		"LANIP":     GetLANIP(),
-		"DBInfo": gin.H{
-			"Host": config.App.DBHost,
-			"Port": config.App.DBPort,
-			"Name": config.App.DBName,
-			"User": config.App.DBUser,
-		},
-	})
+// dbSettingsRedirect returns where to send the user after a save attempt.
+func dbSettingsRedirect(_ *gin.Context) string {
+	return "/pengaturan"
 }
 
 // DatabaseTest tests a database connection with the submitted settings
@@ -167,16 +145,9 @@ func (h *PengaturanAdvancedHandler) DatabaseSave(c *gin.Context) {
 	services.InitQueue(3, services.ProcessJob)
 	services.StartAutoDisposal()
 
-	// After a successful repair from recovery mode, send anonymous users to
-	// the login page (the setup page would still show its warning alert).
-	successRedirect := "/pengaturan"
-	if middleware.GetCurrentUser(c) == nil {
-		successRedirect = "/login"
-	}
-
 	if user := middleware.GetCurrentUser(c); user != nil {
 		logActivity(user.ID, "database_settings", "Mengganti pengaturan database ke "+host+":"+port+"/"+name, "settings", "database", c.ClientIP(), c.GetHeader("User-Agent"))
 	}
 	middleware.SetFlash(c, "success", "Pengaturan database disimpan dan diterapkan. Terhubung ke "+name+" ("+host+":"+port+").")
-	c.Redirect(http.StatusFound, successRedirect)
+	c.Redirect(http.StatusFound, "/pengaturan")
 }

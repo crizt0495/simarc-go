@@ -133,9 +133,7 @@ func Init() (*gin.Engine, error) {
 
 	if err := database.Connect(); err != nil {
 		log.Printf("[WARN] Database tidak dapat dihubungkan: %v", err)
-		if !isVercel {
-			log.Printf("[WARN] Server tetap berjalan dalam mode pemulihan. Buka /database-setup untuk memperbaiki konfigurasi database.")
-		}
+		log.Printf("[WARN] Server tetap berjalan; halaman akan menampilkan error 503 hingga koneksi database pulih.")
 	} else {
 		if err := database.Migrate(); err != nil {
 			log.Printf("[WARN] Migration error: %v", err)
@@ -279,18 +277,21 @@ func registerStaticRoutes(r *gin.Engine) {
 	})
 }
 
-// recoveryGuard redirects every request to /database-setup when the database
-// connection could not be established (recovery mode).
+// recoveryGuard returns HTTP 503 for every request when the database
+// connection could not be established, except health endpoints.
 func recoveryGuard(r *gin.Engine) {
 	r.Use(func(c *gin.Context) {
 		if database.DB == nil {
 			path := c.Request.URL.Path
-			if path == "/database-setup" || path == "/health" || path == "/ping" ||
-				strings.HasPrefix(path, "/pengaturan/database") {
+			if path == "/health" || path == "/ping" {
 				c.Next()
 				return
 			}
-			c.Redirect(http.StatusFound, "/database-setup")
+			handlers.Render(c, http.StatusServiceUnavailable, "errors/503.html", gin.H{
+				"title":     "Database Tidak Tersedia",
+				"pageTitle": "Database Tidak Tersedia",
+				"message":   "Aplikasi tidak dapat terhubung ke database. Hubungi administrator.",
+			})
 			c.Abort()
 			return
 		}

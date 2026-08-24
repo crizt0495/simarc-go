@@ -62,10 +62,6 @@ func registerRoutes(r *gin.Engine) {
 	r.GET("/health", handlers.HealthCheck)
 	r.GET("/ping", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 
-	// Database setup page (reachable without login when the DB is unreachable,
-	// and used to repair the connection in recovery mode)
-	r.GET("/database-setup", handlers.DatabaseSetupPage)
-
 	// Public routes
 	guest := r.Group("/")
 	guest.Use(middleware.GuestOnly())
