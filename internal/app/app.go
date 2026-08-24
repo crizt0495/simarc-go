@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	router     *gin.Engine
+	router      *gin.Engine
 	initialized bool
 )
 
@@ -71,13 +71,17 @@ func listEmbeddedFiles(dirs ...string) []string {
 	return result
 }
 
-// serveStaticFile returns a Gin handler that serves static files with correct Content-Type.
-func serveStaticFile(dir string) gin.HandlerFunc {
+// serveStaticFile returns a Gin handler that serves static files with correct
+// Content-Type and the supplied Cache-Control policy.
+func serveStaticFile(dir string, cacheControl string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		file := c.Param("filepath")
 		if file == "" || file == "/" {
 			c.Status(http.StatusNotFound)
 			return
+		}
+		if cacheControl != "" {
+			c.Header("Cache-Control", cacheControl)
 		}
 		// Try embedded FS first (Vercel), then disk (local)
 		embedPath := filepath.Join(dir, file)
@@ -166,6 +170,11 @@ func Init() (*gin.Engine, error) {
 }
 
 // buildTemplates parses page templates either from embedded FS (Vercel) or disk.
+//
+// Performance: the shared layout/component files are parsed exactly ONCE into
+// a base template; each page then CLONES that base and parses only its own
+// file. Cloning shares the already-parsed trees, so cold-start cost drops from
+// O(pages × shared files) full parses to 1 shared parse + O(pages) clones.
 func buildTemplates(r *gin.Engine) {
 	useEmbedded := false
 	layoutFiles, _ := filepath.Glob("web/templates/layouts/*.html")
@@ -184,6 +193,34 @@ func buildTemplates(r *gin.Engine) {
 
 	handlers.TemplateSets = make(map[string]*template.Template)
 
+	parseShared := func() (*template.Template, error) {
+		if useEmbedded {
+			return template.New("").Funcs(handlers.TemplateFuncs()).ParseFS(arsippro.Embedded, sharedFiles...)
+		}
+		return template.New("").Funcs(handlers.TemplateFuncs()).ParseFiles(sharedFiles...)
+	}
+	base, baseErr := parseShared()
+	if baseErr != nil && !useEmbedded {
+		// Disk mode used template.Must before; keep loud failure semantics.
+		panic(baseErr)
+	}
+	if baseErr != nil {
+		log.Printf("[WARN] Shared template error: %v", baseErr)
+	}
+
+	registerPage := func(ts *template.Template) {
+		for _, t := range ts.Templates() {
+			n := t.Name()
+			if !strings.Contains(n, "/") {
+				continue
+			}
+			if strings.HasPrefix(n, "layouts/") || strings.HasPrefix(n, "components/") {
+				continue
+			}
+			handlers.TemplateSets[n] = ts
+		}
+	}
+
 	pageDirs := []string{
 		"auth", "errors", "dashboard", "arsip", "kode-klasifikasi",
 		"unit-kerja", "lokasi-arsip", "jenis-arsip", "pemberkasan",
@@ -194,75 +231,59 @@ func buildTemplates(r *gin.Engine) {
 		"integrations", "retention", "settings", "mobile", "supervision",
 	}
 
-	if useEmbedded {
+	pagesParsed := 0
+	if base != nil {
 		for _, dir := range pageDirs {
-			pageDir := "web/templates/" + dir
-			pageFiles := listEmbeddedFiles(pageDir)
+			var pageFiles []string
+			if useEmbedded {
+				pageFiles = listEmbeddedFiles("web/templates/" + dir)
+			} else {
+				pageFiles, _ = filepath.Glob("web/templates/" + dir + "/*.html")
+			}
 			for _, pf := range pageFiles {
-				allFiles := append([]string{}, sharedFiles...)
-				allFiles = append(allFiles, pf)
-				ts, err := template.New("").Funcs(handlers.TemplateFuncs()).ParseFS(arsippro.Embedded, allFiles...)
+				ts, err := base.Clone()
 				if err != nil {
-					log.Printf("[WARN] Template parse error %s: %v", pf, err)
+					log.Printf("[WARN] Template clone error %s: %v", pf, err)
 					continue
 				}
-				for _, t := range ts.Templates() {
-					n := t.Name()
-					if !strings.Contains(n, "/") {
+				if useEmbedded {
+					if _, err := ts.ParseFS(arsippro.Embedded, pf); err != nil {
+						log.Printf("[WARN] Template parse error %s: %v", pf, err)
 						continue
 					}
-					if strings.HasPrefix(n, "layouts/") || strings.HasPrefix(n, "components/") {
+				} else {
+					if _, err := ts.ParseFiles(pf); err != nil {
+						log.Printf("[WARN] Template parse error %s: %v", pf, err)
 						continue
 					}
-					handlers.TemplateSets[n] = ts
 				}
+				registerPage(ts)
+				pagesParsed++
 			}
 		}
-		if len(sharedFiles) > 0 {
-			fallbackTmpl, err := template.New("").Funcs(handlers.TemplateFuncs()).ParseFS(arsippro.Embedded, sharedFiles...)
-			if err != nil {
-				log.Printf("[WARN] Fallback template error: %v", err)
-			} else {
-				r.SetHTMLTemplate(fallbackTmpl)
-			}
-		}
-	} else {
-		for _, dir := range pageDirs {
-			pageFiles, _ := filepath.Glob("web/templates/" + dir + "/*.html")
-			for _, pf := range pageFiles {
-				allFiles := append([]string{}, sharedFiles...)
-				allFiles = append(allFiles, pf)
-				ts := template.Must(template.New("").Funcs(handlers.TemplateFuncs()).ParseFiles(allFiles...))
-				for _, t := range ts.Templates() {
-					n := t.Name()
-					if !strings.Contains(n, "/") {
-						continue
-					}
-					if strings.HasPrefix(n, "layouts/") || strings.HasPrefix(n, "components/") {
-						continue
-					}
-					handlers.TemplateSets[n] = ts
-				}
-			}
-		}
-		if len(sharedFiles) > 0 {
-			fallbackTmpl := template.Must(template.New("").Funcs(handlers.TemplateFuncs()).ParseFiles(sharedFiles...))
-			r.SetHTMLTemplate(fallbackTmpl)
-		}
+	}
+	log.Printf("[INFO] Templates ready: %d pages (shared layout parsed once)", pagesParsed)
+
+	if len(sharedFiles) > 0 && base != nil {
+		r.SetHTMLTemplate(base)
 	}
 }
 
-// registerStaticRoutes mounts static asset handlers.
+// registerStaticRoutes mounts static asset handlers. CSS/JS/images are
+// content-versioned via the ?v= query param, so they can be cached
+// aggressively at the browser/CDN.
 func registerStaticRoutes(r *gin.Engine) {
-	r.GET("/css/*filepath", serveStaticFile("web/static/css"))
-	r.HEAD("/css/*filepath", serveStaticFile("web/static/css"))
-	r.GET("/js/*filepath", serveStaticFile("web/static/js"))
-	r.HEAD("/js/*filepath", serveStaticFile("web/static/js"))
-	r.GET("/images/*filepath", serveStaticFile("web/static/images"))
-	r.HEAD("/images/*filepath", serveStaticFile("web/static/images"))
-	r.GET("/storage/*filepath", serveStaticFile("public/storage"))
-	r.HEAD("/storage/*filepath", serveStaticFile("public/storage"))
+	const immutable = "public, max-age=31536000, immutable"
+	r.GET("/css/*filepath", serveStaticFile("web/static/css", immutable))
+	r.HEAD("/css/*filepath", serveStaticFile("web/static/css", immutable))
+	r.GET("/js/*filepath", serveStaticFile("web/static/js", immutable))
+	r.HEAD("/js/*filepath", serveStaticFile("web/static/js", immutable))
+	r.GET("/images/*filepath", serveStaticFile("web/static/images", immutable))
+	r.HEAD("/images/*filepath", serveStaticFile("web/static/images", immutable))
+	r.GET("/storage/*filepath", serveStaticFile("public/storage", "public, max-age=3600"))
+	r.HEAD("/storage/*filepath", serveStaticFile("public/storage", "public, max-age=3600"))
 	r.GET("/sw.js", func(c *gin.Context) {
+		c.Header("Cache-Control", "public, max-age=0, must-revalidate")
 		if f, err := arsippro.Embedded.Open("web/static/sw.js"); err == nil {
 			f.Close()
 			c.FileFromFS("/web/static/sw.js", http.FS(arsippro.Embedded))
@@ -271,6 +292,7 @@ func registerStaticRoutes(r *gin.Engine) {
 		c.File("web/static/sw.js")
 	})
 	r.GET("/manifest.json", func(c *gin.Context) {
+		c.Header("Cache-Control", "public, max-age=3600")
 		if f, err := arsippro.Embedded.Open("web/static/manifest.json"); err == nil {
 			f.Close()
 			c.FileFromFS("/web/static/manifest.json", http.FS(arsippro.Embedded))

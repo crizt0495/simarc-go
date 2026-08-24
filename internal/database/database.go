@@ -46,7 +46,7 @@ func openDB(host, port, name, user, pass string) (*gorm.DB, error) {
 		tlsMode = "preferred"
 	}
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s&readTimeout=20s&writeTimeout=20s&multiStatements=true&tls=%s",
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s&readTimeout=20s&writeTimeout=20s&multiStatements=true&interpolateParams=true&tls=%s",
 		user, pass, host, port, name, tlsMode,
 	)
 
