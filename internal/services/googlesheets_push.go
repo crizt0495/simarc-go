@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -66,9 +67,38 @@ func ResolveSheetsConfig(m *models.Integration) (string, string, error) {
 	return creds, ssID, nil
 }
 
+// normalizeServiceAccountJSON accepts the credential payload either as raw
+// JSON or as base64 (Vercel env vars often mangle multiline JSON, so storing
+// base64 is common). Returns compact JSON ready for JWTConfigFromJSON.
+func normalizeServiceAccountJSON(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", fmt.Errorf("kredensial kosong")
+	}
+	if strings.HasPrefix(trimmed, "{") {
+		var probe map[string]interface{}
+		if err := json.Unmarshal([]byte(trimmed), &probe); err != nil {
+			return "", fmt.Errorf("JSON kredensial tidak valid: %w", err)
+		}
+		return trimmed, nil
+	}
+	if decoded, err := base64.StdEncoding.DecodeString(trimmed); err == nil && strings.HasPrefix(strings.TrimSpace(string(decoded)), "{") {
+		var probe map[string]interface{}
+		if err := json.Unmarshal(decoded, &probe); err != nil {
+			return "", fmt.Errorf("JSON kredensial (hasil decode base64) tidak valid: %w", err)
+		}
+		return string(decoded), nil
+	}
+	return "", fmt.Errorf("format kredensial tidak dikenali — isi GOOGLE_SHEETS_CREDENTIALS_JSON dengan JSON service account lengkap (mulai dengan '{') atau versi base64-nya")
+}
+
 // sheetsClient builds an authenticated HTTP client from service account JSON.
 func sheetsClient(ctx context.Context, credsJSON string) (*http.Client, error) {
-	conf, err := google.JWTConfigFromJSON([]byte(credsJSON), sheetsScope)
+	normalized, err := normalizeServiceAccountJSON(credsJSON)
+	if err != nil {
+		return nil, err
+	}
+	conf, err := google.JWTConfigFromJSON([]byte(normalized), sheetsScope)
 	if err != nil {
 		return nil, fmt.Errorf("JSON kredensial tidak valid: %w", err)
 	}
