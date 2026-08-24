@@ -19,8 +19,11 @@ type Config struct {
 	DBName      string
 	DBUser      string
 	DBPass      string
-	SessionKey  string
-	AppDebug    string
+	// DBTLS controls the MySQL TLS mode: true, false, skip-verify, preferred.
+	// Empty means "preferred" (see internal/database.openDB).
+	DBTLS      string
+	SessionKey string
+	AppDebug   string
 	// Institution header for PDF documents
 	AppInstitution    string
 	AppInstitutionSub string
@@ -48,6 +51,7 @@ func Load() {
 	dbName := getEnv("DB_DATABASE", "defaultdb")
 	dbUser := getEnv("DB_USERNAME", "avnadmin")
 	dbPass := getEnv("DB_PASSWORD", "")
+	dbTLS := getEnv("DB_TLS", "")
 
 	// Support DATABASE_URL for cloud convenience (mysql://user:pass@host:port/db).
 	if dbURL := getEnv("DATABASE_URL", ""); dbURL != "" {
@@ -86,13 +90,14 @@ func Load() {
 		AppPort:     getEnv("APP_PORT", "8080"),
 		AppTimezone: getEnv("APP_TIMEZONE", "Asia/Jakarta"),
 		DBHost:      dbHost,
-		DBPort:     dbPort,
-		DBName:     dbName,
-		DBUser:     dbUser,
-		DBPass:     dbPass,
+		DBPort:      dbPort,
+		DBName:      dbName,
+		DBUser:      dbUser,
+		DBPass:      dbPass,
+		DBTLS:       dbTLS,
 
-		SessionKey: getEnv("SESSION_KEY", ""),
-		AppDebug:   getEnv("APP_DEBUG", "false"),
+		SessionKey:        getEnv("SESSION_KEY", ""),
+		AppDebug:          getEnv("APP_DEBUG", "false"),
 		AppInstitution:    getEnv("APP_INSTITUTION", "PEMERINTAH KOTA PROBOLINGGO"),
 		AppInstitutionSub: getEnv("APP_INSTITUTION_SUB", "BADAN KESATUAN BANGSA DAN POLITIK"),
 		AppAddress:        getEnv("APP_ADDRESS", "Jalan Mawar No. 39A, Kota Probolinggo, Jawa Timur 67219"),

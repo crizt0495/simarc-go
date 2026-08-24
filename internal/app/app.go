@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"arsippro"
 	"arsippro/internal/config"
@@ -275,12 +277,52 @@ func registerStaticRoutes(r *gin.Engine) {
 		}
 		c.File("web/static/manifest.json")
 	})
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.Header("Cache-Control", "public, max-age=604800")
+		if f, err := arsippro.Embedded.Open("web/static/images/logo-icon.svg"); err == nil {
+			f.Close()
+			c.FileFromFS("/web/static/images/logo-icon.svg", http.FS(arsippro.Embedded))
+			return
+		}
+		c.File("web/static/images/logo-icon.svg")
+	})
 }
 
 // recoveryGuard returns HTTP 503 for every request when the database
 // connection could not be established, except health endpoints.
+//
+// Unlike a hard 503, the guard first attempts to (re)connect when the live
+// connection is missing. This makes the app self-heal: if the database was
+// unreachable during cold start (serverless warm instance or a long-running
+// server started before the DB), subsequent requests retry the connection
+// instead of being locked out with 503 forever.
+// Reconnection attempts are throttled to at most one per interval so requests
+// do not pile up on the (capped) connection timeout while the DB is down.
 func recoveryGuard(r *gin.Engine) {
+	var (
+		retryMu       sync.Mutex
+		lastAttempt   time.Time
+		retryInterval = 10 * time.Second
+	)
+
+	tryReconnect := func() {
+		retryMu.Lock()
+		defer retryMu.Unlock()
+		if time.Since(lastAttempt) < retryInterval {
+			return
+		}
+		lastAttempt = time.Now()
+		if err := database.Connect(); err == nil {
+			log.Println("[INFO] Database tersambung kembali (self-heal)")
+			database.Migrate()
+			database.SeedIfNeeded()
+		}
+	}
+
 	r.Use(func(c *gin.Context) {
+		if database.DB == nil && c.Request.URL.Path != "/health" && c.Request.URL.Path != "/ping" {
+			tryReconnect()
+		}
 		if database.DB == nil {
 			path := c.Request.URL.Path
 			if path == "/health" || path == "/ping" {
