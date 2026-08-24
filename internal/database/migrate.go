@@ -21,7 +21,7 @@ import (
 // the stored version matches — critical for Vercel serverless where new
 // instances start constantly and a full migration per cold start made every
 // request slow.
-const SchemaVersion = "2026.08.25-01"
+const SchemaVersion = "2026.08.25-02"
 
 // tableExists returns true when a table exists in the current database.
 func tableExists(name string) bool {
@@ -522,6 +522,16 @@ func alignIntegrationTables() {
 		DB.Exec("ALTER TABLE integration_logs MODIFY COLUMN records_created INT NULL DEFAULT 0")
 		DB.Exec("ALTER TABLE integration_logs MODIFY COLUMN records_updated INT NULL DEFAULT 0")
 		DB.Exec("ALTER TABLE integration_logs MODIFY COLUMN records_failed INT NULL DEFAULT 0")
+		// The Go model writes these columns; the legacy table never had them.
+		if !columnExists("integration_logs", "request_body") {
+			DB.Exec("ALTER TABLE integration_logs ADD COLUMN request_body TEXT NULL")
+		}
+		if !columnExists("integration_logs", "response_body") {
+			DB.Exec("ALTER TABLE integration_logs ADD COLUMN response_body TEXT NULL")
+		}
+		if !columnExists("integration_logs", "status_code") {
+			DB.Exec("ALTER TABLE integration_logs ADD COLUMN status_code INT NULL DEFAULT 0")
+		}
 	}
 }
 
