@@ -15,11 +15,39 @@ import (
 // MySQL schema helpers — use information_schema with DATABASE() instead of
 // PostgreSQL's current_schema(). Two-space indent for consistency with Go fmt.
 
+// SchemaVersion identifies the current expected database schema/maintenance
+// state. Bump this value whenever Migrate()'s tasks need to run again (new
+// tables, indexes, data fixes). On boot, Migrate() skips all heavy work when
+// the stored version matches — critical for Vercel serverless where new
+// instances start constantly and a full migration per cold start made every
+// request slow.
+const SchemaVersion = "2026.08.24-01"
+
 // tableExists returns true when a table exists in the current database.
 func tableExists(name string) bool {
 	var n int64
 	DB.Raw("SELECT COUNT(1) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?", name).Scan(&n)
 	return n > 0
+}
+
+// schemaIsCurrent reports whether the database is already migrated to
+// SchemaVersion (one cheap query when up to date).
+func schemaIsCurrent() bool {
+	if !tableExists("schema_migrations") {
+		return false
+	}
+	var n int64
+	DB.Raw("SELECT COUNT(1) FROM schema_migrations WHERE version = ?", SchemaVersion).Scan(&n)
+	return n > 0
+}
+
+// markSchemaVersion records SchemaVersion as applied.
+func markSchemaVersion() {
+	DB.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
+		version VARCHAR(64) NOT NULL PRIMARY KEY,
+		applied_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
+	DB.Exec("INSERT IGNORE INTO schema_migrations (version) VALUES (?)", SchemaVersion)
 }
 
 // columnExists returns true when a column exists on a table in the current database.
@@ -45,6 +73,14 @@ func columnDataType(table, column string) string {
 func Migrate() error {
 	// Quiet GORM SQL logging for migration step (we explicitly log meaningful events).
 	DB.Logger = logger.Default.LogMode(logger.Error)
+
+	// Fast path: already migrated to the current schema version — skip all
+	// heavy checks/updates (they would otherwise run on every serverless
+	// cold start and dominate request latency).
+	if tableExists("roles") && schemaIsCurrent() {
+		log.Println("[MIGRASI] Skema sudah versi terbaru, lewati pemeriksaan berat")
+		return nil
+	}
 
 	log.Println("[MIGRASI] Memeriksa dan memperbarui skema database...")
 
@@ -173,6 +209,9 @@ func Migrate() error {
 
 	// jADWAL drop OK karena tidak ada data referensi lagi pada legacy schema.
 	dropJenisLokasiColumnIfUnused()
+
+	// Record the completed schema version so subsequent boots take the fast path.
+	markSchemaVersion()
 
 	return nil
 }

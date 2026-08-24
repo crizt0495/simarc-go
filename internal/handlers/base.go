@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"math"
 	"net"
@@ -12,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"arsippro"
 	"arsippro/internal/config"
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
@@ -22,6 +26,40 @@ import (
 
 // TemplateSets stores per-page template sets (layouts + page, isolated)
 var TemplateSets map[string]*template.Template
+
+// assetVersion is a stable cache-busting key derived from the content of the
+// embedded static files. It changes ONLY when an asset actually changes, so
+// browsers and the Vercel CDN can cache CSS/JS/images long-term (the ?v=
+// query used to be time.Now().Unix(), which changed every second and defeated
+// all caching — the main cause of slow repeat page loads).
+var assetVersion = computeAssetVersion()
+
+func computeAssetVersion() string {
+	h := sha256.New()
+	err := fs.WalkDir(arsippro.Embedded, "web/static", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		info, err := d.Info()
+		if err != nil {
+			return nil
+		}
+		fmt.Fprintf(h, "%s:%d:", path, info.Size())
+		if f, err := arsippro.Embedded.Open(path); err == nil {
+			// Hash only headers for large binaries to keep startup fast; sizes
+			// are already part of the digest so renames/replacements still bust.
+			buf := make([]byte, 4096)
+			n, _ := f.Read(buf)
+			h.Write(buf[:n])
+			f.Close()
+		}
+		return nil
+	})
+	if err != nil {
+		return "dev"
+	}
+	return hex.EncodeToString(h.Sum(nil))[:12]
+}
 
 // Render renders a template with base data injected
 func Render(c *gin.Context, status int, tmpl string, data gin.H) {
@@ -49,7 +87,7 @@ func Render(c *gin.Context, status int, tmpl string, data gin.H) {
 	data["AppURL"] = strings.TrimRight(config.App.AppURL, "/")
 	data["Year"] = time.Now().Year()
 	data["CurrentPath"] = c.Request.URL.Path
-	data["AssetVersion"] = fmt.Sprintf("%d", time.Now().Unix())
+	data["AssetVersion"] = assetVersion
 
 	// Use page-specific template set (isolated {{define "content"}})
 	if ts, ok := TemplateSets[tmpl]; ok {
