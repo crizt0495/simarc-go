@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"compress/gzip"
+	"context"
 	"encoding/csv"
 	"encoding/json"
-	"html/template"
 	"fmt"
+	"html/template"
 	"io"
 	"math"
 	"net/http"
@@ -280,11 +281,11 @@ func (h *AdvancedDashboardHandler) Index(c *gin.Context) {
 	Render(c, 200, "dashboard/advanced.html", gin.H{
 		"title": "Advanced Dashboard", "pageTitle": "Advanced Dashboard",
 		"Stats": gin.H{
-			"TotalDokumen":  stats.Total,
-			"DokumenAktif":  stats.Aktif,
+			"TotalDokumen":   stats.Total,
+			"DokumenAktif":   stats.Aktif,
 			"DokumenInaktif": stats.Inaktif,
-			"SiapMusnah":    stats.SiapPenyusutan,
-			"AkurasiSistem": int64(akurasiSistem),
+			"SiapMusnah":     stats.SiapPenyusutan,
+			"AkurasiSistem":  int64(akurasiSistem),
 		},
 		"widgets": widgets,
 		"RecentActivity": gin.H{
@@ -388,6 +389,13 @@ func (h *IntegrationHandler) Store(c *gin.Context) {
 		BaseURL: c.PostForm("base_url"), ApiKey: c.PostForm("api_key"),
 		IsActive: c.PostForm("is_active") == "on",
 	}
+	if m.Type == "google_sheets" {
+		m.BaseURL = services.ExtractSheetID(m.BaseURL)
+		gid := services.ExtractGid(c.PostForm("base_url"))
+		if cfg, err := json.Marshal(map[string]int64{"gid": gid}); err == nil {
+			m.Config = string(cfg)
+		}
+	}
 	database.DB.Create(&m)
 	middleware.SetFlash(c, "success", "Integrasi berhasil ditambahkan.")
 	c.Redirect(http.StatusFound, "/advanced/integrations")
@@ -422,6 +430,16 @@ func (h *IntegrationHandler) Update(c *gin.Context) {
 	m.BaseURL = c.PostForm("base_url")
 	m.ApiKey = c.PostForm("api_key")
 	m.IsActive = c.PostForm("is_active") == "on"
+	if m.Type == "google_sheets" {
+		gid := services.ExtractGid(c.PostForm("base_url"))
+		if old := services.ExtractGid(m.Config); gid == 0 && old != 0 {
+			gid = old
+		}
+		m.BaseURL = services.ExtractSheetID(m.BaseURL)
+		if cfg, err := json.Marshal(map[string]int64{"gid": gid}); err == nil {
+			m.Config = string(cfg)
+		}
+	}
 	database.DB.Save(&m)
 	middleware.SetFlash(c, "success", "Integrasi berhasil diperbarui.")
 	c.Redirect(http.StatusFound, "/advanced/integrations")
@@ -437,30 +455,106 @@ func (h *IntegrationHandler) Destroy(c *gin.Context) {
 func (h *IntegrationHandler) Test(c *gin.Context) {
 	var m models.Integration
 	database.DB.First(&m, "id = ?", c.Param("id"))
-	status := "success"
-	statusCode := 200
-	if m.BaseURL == "" {
-		status = "error"
-		statusCode = 400
+
+	start := time.Now()
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 35*time.Second)
+	defer cancel()
+
+	status, statusCode, detail := "success", http.StatusOK, ""
+	if m.Type != "google_sheets" {
+		// Generic integrations: only check that a URL is configured.
+		if m.BaseURL == "" {
+			status, statusCode, detail = "error", 400, "URL belum diisi"
+		}
+	} else if res, err := testGoogleSheet(ctx, &m); err != nil {
+		status, statusCode, detail = "error", 502, err.Error()
+	} else {
+		detail = fmt.Sprintf("%d baris, %d kolom", res["rows"], res["cols"])
 	}
-	log := models.IntegrationLog{
+
+	durationMs := int(time.Since(start).Milliseconds())
+	logEntry := models.IntegrationLog{
 		IntegrationID: m.ID, Action: "test", Status: status, StatusCode: statusCode,
+		DurationMs: durationMs,
 	}
-	database.DB.Create(&log)
-	c.JSON(http.StatusOK, gin.H{"success": status == "success", "status_code": statusCode})
+	if len(detail) > 500 {
+		detail = detail[:500]
+	}
+	logEntry.ResponseBody = detail
+	database.DB.Create(&logEntry)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":     status == "success",
+		"status_code": statusCode,
+		"detail":      detail,
+	})
+}
+
+// testGoogleSheet validates connectivity and parses the sheet structure.
+func testGoogleSheet(ctx context.Context, m *models.Integration) (map[string]int, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+	gid := services.ExtractGid(m.Config)
+	data, err := services.FetchSheetCSV(ctx, client, services.ExtractSheetID(m.BaseURL), gid)
+	if err != nil {
+		return nil, err
+	}
+	headers, rows, err := services.ParseCSV(data)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]int{"rows": len(rows), "cols": len(headers)}, nil
 }
 
 func (h *IntegrationHandler) Sync(c *gin.Context) {
 	var m models.Integration
 	database.DB.First(&m, "id = ?", c.Param("id"))
 	now := time.Now()
-	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "synced"})
-	log := models.IntegrationLog{
-		IntegrationID: m.ID, Action: "sync", Status: "success", StatusCode: 200,
+
+	start := time.Now()
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 60*time.Second)
+	defer cancel()
+
+	statusCode := http.StatusOK
+	var detail string
+	if m.Type == "google_sheets" {
+		res, err := services.SyncGoogleSheetToArsip(ctx, &m)
+		if err != nil {
+			statusCode = 502
+			detail = err.Error()
+			logEntry := models.IntegrationLog{
+				IntegrationID: m.ID, Action: "sync", Status: "error",
+				StatusCode: statusCode, DurationMs: int(time.Since(start).Milliseconds()),
+				ResponseBody: truncateString(detail, 500),
+			}
+			database.DB.Create(&logEntry)
+			database.DB.Model(&m).Updates(map[string]interface{}{
+				"last_sync_at": now, "last_status": "error",
+			})
+			middleware.SetFlash(c, "error", "Sinkronisasi gagal: "+detail)
+			c.Redirect(http.StatusFound, "/advanced/integrations")
+			return
+		}
+		detail = fmt.Sprintf("Total %d baris — dibuat %d, diperbarui %d, dilewati %d",
+			res.TotalRows, res.Created, res.Updated, res.Skipped)
+		middleware.SetFlash(c, "success", "Sinkronisasi berhasil. "+detail)
+	} else {
+		middleware.SetFlash(c, "success", "Sinkronisasi berhasil.")
 	}
-	database.DB.Create(&log)
-	middleware.SetFlash(c, "success", "Sinkronisasi berhasil.")
+
+	logEntry := models.IntegrationLog{
+		IntegrationID: m.ID, Action: "sync", Status: "success", StatusCode: statusCode,
+		DurationMs: int(time.Since(start).Milliseconds()), ResponseBody: truncateString(detail, 500),
+	}
+	database.DB.Create(&logEntry)
+	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "synced"})
 	c.Redirect(http.StatusFound, "/advanced/integrations")
+}
+
+func truncateString(s string, n int) string {
+	if len(s) > n {
+		return s[:n]
+	}
+	return s
 }
 
 func (h *IntegrationHandler) ShowLog(c *gin.Context) {
@@ -1062,7 +1156,7 @@ func (h *LaporanExportHandler) KlasifikasiDetail(c *gin.Context) {
 			db := database.DB.Where("kode_klasifikasi_id = ? AND deleted_at IS NULL", requestKlasifikasiID)
 			if requestSearch != "" {
 				db = db.Where("(nama_arsip LIKE ? OR nomor_arsip LIKE ? OR uraian LIKE ?)",
-				"%"+requestSearch+"%", "%"+requestSearch+"%", "%"+requestSearch+"%")
+					"%"+requestSearch+"%", "%"+requestSearch+"%", "%"+requestSearch+"%")
 			}
 			if requestStatus != "" {
 				db = db.Where("status_arsip = ?", requestStatus)
@@ -1195,22 +1289,22 @@ func (h *LaporanExportHandler) LokasiIndex(c *gin.Context) {
 	qs := strings.Join(qsParts, "&")
 
 	data := gin.H{
-		"title":                "Laporan Lokasi",
-		"pageTitle":            "Laporan Per Lokasi",
-		"LokasiList":           lokasiList,
-		"UnitKerjaList":        unitKerjaList,
-		"RequestLokasiID":      lokasiID,
-		"RequestUnitKerjaID":   unitKerjaID,
-		"RequestStatusArsip":   statusArsip,
-		"RequestStartDate":     startDate,
-		"RequestEndDate":       endDate,
-		"RequestSearch":        search,
-		"QueryString":          qs,
-		"ArsipListFirstItem":   0,
-		"ArsipListLastItem":    0,
-		"ArsipListTotal":       0,
-		"ArsipListHasPages":    false,
-		"Pagination":           template.HTML(""),
+		"title":              "Laporan Lokasi",
+		"pageTitle":          "Laporan Per Lokasi",
+		"LokasiList":         lokasiList,
+		"UnitKerjaList":      unitKerjaList,
+		"RequestLokasiID":    lokasiID,
+		"RequestUnitKerjaID": unitKerjaID,
+		"RequestStatusArsip": statusArsip,
+		"RequestStartDate":   startDate,
+		"RequestEndDate":     endDate,
+		"RequestSearch":      search,
+		"QueryString":        qs,
+		"ArsipListFirstItem": 0,
+		"ArsipListLastItem":  0,
+		"ArsipListTotal":     0,
+		"ArsipListHasPages":  false,
+		"Pagination":         template.HTML(""),
 	}
 
 	if lokasiID != "" {
@@ -1263,51 +1357,51 @@ func (h *LaporanExportHandler) LokasiIndex(c *gin.Context) {
 		}
 
 		// ── Pagination for Lokasi arsip list ──
-	perPage := 25
-	page := 1
-	if p := c.Query("page"); p != "" {
-		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
-			page = parsed
+		perPage := 25
+		page := 1
+		if p := c.Query("page"); p != "" {
+			if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
+				page = parsed
+			}
 		}
-	}
 
-	var totalFiltered int64
-	dbCount := db.Session(&gorm.Session{})
-	dbCount.Count(&totalFiltered)
+		var totalFiltered int64
+		dbCount := db.Session(&gorm.Session{})
+		dbCount.Count(&totalFiltered)
 
-	totalPages := int(math.Ceil(float64(totalFiltered) / float64(perPage)))
-	if totalPages == 0 {
-		totalPages = 1
-	}
-	if page > totalPages {
-		page = totalPages
-	}
-	offset := (page - 1) * perPage
+		totalPages := int(math.Ceil(float64(totalFiltered) / float64(perPage)))
+		if totalPages == 0 {
+			totalPages = 1
+		}
+		if page > totalPages {
+			page = totalPages
+		}
+		offset := (page - 1) * perPage
 
-	var arsipList []models.Arsip
-	db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Offset(offset).Limit(perPage).Find(&arsipList)
+		var arsipList []models.Arsip
+		db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Offset(offset).Limit(perPage).Find(&arsipList)
 
-	firstItem := offset + 1
-	lastItem := offset + len(arsipList)
-	if lastItem > int(totalFiltered) {
-		lastItem = int(totalFiltered)
-	}
-	hasPages := totalPages > 1
+		firstItem := offset + 1
+		lastItem := offset + len(arsipList)
+		if lastItem > int(totalFiltered) {
+			lastItem = int(totalFiltered)
+		}
+		hasPages := totalPages > 1
 
-	rawQuery := c.Request.URL.RawQuery
-	paginationQueryStr := removePageParam(rawQuery)
+		rawQuery := c.Request.URL.RawQuery
+		paginationQueryStr := removePageParam(rawQuery)
 
-	var paginationHTML template.HTML
-	if hasPages {
-		paginationHTML = BuildPagination(page, totalPages, paginationQueryStr)
-	}
+		var paginationHTML template.HTML
+		if hasPages {
+			paginationHTML = BuildPagination(page, totalPages, paginationQueryStr)
+		}
 
-	data["ArsipList"] = arsipList
-	data["ArsipListFirstItem"] = firstItem
-	data["ArsipListLastItem"] = lastItem
-	data["ArsipListTotal"] = int(totalFiltered)
-	data["ArsipListHasPages"] = hasPages
-	data["Pagination"] = paginationHTML
+		data["ArsipList"] = arsipList
+		data["ArsipListFirstItem"] = firstItem
+		data["ArsipListLastItem"] = lastItem
+		data["ArsipListTotal"] = int(totalFiltered)
+		data["ArsipListHasPages"] = hasPages
+		data["Pagination"] = paginationHTML
 	}
 
 	Render(c, 200, "laporan/lokasi/index.html", data)
@@ -1352,14 +1446,14 @@ func (h *LaporanExportHandler) LokasiPDF(c *gin.Context) {
 			if a.UnitKerja != nil {
 				unitKerja = a.UnitKerja.NamaUnit
 			}
-		kk := ""
-		if a.KodeKlasifikasi != nil {
-			kk = a.KodeKlasifikasi.KodeKlasifikasi
-		}
-		lokasiNama := ""
-		if a.LokasiArsip != nil {
-			lokasiNama = a.LokasiArsip.NamaLokasi
-		}
+			kk := ""
+			if a.KodeKlasifikasi != nil {
+				kk = a.KodeKlasifikasi.KodeKlasifikasi
+			}
+			lokasiNama := ""
+			if a.LokasiArsip != nil {
+				lokasiNama = a.LokasiArsip.NamaLokasi
+			}
 			rows = append(rows, []string{
 				strconv.Itoa(i + 1),
 				a.NomorArsip,
@@ -1412,14 +1506,14 @@ func (h *LaporanExportHandler) LokasiExcel(c *gin.Context) {
 			if a.UnitKerja != nil {
 				unitKerja = a.UnitKerja.NamaUnit
 			}
-		kk := ""
-		if a.KodeKlasifikasi != nil {
-			kk = a.KodeKlasifikasi.KodeKlasifikasi
-		}
-		lokasiNama := ""
-		if a.LokasiArsip != nil {
-			lokasiNama = a.LokasiArsip.NamaLokasi
-		}
+			kk := ""
+			if a.KodeKlasifikasi != nil {
+				kk = a.KodeKlasifikasi.KodeKlasifikasi
+			}
+			lokasiNama := ""
+			if a.LokasiArsip != nil {
+				lokasiNama = a.LokasiArsip.NamaLokasi
+			}
 			rows = append(rows, []string{
 				strconv.Itoa(i + 1),
 				a.NomorArsip,
@@ -2012,9 +2106,6 @@ func (h *BackupAdvancedHandler) Cleanup(c *gin.Context) {
 	}
 }
 
-
-
-
 type BlockchainAdvancedHandler struct{}
 
 func (h *BlockchainAdvancedHandler) Show(c *gin.Context) {
@@ -2108,12 +2199,12 @@ func (h *BlockchainAdvancedHandler) SearchByHash(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"found":       true,
+		"found":        true,
 		"block_number": record.BlockNumber,
-		"action":      record.Action,
-		"entity_type": record.EntityType,
-		"entity_id":   record.EntityID,
-		"timestamp":   record.Timestamp,
+		"action":       record.Action,
+		"entity_type":  record.EntityType,
+		"entity_id":    record.EntityID,
+		"timestamp":    record.Timestamp,
 	})
 }
 
@@ -2586,23 +2677,23 @@ func (h *PengaturanAdvancedHandler) SystemInfo(c *gin.Context) {
 	runtime.ReadMemStats(&memStats)
 
 	info := gin.H{
-		"go_version":          runtime.Version(),
-		"go_os":               runtime.GOOS,
-		"go_arch":             runtime.GOARCH,
-		"hostname":            hostname,
-		"app_name":            config.App.AppName,
-		"app_url":             config.App.AppURL,
-		"app_port":            config.App.AppPort,
-		"app_debug":           config.App.AppDebug,
-		"timezone":            timezone,
-		"db_driver":           "MySQL (MariaDB)",
-		"db_version":          dbVersion,
-		"db_name":             config.App.DBName,
-		"cpu_cores":           runtime.NumCPU(),
-		"goroutines":          runtime.NumGoroutine(),
-		"memory_alloc":        formatBytes(int64(memStats.Alloc)),
-		"memory_total_alloc":  formatBytes(int64(memStats.TotalAlloc)),
-		"memory_sys":          formatBytes(int64(memStats.Sys)),
+		"go_version":         runtime.Version(),
+		"go_os":              runtime.GOOS,
+		"go_arch":            runtime.GOARCH,
+		"hostname":           hostname,
+		"app_name":           config.App.AppName,
+		"app_url":            config.App.AppURL,
+		"app_port":           config.App.AppPort,
+		"app_debug":          config.App.AppDebug,
+		"timezone":           timezone,
+		"db_driver":          "MySQL (MariaDB)",
+		"db_version":         dbVersion,
+		"db_name":            config.App.DBName,
+		"cpu_cores":          runtime.NumCPU(),
+		"goroutines":         runtime.NumGoroutine(),
+		"memory_alloc":       formatBytes(int64(memStats.Alloc)),
+		"memory_total_alloc": formatBytes(int64(memStats.TotalAlloc)),
+		"memory_sys":         formatBytes(int64(memStats.Sys)),
 	}
 
 	Render(c, 200, "pengaturan/system.html", gin.H{
@@ -2880,7 +2971,6 @@ func isTesseractAvailable() bool {
 	_, err := exec.LookPath("tesseract")
 	return err == nil
 }
-
 
 // ── SEARCH ADVANCED ─────────────────────────────────────────────────────────
 

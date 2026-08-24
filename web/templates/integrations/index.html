@@ -40,7 +40,8 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Base URL / Endpoint</label>
-                    <input type="url" name="base_url" class="form-control" placeholder="https://...">
+                    <input type="text" name="base_url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                    <div class="form-text">Google Sheets: tempel link sheet lengkap (sheet harus dibagikan "Siapa saja yang memiliki link — Viewer"). Baris diimpor ke Daftar Arsip saat Sync.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">API Key / Token</label>
@@ -80,11 +81,12 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Base URL / Endpoint</label>
-                    <input type="url" name="base_url" class="form-control" value="{{.m.BaseURL}}">
+                    <input type="text" name="base_url" class="form-control" value="{{.m.BaseURL}}" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                    <div class="form-text">Google Sheets: tempel link sheet lengkap (sheet harus dibagikan "Siapa saja yang memiliki link — Viewer").</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">API Key / Token</label>
-                    <input type="text" name="api_key" class="form-control" value="{{.m.ApiKey}}">
+                    <input type="text" name="api_key" class="form-control" value="{{.m.ApiKey}}" placeholder="opsional">
                 </div>
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {{if .m.IsActive}}checked{{end}}>
