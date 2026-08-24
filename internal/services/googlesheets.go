@@ -90,7 +90,7 @@ func ParseCSV(data []byte) (headers []string, rows [][]string, err error) {
 		return nil, nil, err
 	}
 	if len(all) == 0 {
-		return nil, nil, fmt.Errorf("sheet kosong")
+		return nil, nil, fmt.Errorf("sheet kosong — buka link sheet lalu isi baris 1 dengan nama kolom (mis. nomor_arsip, nama_arsip) dan datanya mulai baris 2")
 	}
 	headers = make([]string, len(all[0]))
 	for i, h := range all[0] {
