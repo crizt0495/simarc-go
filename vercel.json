@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "go",
-  "buildCommand": "go build -ldflags=\"-s -w -buildvcs=false\" -o $VERCEL_OUTPUT_FILE ./cmd/server",
+  "buildCommand": "go build -buildvcs=false -ldflags=\"-s -w\" -o $VERCEL_OUTPUT_FILE ./cmd/server",
   "headers": [
     {
       "source": "/(.*)",
