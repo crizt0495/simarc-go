@@ -46,6 +46,7 @@ func Render(c *gin.Context, status int, tmpl string, data gin.H) {
 
 	data["CSRFToken"] = middleware.GetCSRFToken(c)
 	data["AppName"] = config.App.AppName
+	data["AppURL"] = strings.TrimRight(config.App.AppURL, "/")
 	data["Year"] = time.Now().Year()
 	data["CurrentPath"] = c.Request.URL.Path
 	data["AssetVersion"] = fmt.Sprintf("%d", time.Now().Unix())

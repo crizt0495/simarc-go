@@ -6,51 +6,181 @@
 .integration-card:hover{transform:translateY(-5px)}
 .integration-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
 .integration-icon{width:50px;height:50px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
-.integration-icon.sap{background:#0078d7;color:white}
-.integration-icon.oracle{background:#f80000;color:white}
-.integration-icon.sharepoint{background:#0078d4;color:white}
 .integration-icon.google{background:#4285f4;color:white}
-.integration-icon.slack{background:#4a154b;color:white}
-.integration-icon.teams{background:#464eb8;color:white}
+.integration-icon.generic{background:#64748b;color:white}
 .status-indicator{width:10px;height:10px;border-radius:50%;display:inline-block}
 .status-active{background:#16a34a}
 .status-inactive{background:#64748b}
 .status-error{background:#dc2626}
+.gs-endpoint{font-family:monospace;font-size:.8rem;background:#f1f5f9;border-radius:.375rem;padding:.25rem .5rem;display:inline-block;margin:.15rem .25rem .15rem 0}
 </style>
 <div class="container-fluid">
+    {{if .createForm}}
+    <!-- ══════ FORM TAMBAH ══════ -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-plug"></i> Tambah Integrasi</h2>
+        <a href="/advanced/integrations" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+    <div class="card" style="max-width:720px">
+        <div class="card-body">
+            <form method="POST" action="/advanced/integrations/store">
+                <input type="hidden" name="_token" value="{{.CSRFToken}}">
+                <div class="mb-3">
+                    <label class="form-label">Nama Integrasi <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" required placeholder="mis. Google Sheets Rekap">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipe</label>
+                    <select name="type" class="form-select">
+                        <option value="google_sheets">Google Sheets</option>
+                        <option value="rest_api">REST API</option>
+                        <option value="webhook">Webhook</option>
+                        <option value="other">Lainnya</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Base URL / Endpoint</label>
+                    <input type="url" name="base_url" class="form-control" placeholder="https://...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">API Key / Token</label>
+                    <input type="text" name="api_key" class="form-control" placeholder="opsional">
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" checked>
+                    <label class="form-check-label" for="isActive">Aktifkan integrasi</label>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Simpan</button>
+            </form>
+        </div>
+    </div>
+
+    {{else if .editForm}}
+    <!-- ══════ FORM EDIT ══════ -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-pencil"></i> Edit Integrasi</h2>
+        <a href="/advanced/integrations" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+    <div class="card" style="max-width:720px">
+        <div class="card-body">
+            <form method="POST" action="/advanced/integrations/{{.m.ID}}">
+                <input type="hidden" name="_token" value="{{.CSRFToken}}">
+                <div class="mb-3">
+                    <label class="form-label">Nama Integrasi <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" value="{{.m.Name}}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipe</label>
+                    <select name="type" class="form-select">
+                        <option value="google_sheets" {{if eq .m.Type "google_sheets"}}selected{{end}}>Google Sheets</option>
+                        <option value="rest_api" {{if eq .m.Type "rest_api"}}selected{{end}}>REST API</option>
+                        <option value="webhook" {{if eq .m.Type "webhook"}}selected{{end}}>Webhook</option>
+                        <option value="other" {{if eq .m.Type "other"}}selected{{end}}>Lainnya</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Base URL / Endpoint</label>
+                    <input type="url" name="base_url" class="form-control" value="{{.m.BaseURL}}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">API Key / Token</label>
+                    <input type="text" name="api_key" class="form-control" value="{{.m.ApiKey}}">
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {{if .m.IsActive}}checked{{end}}>
+                    <label class="form-check-label" for="isActive">Aktifkan integrasi</label>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Perbarui</button>
+            </form>
+        </div>
+    </div>
+
+    {{else}}
+    <!-- ══════ DAFTAR INTEGRASI ══════ -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>🔗 Integration Hub</h2>
-        <a href="/advanced/integrations/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Integration</a>
+        <a href="/advanced/integrations/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tambah Integrasi</a>
     </div>
+
+    <!-- Panel Google Sheets -->
+    <div class="card mb-4 border-0 shadow-sm" style="border-left:4px solid #4285f4 !important">
+        <div class="card-body">
+            <div class="d-flex align-items-start gap-3">
+                <div class="integration-icon google"><i class="bi bi-file-earmark-spreadsheet"></i></div>
+                <div class="flex-grow-1">
+                    <h5 class="mb-1">Integrasi Google Sheets</h5>
+                    <p class="text-muted mb-2">Aiven MySQL adalah sumber data utama. Tarik data ke Google Sheets lewat
+                        Apps Script menggunakan endpoint read-only berikut (tanpa API key, JSON):</p>
+                    <div>
+                        <span class="gs-endpoint">GET /api/apps-script/summary</span>
+                        <span class="gs-endpoint">GET /api/apps-script/classifications</span>
+                        <span class="gs-endpoint">GET /api/apps-script/classifications/list</span>
+                        <span class="gs-endpoint">GET /api/apps-script/classifications/{kode}/archives</span>
+                        <span class="gs-endpoint">GET /api/apps-script/statistics/top</span>
+                        <span class="gs-endpoint">GET /api/apps-script/search?q=kata</span>
+                    </div>
+                    <details class="mt-2">
+                        <summary class="text-primary" style="cursor:pointer">Contoh script untuk Google Sheets</summary>
+                        <pre class="bg-light p-3 mt-2 rounded" style="font-size:.78rem">function tarikData() {
+  const url = '{{.AppURL}}/api/apps-script/summary';
+  const res = UrlFetchApp.fetch(url);
+  const data = JSON.parse(res.getContentText());
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  sheet.getRange(1, 1).setValue('Total Arsip');
+  sheet.getRange(1, 2).setValue(data.total);
+}</pre>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card"><div class="card-body text-center"><h3>{{.Stats.Total}}</h3><p class="text-muted mb-0">Total Integrations</p></div></div>
+            <div class="card"><div class="card-body text-center"><h3>{{.Stats.Total}}</h3><p class="text-muted mb-0">Total Integrasi</p></div></div>
         </div>
         <div class="col-md-3">
-            <div class="card"><div class="card-body text-center"><h3 style="color:#16a34a">{{.Stats.Active}}</h3><p class="text-muted mb-0">Active</p></div></div>
+            <div class="card"><div class="card-body text-center"><h3 style="color:#16a34a">{{.Stats.Active}}</h3><p class="text-muted mb-0">Aktif</p></div></div>
         </div>
         <div class="col-md-3">
-            <div class="card"><div class="card-body text-center"><h3 style="color:#64748b">{{.Stats.Inactive}}</h3><p class="text-muted mb-0">Inactive</p></div></div>
+            <div class="card"><div class="card-body text-center"><h3 style="color:#64748b">{{.Stats.Inactive}}</h3><p class="text-muted mb-0">Nonaktif</p></div></div>
         </div>
         <div class="col-md-3">
             <div class="card"><div class="card-body text-center"><h3 style="color:#dc2626">{{.Stats.Error}}</h3><p class="text-muted mb-0">Error</p></div></div>
         </div>
     </div>
+
     <div class="integration-grid">
-        {{range .Integrations}}
+        {{$csrf := .CSRFToken}}
+        {{range .List}}
         <div class="integration-card">
             <div class="integration-header">
-                <div class="integration-icon {{lower .Provider}}"><i class="bi bi-plug"></i></div>
-                <div><h5 class="mb-0">{{.Name}}</h5><small class="text-muted">{{.Provider}} • {{.Type}}</small></div>
+                {{if eq .Type "google_sheets"}}
+                <div class="integration-icon google"><i class="bi bi-file-earmark-spreadsheet"></i></div>
+                {{else}}
+                <div class="integration-icon generic"><i class="bi bi-plug"></i></div>
+                {{end}}
+                <div><h5 class="mb-0">{{.Name}}</h5><small class="text-muted">{{.Type}}</small></div>
             </div>
             <div class="mb-3">
-                <span class="status-indicator status-{{.Status}}"></span> <strong>{{.Status}}</strong>
-                {{if .LastSyncAt}}<br><small class="text-muted">Last sync: {{.LastSyncAt}}</small>{{end}}
+                {{if .IsActive}}<span class="status-indicator status-active"></span> <strong>Aktif</strong>
+                {{else}}<span class="status-indicator status-inactive"></span> <strong>Nonaktif</strong>{{end}}
+                {{if .LastStatus}}<br><small class="text-muted">Status terakhir: {{.LastStatus}}</small>{{end}}
+                {{if .LastSyncAt}}<br><small class="text-muted">Sinkron terakhir: {{.LastSyncAt.Format "02-01-2006 15:04"}}</small>{{end}}
             </div>
-            <div class="d-flex gap-2">
-                <a href="/advanced/integrations/{{.ID}}" class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-eye"></i> View</a>
-                <form action="/advanced/integrations/{{.ID}}/test" method="POST" class="d-inline">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/advanced/integrations/{{.ID}}/edit" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Edit</a>
+                <form action="/advanced/integrations/{{.ID}}/test" method="POST" class="d-inline js-integration-test">
+                    <input type="hidden" name="_token" value="{{$csrf}}">
                     <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-circle"></i> Test</button>
+                </form>
+                <form action="/advanced/integrations/{{.ID}}/sync" method="POST" class="d-inline">
+                    <input type="hidden" name="_token" value="{{$csrf}}">
+                    <button class="btn btn-sm btn-outline-warning"><i class="bi bi-arrow-repeat"></i> Sync</button>
+                </form>
+                <form action="/advanced/integrations/{{.ID}}/delete" method="POST" class="d-inline js-integration-delete">
+                    <input type="hidden" name="_token" value="{{$csrf}}">
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                 </form>
             </div>
         </div>
@@ -58,12 +188,35 @@
         <div class="col-12">
             <div class="text-center py-5">
                 <i class="bi bi-plug" style="font-size:4rem;color:#cbd5e1"></i>
-                <h4 class="mt-3">No Integrations Yet</h4>
-                <p class="text-muted">Connect ArsipPro with your favorite tools</p>
-                <a href="/advanced/integrations/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Create Integration</a>
+                <h4 class="mt-3">Belum Ada Integrasi</h4>
+                <p class="text-muted">Hubungkan SIMARC dengan Google Sheets atau tool lainnya</p>
+                <a href="/advanced/integrations/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tambah Integrasi</a>
             </div>
         </div>
         {{end}}
     </div>
+    {{end}}
 </div>
+
+<script>
+document.querySelectorAll('.js-integration-test').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = f.querySelector('button');
+        btn.disabled = true;
+        fetch(f.action, {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': f.querySelector('[name=_token]').value }
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            btn.disabled = false;
+            alert(d.success ? 'Koneksi OK (HTTP ' + d.status_code + ')' : 'Test gagal (HTTP ' + d.status_code + ')');
+        }).catch(function () { btn.disabled = false; alert('Test gagal: kesalahan jaringan'); });
+    });
+});
+document.querySelectorAll('.js-integration-delete').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+        if (!confirm('Hapus integrasi ini?')) e.preventDefault();
+    });
+});
+</script>
 {{end}}

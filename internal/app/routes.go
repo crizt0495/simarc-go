@@ -471,6 +471,7 @@ func registerRoutes(r *gin.Engine) {
 		advanced.PUT("/integrations/:id", integrationH.Update)
 		advanced.POST("/integrations/:id", integrationH.Update)
 		advanced.DELETE("/integrations/:id", integrationH.Destroy)
+		advanced.POST("/integrations/:id/delete", integrationH.Destroy)
 		advanced.POST("/integrations/:id/test", integrationH.Test)
 		advanced.POST("/integrations/:id/sync", integrationH.Sync)
 		advanced.GET("/integrations/log/:logId", integrationH.ShowLog)

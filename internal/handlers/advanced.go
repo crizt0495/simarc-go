@@ -2771,8 +2771,10 @@ func (h *AppsScriptAPIHandler) SearchArchives(c *gin.Context) {
 	q := c.Query("q")
 	var results []models.Arsip
 	if q != "" {
+		like := "%" + q + "%"
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-			Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))", q).
+			Where("(nama_arsip LIKE ? OR nomor_arsip LIKE ? OR uraian LIKE ? OR ocr_text LIKE ? OR tags LIKE ?)",
+				like, like, like, like, like).
 			Limit(50).Find(&results)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": results, "count": len(results)})
