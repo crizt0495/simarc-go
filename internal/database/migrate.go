@@ -206,6 +206,7 @@ func Migrate() error {
 	migrateSPMFromUraian()
 	migrateLoginSecurity()
 	addBackupLogGDriveColumns()
+	addArsipGDriveURLColumn()
 
 	// Align legacy Laravel-era integration tables with the Go models.
 	alignIntegrationTables()
@@ -491,6 +492,18 @@ func addBackupLogGDriveColumns() {
 	if !columnExists("backup_logs", "google_drive_url") {
 		DB.Exec("ALTER TABLE backup_logs ADD COLUMN google_drive_url TEXT DEFAULT NULL")
 		log.Println("[MIGRASI] Menambahkan kolom google_drive_url ke tabel backup_logs")
+	}
+}
+
+// addArsipGDriveURLColumn adds the google_drive_url column to the arsip table
+// for Google Drive digital archive sync.
+func addArsipGDriveURLColumn() {
+	if !tableExists("arsip") {
+		return
+	}
+	if !columnExists("arsip", "google_drive_url") {
+		DB.Exec("ALTER TABLE arsip ADD COLUMN google_drive_url TEXT DEFAULT NULL")
+		log.Println("[MIGRASI] Menambahkan kolom google_drive_url ke tabel arsip")
 	}
 }
 
