@@ -1,0 +1,183 @@
+/* ── Mobile Material Design 3 Enhancements ──
+   Menambahkan sentuhan Material Design di atas fondasi yang sudah ada.
+   File ini di-load setelah enterprise-premium.css agar bisa overwrite
+   variabel dan mengisi area kosong tanpa mengganggu elemen lainnya.
+*/
+/* ── Status bar & Theme color ──*/
+meta[name="theme-color"]{
+  content:var(--brand) !important;
+}
+@media (prefers-color-scheme: dark){
+  meta[name="theme-color"]{
+    content:var(--slate-900) !important;
+  }
+}
+
+/* ── Bottom Nav Material Design 3 ──*/
+.mobile-bottom-nav{
+  --mbn-gap:8px;
+  --mbn-pill-height:56px;
+  --mbn-icon-size:24px;
+  --mbn-text-font-size:12px;
+  --mbn-active-bg:rgba(var(--primary-rgb),.12);
+  --mbn-active-color:var(--primary);
+  --mbn-inactive-bg:transparent;
+  --mbn-inactive-color:var(--ink-4);
+  --mbn-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.mobile-bottom-nav .mobile-bottom-nav-item{
+  flex:0 0 calc(100%/5 - var(--mbn-gap));
+  height:var(--mbn-pill-height);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:var(--mbn-gap);
+  position:relative;
+  color:var(--mbn-inactive-color);
+  transition:color .2s ease,background .2s ease,border-radius .15s ease;
+}
+.mobile-bottom-nav .mobile-bottom-nav-item:hover{
+  color:var(--ink-2);
+}
+.mobile-bottom-nav .mobile-bottom-nav-item.active{
+  color:var(--mbn-active-color);
+  background:var(--mbn-active-bg);
+  box-shadow:var(--mbn-shadow);
+  border-radius:9999px;
+}
+.mobile-bottom-nav .mobile-bottom-nav-item.active i,
+.mobile-bottom-nav .mobile-bottom-nav-item.active span{
+  color:var(--mbn-active-color);
+}
+.mobile-bottom-nav .mobile-bottom-nav-item::after{
+  content:"";
+  position:absolute;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:20px;
+  height:3px;
+  background:var(--brand);
+  border-radius:0 0 12px 12px;
+  opacity:0;
+  transition:opacity .15s ease;
+}
+.mobile-bottom-nav .mobile-bottom-nav-item.active::after{
+  opacity:1;
+}
+.mobile-bottom-nav .mobile-bottom-nav-item i{
+  font-size:var(--mbn-icon-size);
+}
+.mobile-bottom-nav .mobile-bottom-nav-item span{
+  font-size:var(--mbn-text-font-size);
+  font-weight:500;
+}
+
+/* ── Material Ripple Effect ──*/
+.ripple{
+  position:relative;
+  overflow:hidden;
+}
+.ripple::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.3);
+  border-radius:50%;
+  transform:scale(0);
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;
+}
+.ripple:active::after{
+  transform:scale(4);
+}
+
+/* ── Touch Feedback ──*/
+.btn,.btn-crud,.nav-icon-btn,.mobile-bottom-nav-item,.dropdown-item,.page-link{
+  touch-action:manipulation;
+}
+.btn:active,.btn-crud:active,.nav-icon-btn:active,.mobile-bottom-nav-item:active,.dropdown-item:active,.page-link:active{
+  transform:scale(.98);
+  transition:transform .08s ease;
+}
+
+/* ── Auto-hide Top Navbar ──*/
+/* Add data-scroll="hide" to <header class="top-navbar"> to enable auto-hide */
+.top-navbar{
+  will-change:transform;
+  transition:transform .2s cubic-bezier(.4,0,.2,1);
+}
+.top-navbar.hidden{
+  transform:translateY(-100%);
+}
+body[data-scroll="hide"] .top-navbar{
+  transition:none;
+}
+
+/* ── Floating Action Button ──*/
+/* Add <a href="#" class="fab" style="..."> ke dalam halaman yang butuh FAB */
+.fab{
+  position:fixed;
+  bottom:calc(var(--mbn-pill-height) + 16px);
+  right:16px;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 4px 12px rgba(37,99,235,.3);
+  z-index:1060;
+  transition:background .2s,elevation .2s;
+}
+.fab:hover{
+  background:var(--primary-600);
+}
+.fab:active::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.3);
+  border-radius:50%;
+  transform:scale(4);
+}
+
+/* ── Card Elevation ──*/
+.card{
+  transition:box-shadow .2s ease;
+}
+.card:hover{
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+.card:active{
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+/* ── Prevent iOS Zoom on Focus ──*/
+input,select,textarea{
+  font-size:16px !important;
+}
+
+/* ── Fade-in Page Transition ──*/
+html{
+  transition:opacity .2s ease;
+}
+body{
+  opacity:1;
+}
+body.caching{
+  opacity:0;
+}
+
+/* ── Reduced Motion ──*/
+@media (prefers-reduced-motion: reduce){
+  *,
+  *::before,
+  *::after{
+    animation-duration:0s !important;
+    transition-duration:0s !important;
+  }
+}
