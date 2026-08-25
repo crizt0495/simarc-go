@@ -21,7 +21,7 @@ import (
 // the stored version matches — critical for Vercel serverless where new
 // instances start constantly and a full migration per cold start made every
 // request slow.
-const SchemaVersion = "2026.08.25-02"
+const SchemaVersion = "2026.08.25-03"
 
 // tableExists returns true when a table exists in the current database.
 func tableExists(name string) bool {
