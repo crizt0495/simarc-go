@@ -151,6 +151,9 @@ func registerRoutes(r *gin.Engine) {
 		auth.DELETE("/arsip/:id", arsipH.Destroy)
 		auth.POST("/arsip/:id/delete", arsipH.Destroy)
 
+		// Google Drive sync for arsip files
+		auth.POST("/arsip/:id/gdrive-sync", arsipH.GDriveSync)
+
 		// Import
 		auth.GET("/arsip/import", arsipH.ShowImportForm)
 		auth.POST("/arsip/import", arsipH.ImportExcel)

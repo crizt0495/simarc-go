@@ -202,6 +202,7 @@ type Arsip struct {
 	OcrProcessed        bool             `gorm:"default:false" json:"ocr_processed"`
 	OcrProcessedAt      *time.Time       `json:"ocr_processed_at"`
 	GoogleDriveFileID   string           `gorm:"size:255" json:"google_drive_file_id"`
+	GoogleDriveURL      string           `gorm:"type:text" json:"google_drive_url"`
 	CreatedAt           time.Time        `json:"created_at"`
 	UpdatedAt           time.Time        `json:"updated_at"`
 	DeletedAt           gorm.DeletedAt   `gorm:"index" json:"deleted_at"`

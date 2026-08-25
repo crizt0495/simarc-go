@@ -629,6 +629,8 @@ func (h *ArsipHandler) Show(c *gin.Context) {
 		"CanDelete":        canDelete,
 		"AuthUser":         user,
 		"VersionCount":     len(versions),
+		"GDriveClientID":   config.App.GoogleDriveClientID,
+		"GDriveFolderID":   config.App.GoogleDriveFolderID,
 		"FileInfo": gin.H{
 			"Exists":   fileExists,
 			"Filename": arsip.FileName,
@@ -2083,4 +2085,51 @@ func getCell(row []string, idx int) string {
 		return strings.TrimSpace(row[idx])
 	}
 	return ""
+}
+
+// ── GOOGLE DRIVE SYNC ──────────────────────────────────────────────────────
+
+// GDriveSync receives a Google Drive file ID from the client-side upload
+// and saves it on the arsip record. The actual file upload happens in the
+// browser via Google Identity Services OAuth — the server only stores the
+// reference.
+func (h *ArsipHandler) GDriveSync(c *gin.Context) {
+	id := c.Param("id")
+
+	var req struct {
+		GoogleDriveFileID string `json:"google_drive_file_id"`
+		GoogleDriveURL    string `json:"google_drive_url"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Payload tidak valid"})
+		return
+	}
+	if req.GoogleDriveFileID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "google_drive_file_id wajib diisi"})
+		return
+	}
+
+	var arsip models.Arsip
+	if err := database.DB.First(&arsip, "id = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "Arsip tidak ditemukan"})
+		return
+	}
+
+	updates := map[string]interface{}{
+		"google_drive_file_id": req.GoogleDriveFileID,
+	}
+	if req.GoogleDriveURL != "" {
+		updates["google_drive_url"] = req.GoogleDriveURL
+	}
+	if err := database.DB.Model(&arsip).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal menyimpan: " + err.Error()})
+		return
+	}
+
+	user := middleware.GetCurrentUser(c)
+	if user != nil {
+		logActivity(user.ID, "gdrive_sync", "File arsip di-sync ke Google Drive: "+arsip.NamaArsip, "arsip", arsip.ID, c.ClientIP(), c.GetHeader("User-Agent"))
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "File berhasil di-sync ke Google Drive"})
 }

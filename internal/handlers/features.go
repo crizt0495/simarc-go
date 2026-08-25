@@ -22,6 +22,7 @@ import (
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
 	"arsippro/internal/models"
+	"arsippro/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -1042,12 +1043,33 @@ func (h *BackupHandler) Create(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 	timestamp := time.Now().Format("2006-01-02_150405")
 
-	// mysqldump is not available on Vercel serverless
-	if !config.CanBackup() {
-		respondError(c, isJSON, "Database backup tidak tersedia di Vercel atau mysqldump tidak ditemukan di sistem. Gunakan backup dari dashboard database provider (PlanetScale/Neon)")
+	// If mysqldump is available, use it (faster, more complete).
+	// Otherwise fall back to GORM-based export (works on Vercel).
+	if config.CanBackup() {
+		backupSQL, err := backupWithMysqldump(isJSON)
+		if err != nil {
+			respondError(c, isJSON, err.Error())
+			return
+		}
+		saveBackupAndRespond(c, isJSON, timestamp, backupSQL, user)
 		return
 	}
 
+	// GORM-based export fallback (Vercel serverless compatible)
+	if err := respondProgress(c, isJSON, "Mengekspor database via GORM..."); err != nil {
+		// ignore — progress is optional
+	}
+	backupSQL, err := services.ExportDatabaseAsSQL()
+	if err != nil {
+		respondError(c, isJSON, "Gagal mengekspor database: "+err.Error())
+		return
+	}
+
+	saveBackupAndRespond(c, isJSON, timestamp, backupSQL, user)
+}
+
+// backupWithMysqldump runs mysqldump and returns the SQL bytes.
+func backupWithMysqldump(isJSON bool) ([]byte, error) {
 	// ── Dump database ke memory ──
 	dbUser := os.Getenv("DB_USERNAME")
 	dbPass := os.Getenv("DB_PASSWORD")
@@ -1079,22 +1101,19 @@ func (h *BackupHandler) Create(c *gin.Context) {
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		respondError(c, isJSON, "Gagal membuat pipe: "+err.Error())
-		return
+		return nil, fmt.Errorf("gagal membuat pipe: %w", err)
 	}
 	var errBuf bytes.Buffer
 	cmd.Stderr = &errBuf
 
 	if err := cmd.Start(); err != nil {
-		respondError(c, isJSON, "Gagal menjalankan mysqldump: "+err.Error())
-		return
+		return nil, fmt.Errorf("gagal menjalankan mysqldump: %w", err)
 	}
 
 	var buf bytes.Buffer
-	written, err := io.Copy(&buf, stdout)
+	_, err = io.Copy(&buf, stdout)
 	if err != nil {
-		respondError(c, isJSON, "Gagal membaca output mysqldump: "+err.Error())
-		return
+		return nil, fmt.Errorf("gagal membaca output mysqldump: %w", err)
 	}
 
 	if err := cmd.Wait(); err != nil {
@@ -1102,15 +1121,19 @@ func (h *BackupHandler) Create(c *gin.Context) {
 		if stderrOut := errBuf.String(); stderrOut != "" {
 			errMsg += " — " + strings.TrimSpace(stderrOut)
 		}
-		respondError(c, isJSON, "mysqldump gagal: "+errMsg)
-		return
+		return nil, fmt.Errorf("mysqldump gagal: %s", errMsg)
 	}
 
+	return buf.Bytes(), nil
+}
+
+// saveBackupAndRespond saves the backup to disk, logs it, and responds.
+func saveBackupAndRespond(c *gin.Context, isJSON bool, timestamp string, sqlData []byte, user *models.User) {
 	filename := fmt.Sprintf("backup_%s.sql", timestamp)
 
 	localPath := filepath.Join(config.BackupDir(), filename)
 	os.MkdirAll(filepath.Dir(localPath), 0755)
-	if err := os.WriteFile(localPath, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(localPath, sqlData, 0644); err != nil {
 		respondError(c, isJSON, "Gagal menyimpan backup lokal: "+err.Error())
 		return
 	}
@@ -1118,14 +1141,16 @@ func (h *BackupHandler) Create(c *gin.Context) {
 	log := models.BackupLog{
 		FileName:    filename,
 		FilePath:    localPath,
-		FileSize:    written,
+		FileSize:    int64(len(sqlData)),
 		BackupType:  "database",
 		Status:      "success",
 		CompletedAt: &[]time.Time{time.Now()}[0],
 	}
 	database.DB.Create(&log)
 
-	logActivity(user.ID, "backup", "Backup database berhasil: "+filename, "backup", log.ID, c.ClientIP(), c.GetHeader("User-Agent"))
+	if user != nil {
+		logActivity(user.ID, "backup", "Backup database berhasil: "+filename, "backup", log.ID, c.ClientIP(), c.GetHeader("User-Agent"))
+	}
 
 	if isJSON {
 		c.JSON(http.StatusOK, gin.H{
@@ -1344,6 +1369,13 @@ func HealthCheck(c *gin.Context) {
 
 
 // ── BACKUP HELPERS ────────────────────────────────────────────────────────────
+
+func respondProgress(c *gin.Context, isJSON bool, msg string) error {
+	if isJSON {
+		c.JSON(http.StatusOK, gin.H{"success": true, "progress": msg})
+	}
+	return nil
+}
 
 func respondError(c *gin.Context, isJSON bool, msg string) {
 	if isJSON {

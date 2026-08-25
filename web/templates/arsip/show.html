@@ -397,6 +397,11 @@
                     <div class="d-flex justify-content-center gap-2">
                         <a href="/arsip/{{.arsip.ID}}/download" class="action-bar-btn primary" style="padding:0.35rem 0.9rem;font-size:0.75rem;"><i class="bi bi-download"></i> Unduh</a>
                         {{if eq $ext "pdf"}}<a href="/arsip/{{.arsip.ID}}/view" target="_blank" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;"><i class="bi bi-eye"></i> Preview</a>{{end}}
+                        {{if .arsip.GoogleDriveFileID}}
+                        <a href="{{.arsip.GoogleDriveURL}}" target="_blank" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid #e0e0e0;color:#059669;"><i class="bi bi-google"></i> GDrive</a>
+                        {{else}}
+                        <button onclick="uploadArsipToDrive('{{.arsip.ID}}', '{{$fileInfo.Filename}}')" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid #e0e0e0;color:#6c757d;"><i class="bi bi-cloud-upload"></i> Ke GDrive</button>
+                        {{end}}
                     </div>
                     {{if and .IsOcrProcessed $fileInfo.OcrText}}
                     <div class="mt-3 text-start" style="max-height:110px;overflow-y:auto;background:var(--surface-2);border-radius:var(--r-sm);padding:0.65rem;font-size:0.72rem;color:var(--ink-4);border:1px solid var(--border);">
@@ -585,6 +590,102 @@ function showToast(t,m,type){
     if(icon) icon.className='bi bi-'+(type==='success'?'check-circle text-success':type==='warning'?'exclamation-triangle text-warning':'x-circle text-danger');
     try{new bootstrap.Toast(el).show()}catch(e){alert(m)}
 }
+
+// ── Google Drive Sync ──
+const ARSIP_GDRIVE_CLIENT_ID = '{{.GDriveClientID}}';
+const ARSIP_GDRIVE_FOLDER_ID = '{{.GDriveFolderID}}';
+
+function loadGsiScript() {
+    return new Promise(function(resolve, reject) {
+        if (window.google && google.accounts) return resolve();
+        var s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client';
+        s.async = true; s.defer = true;
+        s.onload = resolve;
+        s.onerror = function() { reject(new Error('Gagal memuat Google Identity Services')); };
+        document.head.appendChild(s);
+    });
+}
+
+function getArsipGDriveToken() {
+    return new Promise(function(resolve, reject) {
+        if (!ARSIP_GDRIVE_CLIENT_ID) {
+            reject(new Error('Google Drive Client ID belum dikonfigurasi. Buka Pengaturan > Backup untuk mengaturnya.'));
+            return;
+        }
+        loadGsiScript().then(function() {
+            var tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: ARSIP_GDRIVE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: function(resp) {
+                    if (resp.error) { reject(new Error(resp.error_description || resp.error)); return; }
+                    resolve(resp.access_token);
+                },
+            });
+            tokenClient.requestAccessToken();
+        }).catch(reject);
+    });
+}
+
+function uploadToGDrive(accessToken, filename, blob) {
+    return new Promise(function(resolve, reject) {
+        var metadata = { name: filename };
+        if (ARSIP_GDRIVE_FOLDER_ID) metadata.parents = [ARSIP_GDRIVE_FOLDER_ID];
+        fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'application/octet-stream', 'X-Upload-Content-Length': String(blob.size) },
+            body: JSON.stringify(metadata),
+        }).then(function(resp) {
+            if (!resp.ok) return resp.json().then(function(e) { throw new Error((e.error && e.error.message) || 'Gagal memulai upload'); });
+            var location = resp.headers.get('Location');
+            if (!location) throw new Error('Google Drive tidak mengembalikan lokasi upload');
+            var xhr = new XMLHttpRequest();
+            xhr.open('PUT', location);
+            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) { try { resolve(JSON.parse(xhr.responseText)); } catch(e2) { reject(new Error('Respons tidak valid')); } }
+                else { reject(new Error('Upload gagal (HTTP ' + xhr.status + ')')); }
+            };
+            xhr.onerror = function() { reject(new Error('Upload gagal — periksa koneksi')); };
+            xhr.send(blob);
+        }).catch(reject);
+    });
+}
+
+function uploadArsipToDrive(arsipId, originalName) {
+    if (!ARSIP_GDRIVE_CLIENT_ID) {
+        showToast('Google Drive belum dikonfigurasi. Buka Pengaturan > Backup.', 'warning');
+        return;
+    }
+    if (!confirm('Upload berkas ini ke Google Drive?')) return;
+
+    showToast('Mengunduh file...', 'info');
+    fetch('/arsip/' + arsipId + '/download')
+    .then(function(r) { if (!r.ok) throw new Error('Gagal mengunduh file'); return r.blob(); })
+    .then(function(blob) {
+        showToast('Menghubungkan ke Google Drive...', 'info');
+        return getArsipGDriveToken().then(function(token) { return { blob: blob, token: token }; });
+    })
+    .then(function(data) {
+        var fname = originalName || ('arsip_' + arsipId + '.bin');
+        showToast('Mengunggah ke Google Drive...', 'info');
+        return uploadToGDrive(data.token, fname, data.blob);
+    })
+    .then(function(file) {
+        var gdriveUrl = 'https://drive.google.com/file/d/' + file.id + '/view';
+        return fetch('/arsip/' + arsipId + '/gdrive-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ google_drive_file_id: file.id, google_drive_url: gdriveUrl })
+        }).then(function(r) { return r.json(); }).then(function(d) { if (!d.success) throw new Error(d.error); return gdriveUrl; });
+    })
+    .then(function(url) {
+        showToast('Berhasil di-sync ke Google Drive!', 'success');
+        setTimeout(function() { location.reload(); }, 1000);
+    })
+    .catch(function(err) { showToast('Gagal: ' + err.message, 'danger'); });
+}
+
 });
 </script>
 {{end}}
