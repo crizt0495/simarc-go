@@ -404,7 +404,7 @@ function filterBackups() {
         else item.style.display = 'none';
     });
 }
-function deleteOldBackups() { if (!confirm('Hapus backup yang lebih tua dari 30 hari?')) return; showProgress('Membersihkan backup lama...', 0); fetch('/backup/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).then(r => r.json()).then(d => { hideProgress(); if (d.success) { showToast('✅ ' + d.message, 'success'); setTimeout(() => location.reload(), 1500); } else { showToast('❌ ' + (d.error || 'Gagal'), 'error'); } }).catch(e => { hideProgress(); showToast('❌ Error: ' + e, 'error'); }); }
+function deleteOldBackups() { if (!confirm('Hapus backup yang lebih tua dari 30 hari?')) return; showProgress('Membersihkan backup lama...', 0); fetch('/backup/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: 30 }) }).then(r => r.json()).then(d => { hideProgress(); if (d.success) { showToast('✅ ' + d.message, 'success'); setTimeout(() => location.reload(), 1500); } else { showToast('❌ ' + (d.error || 'Gagal'), 'error'); } }).catch(e => { hideProgress(); showToast('❌ Error: ' + e, 'error'); }); }
 function showRestoreModal() { document.querySelector('.restore-section').scrollIntoView({ behavior: 'smooth' }); }
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');

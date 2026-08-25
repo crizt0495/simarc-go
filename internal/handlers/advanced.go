@@ -2064,11 +2064,11 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 
 	// Run mysql restore
 	// mysql command is not available on Vercel serverless
-	if config.IsVercel() {
+	if !config.CanRestore() {
 		if isJSON {
-			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Database restore tidak tersedia di Vercel. Gunakan restore dari dashboard database provider"})
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Database restore tidak tersedia di Vercel atau mysql tidak ditemukan di sistem. Gunakan restore dari dashboard database provider"})
 		} else {
-			middleware.SetFlash(c, "error", "Database restore tidak tersedia di Vercel.")
+			middleware.SetFlash(c, "error", "Database restore tidak tersedia di Vercel atau mysql tidak ditemukan di sistem.")
 			c.Redirect(http.StatusFound, "/backup")
 		}
 		return
@@ -2110,17 +2110,22 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 	cmd.Stdin = io.MultiReader(optReader, inFile, finalReader)
 
 	if err := cmd.Run(); err != nil {
+		errMsg := err.Error()
+		if stderrOut := errBufRestore.String(); stderrOut != "" {
+			errMsg += " — " + strings.TrimSpace(stderrOut)
+		}
 		if isJSON {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Restore MySQL gagal: " + err.Error() + " - " + errBufRestore.String()})
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Restore MySQL gagal: " + errMsg})
 		} else {
-			middleware.SetFlash(c, "error", "Restore MySQL gagal: "+err.Error()+" - "+errBufRestore.String())
+			middleware.SetFlash(c, "error", "Restore MySQL gagal: "+errMsg)
 			c.Redirect(http.StatusFound, "/backup")
 		}
 		return
 	}
 
-	user := middleware.GetCurrentUser(c)
-	logActivity(user.ID, "restore", "Restore database berhasil menggunakan file: "+filename, "backup", "", c.ClientIP(), c.GetHeader("User-Agent"))
+	if user := middleware.GetCurrentUser(c); user != nil {
+		logActivity(user.ID, "restore", "Restore database berhasil menggunakan file: "+filename, "backup", "", c.ClientIP(), c.GetHeader("User-Agent"))
+	}
 
 	if isJSON {
 		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Database berhasil di-restore dari " + filename})
@@ -2131,23 +2136,55 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 }
 
 func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
+	isJSON := strings.Contains(c.ContentType(), "application/json")
+
 	if ok, msg := restoreGuard(c); !ok {
-		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": msg})
+		if isJSON {
+			c.JSON(http.StatusForbidden, gin.H{"success": false, "error": msg})
+		} else {
+			middleware.SetFlash(c, "error", msg)
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
-	if c.PostForm("confirm") != "1" {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Import SQL harus dikirim dengan konfirmasi (confirm=1)"})
+
+	confirm := c.PostForm("confirm")
+	if isJSON {
+		var req struct {
+			Confirm bool `json:"confirm"`
+		}
+		if err := c.ShouldBindJSON(&req); err == nil && req.Confirm {
+			confirm = "1"
+		}
+	}
+	if confirm != "1" {
+		if isJSON {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Import SQL harus dikirim dengan konfirmasi (confirm=1)"})
+		} else {
+			middleware.SetFlash(c, "error", "Import SQL harus dikirim dengan konfirmasi (confirm=1)")
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 
 	file, err := c.FormFile("sql_file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "File SQL wajib diunggah: " + err.Error()})
+		if isJSON {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "File SQL wajib diunggah: " + err.Error()})
+		} else {
+			middleware.SetFlash(c, "error", "File SQL wajib diunggah: "+err.Error())
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 
 	if !strings.HasSuffix(strings.ToLower(file.Filename), ".sql") {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Hanya file dengan ekstensi .sql yang didukung"})
+		if isJSON {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Hanya file dengan ekstensi .sql yang didukung"})
+		} else {
+			middleware.SetFlash(c, "error", "Hanya file dengan ekstensi .sql yang didukung")
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 
@@ -2156,7 +2193,12 @@ func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
 	tempFilePath := filepath.Join(uploadDir, "import_"+uuid.New().String()+".sql")
 
 	if err := c.SaveUploadedFile(file, tempFilePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal menyimpan file upload: " + err.Error()})
+		if isJSON {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal menyimpan file upload: " + err.Error()})
+		} else {
+			middleware.SetFlash(c, "error", "Gagal menyimpan file upload: "+err.Error())
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 	defer os.Remove(tempFilePath)
@@ -2164,22 +2206,37 @@ func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
 	// Modify the SQL content to temporarily disable constraints during import
 	sqlContent, err := os.ReadFile(tempFilePath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal membaca file SQL: " + err.Error()})
+		if isJSON {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal membaca file SQL: " + err.Error()})
+		} else {
+			middleware.SetFlash(c, "error", "Gagal membaca file SQL: "+err.Error())
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 
 	modifiedSQLPath := tempFilePath + ".modified.sql"
 	modifiedContent := "SET FOREIGN_KEY_CHECKS=0;\nSET unique_checks=0;\nSET autocommit=0;\n" + string(sqlContent) + "\nCOMMIT;\nSET FOREIGN_KEY_CHECKS=1;\nSET unique_checks=1;\nSET autocommit=1;\n"
 	if err := os.WriteFile(modifiedSQLPath, []byte(modifiedContent), 0644); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal menyiapkan file import: " + err.Error()})
+		if isJSON {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal menyiapkan file import: " + err.Error()})
+		} else {
+			middleware.SetFlash(c, "error", "Gagal menyiapkan file import: "+err.Error())
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 	defer os.Remove(modifiedSQLPath)
 
 	// Run mysql restore
 	// mysql CLI is not available on Vercel serverless
-	if config.IsVercel() {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "SQL import tidak tersedia di Vercel. Gunakan Aiven Console untuk import"})
+	if !config.CanRestore() {
+		if isJSON {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "SQL import tidak tersedia di Vercel atau mysql tidak ditemukan di sistem. Gunakan Aiven Console untuk import"})
+		} else {
+			middleware.SetFlash(c, "error", "SQL import tidak tersedia di Vercel atau mysql tidak ditemukan di sistem.")
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 
@@ -2202,7 +2259,12 @@ func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
 
 	inFile, err := os.Open(modifiedSQLPath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal membuka file import: " + err.Error()})
+		if isJSON {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal membuka file import: " + err.Error()})
+		} else {
+			middleware.SetFlash(c, "error", "Gagal membuka file import: "+err.Error())
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 	defer inFile.Close()
@@ -2210,22 +2272,47 @@ func (h *BackupAdvancedHandler) ImportSQL(c *gin.Context) {
 	cmd.Stderr = &errBufRestore
 	cmd.Stdin = inFile
 	if err := cmd.Run(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal mengimpor database: " + err.Error() + " - " + errBufRestore.String()})
+		errMsg := err.Error()
+		if stderrOut := errBufRestore.String(); stderrOut != "" {
+			errMsg += " — " + strings.TrimSpace(stderrOut)
+		}
+		if isJSON {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal mengimpor database: " + errMsg})
+		} else {
+			middleware.SetFlash(c, "error", "Gagal mengimpor database: "+errMsg)
+			c.Redirect(http.StatusFound, "/backup")
+		}
 		return
 	}
 
-	user := middleware.GetCurrentUser(c)
-	logActivity(user.ID, "restore", "Import database .sql berhasil menggunakan file: "+file.Filename, "backup", "", c.ClientIP(), c.GetHeader("User-Agent"))
+	if user := middleware.GetCurrentUser(c); user != nil {
+		logActivity(user.ID, "restore", "Import database .sql berhasil menggunakan file: "+file.Filename, "backup", "", c.ClientIP(), c.GetHeader("User-Agent"))
+	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Database berhasil di-import dari " + file.Filename})
+	if isJSON {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Database berhasil di-import dari " + file.Filename})
+	} else {
+		middleware.SetFlash(c, "success", "Database berhasil di-import dari "+file.Filename)
+		c.Redirect(http.StatusFound, "/backup")
+	}
 }
 
 func (h *BackupAdvancedHandler) Cleanup(c *gin.Context) {
 	isJSON := strings.Contains(c.ContentType(), "application/json")
 	days := 30
-	if v := c.PostForm("days"); v != "" {
-		if d, err := strconv.Atoi(v); err == nil {
-			days = d
+
+	if isJSON {
+		var req struct {
+			Days int `json:"days"`
+		}
+		if err := c.ShouldBindJSON(&req); err == nil && req.Days > 0 {
+			days = req.Days
+		}
+	} else {
+		if v := c.PostForm("days"); v != "" {
+			if d, err := strconv.Atoi(v); err == nil && d > 0 {
+				days = d
+			}
 		}
 	}
 	cutoff := time.Now().AddDate(0, 0, -days)

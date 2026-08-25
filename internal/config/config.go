@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -200,6 +201,29 @@ func quoteEnvValue(v string) string {
 // IsVercel returns true when running on Vercel's serverless platform.
 func IsVercel() bool {
 	return os.Getenv("VERCEL") == "1"
+}
+
+// HasMysqldump checks if mysqldump binary is available in PATH.
+// This is a more reliable check for backup/restore capability than VERCEL env var.
+func HasMysqldump() bool {
+	_, err := exec.LookPath("mysqldump")
+	return err == nil
+}
+
+// HasMysql checks if mysql binary is available in PATH (needed for restore/import).
+func HasMysql() bool {
+	_, err := exec.LookPath("mysql")
+	return err == nil
+}
+
+// CanBackup returns true if database backup is possible (mysqldump available and not on Vercel).
+func CanBackup() bool {
+	return HasMysqldump() && !IsVercel()
+}
+
+// CanRestore returns true if database restore is possible (mysql available and not on Vercel).
+func CanRestore() bool {
+	return HasMysql() && !IsVercel()
 }
 
 // StorageDir returns the base directory for file storage.

@@ -358,8 +358,8 @@ type BackupService struct{}
 
 func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
 	// mysqldump is not available on Vercel serverless
-	if config.IsVercel() {
-		return nil, fmt.Errorf("database backup tidak tersedia di Vercel. Gunakan backup dari dashboard Aiven Console")
+	if !config.CanBackup() {
+		return nil, fmt.Errorf("database backup tidak tersedia di Vercel atau mysqldump tidak ditemukan di sistem. Gunakan backup dari dashboard Aiven Console")
 	}
 
 	filename := fmt.Sprintf("backup_%s.sql", time.Now().Format("2006-01-02_150405"))
@@ -390,7 +390,8 @@ func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
 	if err != nil {
 		return nil, fmt.Errorf("gagal membuat pipe: %w", err)
 	}
-	cmd.Stderr = os.Stderr
+	var errBuf bytes.Buffer
+	cmd.Stderr = &errBuf
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("gagal menjalankan mysqldump: %w", err)
@@ -403,7 +404,11 @@ func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return nil, fmt.Errorf("mysqldump gagal: %w", err)
+		errMsg := err.Error()
+		if stderrOut := errBuf.String(); stderrOut != "" {
+			errMsg += " — " + strings.TrimSpace(stderrOut)
+		}
+		return nil, fmt.Errorf("mysqldump gagal: %s", errMsg)
 	}
 
 	log := &models.BackupLog{

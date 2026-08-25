@@ -1040,8 +1040,8 @@ func (h *BackupHandler) Create(c *gin.Context) {
 	timestamp := time.Now().Format("2006-01-02_150405")
 
 	// mysqldump is not available on Vercel serverless
-	if config.IsVercel() {
-		respondError(c, isJSON, "Database backup tidak tersedia di Vercel. Gunakan backup dari dashboard database provider (PlanetScale/Neon)")
+	if !config.CanBackup() {
+		respondError(c, isJSON, "Database backup tidak tersedia di Vercel atau mysqldump tidak ditemukan di sistem. Gunakan backup dari dashboard database provider (PlanetScale/Neon)")
 		return
 	}
 
@@ -1079,7 +1079,8 @@ func (h *BackupHandler) Create(c *gin.Context) {
 		respondError(c, isJSON, "Gagal membuat pipe: "+err.Error())
 		return
 	}
-	cmd.Stderr = os.Stderr
+	var errBuf bytes.Buffer
+	cmd.Stderr = &errBuf
 
 	if err := cmd.Start(); err != nil {
 		respondError(c, isJSON, "Gagal menjalankan mysqldump: "+err.Error())
@@ -1094,7 +1095,11 @@ func (h *BackupHandler) Create(c *gin.Context) {
 	}
 
 	if err := cmd.Wait(); err != nil {
-		respondError(c, isJSON, "mysqldump gagal: "+err.Error())
+		errMsg := err.Error()
+		if stderrOut := errBuf.String(); stderrOut != "" {
+			errMsg += " — " + strings.TrimSpace(stderrOut)
+		}
+		respondError(c, isJSON, "mysqldump gagal: "+errMsg)
 		return
 	}
 
