@@ -1008,6 +1008,9 @@ func (h *BackupHandler) Index(c *gin.Context) {
 		},
 		"GDriveClientID": config.App.GoogleDriveClientID,
 		"GDriveFolderID": config.App.GoogleDriveFolderID,
+		"CanBackup":      config.CanBackup(),
+		"CanRestore":     config.CanRestore(),
+		"IsVercel":       config.IsVercel(),
 	})
 }
 

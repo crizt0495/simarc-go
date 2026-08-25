@@ -56,7 +56,22 @@
     <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
     <p class="text-muted mb-0" id="progressText">Please wait...</p>
 </div>
+{{if .IsVercel}}
+<div class="alert alert-warning d-flex align-items-start gap-3 mb-4" style="border-radius:12px;">
+    <i class="bi bi-exclamation-triangle" style="font-size:24px;color:#b45309;"></i>
+    <div>
+        <strong>Backup &amp; Restore tidak tersedia di Vercel.</strong><br>
+        <span style="font-size:14px;">Vercel serverless tidak memiliki binary <code>mysqldump</code>/<code>mysql</code>. Gunakan salah satu alternatif berikut:</span>
+        <ul class="mb-0 mt-2" style="font-size:14px;">
+            <li><strong>Aiven Console</strong> — Backup &amp; restore langsung dari dashboard Aiven MySQL.</li>
+            <li><strong>Jalankan lokal</strong> — Clone repo, jalankan <code>./run.sh</code>, lalu backup dari <code>http://localhost:8080</code>.</li>
+            <li><strong>Google Drive</strong> — Upload backup dari Aiven Console ke Google Drive.</li>
+        </ul>
+    </div>
+</div>
+{{end}}
 <div class="backup-actions">
+    {{if .CanBackup}}
     <div class="backup-action-card" onclick="createBackup()">
         <div class="backup-action-icon primary"><i class="bi bi-database"></i></div>
         <h5>Backup Database</h5>
@@ -67,8 +82,28 @@
         <h5>Backup &amp; Upload ke Google Drive</h5>
         <p>Buat backup database lalu unggah otomatis ke Google Drive</p>
     </div>
+    {{else}}
+    <div class="backup-action-card" style="opacity:0.5;cursor:not-allowed;" title="mysqldump tidak tersedia">
+        <div class="backup-action-icon primary" style="opacity:0.5;"><i class="bi bi-database"></i></div>
+        <h5>Backup Database</h5>
+        <p>mysqldump tidak tersedia di sistem ini</p>
+    </div>
+    {{end}}
+    {{if .CanRestore}}
     <div class="backup-action-card" onclick="showRestoreModal()"><div class="backup-action-icon success"><i class="bi bi-arrow-counterclockwise"></i></div><h5>Restore Database</h5><p>Restore dari backup file</p></div>
     <div class="backup-action-card" onclick="showImportModal()"><div class="backup-action-icon success" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"><i class="bi bi-filetype-sql"></i></div><h5>Import Database (.SQL)</h5><p>Unggah dan import database .SQL</p></div>
+    {{else}}
+    <div class="backup-action-card" style="opacity:0.5;cursor:not-allowed;" title="mysql tidak tersedia">
+        <div class="backup-action-icon success" style="opacity:0.5;"><i class="bi bi-arrow-counterclockwise"></i></div>
+        <h5>Restore Database</h5>
+        <p>mysql client tidak tersedia di sistem ini</p>
+    </div>
+    <div class="backup-action-card" style="opacity:0.5;cursor:not-allowed;" title="mysql tidak tersedia">
+        <div class="backup-action-icon success" style="opacity:0.5;background:linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"><i class="bi bi-filetype-sql"></i></div>
+        <h5>Import Database (.SQL)</h5>
+        <p>mysql client tidak tersedia di sistem ini</p>
+    </div>
+    {{end}}
 </div>
 <div class="backup-list">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -150,6 +185,7 @@
         </div>
     </div>
 </div>
+{{if .CanRestore}}
 <div class="restore-section">
     <h5><i class="bi bi-arrow-counterclockwise"></i> Quick Restore</h5>
     <p class="text-muted mb-3">Upload backup file untuk restore</p>
@@ -162,6 +198,7 @@
         </div>
     </form>
 </div>
+{{end}}
 <script>
 const GDRIVE_CLIENT_ID = '{{.GDriveClientID}}';
 const GDRIVE_FOLDER_ID = '{{.GDriveFolderID}}';
