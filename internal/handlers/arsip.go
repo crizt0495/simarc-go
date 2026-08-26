@@ -1107,9 +1107,23 @@ func (h *ArsipHandler) PemindahanIndex(c *gin.Context) {
 		Count(&mutasiBulanIni)
 
 	var mutasiLogs []models.ActivityLog
-	database.DB.Preload("User").
-		Where("action = 'move_location'").
-		Order("created_at DESC").Limit(20).Find(&mutasiLogs)
+	var totalLogs int64
+	logsDB := database.DB.Model(&models.ActivityLog{}).Where("action = 'move_location'")
+	logsDB.Count(&totalLogs)
+	perPage := 20
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(totalLogs) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	logsDB.Preload("User").Order("created_at DESC").Limit(perPage).Offset(offset).Find(&mutasiLogs)
 
 	var unitOpts []models.UnitKerja
 	database.DB.Where("deleted_at IS NULL").Order("nama_unit").Find(&unitOpts)
@@ -1128,6 +1142,12 @@ func (h *ArsipHandler) PemindahanIndex(c *gin.Context) {
 		"MutasiBulanIni": mutasiBulanIni,
 		"MutasiLogs":     mutasiLogs,
 		"TempatDefault":  "Kantor",
+		"Total":          totalLogs, "Page": page, "PerPage": perPage,
+		"TotalPages":     totalPages, "StartIndex": offset + 1,
+		"FirstItem":      offset + 1,
+		"LastItem":       offset + len(mutasiLogs),
+		"Pagination":     BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":       totalPages > 1,
 	})
 }
 

@@ -139,7 +139,8 @@
                 </table>
 
                 {{if .HasPages}}
-                <div class="d-flex justify-content-center mt-3">
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                    <small class="text-muted">Menampilkan {{.FirstItem}}–{{.LastItem}} dari {{.Total}} data</small>
                     {{.Pagination}}
                 </div>
                 {{end}}

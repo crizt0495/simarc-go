@@ -362,18 +362,35 @@ type JenisArsipHandler struct{}
 
 func (h *JenisArsipHandler) Index(c *gin.Context) {
 	var list []models.JenisArsip
+	var total int64
 	db := database.DB.Model(&models.JenisArsip{})
 	if q := c.Query("search"); q != "" {
 		db = db.Where("nama_jenis LIKE ? OR kode_jenis LIKE ? OR keterangan LIKE ?", "%"+q+"%", "%"+q+"%", "%"+q+"%")
 	}
-	db.Order("nama_jenis").Find(&list)
+	db.Count(&total)
+	perPage := 20
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Order("nama_jenis").Limit(perPage).Offset(offset).Find(&list)
 	Render(c, 200, "jenis-arsip/index.html", gin.H{
 		"title": "Jenis Arsip - SIMARC", "pageTitle": "Jenis Arsip",
 		"List": list, "Search": c.Query("search"),
-		"FirstItem":  1,
-		"LastItem":   len(list),
-		"HasPages":   false,
-		"Pagination": "",
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(list),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 

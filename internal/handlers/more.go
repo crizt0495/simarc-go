@@ -144,7 +144,23 @@ type RoleHandler struct{}
 
 func (h *RoleHandler) Index(c *gin.Context) {
 	var roles []models.Role
-	database.DB.Preload("Permissions").Order("name").Find(&roles)
+	var total int64
+	db := database.DB.Model(&models.Role{})
+	db.Count(&total)
+	perPage := 15
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Preload("Permissions").Order("name").Limit(perPage).Offset(offset).Find(&roles)
 	type RoleWithCount struct {
 		models.Role
 		UsersCount       int `json:"users_count"`
@@ -166,8 +182,12 @@ func (h *RoleHandler) Index(c *gin.Context) {
 	Render(c, 200, "role/index.html", gin.H{
 		"title": "Role - SIMARC", "pageTitle": "Manajemen Role",
 		"Roles": enriched, "TotalRoles": totalRoles, "TotalPermissions": totalPermissions,
-		"FirstItem":  1,
-		"Pagination": "",
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(roles),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -582,7 +602,26 @@ type JadwalRetensiHandler struct{}
 
 func (h *JadwalRetensiHandler) Index(c *gin.Context) {
 	var list []models.JadwalRetensi
-	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Order("nama_jadwal").Find(&list)
+	var total int64
+	db := database.DB.Model(&models.JadwalRetensi{})
+	if q := c.Query("search"); q != "" {
+		db = db.Where("nama_jadwal LIKE ?", "%"+q+"%")
+	}
+	db.Count(&total)
+	perPage := 10
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Preload("KodeKlasifikasi").Preload("UnitKerja").Order("nama_jadwal").Limit(perPage).Offset(offset).Find(&list)
 	type JadwalRetensiWithMeta struct {
 		models.JadwalRetensi
 		IsOverdue          bool   `json:"is_overdue"`
@@ -627,7 +666,12 @@ func (h *JadwalRetensiHandler) Index(c *gin.Context) {
 	database.DB.Model(&models.JadwalRetensi{}).Where("status = 'overdue'").Count(&overdue)
 	Render(c, 200, "jadwal-retensi/index.html", gin.H{
 		"title": "Jadwal Retensi - SIMARC", "pageTitle": "Jadwal Retensi Arsip (JRA)",
-		"List": enrichedList, "FirstItem": 1, "Pagination": "",
+		"List": enrichedList, "Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(enrichedList),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 		"Stats": gin.H{
 			"TotalSchedules": totalSchedules,
 			"Draft":          draft,
@@ -811,14 +855,39 @@ type SearchHandler struct{}
 func (h *SearchHandler) Results(c *gin.Context) {
 	q := c.Query("q")
 	var results []models.Arsip
+	var total int64
+	perPage := 25
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := 1
+	offset := 0
 	if q != "" {
+		tsQuery := "(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))"
+		db := database.DB.Model(&models.Arsip{}).Where(tsQuery, q)
+		db.Count(&total)
+		totalPages = (int(total) + perPage - 1) / perPage
+		if totalPages == 0 {
+			totalPages = 1
+		}
+		if page > totalPages {
+			page = totalPages
+		}
+		offset = (page - 1) * perPage
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip").
-			Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))", q).
-			Limit(50).Find(&results)
+			Where(tsQuery, q).
+			Limit(perPage).Offset(offset).Find(&results)
 	}
 	Render(c, 200, "search/results.html", gin.H{
 		"title": "Hasil Pencarian - SIMARC", "pageTitle": "Pencarian Arsip",
 		"query": q, "results": results, "count": len(results),
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(results),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -829,10 +898,31 @@ type PeminjamanHandler struct{}
 
 func (h *PeminjamanHandler) Index(c *gin.Context) {
 	var list []models.PeminjamanArsip
-	database.DB.Preload("Arsip").Preload("User").Order("created_at DESC").Find(&list)
+	var total int64
+	db := database.DB.Model(&models.PeminjamanArsip{})
+	db.Count(&total)
+	perPage := 15
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Preload("Arsip").Preload("User").Order("created_at DESC").Limit(perPage).Offset(offset).Find(&list)
 	Render(c, 200, "peminjaman/index.html", gin.H{
 		"title": "Peminjaman Arsip - SIMARC", "pageTitle": "Peminjaman Arsip", "List": list,
-		"Pagination": "",
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(list),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 

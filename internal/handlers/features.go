@@ -800,9 +800,23 @@ type BlockchainHandler struct{}
 
 func (h *BlockchainHandler) Index(c *gin.Context) {
 	var records []models.BlockchainAudit
-	database.DB.Order("block_number DESC").Limit(50).Find(&records)
 	var total int64
-	database.DB.Model(&models.BlockchainAudit{}).Count(&total)
+	db := database.DB.Model(&models.BlockchainAudit{})
+	db.Count(&total)
+	perPage := 25
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Order("block_number DESC").Limit(perPage).Offset(offset).Find(&records)
 
 	var todayCount int64
 	database.DB.Model(&models.BlockchainAudit{}).Where("DATE(created_at) = CURDATE()").Count(&todayCount)
@@ -869,6 +883,12 @@ func (h *BlockchainHandler) Index(c *gin.Context) {
 			"VerifiedBlocks": total,
 			"TodayBlocks":    todayCount,
 		},
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(enriched),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -951,9 +971,25 @@ type BackupHandler struct{}
 
 func (h *BackupHandler) Index(c *gin.Context) {
 	var logs []models.BackupLog
-	database.DB.Order("created_at DESC").Find(&logs)
+	var total int64
+	db := database.DB.Model(&models.BackupLog{})
+	db.Count(&total)
+	perPage := 10
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Order("created_at DESC").Limit(perPage).Offset(offset).Find(&logs)
 
-	var totalBackups = len(logs)
+	var totalBackups = total
 	var totalSize int64 = 0
 	var lastBackupAge = "Tidak ada"
 	for _, b := range logs {
@@ -1012,6 +1048,12 @@ func (h *BackupHandler) Index(c *gin.Context) {
 		"CanBackup":      config.CanBackup(),
 		"CanRestore":     config.CanRestore(),
 		"IsVercel":       config.IsVercel(),
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(logs),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -1314,9 +1356,25 @@ type retensiArsipItem struct {
 
 func (h *MonitoringHandler) Retensi(c *gin.Context) {
 	var list []models.Arsip
-	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("tanggal_retensi_berakhir BETWEEN ? AND ?", time.Now().AddDate(0, 0, -30), time.Now().AddDate(0, 0, 30)).
-		Order("tanggal_retensi_berakhir").Find(&list)
+	var total int64
+	db := database.DB.Model(&models.Arsip{}).
+		Where("tanggal_retensi_berakhir BETWEEN ? AND ?", time.Now().AddDate(0, 0, -30), time.Now().AddDate(0, 0, 30))
+	db.Count(&total)
+	perPage := 25
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Preload("KodeKlasifikasi").Preload("UnitKerja").
+		Order("tanggal_retensi_berakhir").Limit(perPage).Offset(offset).Find(&list)
 	var sudahBerakhir, akanBerakhir, masihAktif int64
 	database.DB.Model(&models.Arsip{}).Where("tanggal_retensi_berakhir < ?", time.Now()).Count(&sudahBerakhir)
 	database.DB.Model(&models.Arsip{}).Where("tanggal_retensi_berakhir BETWEEN ? AND ?", time.Now(), time.Now().AddDate(1, 0, 0)).Count(&akanBerakhir)
@@ -1345,7 +1403,12 @@ func (h *MonitoringHandler) Retensi(c *gin.Context) {
 	
 	Render(c, 200, "monitoring/retensi.html", gin.H{
 		"title": "Monitoring Retensi - SIMARC", "pageTitle": "Monitoring Retensi", "List": enhancedList,
-		"HasPages": false, "FirstItem": 1,
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(enhancedList),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 		"Stats": gin.H{
 			"SudahBerakhir": sudahBerakhir,
 			"AkanBerakhir":  akanBerakhir,

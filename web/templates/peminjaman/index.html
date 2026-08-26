@@ -227,8 +227,11 @@
                 </tbody>
             </table>
         </div>
-        {{if .Pagination}}
-        <div class="border-top px-3 py-2 d-flex justify-content-center" style="background:var(--surface-2);">{{.Pagination}}</div>
+        {{if .HasPages}}
+        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+            <small class="text-muted">Menampilkan {{.FirstItem}}–{{.LastItem}} dari {{.Total}} data</small>
+            {{.Pagination}}
+        </div>
         {{end}}
     </div>
 </div>

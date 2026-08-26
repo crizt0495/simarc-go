@@ -103,6 +103,12 @@
                     <div class="p-5 text-center text-muted italic">Belum ada blok tersimpan.</div>
                     {{end}}
                 </div>
+                {{if .HasPages}}
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                    <small class="text-muted">Menampilkan {{.FirstItem}}–{{.LastItem}} dari {{.Total}} data</small>
+                    {{.Pagination}}
+                </div>
+                {{end}}
             </div>
         </div>
         <div class="explorer-side">

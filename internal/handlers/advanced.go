@@ -39,7 +39,23 @@ type DisposalHandler struct{}
 
 func (h *DisposalHandler) Index(c *gin.Context) {
 	var klasifikasiList []models.KodeKlasifikasi
-	database.DB.Where("is_active = 1").Preload("Children").Order("kode_klasifikasi").Find(&klasifikasiList)
+	var total int64
+	db := database.DB.Model(&models.KodeKlasifikasi{}).Where("is_active = 1")
+	db.Count(&total)
+	perPage := 20
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Preload("Children").Order("kode_klasifikasi").Limit(perPage).Offset(offset).Find(&klasifikasiList)
 	type ClassStat struct {
 		KodeKlasifikasiID string `gorm:"column:kk_id"`
 		Kode              string `gorm:"column:kode"`
@@ -56,6 +72,12 @@ func (h *DisposalHandler) Index(c *gin.Context) {
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Smart Disposal", "pageTitle": "Smart Disposal - Berdasarkan Klasifikasi",
 		"klasifikasiList": klasifikasiList, "stats": stats,
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(klasifikasiList),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -66,12 +88,35 @@ func (h *DisposalHandler) ShowByClassification(c *gin.Context) {
 		return
 	}
 	var arsipList []models.Arsip
-	database.DB.Preload("UnitKerja").Preload("LokasiArsip").
+	var total int64
+	db := database.DB.Model(&models.Arsip{}).
 		Where("kode_klasifikasi_id = ? AND tanggal_retensi_berakhir < ? AND status_arsip != 'musnah'",
-			kk.ID, time.Now()).Order("tanggal_retensi_berakhir ASC").Find(&arsipList)
+			kk.ID, time.Now())
+	db.Count(&total)
+	perPage := 20
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Preload("UnitKerja").Preload("LokasiArsip").
+		Order("tanggal_retensi_berakhir ASC").Limit(perPage).Offset(offset).Find(&arsipList)
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Disposal - " + kk.KodeKlasifikasi, "pageTitle": "Disposal: " + kk.NamaKlasifikasi,
 		"ArsipList": arsipList, "kk": kk,
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(arsipList),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -115,13 +160,35 @@ func (h *DisposalHandler) CreateSchedule(c *gin.Context) {
 
 func (h *DisposalHandler) Schedules(c *gin.Context) {
 	var schedules []models.DisposalSchedule
-	db := database.DB.Preload("KodeKlasifikasi").Preload("Arsip").Preload("Arsip.KodeKlasifikasi").Preload("Arsip.UnitKerja")
+	var total int64
+	db := database.DB.Model(&models.DisposalSchedule{})
 	if v := c.Query("status"); v != "" {
 		db = db.Where("status = ?", v)
 	}
-	db.Order("scheduled_date ASC").Find(&schedules)
+	db.Count(&total)
+	perPage := 20
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Preload("KodeKlasifikasi").Preload("Arsip").Preload("Arsip.KodeKlasifikasi").Preload("Arsip.UnitKerja").
+		Order("scheduled_date ASC").Limit(perPage).Offset(offset).Find(&schedules)
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Jadwal Disposal", "pageTitle": "Jadwal Disposal", "schedules": schedules, "scheduleMode": true,
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(schedules),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -363,7 +430,23 @@ type IntegrationHandler struct{}
 
 func (h *IntegrationHandler) Index(c *gin.Context) {
 	var list []models.Integration
-	database.DB.Order("name").Find(&list)
+	var totalInt int64
+	db := database.DB.Model(&models.Integration{})
+	db.Count(&totalInt)
+	perPage := 15
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(totalInt) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Order("name").Limit(perPage).Offset(offset).Find(&list)
 
 	// External spreadsheet links for google_sheets integrations.
 	sheetLinks := make(map[string]string, len(list))
@@ -389,6 +472,12 @@ func (h *IntegrationHandler) Index(c *gin.Context) {
 			"Inactive": inactive,
 			"Error":    errorCount,
 		},
+		"Total": totalInt, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(list),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -670,7 +759,23 @@ type ImportExportHandler struct{}
 
 func (h *ImportExportHandler) Index(c *gin.Context) {
 	var jobs []models.ImportExportJob
-	database.DB.Order("created_at DESC").Limit(20).Find(&jobs)
+	var total int64
+	db := database.DB.Model(&models.ImportExportJob{})
+	db.Count(&total)
+	perPage := 20
+	page := 1
+	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
+		page = p
+	}
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+	db.Order("created_at DESC").Limit(perPage).Offset(offset).Find(&jobs)
 	var totalJobs, pending, processing, completed, failed int64
 	database.DB.Model(&models.ImportExportJob{}).Count(&totalJobs)
 	database.DB.Model(&models.ImportExportJob{}).Where("status = 'pending'").Count(&pending)
@@ -686,6 +791,12 @@ func (h *ImportExportHandler) Index(c *gin.Context) {
 			"Completed":  completed,
 			"Failed":     failed,
 		},
+		"Total": total, "Page": page, "PerPage": perPage,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(jobs),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
