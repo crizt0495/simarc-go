@@ -1363,7 +1363,7 @@ func HealthCheck(c *gin.Context) {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "error", "db": "down"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().Format(time.RFC3339), "app": config.App.AppName, "deploy": "ae90a6d-1364fix"})
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().Format(time.RFC3339), "app": config.App.AppName, "deploy": "a62435b-activitylog-fix"})
 }
 
 
