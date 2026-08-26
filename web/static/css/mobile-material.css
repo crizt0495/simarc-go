@@ -3,6 +3,15 @@
    Loaded AFTER enterprise-premium.css for clean overrides
    ═══════════════════════════════════════════════════════════════ */
 
+/* ── FORCE: Hide all desktop-only mobile leftovers ── */
+@media (max-width: 991px) {
+  .sidebar-toggle,
+  .sidebar-toggle#sidebarToggle,
+  .top-navbar .sidebar-toggle,
+  .navbar-left .sidebar-toggle { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
+  .navbar-brand-mobile { display: flex !important; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; font-size: 16px; color: var(--ink); }
+}
+
 /* ── Theme Color for Android Status Bar ── */
 meta[name="theme-color"] {
   content: var(--brand) !important;
@@ -162,16 +171,17 @@ meta[name="theme-color"] {
     top: auto !important;
     right: 8px !important;
     bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px) !important;
-    left: auto !important;
+    left: 8px !important;
     transform: none !important;
     width: auto !important;
-    min-width: 280px;
-    max-width: 320px;
+    max-height: 65vh;
+    overflow-y: auto;
     border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
     border: 1px solid var(--border) !important;
     padding: 8px !important;
     z-index: 1060 !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   [data-theme="dark"] .mobile-more-menu {
@@ -179,10 +189,32 @@ meta[name="theme-color"] {
     border-color: #2d2d2d !important;
   }
 
+  /* Section */
+  .mobile-more-section {
+    margin-bottom: 4px;
+  }
+  .mobile-more-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .mobile-more-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-4);
+    padding: 6px 8px 2px;
+    user-select: none;
+  }
+
+  [data-theme="dark"] .mobile-more-section-title {
+    color: #757575;
+  }
+
   .mobile-more-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+    gap: 2px;
   }
 
   .mobile-more-item {
@@ -191,7 +223,7 @@ meta[name="theme-color"] {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 10px 4px;
+    padding: 10px 2px;
     border-radius: 12px;
     text-decoration: none;
     color: var(--ink-3);
@@ -199,6 +231,10 @@ meta[name="theme-color"] {
     font-weight: 500;
     transition: background 0.15s ease;
     min-height: 56px;
+    border: none;
+    background: none;
+    width: 100%;
+    cursor: pointer;
   }
 
   [data-theme="dark"] .mobile-more-item {
@@ -233,16 +269,31 @@ meta[name="theme-color"] {
 
   .mobile-more-item span {
     font-size: 10px;
-    line-height: 1;
+    line-height: 1.1;
     text-align: center;
+    white-space: nowrap;
   }
 
-  /* Active state in more menu */
+  /* Active state */
   .mobile-more-item.active {
     color: var(--brand);
   }
   .mobile-more-item.active i {
     color: var(--brand);
+  }
+
+  /* Logout button */
+  .mobile-more-logout {
+    color: #ef4444 !important;
+  }
+  .mobile-more-logout i {
+    color: #ef4444 !important;
+  }
+  [data-theme="dark"] .mobile-more-logout {
+    color: #f87171 !important;
+  }
+  [data-theme="dark"] .mobile-more-logout i {
+    color: #f87171 !important;
   }
 }
 
