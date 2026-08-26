@@ -377,7 +377,7 @@
 {{template "components/sidebar.html" .}}
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- Mobile Search Bar (sticky) -->
+<!-- Mobile Search Bar (hidden on mobile - using bottom nav search instead) -->
 <div class="mobile-search-bar" id="mobileSearchBar">
   <form action="/search" method="GET" style="display:contents;flex:1">
     <div class="mobile-search-inner">
@@ -389,26 +389,6 @@
     <button type="button" class="btn btn-light btn-sm mobile-search-close" onclick="var sb=document.getElementById('mobileSearchBar');sb.classList.add('d-none');document.getElementById('mobileSearchBtn')?.classList.remove('active')" aria-label="Tutup pencarian"><i class="bi bi-x-lg"></i></button>
   </form>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var msb = document.getElementById('mobileSearchBar');
-  if (!msb) return;
-  var input = msb.querySelector('input');
-  var clear = document.getElementById('mobileSearchClear');
-  if (input && clear) {
-    input.addEventListener('input', function() {
-      clear.style.display = this.value.length > 0 ? 'flex' : 'none';
-    });
-    // Auto-close on Escape
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        msb.classList.add('d-none');
-        document.getElementById('mobileSearchBtn')?.classList.remove('active');
-      }
-    });
-  }
-});
-</script>
 
 <!-- Top Navbar -->
 <header class="top-navbar">
@@ -429,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <i class="bi bi-moon" id="themeIcon"></i>
     </button>
 
-    <button class="nav-icon-btn" id="keyboardShortcutBtn" title="Pintasan Keyboard" onclick="SimarcModal.show('kbdModal')">
+    <button class="nav-icon-btn d-none d-md-flex" id="keyboardShortcutBtn" title="Pintasan Keyboard" onclick="SimarcModal.show('kbdModal')">
       <i class="bi bi-keyboard"></i>
     </button>
 
@@ -527,8 +507,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (href && (currentPath === href || currentPath.startsWith(href + '/') || currentPath.startsWith(href + '?'))) {
       item.classList.add('active');
     }
-    if (href === '/search' && (currentPath === '/search' || document.querySelector('.mobile-search-bar:not(.d-none)'))) {
-      // keep search active if search bar is open
+    // Special handling for search page
+    if (href === '/search' && currentPath === '/search') {
+      item.classList.add('active');
     }
   });
 });
@@ -752,27 +733,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {{block "scripts" .}}{{end}}
 
-<!-- Mobile Bottom Navigation -->
+<!-- Mobile Bottom Navigation - Android Material Design Style -->
 <nav class="mobile-bottom-nav" id="mobileBottomNav">
   <a href="/dashboard" class="mobile-bottom-nav-item">
-    <i class="bi bi-speedometer2"></i>
-    <span>Dashboard</span>
+    <i class="bi bi-house-door"></i>
+    <span>Beranda</span>
   </a>
   <a href="/arsip" class="mobile-bottom-nav-item">
-    <i class="bi bi-file-earmark-text"></i>
+    <i class="bi bi-folder2-open"></i>
     <span>Arsip</span>
   </a>
-  <a href="/search" class="mobile-bottom-nav-item" id="mobileSearchBtn" onclick="event.preventDefault();var sb=document.getElementById('mobileSearchBar');sb.classList.toggle('d-none');if(!sb.classList.contains('d-none')){var inp=sb.querySelector('input');if(inp)setTimeout(function(){inp.focus()},300)};this.classList.toggle('active');">
+  <a href="/search" class="mobile-bottom-nav-item" id="mobileSearchBtn" onclick="event.preventDefault();window.location.href='/search';">
     <i class="bi bi-search"></i>
     <span>Cari</span>
   </a>
   <a href="/peminjaman" class="mobile-bottom-nav-item">
-    <i class="bi bi-journal-check"></i>
+    <i class="bi bi-journal-arrow-down"></i>
     <span>Pinjam</span>
   </a>
   <a href="/profil" class="mobile-bottom-nav-item">
-    <i class="bi bi-person"></i>
-    <span>Profil</span>
+    <i class="bi bi-person-circle"></i>
+    <span>Akun</span>
   </a>
 </nav>
 
