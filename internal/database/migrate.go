@@ -525,7 +525,7 @@ func ensureArsipIDDefault() {
 	if currentDefault != nil && *currentDefault != "" {
 		return
 	}
-	DB.Exec("ALTER TABLE arsip MODIFY COLUMN id VARCHAR(36) NOT NULL DEFAULT (UUID())")
+	DB.Exec("ALTER TABLE arsip MODIFY COLUMN id CHAR(36) NOT NULL DEFAULT (UUID())")
 	log.Println("[MIGRASI] Menambahkan DEFAULT (UUID()) ke kolom id tabel arsip")
 }
 
