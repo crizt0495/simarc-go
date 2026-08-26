@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"arsippro/internal/models"
 
@@ -217,6 +218,10 @@ func Migrate() error {
 	// Ensure arsip.id has a DEFAULT so MySQL won't reject inserts that forget
 	// to supply the primary key (Error 1364). Works on MySQL 8.0.13+.
 	ensureArsipIDDefault()
+
+	// Ensure activity_logs.id has AUTO_INCREMENT so GORM can create log
+	// records without specifying the id column.
+	ensureActivityLogAutoIncrement()
 
 	// Record the completed schema version so subsequent boots take the fast path.
 	markSchemaVersion()
@@ -527,6 +532,22 @@ func ensureArsipIDDefault() {
 	}
 	DB.Exec("ALTER TABLE arsip MODIFY COLUMN id CHAR(36) NOT NULL DEFAULT (UUID())")
 	log.Println("[MIGRASI] Menambahkan DEFAULT (UUID()) ke kolom id tabel arsip")
+}
+
+// ensureActivityLogAutoIncrement makes sure activity_logs.id has AUTO_INCREMENT.
+// Without it, GORM creates ActivityLog with uint zero value and omits id from
+// INSERT, causing MySQL Error 1364.
+func ensureActivityLogAutoIncrement() {
+	if !tableExists("activity_logs") {
+		return
+	}
+	var extra string
+	DB.Raw("SHOW CREATE TABLE activity_logs").Scan(&extra)
+	if strings.Contains(strings.ToLower(extra), "auto_increment") {
+		return
+	}
+	DB.Exec("ALTER TABLE activity_logs MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT")
+	log.Println("[MIGRASI] Menambahkan AUTO_INCREMENT ke kolom id tabel activity_logs")
 }
 
 // alignIntegrationTables adapts the legacy Laravel schema of integrations and

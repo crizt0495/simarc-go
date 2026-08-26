@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -516,16 +517,17 @@ if err := database.DB.Transaction(func(tx *gorm.DB) error {
 			return err
 		}
 		
-		// Log activity inside the same transaction
-		log := models.ActivityLog{
+		// Log activity — failure here must NOT block arsip creation.
+		actLog := models.ActivityLog{
 			UserID:      &user.ID,
 			Action:      "create",
 			Description: "Menambah arsip: " + arsip.NamaArsip,
 			ModelType:   "arsip",
 			ModelID:     arsip.ID,
 		}
-		if err := tx.Create(&log).Error; err != nil {
-			return err
+		if err := tx.Create(&actLog).Error; err != nil {
+			// Activity log failure is non-fatal — arsip was already saved.
+			log.Printf("[WARN] Gagal log aktivitas untuk arsip %s: %v", arsip.ID, err)
 		}
 		
 		// Note: blockchain audit isn't part of logActivity if we bypass it, but logActivity internally uses global DB.

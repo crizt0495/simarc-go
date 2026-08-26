@@ -399,6 +399,13 @@ type ActivityLog struct {
 
 func (ActivityLog) TableName() string { return "activity_logs" }
 
+func (a *ActivityLog) BeforeCreate(tx *gorm.DB) error {
+	if a.ID == 0 {
+		// let DB auto-increment; this hook ensures it's called
+	}
+	return nil
+}
+
 // ── AUDIT LOG ────────────────────────────────────────────────────────────────
 
 type AuditLog struct {
