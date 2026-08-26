@@ -219,3 +219,4 @@ APP_DEBUG=true ./simarc-server
 ## 📝 Lisensi
 
 © 2026 Bakesbangpol Kota Probolinggo. All rights reserved.
+
