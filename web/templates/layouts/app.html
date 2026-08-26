@@ -396,6 +396,10 @@
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="Menu">
       <i class="bi bi-list"></i>
     </button>
+    <a href="/dashboard" class="navbar-brand-mobile d-flex d-md-none align-items-center gap-2 text-decoration-none" style="font-weight:700;font-size:16px;color:var(--ink);">
+      <i class="bi bi-archive-fill" style="color:var(--brand);font-size:20px;"></i>
+      <span>SIMARC</span>
+    </a>
 
     <form action="/search" method="GET" class="nav-search d-none d-md-flex">
       <i class="bi bi-search" style="color:var(--ink-4);font-size:14px;flex-shrink:0"></i>
@@ -421,7 +425,7 @@
           <div class="nav-user-name">{{.AuthUser.Name}}</div>
           <div class="nav-user-role">{{if .AuthUser.Role}}{{.AuthUser.Role.Name}}{{else}}Pengguna{{end}}</div>
         </div>
-        <i class="bi bi-chevron-down" style="font-size:11px;color:var(--ink-4)"></i>
+        <i class="bi bi-chevron-down d-none d-sm-inline" style="font-size:11px;color:var(--ink-4)"></i>
       </div>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="/profil"><i class="bi bi-person"></i> Profil Saya</a></li>
@@ -502,14 +506,48 @@
 /* ── Mobile Bottom Nav Active State ── */
 document.addEventListener('DOMContentLoaded', function() {
   var currentPath = window.location.pathname;
-  document.querySelectorAll('.mobile-bottom-nav-item').forEach(function(item) {
+
+  // Mark active bottom nav item
+  document.querySelectorAll('.mobile-bottom-nav-item[data-page]').forEach(function(item) {
     var href = item.getAttribute('href');
-    if (href && (currentPath === href || currentPath.startsWith(href + '/') || currentPath.startsWith(href + '?'))) {
+    if (!href) return;
+    if (currentPath === href || currentPath.startsWith(href + '/') || currentPath.startsWith(href + '?')) {
       item.classList.add('active');
     }
-    // Special handling for search page
-    if (href === '/search' && currentPath === '/search') {
-      item.classList.add('active');
+  });
+
+  // Mark "Lainnya" as active when on a sub-page
+  var moreBtn = document.getElementById('mobileMoreBtn');
+  if (moreBtn) {
+    var moreItems = document.querySelectorAll('.mobile-more-item');
+    var isMorePage = true;
+    // Check if current page matches any main nav item
+    document.querySelectorAll('.mobile-bottom-nav-item[data-page]').forEach(function(item) {
+      var href = item.getAttribute('href');
+      if (href && (currentPath === href || currentPath.startsWith(href + '/'))) {
+        isMorePage = false;
+      }
+    });
+    if (isMorePage) {
+      moreBtn.classList.add('active');
+    }
+
+    // Mark active item inside more menu
+    moreItems.forEach(function(item) {
+      var href = item.getAttribute('href');
+      if (href && (currentPath === href || currentPath.startsWith(href + '/'))) {
+        item.classList.add('active');
+      }
+    });
+  }
+
+  // Close more menu when clicking outside
+  document.addEventListener('click', function(e) {
+    var moreMenu = document.querySelector('.mobile-more-menu');
+    var moreBtn = document.getElementById('mobileMoreBtn');
+    if (moreMenu && moreBtn && !moreMenu.contains(e.target) && !moreBtn.contains(e.target)) {
+      var bsDropdown = bootstrap.Dropdown.getInstance(moreBtn);
+      if (bsDropdown) bsDropdown.hide();
     }
   });
 });
@@ -733,28 +771,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {{block "scripts" .}}{{end}}
 
-<!-- Mobile Bottom Navigation - Android Material Design Style -->
-<nav class="mobile-bottom-nav" id="mobileBottomNav">
-  <a href="/dashboard" class="mobile-bottom-nav-item">
+<!-- Mobile Bottom Navigation - Android Material Design 3 -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Navigasi utama">
+  <a href="/dashboard" class="mobile-bottom-nav-item" data-page="dashboard">
     <i class="bi bi-house-door"></i>
     <span>Beranda</span>
   </a>
-  <a href="/arsip" class="mobile-bottom-nav-item">
+  <a href="/arsip" class="mobile-bottom-nav-item" data-page="arsip">
     <i class="bi bi-folder2-open"></i>
     <span>Arsip</span>
   </a>
-  <a href="/search" class="mobile-bottom-nav-item" id="mobileSearchBtn" onclick="event.preventDefault();window.location.href='/search';">
-    <i class="bi bi-search"></i>
-    <span>Cari</span>
+  <a href="/pemberkasan" class="mobile-bottom-nav-item" data-page="pemberkasan">
+    <i class="bi bi-archive"></i>
+    <span>Berkas</span>
   </a>
-  <a href="/peminjaman" class="mobile-bottom-nav-item">
-    <i class="bi bi-journal-arrow-down"></i>
+  <a href="/peminjaman" class="mobile-bottom-nav-item" data-page="peminjaman">
+    <i class="bi bi-arrow-left-right"></i>
     <span>Pinjam</span>
   </a>
-  <a href="/profil" class="mobile-bottom-nav-item">
-    <i class="bi bi-person-circle"></i>
-    <span>Akun</span>
-  </a>
+  <button type="button" class="mobile-bottom-nav-item" id="mobileMoreBtn" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="bi bi-grid"></i>
+    <span>Lainnya</span>
+  </button>
+
+  <!-- More Menu (dropdown with all features) -->
+  <div class="dropdown-menu mobile-more-menu" aria-labelledby="mobileMoreBtn">
+    <div class="mobile-more-grid">
+      <a href="/search" class="mobile-more-item">
+        <i class="bi bi-search"></i><span>Cari</span>
+      </a>
+      <a href="/arsip/pemindahan" class="mobile-more-item">
+        <i class="bi bi-map"></i><span>Pindahkan</span>
+      </a>
+      <a href="/pemusnahan" class="mobile-more-item">
+        <i class="bi bi-trash"></i><span>Musnahkan</span>
+      </a>
+      <a href="/jadwal-retensi" class="mobile-more-item">
+        <i class="bi bi-calendar-check"></i><span>Retensi</span>
+      </a>
+      <a href="/laporan" class="mobile-more-item">
+        <i class="bi bi-graph-up"></i><span>Laporan</span>
+      </a>
+      <a href="/monitoring/retensi" class="mobile-more-item">
+        <i class="bi bi-clock"></i><span>Monitoring</span>
+      </a>
+      <a href="/unit-kerja" class="mobile-more-item">
+        <i class="bi bi-building"></i><span>Unit Kerja</span>
+      </a>
+      <a href="/lokasi-arsip" class="mobile-more-item">
+        <i class="bi bi-geo-alt"></i><span>Lokasi</span>
+      </a>
+      <a href="/kode-klasifikasi" class="mobile-more-item">
+        <i class="bi bi-tags"></i><span>Klasifikasi</span>
+      </a>
+      <a href="/jenis-arsip" class="mobile-more-item">
+        <i class="bi bi-folder"></i><span>Jenis</span>
+      </a>
+      <a href="/users" class="mobile-more-item">
+        <i class="bi bi-people"></i><span>Petugas</span>
+      </a>
+      <a href="/roles" class="mobile-more-item">
+        <i class="bi bi-person-badge"></i><span>Role</span>
+      </a>
+      <a href="/backup" class="mobile-more-item">
+        <i class="bi bi-database"></i><span>Backup</span>
+      </a>
+      <a href="/blockchain" class="mobile-more-item">
+        <i class="bi bi-shield-check"></i><span>Blockchain</span>
+      </a>
+      <a href="/pengaturan" class="mobile-more-item">
+        <i class="bi bi-gear"></i><span>Pengaturan</span>
+      </a>
+      <a href="/profil" class="mobile-more-item">
+        <i class="bi bi-person-circle"></i><span>Akun</span>
+      </a>
+    </div>
+  </div>
 </nav>
 
 <script>

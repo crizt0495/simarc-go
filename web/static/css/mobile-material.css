@@ -1,183 +1,304 @@
-/* ── Mobile Material Design 3 Enhancements ──
-   Menambahkan sentuhan Material Design di atas fondasi yang sudah ada.
-   File ini di-load setelah enterprise-premium.css agar bisa overwrite
-   variabel dan mengisi area kosong tanpa mengganggu elemen lainnya.
-*/
-/* ── Status bar & Theme color ──*/
-meta[name="theme-color"]{
-  content:var(--brand) !important;
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE MATERIAL DESIGN 3 — Android-Style Bottom Navigation
+   Loaded AFTER enterprise-premium.css for clean overrides
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Theme Color for Android Status Bar ── */
+meta[name="theme-color"] {
+  content: var(--brand) !important;
 }
-@media (prefers-color-scheme: dark){
-  meta[name="theme-color"]{
-    content:var(--slate-900) !important;
+@media (prefers-color-scheme: dark) {
+  meta[name="theme-color"] {
+    content: var(--slate-900) !important;
   }
 }
 
-/* ── Bottom Nav Material Design 3 ──*/
-.mobile-bottom-nav{
-  --mbn-gap:8px;
-  --mbn-pill-height:56px;
-  --mbn-icon-size:24px;
-  --mbn-text-font-size:12px;
-  --mbn-active-bg:rgba(var(--primary-rgb),.12);
-  --mbn-active-color:var(--primary);
-  --mbn-inactive-bg:transparent;
-  --mbn-inactive-color:var(--ink-4);
-  --mbn-shadow:0 1px 2px rgba(0,0,0,.04);
-}
-.mobile-bottom-nav .mobile-bottom-nav-item{
-  flex:0 0 calc(100%/5 - var(--mbn-gap));
-  height:var(--mbn-pill-height);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:var(--mbn-gap);
-  position:relative;
-  color:var(--mbn-inactive-color);
-  transition:color .2s ease,background .2s ease,border-radius .15s ease;
-}
-.mobile-bottom-nav .mobile-bottom-nav-item:hover{
-  color:var(--ink-2);
-}
-.mobile-bottom-nav .mobile-bottom-nav-item.active{
-  color:var(--mbn-active-color);
-  background:var(--mbn-active-bg);
-  box-shadow:var(--mbn-shadow);
-  border-radius:9999px;
-}
-.mobile-bottom-nav .mobile-bottom-nav-item.active i,
-.mobile-bottom-nav .mobile-bottom-nav-item.active span{
-  color:var(--mbn-active-color);
-}
-.mobile-bottom-nav .mobile-bottom-nav-item::after{
-  content:"";
-  position:absolute;
-  bottom:0;
-  left:50%;
-  transform:translateX(-50%);
-  width:20px;
-  height:3px;
-  background:var(--brand);
-  border-radius:0 0 12px 12px;
-  opacity:0;
-  transition:opacity .15s ease;
-}
-.mobile-bottom-nav .mobile-bottom-nav-item.active::after{
-  opacity:1;
-}
-.mobile-bottom-nav .mobile-bottom-nav-item i{
-  font-size:var(--mbn-icon-size);
-}
-.mobile-bottom-nav .mobile-bottom-nav-item span{
-  font-size:var(--mbn-text-font-size);
-  font-weight:500;
+/* ── Bottom Navigation Bar — Material Design 3 ── */
+@media (max-width: 991px) {
+  .mobile-bottom-nav {
+    --mbn-height: 64px;
+    --mbn-icon-size: 24px;
+    --mbn-font-size: 12px;
+    --mbn-active-color: var(--brand);
+    --mbn-inactive-color: #757575;
+    --mbn-active-bg: rgba(var(--primary-rgb, 59,130,246), 0.12);
+
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--mbn-height);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
+    display: flex !important;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 1050;
+  }
+
+  /* Dark mode bottom nav */
+  [data-theme="dark"] .mobile-bottom-nav {
+    background: #121212;
+    border-top-color: #2d2d2d;
+    box-shadow: 0 -1px 6px rgba(0,0,0,0.3);
+  }
+
+  /* ── Nav Item ── */
+  .mobile-bottom-nav-item {
+    flex: 1;
+    max-width: 80px;
+    height: var(--mbn-height);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-decoration: none;
+    color: var(--mbn-inactive-color);
+    font-size: var(--mbn-font-size);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 8px 0;
+    transition: color 0.15s ease;
+  }
+
+  [data-theme="dark"] .mobile-bottom-nav-item {
+    color: #9e9e9e;
+  }
+
+  .mobile-bottom-nav-item i {
+    font-size: var(--mbn-icon-size);
+    line-height: 1;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+
+  .mobile-bottom-nav-item span {
+    font-size: var(--mbn-font-size);
+    line-height: 1;
+    font-weight: 500;
+  }
+
+  /* ── Tap Feedback ── */
+  .mobile-bottom-nav-item:active {
+    transform: scale(0.92);
+    transition: transform 0.08s ease;
+  }
+
+  /* ── Active State — MD3 Pill Indicator ── */
+  .mobile-bottom-nav-item.active {
+    color: var(--mbn-active-color);
+  }
+
+  [data-theme="dark"] .mobile-bottom-nav-item.active {
+    color: #60a5fa;
+  }
+
+  .mobile-bottom-nav-item.active i {
+    color: var(--mbn-active-color);
+  }
+
+  [data-theme="dark"] .mobile-bottom-nav-item.active i {
+    color: #60a5fa;
+  }
+
+  /* Active pill background (MD3 style) */
+  .mobile-bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--mbn-active-bg);
+    z-index: -1;
+    transition: opacity 0.2s ease;
+  }
+
+  [data-theme="dark"] .mobile-bottom-nav-item.active::before {
+    background: rgba(96, 165, 250, 0.12);
+  }
 }
 
-/* ── Material Ripple Effect ──*/
-.ripple{
-  position:relative;
-  overflow:hidden;
-}
-.ripple::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(255,255,255,.3);
-  border-radius:50%;
-  transform:scale(0);
-  transition:transform .25s cubic-bezier(.4,0,.2,1);
-  pointer-events:none;
-}
-.ripple:active::after{
-  transform:scale(4);
+/* ── Touch Feedback for Buttons ── */
+.btn:active,
+.btn-crud:active,
+.nav-icon-btn:active,
+.dropdown-item:active,
+.page-link:active {
+  transform: scale(0.98);
+  transition: transform 0.08s ease;
 }
 
-/* ── Touch Feedback ──*/
-.btn,.btn-crud,.nav-icon-btn,.mobile-bottom-nav-item,.dropdown-item,.page-link{
-  touch-action:manipulation;
+/* ── Ripple Effect Class (add .ripple to any element) ── */
+.ripple {
+  position: relative;
+  overflow: hidden;
 }
-.btn:active,.btn-crud:active,.nav-icon-btn:active,.mobile-bottom-nav-item:active,.dropdown-item:active,.page-link:active{
-  transform:scale(.98);
-  transition:transform .08s ease;
+.ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
 }
-
-/* ── Auto-hide Top Navbar ──*/
-/* Add data-scroll="hide" to <header class="top-navbar"> to enable auto-hide */
-.top-navbar{
-  will-change:transform;
-  transition:transform .2s cubic-bezier(.4,0,.2,1);
-}
-.top-navbar.hidden{
-  transform:translateY(-100%);
-}
-body[data-scroll="hide"] .top-navbar{
-  transition:none;
+.ripple:active::after {
+  transform: scale(4);
 }
 
-/* ── Floating Action Button ──*/
-/* Add <a href="#" class="fab" style="..."> ke dalam halaman yang butuh FAB */
-.fab{
-  position:fixed;
-  bottom:calc(var(--mbn-pill-height) + 16px);
-  right:16px;
-  width:56px;
-  height:56px;
-  border-radius:50%;
-  background:var(--primary);
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 4px 12px rgba(37,99,235,.3);
-  z-index:1060;
-  transition:background .2s,elevation .2s;
-}
-.fab:hover{
-  background:var(--primary-600);
-}
-.fab:active::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(255,255,255,.3);
-  border-radius:50%;
-  transform:scale(4);
+/* ── More Menu Dropdown ── */
+@media (max-width: 991px) {
+  .mobile-more-menu {
+    position: fixed !important;
+    top: auto !important;
+    right: 8px !important;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px) !important;
+    left: auto !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: 280px;
+    max-width: 320px;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+    border: 1px solid var(--border) !important;
+    padding: 8px !important;
+    z-index: 1060 !important;
+  }
+
+  [data-theme="dark"] .mobile-more-menu {
+    background: #1e1e1e !important;
+    border-color: #2d2d2d !important;
+  }
+
+  .mobile-more-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+
+  .mobile-more-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--ink-3);
+    font-size: 10px;
+    font-weight: 500;
+    transition: background 0.15s ease;
+    min-height: 56px;
+  }
+
+  [data-theme="dark"] .mobile-more-item {
+    color: #b0b0b0;
+  }
+
+  .mobile-more-item:hover {
+    background: var(--surface-3);
+  }
+
+  .mobile-more-item:active {
+    transform: scale(0.95);
+    background: var(--brand-lt);
+  }
+
+  [data-theme="dark"] .mobile-more-item:hover {
+    background: rgba(255,255,255,0.08);
+  }
+
+  [data-theme="dark"] .mobile-more-item:active {
+    background: rgba(96,165,250,0.12);
+  }
+
+  .mobile-more-item i {
+    font-size: 20px;
+    color: var(--ink-3);
+  }
+
+  [data-theme="dark"] .mobile-more-item i {
+    color: #b0b0b0;
+  }
+
+  .mobile-more-item span {
+    font-size: 10px;
+    line-height: 1;
+    text-align: center;
+  }
+
+  /* Active state in more menu */
+  .mobile-more-item.active {
+    color: var(--brand);
+  }
+  .mobile-more-item.active i {
+    color: var(--brand);
+  }
 }
 
-/* ── Card Elevation ──*/
-.card{
-  transition:box-shadow .2s ease;
+/* ── Floating Action Button ── */
+.fab {
+  position: fixed;
+  bottom: calc(64px + 16px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+  z-index: 1060;
+  text-decoration: none;
+  font-size: 24px;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
 }
-.card:hover{
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
-.card:active{
-  box-shadow:0 2px 6px rgba(0,0,0,.1);
+.fab:hover { box-shadow: 0 6px 20px rgba(37,99,235,0.4); transform: translateY(-2px); }
+.fab:active { transform: scale(0.92); }
+
+/* ── Card Elevation on Touch ── */
+@media (max-width: 991px) {
+  .card { transition: box-shadow 0.15s ease; }
+  .card:active { box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; }
 }
 
-/* ── Prevent iOS Zoom on Focus ──*/
-input,select,textarea{
-  font-size:16px !important;
+/* ── iOS Safe Areas ── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .fab {
+    bottom: calc(64px + 16px + env(safe-area-inset-bottom));
+  }
 }
 
-/* ── Fade-in Page Transition ──*/
-html{
-  transition:opacity .2s ease;
-}
-body{
-  opacity:1;
-}
-body.caching{
-  opacity:0;
+/* ── Page Transitions ── */
+@media (max-width: 991px) {
+  .main-content {
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0.96; }
+    to { opacity: 1; }
+  }
 }
 
-/* ── Reduced Motion ──*/
-@media (prefers-reduced-motion: reduce){
-  *,
-  *::before,
-  *::after{
-    animation-duration:0s !important;
-    transition-duration:0s !important;
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
   }
 }

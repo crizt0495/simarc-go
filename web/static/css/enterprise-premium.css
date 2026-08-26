@@ -2605,179 +2605,64 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 @media (max-width: 480px) { .dashboard-stats .col, .dashboard-stats [class*="col-"] { min-width: 100%; flex: 0 0 100%; } }
 
 /* ═══════════════════════════════════════════════════════════════
-   RESPONSIVE MOBILE OPTIMIZATION
+   RESPONSIVE MOBILE OPTIMIZATION (Android App Style)
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Mobile: Android-Style Bottom Navigation ── */
+/* ── Mobile (< 992px): Android App Layout ──
+   No sidebar, no hamburger, bottom nav only */
 @media (max-width: 991px) {
-    /* Hide sidebar completely on mobile */
-    .sidebar {
-        display: none !important;
-        transform: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-    }
-    .sidebar-overlay { display: none !important; }
-
-    /* Hide hamburger menu on mobile */
+    /* === SIDEBAR: completely removed === */
+    .sidebar,
+    .sidebar-overlay,
     .sidebar-toggle { display: none !important; }
+    .sidebar-toggle { pointer-events: none !important; }
 
-    /* Hide desktop search on mobile */
-    .nav-search { display: none !important; }
-
-    /* Top navbar simplified for mobile */
+    /* === TOP NAVBAR: Android App Bar === */
     .top-navbar {
         left: 0 !important;
+        right: 0;
+        height: 56px !important;
         padding: 0 12px !important;
-        height: 52px !important;
-        border-bottom: 1px solid var(--border);
         background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        box-shadow: none;
+        z-index: 1040;
     }
-
-    .top-navbar .navbar-left {
-        flex: 1;
-    }
-
-    .top-navbar .navbar-right {
-        gap: 4px;
-    }
-
-    /* Hide keyboard shortcut button on mobile */
+    .top-navbar .navbar-left { flex: 1; display: flex; align-items: center; }
+    .top-navbar .navbar-right { gap: 4px; }
+    .navbar-brand-mobile { display: flex !important; }
+    .nav-search { display: none !important; }
     #keyboardShortcutBtn { display: none !important; }
+    .nav-user-name, .nav-user-role { display: none !important; }
 
-    /* Main content adjustment */
+    /* === MAIN CONTENT: offset for top bar + bottom nav === */
     .main-content {
         margin-left: 0 !important;
         padding: 12px 14px !important;
-        padding-top: 60px !important;
-        padding-bottom: 72px !important;
-        min-height: 100vh;
+        padding-top: 64px !important;
+        padding-bottom: 80px !important;
+        min-height: 100dvh;
     }
 
-    /* Bottom Navigation Bar - Android Material Design Style */
+    /* === BOTTOM NAV: hidden by default, shown here === */
     .mobile-bottom-nav {
         display: flex !important;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: var(--surface);
-        border-top: 1px solid var(--border);
-        z-index: 1060;
-        padding: 6px 0 env(safe-area-inset-bottom, 6px);
-        justify-content: space-around;
-        align-items: center;
-        box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
-        height: 60px;
-    }
-
-    .mobile-bottom-nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 2px;
-        padding: 6px 12px;
-        border-radius: 16px;
-        text-decoration: none;
-        color: var(--ink-4);
-        font-size: 11px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-        min-width: 56px;
-        min-height: 48px;
-        position: relative;
-    }
-
-    .mobile-bottom-nav-item i {
-        font-size: 22px;
-        transition: all 0.2s ease;
-    }
-
-    .mobile-bottom-nav-item span {
-        font-size: 11px;
-        line-height: 1;
-        font-weight: 500;
-    }
-
-    .mobile-bottom-nav-item:active {
-        background: var(--surface-3);
-        transform: scale(0.92);
-    }
-
-    /* Active state - Material Design indicator */
-    .mobile-bottom-nav-item.active {
-        color: var(--brand);
-        font-weight: 600;
-    }
-
-    .mobile-bottom-nav-item.active i {
-        color: var(--brand);
-        transform: scale(1.05);
-    }
-
-    .mobile-bottom-nav-item.active::before {
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 32px;
-        height: 3px;
-        background: var(--brand);
-        border-radius: 0 0 4px 4px;
-    }
-
-    /* Active state pill background */
-    .mobile-bottom-nav-item.active::after {
-        content: '';
-        position: absolute;
-        top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 48px;
-        height: 28px;
-        background: var(--brand-lt);
-        border-radius: 14px;
-        z-index: -1;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-    }
-
-    .mobile-bottom-nav-item.active::after {
-        opacity: 1;
     }
 }
 
+/* === BOTTOM NAV: always hidden on desktop === */
 .mobile-bottom-nav { display: none; }
 
-/* Sidebar Mobile Improvements - Desktop Only */
+/* === MOBILE SEARCH BAR: always hidden === */
+.mobile-search-bar { display: none !important; }
+.navbar-brand-mobile { display: none !important; }
+
+/* === Sidebar: desktop only === */
 @media (min-width: 992px) {
     .sidebar { width: 280px !important; }
-    .sidebar.show,
-    .sidebar.active { transform: translateX(0); }
+    .sidebar.show, .sidebar.active { transform: translateX(0); }
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1010; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-    .sidebar-overlay.show,
-    .sidebar-overlay.active { display: block; }
-
-    .sidebar-section-toggle {
-        cursor: pointer;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 20px 6px;
-        margin-top: 4px;
-    }
-
-    .sidebar-section-toggle:hover { color: rgba(255,255,255,0.5); }
-    .sidebar-section-toggle i.chevron { font-size: 11px; transition: transform 0.2s ease; opacity: 0.5; }
-    .sidebar-section-toggle.active i.chevron { transform: rotate(90deg); }
-    .sidebar-section-links { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
-    .sidebar-section-links.open { max-height: 500px; }
+    .sidebar-overlay.show, .sidebar-overlay.active { display: block; }
 }
 
 /* Touch-friendly tap targets */
@@ -2788,15 +2673,6 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
     .sidebar-link { padding-top: 12px !important; padding-bottom: 12px !important; }
     input, select, textarea { font-size: 16px !important; }
 }
-
-/* Mobile Search Bar - Hidden on Android-style mobile */
-@media (max-width: 991px) {
-    .mobile-search-bar {
-        display: none !important;
-    }
-}
-
-.mobile-search-bar { display: none; }
 
 /* Table Mobile Card Layout */
 @media (max-width: 768px) {
@@ -2849,9 +2725,8 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 /* Alert mobile styling */
 @media (max-width: 576px) { .alert { border-radius: 10px; padding: 10px 12px; font-size: 12px; } .alert i { font-size: 16px; } }
 
-/* ── Mobile Bottom Content Safe Area (prevents overlap with bottom nav) ── */
+/* ── Mobile Bottom Content Safe Area ── */
 @media (max-width: 991px) {
-    .main-content { padding-bottom: 90px !important; }
     .toast-container { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
     .floating-bar { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
 }
