@@ -234,6 +234,19 @@ func (a Arsip) TanggalRetensiBerakhirExpired() bool {
 	return a.RetensiExpired()
 }
 
+// BeforeCreate ensures the Arsip primary key is populated before insert.
+// The id column is CHAR(36) PRIMARY KEY with no DEFAULT and no AUTO_INCREMENT,
+// so MySQL rejects inserts that omit it with Error 1364 (HY000)
+// "Field 'id' doesn't have a default value". Mirrors the pattern already
+// used by LoginLog, AuditLog, QrScanLog, OcrLog, BackupLog, IntegrationLog,
+// and EmailNotification.
+func (a *Arsip) BeforeCreate(tx *gorm.DB) error {
+	if a.ID == "" {
+		a.ID = uuid.New().String()
+	}
+	return nil
+}
+
 // HitungRetensiBerakhir calculates the retention end date from tanggalDibuat + (RetensiAktif + RetensiInaktif) years
 // based on the associated KodeKlasifikasi.
 func HitungRetensiBerakhir(tanggalDibuat time.Time, kk *KodeKlasifikasi) *time.Time {
