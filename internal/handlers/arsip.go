@@ -505,6 +505,12 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 		}
 	}
 
+	// Defense-in-depth: guarantee ID is never empty before hitting MySQL.
+	// MySQL rejects INSERT without id when column has no DEFAULT (Error 1364).
+	if arsip.ID == "" {
+		arsip.ID = uuid.New().String()
+	}
+
 if err := database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&arsip).Error; err != nil {
 			return err
