@@ -21,7 +21,7 @@ import (
 // the stored version matches — critical for Vercel serverless where new
 // instances start constantly and a full migration per cold start made every
 // request slow.
-const SchemaVersion = "2026.08.25-03"
+const SchemaVersion = "2026.08.26-01"
 
 // tableExists returns true when a table exists in the current database.
 func tableExists(name string) bool {
@@ -213,6 +213,10 @@ func Migrate() error {
 
 	// jADWAL drop OK karena tidak ada data referensi lagi pada legacy schema.
 	dropJenisLokasiColumnIfUnused()
+
+	// Ensure arsip.id has a DEFAULT so MySQL won't reject inserts that forget
+	// to supply the primary key (Error 1364). Works on MySQL 8.0.13+.
+	ensureArsipIDDefault()
 
 	// Record the completed schema version so subsequent boots take the fast path.
 	markSchemaVersion()
@@ -505,6 +509,24 @@ func addArsipGDriveURLColumn() {
 		DB.Exec("ALTER TABLE arsip ADD COLUMN google_drive_url TEXT DEFAULT NULL")
 		log.Println("[MIGRASI] Menambahkan kolom google_drive_url ke tabel arsip")
 	}
+}
+
+// ensureArsipIDDefault adds DEFAULT (UUID()) to arsip.id so MySQL won't reject
+// inserts that forget to supply the primary key (Error 1364 HY000). This is a
+// safety net alongside the GORM BeforeCreate hook on the Arsip model. Requires
+// MySQL 8.0.13+ (Aiven MySQL satisfies this).
+func ensureArsipIDDefault() {
+	if !tableExists("arsip") {
+		return
+	}
+	// Check current column default — only ALTER if it's empty.
+	var currentDefault *string
+	DB.Raw("SELECT column_default FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'arsip' AND column_name = 'id'").Scan(&currentDefault)
+	if currentDefault != nil && *currentDefault != "" {
+		return
+	}
+	DB.Exec("ALTER TABLE arsip MODIFY COLUMN id VARCHAR(36) NOT NULL DEFAULT (UUID())")
+	log.Println("[MIGRASI] Menambahkan DEFAULT (UUID()) ke kolom id tabel arsip")
 }
 
 // alignIntegrationTables adapts the legacy Laravel schema of integrations and
