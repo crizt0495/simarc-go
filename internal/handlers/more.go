@@ -845,6 +845,8 @@ func (h *PengaturanHandler) Index(c *gin.Context) {
 		"Settings":          settings,
 		"DBInfo":            dbInfo,
 		"CanManageDatabase": isAdmin,
+		"GDriveClientID":    config.App.GoogleDriveClientID,
+		"GDriveFolderID":    config.App.GoogleDriveFolderID,
 	})
 }
 
