@@ -872,10 +872,10 @@ mark {
                 </table>
         </div>
 
-        {{if gt .TotalPages 1}}
         <!-- PAGINATION -->
-        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" style="background:var(--surface-2);">
-            <small class="text-muted fw-600">Halaman <strong>{{.CurrentPage}}</strong> dari <strong>{{.TotalPages}}</strong> · {{.TotalResults}} arsip</small>
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top flex-wrap gap-2" style="background:var(--surface-2);">
+            <small class="text-muted fw-600">Menampilkan <strong>{{.TotalResults}}</strong> arsip · Halaman <strong>{{.CurrentPage}}</strong> dari <strong>{{.TotalPages}}</strong></small>
+            {{if gt .TotalPages 1}}
             <nav><ul class="pagination pagination-sm mb-0">
                 {{if gt .CurrentPage 1}}<li class="page-item"><a class="page-link" href="?page=1{{.QueryString}}" title="Pertama"><i class="bi bi-chevron-double-left"></i></a></li><li class="page-item"><a class="page-link" href="?page={{sub .CurrentPage 1}}{{.QueryString}}" title="Sebelum"><i class="bi bi-chevron-left"></i></a></li>{{else}}<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-left"></i></span></li><li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>{{end}}
                 {{if gt .CurrentPage 4}}<li class="page-item"><a class="page-link" href="?page=1{{.QueryString}}">1</a></li><li class="page-item disabled"><span class="page-link">&hellip;</span></li>{{end}}
@@ -883,8 +883,8 @@ mark {
                 {{if lt (add .CurrentPage 3) .TotalPages}}<li class="page-item disabled"><span class="page-link">&hellip;</span></li><li class="page-item"><a class="page-link" href="?page={{.TotalPages}}{{.QueryString}}">{{.TotalPages}}</a></li>{{end}}
                 {{if lt .CurrentPage .TotalPages}}<li class="page-item"><a class="page-link" href="?page={{add .CurrentPage 1}}{{.QueryString}}" title="Berikut"><i class="bi bi-chevron-right"></i></a></li><li class="page-item"><a class="page-link" href="?page={{.TotalPages}}{{.QueryString}}" title="Terakhir"><i class="bi bi-chevron-double-right"></i></a></li>{{else}}<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li><li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-double-right"></i></span></li>{{end}}
             </ul></nav>
+            {{end}}
         </div>
-        {{end}}
     </div>
 
 
