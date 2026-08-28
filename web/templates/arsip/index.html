@@ -155,6 +155,30 @@
     gap: 1rem;
     padding: 0.5rem 0;
 }
+
+/* Inner scroll untuk card grid - scroll dalam area card */
+.arsip-card-grid {
+    max-height: calc(100vh - 320px);
+    min-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.35rem;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+.arsip-card-grid::-webkit-scrollbar {
+    width: 6px;
+}
+.arsip-card-grid::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 6px;
+}
+.arsip-card-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-4);
+}
+.arsip-card-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
 .arsip-card {
     background: var(--surface);
     border: 1px solid var(--border);
