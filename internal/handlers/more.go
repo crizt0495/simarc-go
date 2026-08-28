@@ -488,15 +488,15 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 		Diajukan  int64 `gorm:"column:diajukan"`
 		Disetujui int64 `gorm:"column:disetujui"`
 		Ditolak   int64 `gorm:"column:ditolak"`
-		Auto      int64 `gorm:"column:auto"`
-		Manual    int64 `gorm:"column:manual"`
+		Auto      int64 `gorm:"column:auto_count"`
+		Manual    int64 `gorm:"column:manual_count"`
 	}
 	database.DB.Raw(`SELECT COUNT(*) as total,
 		SUM(CASE WHEN status='diajukan' THEN 1 ELSE 0 END) as diajukan,
 		SUM(CASE WHEN status='disetujui' THEN 1 ELSE 0 END) as disetujui,
 		SUM(CASE WHEN status='ditolak' THEN 1 ELSE 0 END) as ditolak,
-		SUM(CASE WHEN is_auto=1 THEN 1 ELSE 0 END) as auto,
-		SUM(CASE WHEN is_auto=0 OR is_auto IS NULL THEN 1 ELSE 0 END) as manual
+		SUM(CASE WHEN is_auto=1 THEN 1 ELSE 0 END) as auto_count,
+		SUM(CASE WHEN is_auto=0 OR is_auto IS NULL THEN 1 ELSE 0 END) as manual_count
 		FROM pemusnahan_arsip WHERE deleted_at IS NULL`).Scan(&stats)
 
 	// Hitung total arsip dengan status 'musnah' dari tabel arsip (sama dengan dashboard)
