@@ -156,27 +156,35 @@
     padding: 0.5rem 0;
 }
 
-/* Inner scroll untuk card grid - scroll dalam area card */
-.arsip-card-grid {
-    max-height: calc(100vh - 320px);
-    min-height: 200px;
+/* Scroll container untuk card view */
+#viewCard {
+    max-height: calc(100vh - 300px);
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 0.35rem;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
 }
-.arsip-card-grid::-webkit-scrollbar {
+/* Scroll container untuk card view */
+#viewCard {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.arsip-card-grid {
+    overflow: visible !important;
+}
+#viewCard::-webkit-scrollbar {
     width: 6px;
 }
-.arsip-card-grid::-webkit-scrollbar-thumb {
+#viewCard::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 6px;
 }
-.arsip-card-grid::-webkit-scrollbar-thumb:hover {
+#viewCard::-webkit-scrollbar-thumb:hover {
     background: var(--ink-4);
 }
-.arsip-card-grid::-webkit-scrollbar-track {
+#viewCard::-webkit-scrollbar-track {
     background: transparent;
 }
 .arsip-card {
