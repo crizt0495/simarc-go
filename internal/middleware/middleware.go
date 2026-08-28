@@ -3,6 +3,8 @@ package middleware
 import (
 	"log"
 	"net/http"
+	"sync"
+	"time"
 
 	"arsippro/internal/config"
 	"arsippro/internal/database"
@@ -13,6 +15,55 @@ import (
 )
 
 var Store *sessions.CookieStore
+
+// ── USER CACHE (reduces DB queries on every authenticated request) ─────────
+
+type userCacheEntry struct {
+	user      *models.User
+	expiresAt time.Time
+}
+
+var (
+	userCache   = make(map[string]userCacheEntry)
+	userCacheMu sync.RWMutex
+	userCacheTTL = 30 * time.Second // short TTL to keep data fresh
+)
+
+func cacheUser(userID string, user *models.User) {
+	userCacheMu.Lock()
+	userCache[userID] = userCacheEntry{
+		user:      user,
+		expiresAt: time.Now().Add(userCacheTTL),
+	}
+	userCacheMu.Unlock()
+}
+
+func getCachedUser(userID string) *models.User {
+	userCacheMu.RLock()
+	entry, ok := userCache[userID]
+	userCacheMu.RUnlock()
+	if !ok || time.Now().After(entry.expiresAt) {
+		if ok {
+			userCacheMu.Lock()
+			delete(userCache, userID)
+			userCacheMu.Unlock()
+		}
+		return nil
+	}
+	return entry.user
+}
+
+func InvalidateUserCache(userID string) {
+	userCacheMu.Lock()
+	delete(userCache, userID)
+	userCacheMu.Unlock()
+}
+
+func InvalidateAllUserCaches() {
+	userCacheMu.Lock()
+	userCache = make(map[string]userCacheEntry)
+	userCacheMu.Unlock()
+}
 
 func InitSession() {
 	// In production (Vercel) we refuse to boot without a strong SESSION_KEY.
@@ -90,6 +141,14 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 
+		// Try cache first (avoids 3 DB queries per request)
+		if cached := getCachedUser(userID); cached != nil {
+			c.Set("user", cached)
+			c.Set("user_id", userID)
+			c.Next()
+			return
+		}
+
 		var user models.User
 		if err := database.DB.Preload("Role").Preload("UnitKerja").First(&user, "id = ?", userID).Error; err != nil {
 			c.Redirect(http.StatusFound, "/login")
@@ -103,6 +162,7 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 
+		cacheUser(userID, &user)
 		c.Set("user", &user)
 		c.Set("user_id", userID)
 		c.Next()
@@ -152,16 +212,20 @@ func GuestOnly() gin.HandlerFunc {
 // InjectUser - inject user data into all templates (optional, for public routes)
 func InjectUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Skip when the database is unreachable (recovery mode) — there is
-		// no user to load and DB access would fail.
 		if !database.Connected() {
 			c.Next()
 			return
 		}
 		session := GetSession(c)
 		if userID, ok := session.Values["user_id"].(string); ok && userID != "" {
+			if cached := getCachedUser(userID); cached != nil {
+				c.Set("user", cached)
+				c.Next()
+				return
+			}
 			var user models.User
-			if err := database.DB.Preload("Role").First(&user, "id = ?", userID).Error; err == nil {
+			if err := database.DB.Preload("Role").Preload("UnitKerja").First(&user, "id = ?", userID).Error; err == nil {
+				cacheUser(userID, &user)
 				c.Set("user", &user)
 			}
 		}

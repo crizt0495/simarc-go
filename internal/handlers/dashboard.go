@@ -3,6 +3,7 @@ package handlers
 import (
 	"time"
 
+	"arsippro/internal/cache"
 	"arsippro/internal/database"
 	"arsippro/internal/models"
 	"arsippro/internal/services"
@@ -12,6 +13,12 @@ import (
 
 
 func Dashboard(c *gin.Context) {
+	cacheKey := "dashboard:data"
+	if cached, ok := cache.Default.Get(cacheKey); ok {
+		Render(c, 200, "dashboard/index.html", cached.(gin.H))
+		return
+	}
+
 	var stats struct {
 		Total          int64 `gorm:"column:total"`
 		TotalItems     int64 `gorm:"column:total_items"`
@@ -102,7 +109,7 @@ func Dashboard(c *gin.Context) {
 	}
 	var monthlyStats []MonthlyStat
 	database.DB.Raw(`
-		SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
+		SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as total
 		FROM arsip
 		WHERE deleted_at IS NULL
 		  AND status_arsip != 'permanen'
@@ -204,7 +211,7 @@ func Dashboard(c *gin.Context) {
 		rcDigitalPercent = float64(rcDigitalStat.WithDigital) / float64(totalRC) * 100
 	}
 
-	Render(c, 200, "dashboard/index.html", gin.H{
+	data := gin.H{
 		"title":               "Dashboard - SIMARC",
 		"pageTitle":           "Dashboard",
 		"Stats":               stats,
@@ -233,10 +240,18 @@ func Dashboard(c *gin.Context) {
 			"ListMurniNonSpj": listMurniNonSpj,
 			"ListCampuran":    listCampuran,
 		},
-	})
+	}
+	cache.Default.SetWithTTL(cacheKey, data, 30*time.Second)
+	Render(c, 200, "dashboard/index.html", data)
 }
 
 func DashboardAPI(c *gin.Context) {
+	cacheKey := "dashboard:api"
+	if cached, ok := cache.Default.Get(cacheKey); ok {
+		c.JSON(200, gin.H{"success": true, "data": cached})
+		return
+	}
+
 	var stats struct {
 		Total          int64 `json:"total"`
 		TotalItems     int64 `json:"total_items"`
@@ -316,7 +331,7 @@ func DashboardAPI(c *gin.Context) {
 	}
 	var monthlyStats []MonthlyStat
 	database.DB.Raw(`
-		SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
+		SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as total
 		FROM arsip
 		WHERE deleted_at IS NULL
 		  AND status_arsip != 'permanen'
@@ -338,17 +353,16 @@ func DashboardAPI(c *gin.Context) {
 		GROUP BY la.nama_lokasi ORDER BY count DESC
 	`).Scan(&lokasiStats)
 
-	c.JSON(200, gin.H{
-		"success": true,
-		"data": gin.H{
-			"stats":            stats,
-			"arsipPerUnit":     arsipPerUnit,
-			"pemberkasanCount": pemberkasanCount,
-			"blockchainCount":  blockchainCount,
-			"recentActivities": recentActivities,
-			"monthlyStats":     monthlyStats,
-			"lokasiStats":      lokasiStats,
-			"digitalPercent":   int64(digitalPercent),
-		},
-	})
+	data := gin.H{
+		"stats":            stats,
+		"arsipPerUnit":     arsipPerUnit,
+		"pemberkasanCount": pemberkasanCount,
+		"blockchainCount":  blockchainCount,
+		"recentActivities": recentActivities,
+		"monthlyStats":     monthlyStats,
+		"lokasiStats":      lokasiStats,
+		"digitalPercent":   int64(digitalPercent),
+	}
+	cache.Default.SetWithTTL(cacheKey, data, 30*time.Second)
+	c.JSON(200, gin.H{"success": true, "data": data})
 }

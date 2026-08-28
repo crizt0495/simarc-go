@@ -166,18 +166,58 @@ func (h *UnitKerjaHandler) Index(c *gin.Context) {
 	}
 	offset := (page - 1) * perPage
 	db.Order("nama_unit").Limit(perPage).Offset(offset).Find(&list)
+
 	type UnitKerjaWithCount struct {
 		models.UnitKerja
 		ArsipCount int `json:"arsip_count"`
 		UsersCount int `json:"users_count"`
 	}
 	var enrichedList []UnitKerjaWithCount
-	for _, u := range list {
-		var ac, uc int64
-		database.DB.Model(&models.Arsip{}).Where("unit_kerja_id = ?", u.ID).Count(&ac)
-		database.DB.Model(&models.User{}).Where("unit_kerja_id = ?", u.ID).Count(&uc)
-		enrichedList = append(enrichedList, UnitKerjaWithCount{UnitKerja: u, ArsipCount: int(ac), UsersCount: int(uc)})
+
+	if len(list) > 0 {
+		ids := make([]string, len(list))
+		for i, u := range list {
+			ids[i] = u.ID
+		}
+		type arsipCountRow struct {
+			UnitKerjaID string
+			Count       int
+		}
+		type userCountRow struct {
+			UnitKerjaID string
+			Count       int
+		}
+		var arsipCounts []arsipCountRow
+		database.DB.Model(&models.Arsip{}).
+			Select("unit_kerja_id, COUNT(*) as count").
+			Where("unit_kerja_id IN ?", ids).
+			Group("unit_kerja_id").
+			Scan(&arsipCounts)
+		arsipMap := make(map[string]int)
+		for _, r := range arsipCounts {
+			arsipMap[r.UnitKerjaID] = r.Count
+		}
+
+		var userCounts []userCountRow
+		database.DB.Model(&models.User{}).
+			Select("unit_kerja_id, COUNT(*) as count").
+			Where("unit_kerja_id IN ?", ids).
+			Group("unit_kerja_id").
+			Scan(&userCounts)
+		userMap := make(map[string]int)
+		for _, r := range userCounts {
+			userMap[r.UnitKerjaID] = r.Count
+		}
+
+		for _, u := range list {
+			enrichedList = append(enrichedList, UnitKerjaWithCount{
+				UnitKerja:  u,
+				ArsipCount: arsipMap[u.ID],
+				UsersCount: userMap[u.ID],
+			})
+		}
 	}
+
 	Render(c, 200, "unit-kerja/index.html", gin.H{
 		"title": "Unit Kerja - SIMARC", "pageTitle": "Unit Kerja",
 		"List": enrichedList, "Total": total, "Page": page, "PerPage": perPage,
@@ -258,11 +298,35 @@ func (h *LokasiArsipHandler) Index(c *gin.Context) {
 		ArsipCount int `json:"arsip_count"`
 	}
 	var enrichedList []LokasiWithCount
-	for _, l := range list {
-		var cnt int64
-		database.DB.Model(&models.Arsip{}).Where("lokasi_arsip_id = ?", l.ID).Count(&cnt)
-		enrichedList = append(enrichedList, LokasiWithCount{LokasiArsip: l, ArsipCount: int(cnt)})
+
+	if len(list) > 0 {
+		ids := make([]string, len(list))
+		for i, l := range list {
+			ids[i] = l.ID
+		}
+		type countRow struct {
+			LokasiArsipID string
+			Count         int
+		}
+		var counts []countRow
+		database.DB.Model(&models.Arsip{}).
+			Select("lokasi_arsip_id, COUNT(*) as count").
+			Where("lokasi_arsip_id IN ?", ids).
+			Group("lokasi_arsip_id").
+			Scan(&counts)
+		countMap := make(map[string]int)
+		for _, r := range counts {
+			countMap[r.LokasiArsipID] = r.Count
+		}
+
+		for _, l := range list {
+			enrichedList = append(enrichedList, LokasiWithCount{
+				LokasiArsip: l,
+				ArsipCount:  countMap[l.ID],
+			})
+		}
 	}
+
 	Render(c, 200, "lokasi-arsip/index.html", gin.H{
 		"title": "Lokasi Arsip - SIMARC", "pageTitle": "Lokasi Arsip",
 		"List": enrichedList, "Total": total, "Page": page, "PerPage": perPage,
@@ -464,16 +528,38 @@ func (h *PemberkasanHandler) Index(c *gin.Context) {
 	}
 	offset := (page - 1) * perPage
 	db.Order("created_at DESC").Limit(perPage).Offset(offset).Find(&list)
-	// Count arsip per pemberkasan
 	type PemberkasanWithCount struct {
 		models.Pemberkasan
 		ArsipCount int `json:"arsip_count"`
 	}
 	var enrichedList []PemberkasanWithCount
-	for _, p := range list {
-		var cnt int64
-		database.DB.Model(&models.Arsip{}).Where("pemberkasan_id = ?", p.ID).Count(&cnt)
-		enrichedList = append(enrichedList, PemberkasanWithCount{Pemberkasan: p, ArsipCount: int(cnt)})
+
+	if len(list) > 0 {
+		ids := make([]string, len(list))
+		for i, p := range list {
+			ids[i] = p.ID
+		}
+		type countRow struct {
+			PemberkasanID string
+			Count         int
+		}
+		var counts []countRow
+		database.DB.Model(&models.Arsip{}).
+			Select("pemberkasan_id, COUNT(*) as count").
+			Where("pemberkasan_id IN ?", ids).
+			Group("pemberkasan_id").
+			Scan(&counts)
+		countMap := make(map[string]int)
+		for _, r := range counts {
+			countMap[r.PemberkasanID] = r.Count
+		}
+
+		for _, p := range list {
+			enrichedList = append(enrichedList, PemberkasanWithCount{
+				Pemberkasan: p,
+				ArsipCount:  countMap[p.ID],
+			})
+		}
 	}
 	Render(c, 200, "pemberkasan/index.html", gin.H{
 		"title": "Pemberkasan - SIMARC", "pageTitle": "Pemberkasan",

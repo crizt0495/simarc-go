@@ -168,16 +168,36 @@ func (h *RoleHandler) Index(c *gin.Context) {
 	}
 	var enriched []RoleWithCount
 	var totalRoles, totalPermissions int64
-	for _, r := range roles {
-		var uc int64
-		database.DB.Model(&models.User{}).Where("role_id = ?", r.ID).Count(&uc)
-		enriched = append(enriched, RoleWithCount{
-			Role:             r,
-			UsersCount:       int(uc),
-			PermissionsCount: len(r.Permissions),
-		})
-		totalRoles++
-		totalPermissions += int64(len(r.Permissions))
+
+	if len(roles) > 0 {
+		roleIDs := make([]string, len(roles))
+		for i, r := range roles {
+			roleIDs[i] = r.ID
+		}
+		type userCountRow struct {
+			RoleID string
+			Count  int
+		}
+		var userCounts []userCountRow
+		database.DB.Model(&models.User{}).
+			Select("role_id, COUNT(*) as count").
+			Where("role_id IN ?", roleIDs).
+			Group("role_id").
+			Scan(&userCounts)
+		userMap := make(map[string]int)
+		for _, r := range userCounts {
+			userMap[r.RoleID] = r.Count
+		}
+
+		for _, r := range roles {
+			enriched = append(enriched, RoleWithCount{
+				Role:             r,
+				UsersCount:       userMap[r.ID],
+				PermissionsCount: len(r.Permissions),
+			})
+			totalRoles++
+			totalPermissions += int64(len(r.Permissions))
+		}
 	}
 	Render(c, 200, "role/index.html", gin.H{
 		"title": "Role - SIMARC", "pageTitle": "Manajemen Role",
@@ -560,7 +580,6 @@ func (h *PemusnahanHandler) AutoCreate(c *gin.Context) {
 
 func (h *PemusnahanHandler) Approve(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
-	// Get pemusnahan with items
 	var m models.PemusnahanArsip
 	if err := database.DB.Preload("Arsip").First(&m, "id = ?", c.Param("id")).Error; err != nil {
 		middleware.SetFlash(c, "error", "Pemusnahan tidak ditemukan.")
@@ -570,11 +589,12 @@ func (h *PemusnahanHandler) Approve(c *gin.Context) {
 	database.DB.Model(&models.PemusnahanArsip{}).Where("id = ?", c.Param("id")).Updates(map[string]interface{}{
 		"status": "disetujui", "approved_by": user.ID, "tanggal_approve": time.Now(),
 	})
-	// Update arsip status to musnah for all items
-	var items []models.PemusnahanItem
-	database.DB.Where("pemusnahan_id = ?", c.Param("id")).Find(&items)
-	for _, item := range items {
-		database.DB.Model(&models.Arsip{}).Where("id = ?", item.ArsipID).Update("status_arsip", "musnah")
+	var arsipIDs []string
+	database.DB.Model(&models.PemusnahanItem{}).
+		Where("pemusnahan_id = ?", c.Param("id")).
+		Pluck("arsip_id", &arsipIDs)
+	if len(arsipIDs) > 0 {
+		database.DB.Model(&models.Arsip{}).Where("id IN ?", arsipIDs).Update("status_arsip", "musnah")
 	}
 	middleware.SetFlash(c, "success", "Pemusnahan disetujui. Status arsip diubah menjadi musnah.")
 	c.Redirect(http.StatusFound, "/pemusnahan")
@@ -585,12 +605,12 @@ func (h *PemusnahanHandler) Reject(c *gin.Context) {
 	database.DB.Model(&models.PemusnahanArsip{}).Where("id = ?", c.Param("id")).Updates(map[string]interface{}{
 		"status": "ditolak", "approved_by": user.ID,
 	})
-	// Revert arsip status back from siap_penyusutan
-	var items []models.PemusnahanItem
-	database.DB.Where("pemusnahan_id = ?", c.Param("id")).Find(&items)
-	for _, item := range items {
-		// Only revert if currently siap_penyusutan
-		database.DB.Model(&models.Arsip{}).Where("id = ? AND status_arsip = ?", item.ArsipID, "siap_penyusutan").Update("status_arsip", "inaktif")
+	var arsipIDs []string
+	database.DB.Model(&models.PemusnahanItem{}).
+		Where("pemusnahan_id = ?", c.Param("id")).
+		Pluck("arsip_id", &arsipIDs)
+	if len(arsipIDs) > 0 {
+		database.DB.Model(&models.Arsip{}).Where("id IN ? AND status_arsip = ?", arsipIDs, "siap_penyusutan").Update("status_arsip", "inaktif")
 	}
 	middleware.SetFlash(c, "success", "Pemusnahan ditolak.")
 	c.Redirect(http.StatusFound, "/pemusnahan")

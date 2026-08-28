@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"arsippro/internal/cache"
 	"arsippro/internal/config"
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
@@ -1271,10 +1272,33 @@ func (h *LaporanExportHandler) KlasifikasiDetail(c *gin.Context) {
 		ArsipCount int `json:"arsip_count"`
 	}
 	var klasifikasiList []KlasifikasiWithCount
-	for _, kk := range allKlasifikasi {
-		var cnt int64
-		database.DB.Model(&models.Arsip{}).Where("kode_klasifikasi_id = ? AND deleted_at IS NULL", kk.ID).Count(&cnt)
-		klasifikasiList = append(klasifikasiList, KlasifikasiWithCount{KodeKlasifikasi: kk, ArsipCount: int(cnt)})
+
+	if len(allKlasifikasi) > 0 {
+		klasifikasiIDs := make([]string, len(allKlasifikasi))
+		for i, kk := range allKlasifikasi {
+			klasifikasiIDs[i] = kk.ID
+		}
+		type countRow struct {
+			KodeKlasifikasiID string
+			Count             int
+		}
+		var counts []countRow
+		database.DB.Model(&models.Arsip{}).
+			Select("kode_klasifikasi_id, COUNT(*) as count").
+			Where("kode_klasifikasi_id IN ? AND deleted_at IS NULL", klasifikasiIDs).
+			Group("kode_klasifikasi_id").
+			Scan(&counts)
+		countMap := make(map[string]int)
+		for _, r := range counts {
+			countMap[r.KodeKlasifikasiID] = r.Count
+		}
+
+		for _, kk := range allKlasifikasi {
+			klasifikasiList = append(klasifikasiList, KlasifikasiWithCount{
+				KodeKlasifikasi: kk,
+				ArsipCount:      countMap[kk.ID],
+			})
+		}
 	}
 
 	// Top 5 klasifikasi by count
@@ -3438,6 +3462,7 @@ func DashboardChampion(c *gin.Context) {
 }
 
 func DashboardRefresh(c *gin.Context) {
+	cache.InvalidatePrefix("dashboard:")
 	middleware.SetFlash(c, "success", "Dashboard berhasil di-refresh.")
 	c.Redirect(http.StatusFound, "/dashboard")
 }

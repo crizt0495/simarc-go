@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"arsippro/internal/cache"
 	"arsippro/internal/config"
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
@@ -555,6 +556,7 @@ if err := database.DB.Transaction(func(tx *gorm.DB) error {
 		c.Redirect(http.StatusFound, createURL)
 		return
 	}
+	cache.InvalidatePrefix("dashboard:")
 	c.Redirect(http.StatusFound, "/arsip")
 }
 
@@ -853,6 +855,7 @@ func (h *ArsipHandler) Update(c *gin.Context) {
 		msg = "Arsip #" + arsip.NomorArsip + " berhasil diperbarui."
 	}
 	middleware.SetFlash(c, "success", msg)
+	cache.InvalidatePrefix("dashboard:")
 	c.Redirect(http.StatusFound, "/arsip/"+id)
 }
 
@@ -868,6 +871,7 @@ func (h *ArsipHandler) Destroy(c *gin.Context) {
 	}
 
 	database.DB.Delete(&arsip)
+	cache.InvalidatePrefix("dashboard:")
 	logActivity(user.ID, "delete", "Menghapus arsip: "+arsip.NamaArsip, "arsip", arsip.ID, c.ClientIP(), c.GetHeader("User-Agent"))
 	middleware.SetFlash(c, "success", "Arsip berhasil dihapus.")
 	c.Redirect(http.StatusFound, "/arsip")
