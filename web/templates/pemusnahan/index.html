@@ -30,50 +30,262 @@
 .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
 .fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
 
-.premium-table thead th {
+/* ── View Toggle (Table / Card) ── */
+.view-toggle-group {
+    display: inline-flex;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 3px;
+    gap: 2px;
+}
+.view-toggle-btn {
     background: transparent;
     border: none;
+    padding: 0.4rem 0.85rem;
+    border-radius: 50px;
+    font-size: 0.72rem;
+    font-weight: 700;
     color: var(--ink-4);
-    font-weight: 800;
-    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.view-toggle-btn:hover { color: var(--ink-2); }
+.view-toggle-btn.active {
+    background: var(--surface);
+    color: var(--danger);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.view-toggle-btn i { font-size: 0.85rem; }
+
+/* ── Status Badges ── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 50px;
     font-size: 0.65rem;
-    letter-spacing: 0.06em;
-    padding: 0.85rem 1rem;
-    border-bottom: 2px solid var(--border);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
 }
-.premium-table tbody tr {
-    transition: all 0.15s ease;
-    border-bottom: 1px solid var(--border);
+.status-diajukan { background: #fef3c7; color: #b45309; }
+.status-disetujui { background: #dcfce7; color: #15803d; }
+.status-ditolak { background: #fee2e2; color: #b91c1c; }
+.status-selesai { background: #e0f2fe; color: #0369a1; }
+.status-aktif { background: #dcfce7; color: #15803d; }
+.status-inaktif { background: #f1f5f9; color: #475569; }
+
+/* ── Card View ── */
+.pemusnahan-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1rem;
+    padding: 0.5rem 0;
 }
-.premium-table tbody tr:hover { background: rgba(26,86,219,0.02); }
-.premium-table tbody td {
-    padding: 1rem;
-    vertical-align: middle;
-    font-size: 0.85rem;
+.pemusnahan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1rem 1.1rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+.pemusnahan-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--danger);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.25s ease;
+}
+.pemusnahan-card:hover {
+    border-color: #fecaca;
+    box-shadow: 0 8px 24px rgba(220,38,38,0.06);
+    transform: translateY(-3px);
+}
+.pemusnahan-card:hover::before { transform: scaleY(1); }
+.pemusnahan-card.is-pending { border-left: 4px solid var(--warning); }
+.pemusnahan-card.is-approved { border-left: 4px solid var(--success); }
+.pemusnahan-card.is-rejected { border-left: 4px solid var(--danger); }
+
+.pemusnahan-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px dashed var(--border);
+}
+.pemusnahan-card-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    background: rgba(220,38,38,0.08);
+    color: var(--danger);
+}
+.pemusnahan-card-title {
+    flex: 1;
+    min-width: 0;
+}
+.pemusnahan-card-name {
+    font-size: 0.95rem;
+    font-weight: 800;
     color: var(--ink-2);
+    line-height: 1.35;
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
 }
+.pemusnahan-card-name:hover { color: var(--danger); }
+.pemusnahan-card-badges {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+.pemusnahan-card-body {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.55rem 1rem;
+    font-size: 0.78rem;
+}
+.pemusnahan-card-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+.pemusnahan-card-field-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-4);
+}
+.pemusnahan-card-field-value {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ink-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pemusnahan-card-field-value i { color: var(--ink-4); margin-right: 0.2rem; font-size: 0.75rem; }
+.pemusnahan-card-alasan {
+    background: var(--surface-2);
+    padding: 0.55rem 0.7rem;
+    border-radius: var(--r);
+    font-size: 0.75rem;
+    color: var(--ink-3);
+    line-height: 1.45;
+    border-left: 3px solid var(--border);
+}
+.pemusnahan-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border);
+    gap: 0.5rem;
+}
+.pemusnahan-card-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+.pemusnahan-card-actions .btn-crud {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+}
+
+/* ── Expired Card (Arsip Siap Musnah) ── */
+.expired-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 0.9rem 1.1rem;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.expired-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--danger);
+}
+.expired-card:hover {
+    box-shadow: 0 4px 12px rgba(220,38,38,0.06);
+    transform: translateY(-1px);
+}
+.expired-card-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--ink-2);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.expired-card-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    color: var(--ink-3);
+}
+.expired-card-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.expired-card-meta i { color: var(--ink-4); font-size: 0.7rem; }
+
+/* ── View containers ── */
+.view-container { display: none; }
+.view-container.active { display: block; }
+
+/* ── Scroll untuk card view ── */
+.pemusnahan-card-view {
+    max-height: calc(100vh - 480px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.pemusnahan-card-view::-webkit-scrollbar { width: 6px; }
+.pemusnahan-card-view::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+.pemusnahan-card-view::-webkit-scrollbar-track { background: transparent; }
+
 @media (max-width: 768px) {
     .pemusnahan-hero { padding: 1.25rem; }
     .pemusnahan-hero .hero-title { font-size: 1.1rem; }
-    .premium-table thead { display: none; }
-    .premium-table tbody tr {
-        display: block; margin-bottom: 0.75rem;
-        border: 1px solid var(--border); border-radius: var(--r);
-        padding: 0.75rem; background: var(--surface);
-    }
-    .premium-table tbody td {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 0.4rem 0 !important; border: none !important;
-        border-bottom: 1px solid var(--border) !important;
-        text-align: right; font-size: 0.8rem;
-    }
-    .premium-table tbody td:last-child { border-bottom: none !important; }
-    .premium-table tbody td::before {
-        content: attr(data-label);
-        font-weight: 700; color: var(--ink-3);
-        font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
-        padding-right: 0.75rem;
-    }
+    .pemusnahan-card-grid { grid-template-columns: 1fr; }
+    .pemusnahan-card-body { grid-template-columns: 1fr 1fr; gap: 0.4rem 0.6rem; }
+    .pemusnahan-card-view { max-height: calc(100vh - 380px); }
 }
 </style>
 
@@ -84,7 +296,7 @@
                 <div class="hero-title"><i class="bi bi-trash3 me-2"></i>Pemusnahan Arsip</div>
                 <div class="hero-sub">Kelola pengajuan pemusnahan arsip yang telah melewati masa retensi</div>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
                 {{if .HasExpired}}
                 <form action="/pemusnahan/auto-create" method="POST" class="d-inline">
                     <input type="hidden" name="_token" value="{{.CSRFToken}}">
@@ -111,51 +323,51 @@
 
     <!-- Stat Cards -->
     <div class="row g-2 mb-3 fade-up-d1">
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100" class="card-accent-warning">
+        <div class="col-6 col-md-3 col-lg">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#fef3c7;display:flex;align-items:center;justify-content:center;color:var(--warning);font-size:1.2rem;"><i class="bi bi-clock"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#b45309;font-size:1.2rem;"><i class="bi bi-clock"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Diajukan}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Diajukan</div></div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100" class="card-accent-success">
+        <div class="col-6 col-md-3 col-lg">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#dcfce7;display:flex;align-items:center;justify-content:center;color:var(--success);font-size:1.2rem;"><i class="bi bi-check-circle"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#15803d;font-size:1.2rem;"><i class="bi bi-check-circle"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Disetujui}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Disetujui</div></div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100" class="card-accent-danger">
+        <div class="col-6 col-md-3 col-lg">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#fee2e2;display:flex;align-items:center;justify-content:center;color:var(--danger);font-size:1.2rem;"><i class="bi bi-x-circle"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#b91c1c;font-size:1.2rem;"><i class="bi bi-x-circle"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Ditolak}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Ditolak</div></div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100" class="card-accent-info">
+        <div class="col-6 col-md-3 col-lg">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:var(--info);font-size:1.2rem;"><i class="bi bi-archive"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0369a1;font-size:1.2rem;"><i class="bi bi-archive"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Total}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Total Pengajuan</div></div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-6 col-md-3 col-lg">
+            <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#f3e8ff;display:flex;align-items:center;justify-content:center;color:var(--purple-500);font-size:1.2rem;"><i class="bi bi-file-earmark-x"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:#f3e8ff;display:flex;align-items:center;justify-content:center;color:#7c3aed;font-size:1.2rem;"><i class="bi bi-file-earmark-x"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.TotalArsipMusnah}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Arsip Dimusnahkan</div></div>
                     </div>
                 </div>
@@ -164,9 +376,9 @@
     </div>
 
     {{if .HasExpired}}
-    <div class="card border-danger shadow-sm mb-3 fade-up-d1">
-        <div class="card-header d-flex justify-content-between align-items-center" style="background:#fef2f2;border-bottom:1px solid #fecdd3;">
-            <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:var(--danger);"><i class="bi bi-exclamation-triangle-fill me-2"></i>Arsip Siap Dimusnahkan ({{.TotalExpired}})</h5>
+    <div class="card border-0 shadow-sm mb-3 fade-up-d1" style="border:1px solid #fecaca !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border-bottom:1px solid #fecdd3;padding:0.85rem 1.25rem;">
+            <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:#b91c1c;"><i class="bi bi-exclamation-triangle-fill me-2"></i>Arsip Siap Dimusnahkan ({{.TotalExpired}})</h5>
             <form action="/pemusnahan/auto-create" method="POST" class="d-inline">
                 <input type="hidden" name="_token" value="{{.CSRFToken}}">
                 <button type="submit" class="btn btn-sm btn-danger rounded-pill fw-700 px-3" style="font-size:0.7rem;" onclick="return confirm('Buat pemusnahan otomatis?')">
@@ -174,59 +386,98 @@
                 </button>
             </form>
         </div>
-        <div class="table-responsive">
-            <table class="table premium-table mb-0 datatable" data-pagination="server">
-                <thead>
-                    <tr><th class="ps-3">Arsip</th><th>Kode Klasifikasi</th><th>Retensi Berakhir</th><th>Status</th></tr>
-                </thead>
-                <tbody>
-                    {{range .ExpiredArsip}}
-                    <tr>
-                        <td data-label="Arsip" class="ps-3"><div class="fw-700" style="font-size:0.85rem;">{{.NamaArsip}}</div><small class="text-muted">{{.NomorArsip}}</small></td>
-                        <td data-label="Klasifikasi">{{if .KodeKlasifikasi}}<span class="fw-700" style="color:var(--danger);">{{.KodeKlasifikasi.KodeKlasifikasi}}</span><small class="d-block text-muted">{{.KodeKlasifikasi.NamaKlasifikasi}}</small>{{else}}<span class="text-muted">-</span>{{end}}</td>
-                        <td data-label="Retensi"><span class="fw-700" style="color:var(--danger);">{{.TanggalRetensiBerakhir}}</span></td>
-                        <td data-label="Status"><span class="badge-soft {{if eq .StatusArsip "aktif"}}badge-soft-success{{else if eq .StatusArsip "inaktif"}}badge-soft-warning{{else}}badge-soft-info{{end}}">{{.StatusArsip}}</span></td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+        <div style="padding:0.75rem;">
+            <div class="pemusnahan-card-grid">
+                {{range .ExpiredArsip}}
+                <div class="expired-card">
+                    <div class="pemusnahan-card-field">
+                        <span class="pemusnahan-card-field-label">Nomor</span>
+                        <span class="pemusnahan-card-field-value font-monospace">{{.NomorArsip}}</span>
+                    </div>
+                    <a href="/arsip/{{.ID}}" class="expired-card-title">{{.NamaArsip}}</a>
+                    <div class="expired-card-meta">
+                        {{if .KodeKlasifikasi}}
+                        <span><i class="bi bi-tag-fill text-danger"></i> <strong style="color:#b91c1c;">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
+                        <span><i class="bi bi-info-circle"></i> {{.KodeKlasifikasi.NamaKlasifikasi}}</span>
+                        {{end}}
+                    </div>
+                    <div class="expired-card-meta">
+                        <span><i class="bi bi-calendar-x text-danger"></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
+                        <span><span class="status-badge status-{{.StatusArsip}}">{{.StatusArsip}}</span></span>
+                    </div>
+                </div>
+                {{end}}
+            </div>
         </div>
     </div>
     {{end}}
 
+    <!-- View Toggle + Filter -->
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2 fade-up-d2">
+        <div class="d-flex align-items-center gap-2">
+            <div class="view-toggle-group">
+                <button type="button" class="view-toggle-btn active" data-view="card" onclick="switchPemusnahanView('card')">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> <span>Card</span>
+                </button>
+                <button type="button" class="view-toggle-btn" data-view="table" onclick="switchPemusnahanView('table')">
+                    <i class="bi bi-table"></i> <span>Tabel</span>
+                </button>
+            </div>
+        </div>
+        <div class="d-flex gap-1 flex-wrap">
+            <a href="/pemusnahan?status=diajukan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#fef3c7;color:#b45309;border:none;">Diajukan</a>
+            <a href="/pemusnahan?status=disetujui" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#dcfce7;color:#15803d;border:none;">Disetujui</a>
+            <a href="/pemusnahan?status=ditolak" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#fee2e2;color:#b91c1c;border:none;">Ditolak</a>
+            <a href="/pemusnahan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--surface-3);color:var(--ink-3);border:none;">Semua</a>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm fade-up-d2" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
         <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--surface);border-bottom:1px solid var(--border);padding:0.85rem 1.25rem;">
             <h5 class="fw-800 mb-0" style="font-size:0.85rem;"><i class="bi bi-list-ul me-2"></i>Daftar Pengajuan</h5>
-            <div class="d-flex gap-1">
-                <a href="/pemusnahan?status=diajukan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#fef3c7;color:#b45309;border:none;">Diajukan</a>
-                <a href="/pemusnahan?status=disetujui" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#dcfce7;color:#15803d;border:none;">Disetujui</a>
-                <a href="/pemusnahan?status=ditolak" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#fee2e2;color:#b91c1c;border:none;">Ditolak</a>
-                <a href="/pemusnahan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--surface-3);color:var(--ink-3);border:none;">Semua</a>
-            </div>
         </div>
 
         {{if .List}}
-        <div class="table-responsive">
-            <table class="table premium-table mb-0 datatable" data-pagination="server">
-                <thead>
-                    <tr><th width="40">#</th><th>Kegiatan</th><th width="70" class="text-center">Arsip</th><th width="100">Status</th><th width="110">Tanggal</th><th width="100">Pengaju</th><th width="70">Tipe</th><th width="140" class="text-center">Aksi</th></tr>
-                </thead>
-                <tbody>
+        <!-- CARD VIEW -->
+        <div id="pemusnahanViewCard" class="view-container active" style="padding:0.75rem;">
+            <div class="pemusnahan-card-view">
+                <div class="pemusnahan-card-grid">
                     {{range $i, $v := .List}}
-                    <tr>
-                        <td class="text-muted fw-700 text-center" data-label="#">{{add $i 1}}</td>
-                        <td data-label="Kegiatan"><div class="fw-700" style="font-size:0.85rem;">{{$v.NamaKegiatan}}</div>{{if $v.AlasanPengajuan}}<small class="text-muted">{{limitString $v.AlasanPengajuan 60}}</small>{{end}}</td>
-                        <td class="text-center" data-label="Arsip"><span class="badge rounded-pill fw-700" style="background:var(--surface-3);color:var(--ink-3);">{{len $v.Items}}</span></td>
-                        <td data-label="Status">
-                            {{if eq $v.Status "diajukan"}}<span class="badge-soft badge-soft-warning"><i class="bi bi-clock me-1"></i>Diajukan</span>
-                            {{else if eq $v.Status "disetujui"}}<span class="badge-soft badge-soft-success"><i class="bi bi-check-lg me-1"></i>Disetujui</span>
-                            {{else}}<span class="badge-soft badge-soft-danger"><i class="bi bi-x-lg me-1"></i>Ditolak</span>{{end}}
-                        </td>
-                        <td data-label="Tanggal"><span class="small"><i class="bi bi-calendar3 me-1"></i>{{formatDate $v.TanggalPengajuan}}</span></td>
-                        <td data-label="Pengaju"><span class="small"><i class="bi bi-person me-1"></i>{{if $v.Creator}}{{$v.Creator.Name}}{{else}}-{{end}}</span></td>
-                        <td data-label="Tipe">{{if $v.IsAuto}}<span class="badge-soft badge-soft-primary"><i class="bi bi-robot me-1"></i>Auto</span>{{else}}<span class="badge-soft" style="background:var(--surface-3);color:var(--ink-3);"><i class="bi bi-person me-1"></i>Manual</span>{{end}}</td>
-                        <td class="text-center" data-label="Aksi">
-                            <div class="d-flex gap-1 justify-content-center">
+                    {{$statusClass := "is-pending"}}
+                    {{if eq $v.Status "disetujui"}}{{$statusClass = "is-approved"}}{{else if eq $v.Status "ditolak"}}{{$statusClass = "is-rejected"}}{{end}}
+                    <div class="pemusnahan-card {{$statusClass}}">
+                        <div class="pemusnahan-card-header">
+                            <div class="pemusnahan-card-icon"><i class="bi bi-trash3-fill"></i></div>
+                            <div class="pemusnahan-card-title">
+                                <a href="/pemusnahan/{{$v.ID}}" class="pemusnahan-card-name">{{$v.NamaKegiatan}}</a>
+                                <div class="pemusnahan-card-badges">
+                                    {{if eq $v.Status "diajukan"}}<span class="status-badge status-diajukan"><i class="bi bi-clock me-1"></i>Diajukan</span>
+                                    {{else if eq $v.Status "disetujui"}}<span class="status-badge status-disetujui"><i class="bi bi-check-lg me-1"></i>Disetujui</span>
+                                    {{else}}<span class="status-badge status-ditolak"><i class="bi bi-x-lg me-1"></i>Ditolak</span>{{end}}
+                                    {{if $v.IsAuto}}<span class="status-badge" style="background:#dbeafe;color:#1e40af;"><i class="bi bi-robot me-1"></i>Auto</span>
+                                    {{else}}<span class="status-badge" style="background:var(--surface-3);color:var(--ink-3);"><i class="bi bi-person me-1"></i>Manual</span>{{end}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pemusnahan-card-body">
+                            <div class="pemusnahan-card-field">
+                                <span class="pemusnahan-card-field-label">Jumlah Arsip</span>
+                                <span class="pemusnahan-card-field-value"><i class="bi bi-archive"></i>{{len $v.Items}} arsip</span>
+                            </div>
+                            <div class="pemusnahan-card-field">
+                                <span class="pemusnahan-card-field-label">Tanggal</span>
+                                <span class="pemusnahan-card-field-value"><i class="bi bi-calendar3"></i>{{formatDate $v.TanggalPengajuan}}</span>
+                            </div>
+                            <div class="pemusnahan-card-field" style="grid-column: span 2;">
+                                <span class="pemusnahan-card-field-label">Pengaju</span>
+                                <span class="pemusnahan-card-field-value"><i class="bi bi-person"></i>{{if $v.Creator}}{{$v.Creator.Name}}{{else}}-{{end}}</span>
+                            </div>
+                        </div>
+                        {{if $v.AlasanPengajuan}}
+                        <div class="pemusnahan-card-alasan"><strong>Alasan:</strong> {{$v.AlasanPengajuan}}</div>
+                        {{end}}
+                        <div class="pemusnahan-card-footer">
+                            <div class="pemusnahan-card-actions">
                                 <a href="/pemusnahan/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
                                 {{if eq $v.Status "diajukan"}}
                                 <form action="/pemusnahan/{{$v.ID}}/approve" method="POST" class="d-inline">
@@ -239,14 +490,58 @@
                                 </form>
                                 {{end}}
                             </div>
-                        </td>
-                    </tr>
+                        </div>
+                    </div>
                     {{end}}
-                </tbody>
-            </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE VIEW -->
+        <div id="pemusnahanViewTable" class="view-container">
+            <div class="table-responsive">
+                <table class="table premium-table mb-0 datatable" data-pagination="server">
+                    <thead>
+                        <tr><th width="40">#</th><th>Kegiatan</th><th width="70" class="text-center">Arsip</th><th width="100">Status</th><th width="110">Tanggal</th><th width="100">Pengaju</th><th width="70">Tipe</th><th width="140" class="text-center">Aksi</th></tr>
+                    </thead>
+                    <tbody>
+                        {{range $i, $v := .List}}
+                        <tr>
+                            <td class="text-muted fw-700 text-center" data-label="#">{{add $i 1}}</td>
+                            <td data-label="Kegiatan"><div class="fw-700" style="font-size:0.85rem;">{{$v.NamaKegiatan}}</div>{{if $v.AlasanPengajuan}}<small class="text-muted">{{limitString $v.AlasanPengajuan 60}}</small>{{end}}</td>
+                            <td class="text-center" data-label="Arsip"><span class="badge rounded-pill fw-700" style="background:var(--surface-3);color:var(--ink-3);">{{len $v.Items}}</span></td>
+                            <td data-label="Status">
+                                {{if eq $v.Status "diajukan"}}<span class="status-badge status-diajukan"><i class="bi bi-clock me-1"></i>Diajukan</span>
+                                {{else if eq $v.Status "disetujui"}}<span class="status-badge status-disetujui"><i class="bi bi-check-lg me-1"></i>Disetujui</span>
+                                {{else}}<span class="status-badge status-ditolak"><i class="bi bi-x-lg me-1"></i>Ditolak</span>{{end}}
+                            </td>
+                            <td data-label="Tanggal"><span class="small"><i class="bi bi-calendar3 me-1"></i>{{formatDate $v.TanggalPengajuan}}</span></td>
+                            <td data-label="Pengaju"><span class="small"><i class="bi bi-person me-1"></i>{{if $v.Creator}}{{$v.Creator.Name}}{{else}}-{{end}}</span></td>
+                            <td data-label="Tipe">{{if $v.IsAuto}}<span class="status-badge" style="background:#dbeafe;color:#1e40af;"><i class="bi bi-robot me-1"></i>Auto</span>{{else}}<span class="status-badge" style="background:var(--surface-3);color:var(--ink-3);"><i class="bi bi-person me-1"></i>Manual</span>{{end}}</td>
+                            <td class="text-center" data-label="Aksi">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="/pemusnahan/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+                                    {{if eq $v.Status "diajukan"}}
+                                    <form action="/pemusnahan/{{$v.ID}}/approve" method="POST" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{$.CSRFToken}}">
+                                        <button type="submit" class="btn-crud btn-crud-success" onclick="return confirm('Setujui pemusnahan?')" title="Setujui" data-bs-toggle="tooltip"><i class="bi bi-check-lg"></i></button>
+                                    </form>
+                                    <form action="/pemusnahan/{{$v.ID}}/reject" method="POST" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{$.CSRFToken}}">
+                                        <button type="submit" class="btn-crud btn-crud-del" onclick="return confirm('Tolak pemusnahan?')" title="Tolak" data-bs-toggle="tooltip"><i class="bi bi-x-lg"></i></button>
+                                    </form>
+                                    {{end}}
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
         </div>
         {{if .HasPages}}
-        <div class="d-flex justify-content-center px-3 py-3 border-top" style="background:var(--surface-2);">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top flex-wrap gap-2" style="background:var(--surface-2);">
+            <small class="text-muted fw-600">Halaman <strong>{{.Page}}</strong> dari <strong>{{.TotalPages}}</strong></small>
             <nav><ul class="pagination pagination-sm mb-0">
                 {{if gt .Page 1}}<li class="page-item"><a class="page-link" href="?page={{sub .Page 1}}">&laquo;</a></li>{{end}}
                 <li class="page-item active"><span class="page-link">{{.Page}} / {{.TotalPages}}</span></li>
@@ -269,4 +564,28 @@
         {{end}}
     </div>
 </div>
+
+<script>
+(function() {
+    const savedView = localStorage.getItem('pemusnahanView') || 'card';
+    
+    window.switchPemusnahanView = function(viewType) {
+        document.querySelectorAll('.view-toggle-btn[data-view]').forEach(btn => {
+            const btnView = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+            if (btnView) btn.classList.toggle('active', btnView === viewType);
+        });
+        ['Card', 'Table'].forEach(v => {
+            const el = document.getElementById('pemusnahanView' + v);
+            if (el) el.classList.toggle('active', v.toLowerCase() === viewType);
+        });
+        localStorage.setItem('pemusnahanView', viewType);
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { switchPemusnahanView(savedView); });
+    } else {
+        switchPemusnahanView(savedView);
+    }
+})();
+</script>
 {{end}}
