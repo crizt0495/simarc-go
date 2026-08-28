@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -409,6 +410,24 @@ func getExpiredArsipForPemusnahan() []models.Arsip {
 		Order("arsip.tanggal_dibuat ASC").
 		Limit(100).
 		Find(&expiredArsip)
+
+	// Debug logging: hitung total arsip dengan penyusutan musnah di DB
+	var totalMusnah, totalExpiredByCalc int64
+	// Total arsip dengan klasifikasi penyusutan musnah
+	database.DB.
+		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
+		Where("kode_klasifikasi.penyusutan_arsip = 'musnah' AND arsip.deleted_at IS NULL").
+		Model(&models.Arsip{}).Count(&totalMusnah)
+	// Total arsip dengan retensi (tanggal_dibuat + retensi < now)
+	database.DB.
+		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
+		Where("kode_klasifikasi.penyusutan_arsip = 'musnah' AND arsip.deleted_at IS NULL").
+		Where("arsip.tanggal_dibuat IS NOT NULL").
+		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
+		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Model(&models.Arsip{}).Count(&totalExpiredByCalc)
+	log.Printf("[DEBUG Pemusnahan] totalArsip_musnah=%d | expired_by_calc=%d (tanpa exclude) | returned=%d", totalMusnah, totalExpiredByCalc, len(expiredArsip))
+
 	return expiredArsip
 }
 
