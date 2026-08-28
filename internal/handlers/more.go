@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -410,52 +409,6 @@ func getExpiredArsipForPemusnahan() []models.Arsip {
 		Order("arsip.tanggal_dibuat ASC").
 		Limit(100).
 		Find(&expiredArsip)
-
-	// Debug logging: breakdown relasi arsip -> kode_klasifikasi
-	var (
-		totalSemuaArsip  int64 // semua arsip
-		totalNullKk      int64 // kode_klasifikasi_id NULL
-		totalInvalidKk   int64 // kode_klasifikasi_id tidak ada di tabel kode_klasifikasi
-		totalMusnah      int64 // arsip yang klasifikasinya penyusutan=musnah
-		totalNonMusnah   int64 // arsip yang klasifikasinya != musnah
-		totalExpiredCalc int64 // arsip musnah & retensi habis (tanpa exclude)
-	)
-	database.DB.Model(&models.Arsip{}).Where("deleted_at IS NULL").Count(&totalSemuaArsip)
-
-	// Arsip dengan kode_klasifikasi_id kosong/NULL
-	database.DB.Model(&models.Arsip{}).
-		Where("deleted_at IS NULL AND (kode_klasifikasi_id IS NULL OR kode_klasifikasi_id = '')").
-		Count(&totalNullKk)
-
-	// Arsip dengan kode_klasifikasi_id yang TIDAK ada di tabel kode_klasifikasi (relasi putus)
-	database.DB.Model(&models.Arsip{}).
-		Where("deleted_at IS NULL AND kode_klasifikasi_id IS NOT NULL AND kode_klasifikasi_id != ''").
-		Where("NOT EXISTS (SELECT 1 FROM kode_klasifikasi WHERE kode_klasifikasi.id = arsip.kode_klasifikasi_id)").
-		Count(&totalInvalidKk)
-
-	// Arsip dengan klasifikasi penyusutan musnah
-	database.DB.
-		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
-		Where("kode_klasifikasi.penyusutan_arsip = 'musnah' AND arsip.deleted_at IS NULL").
-		Model(&models.Arsip{}).Count(&totalMusnah)
-
-	// Arsip dengan klasifikasi BUKAN musnah (permanen/dinilai_kembali/aktif/dll)
-	database.DB.
-		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
-		Where("LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) != 'musnah' AND arsip.deleted_at IS NULL").
-		Model(&models.Arsip{}).Count(&totalNonMusnah)
-
-	// Arsip musnah & retensi habis (tanpa exclude, HANYA kondisi relasi+retensi)
-	database.DB.
-		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
-		Where("kode_klasifikasi.penyusutan_arsip = 'musnah' AND arsip.deleted_at IS NULL").
-		Where("arsip.tanggal_dibuat IS NOT NULL").
-		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
-		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
-		Model(&models.Arsip{}).Count(&totalExpiredCalc)
-
-	log.Printf("[DEBUG Pemusnahan] totalArsip=%d | nullKk=%d | invalidKk(relasi putus)=%d | klasMusnah=%d | klasNonMusnah=%d | musnah&retensiHabis=%d | returnedAfterExclude=%d",
-		totalSemuaArsip, totalNullKk, totalInvalidKk, totalMusnah, totalNonMusnah, totalExpiredCalc, len(expiredArsip))
 
 	return expiredArsip
 }
