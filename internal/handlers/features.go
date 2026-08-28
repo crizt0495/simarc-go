@@ -68,7 +68,7 @@ func (h *LaporanHandler) Index(c *gin.Context) {
 	var diberkaskanCount, layakMusnah, sudahMusnah int64
 	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'diberkaskan'").Count(&diberkaskanCount)
 	database.DB.Model(&models.Arsip{}).Where("tanggal_retensi_berakhir < ? AND status_arsip != 'musnah'", time.Now()).Count(&layakMusnah)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah'").Count(&sudahMusnah)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah' AND deleted_at IS NULL").Count(&sudahMusnah)
 	stats = gin.H{
 		"TotalArsip":      totalArsip,
 		"ArsipAktif":      arsipAktif,

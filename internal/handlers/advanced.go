@@ -1244,9 +1244,9 @@ func (h *LaporanExportHandler) PemberkasanExcel(c *gin.Context) {
 func (h *LaporanExportHandler) StatistikPDF(c *gin.Context) {
 	var total, aktif, inaktif, musnah int64
 	database.DB.Model(&models.Arsip{}).Count(&total)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif'").Count(&aktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif'").Count(&inaktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah'").Count(&musnah)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif' AND deleted_at IS NULL").Count(&aktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif' AND deleted_at IS NULL").Count(&inaktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah' AND deleted_at IS NULL").Count(&musnah)
 	headers := []string{"Kategori", "Jumlah"}
 	rows := [][]string{
 		{"Total Arsip", strconv.FormatInt(total, 10)},
@@ -1260,9 +1260,9 @@ func (h *LaporanExportHandler) StatistikPDF(c *gin.Context) {
 func (h *LaporanExportHandler) StatistikExcel(c *gin.Context) {
 	var total, aktif, inaktif, musnah int64
 	database.DB.Model(&models.Arsip{}).Count(&total)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif'").Count(&aktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif'").Count(&inaktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah'").Count(&musnah)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif' AND deleted_at IS NULL").Count(&aktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif' AND deleted_at IS NULL").Count(&inaktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah' AND deleted_at IS NULL").Count(&musnah)
 	rows := [][]string{
 		{"Total Arsip", strconv.FormatInt(total, 10)},
 		{"Arsip Aktif", strconv.FormatInt(aktif, 10)},
@@ -3186,9 +3186,9 @@ type AppsScriptAPIHandler struct{}
 func (h *AppsScriptAPIHandler) GetArchiveSummary(c *gin.Context) {
 	var total, aktif, inaktif, musnah int64
 	database.DB.Model(&models.Arsip{}).Count(&total)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif'").Count(&aktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif'").Count(&inaktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah'").Count(&musnah)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif' AND deleted_at IS NULL").Count(&aktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif' AND deleted_at IS NULL").Count(&inaktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah' AND deleted_at IS NULL").Count(&musnah)
 	c.JSON(http.StatusOK, gin.H{
 		"total": total, "aktif": aktif, "inaktif": inaktif, "musnah": musnah,
 	})
@@ -3276,10 +3276,10 @@ func (h *PremiumAPIHandler) SmartSearch(c *gin.Context) {
 func (h *PremiumAPIHandler) Analytics(c *gin.Context) {
 	var total, aktif, inaktif, musnah, digital int64
 	database.DB.Model(&models.Arsip{}).Count(&total)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif'").Count(&aktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif'").Count(&inaktif)
-	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah'").Count(&musnah)
-	database.DB.Model(&models.Arsip{}).Where("file_path IS NOT NULL AND file_path != ''").Count(&digital)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'aktif' AND deleted_at IS NULL").Count(&aktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'inaktif' AND deleted_at IS NULL").Count(&inaktif)
+	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah' AND deleted_at IS NULL").Count(&musnah)
+	database.DB.Model(&models.Arsip{}).Where("file_path IS NOT NULL AND file_path != '' AND deleted_at IS NULL").Count(&digital)
 	svc := &services.AnalyticsService{}
 	growth := svc.GetArsipGrowth(12)
 	c.JSON(http.StatusOK, gin.H{
