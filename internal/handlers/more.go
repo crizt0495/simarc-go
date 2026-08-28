@@ -374,8 +374,13 @@ func (h *RoleHandler) UpdatePermissions(c *gin.Context) {
 type PemusnahanHandler struct{}
 
 // getExpiredArsipForPemusnahan returns archives whose retention has expired,
-// matched with kode_klasifikasi where penyusutan_arsip = 'musnah',
+// matched with kode_klasifikasi where penyusutan_arsip is 'musnah' (case-insensitive),
 // and not already in any active (diajukan/disetujui) pemusnahan.
+// LOGIC:
+//   1. Arsip dengan status_arsip bukan 'musnah', 'siap_penyusutan', 'permanen'
+//   2. Tanggal retensi sudah lewat (< today)
+//   3. Kode klasifikasi terkait memiliki penyusutan_arsip = 'musnah' (LOWERCASE comparison)
+//   4. Belum ada di pengajuan pemusnahan yang aktif (diajukan/disetujui)
 func getExpiredArsipForPemusnahan() []models.Arsip {
 	var expiredArsip []models.Arsip
 	now := time.Now().Format("2006-01-02")
@@ -383,8 +388,11 @@ func getExpiredArsipForPemusnahan() []models.Arsip {
 		Preload("KodeKlasifikasi").
 		Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
-		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen') AND arsip.tanggal_retensi_berakhir IS NOT NULL AND arsip.tanggal_retensi_berakhir < ?", now).
-		Where("kode_klasifikasi.penyusutan_arsip = ?", "musnah").
+		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
+		Where("arsip.tanggal_retensi_berakhir IS NOT NULL").
+		Where("arsip.tanggal_retensi_berakhir < ?", now).
+		Where("LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ?", "musnah").
+		Where("kode_klasifikasi.is_active = ?", true).
 		// Exclude arsip already in pemusnahan_arsip_items (new Go structure)
 		Where("arsip.id NOT IN (SELECT pi.arsip_id FROM pemusnahan_arsip_items pi INNER JOIN pemusnahan_arsip pa ON pa.id = pi.pemusnahan_id WHERE pa.status IN ('diajukan','disetujui') AND pa.deleted_at IS NULL)").
 		// Exclude arsip already in pemusnahan_arsip.arsip_id (legacy Laravel structure, backward compat)
@@ -462,8 +470,10 @@ func (h *PemusnahanHandler) Create(c *gin.Context) {
 	db := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
 		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
-		Where("arsip.tanggal_retensi_berakhir IS NOT NULL AND arsip.tanggal_retensi_berakhir < ?", now).
-		Where("kode_klasifikasi.penyusutan_arsip = ?", "musnah").
+		Where("arsip.tanggal_retensi_berakhir IS NOT NULL").
+		Where("arsip.tanggal_retensi_berakhir < ?", now).
+		Where("LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ?", "musnah").
+		Where("kode_klasifikasi.is_active = ?", true).
 		Where("arsip.deleted_at IS NULL").
 		Where("arsip.id NOT IN (SELECT pi.arsip_id FROM pemusnahan_arsip_items pi INNER JOIN pemusnahan_arsip pa ON pa.id = pi.pemusnahan_id WHERE pa.status IN ('diajukan','disetujui') AND pa.deleted_at IS NULL)").
 		Where("arsip.id NOT IN (SELECT pa2.arsip_id FROM pemusnahan_arsip pa2 WHERE pa2.arsip_id IS NOT NULL AND pa2.arsip_id != '' AND pa2.status IN ('diajukan','disetujui') AND pa2.deleted_at IS NULL)").
@@ -478,7 +488,7 @@ func (h *PemusnahanHandler) Create(c *gin.Context) {
 
 	// Get kode klasifikasi options for filter
 	var kodeKlasifikasiOpts []models.KodeKlasifikasi
-	database.DB.Where("penyusutan_arsip = ? AND is_active = 1", "musnah").Order("kode_klasifikasi").Find(&kodeKlasifikasiOpts)
+	database.DB.Where("LOWER(TRIM(penyusutan_arsip)) = ? AND is_active = 1", "musnah").Order("kode_klasifikasi").Find(&kodeKlasifikasiOpts)
 
 	Render(c, 200, "pemusnahan/create.html", gin.H{
 		"title": "Ajukan Pemusnahan", "pageTitle": "Ajukan Pemusnahan",
