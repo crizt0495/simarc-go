@@ -67,10 +67,14 @@ func (h *DisposalHandler) Index(c *gin.Context) {
 	database.DB.Raw(`SELECT kk.id as kk_id, kk.kode_klasifikasi as kode, kk.nama_klasifikasi as nama,
 		COUNT(a.id) as total FROM kode_klasifikasi kk
 		LEFT JOIN arsip a ON a.kode_klasifikasi_id = kk.id AND a.deleted_at IS NULL
-		AND a.tanggal_retensi_berakhir < ? AND a.status_arsip NOT IN ('musnah','siap_penyusutan','permanen')
+		AND a.status_arsip NOT IN ('musnah','siap_penyusutan','permanen')
 		AND LOWER(TRIM(kk.penyusutan_arsip)) = 'musnah'
+		AND kk.is_active = 1
+		AND (kk.retensi_aktif + kk.retensi_inaktif) > 0
+		AND a.tanggal_dibuat IS NOT NULL
+		AND DATE_ADD(a.tanggal_dibuat, INTERVAL (kk.retensi_aktif + kk.retensi_inaktif) YEAR) < CURDATE()
 		WHERE kk.is_active = 1 GROUP BY kk.id, kk.kode_klasifikasi, kk.nama_klasifikasi
-		HAVING total > 0 ORDER BY total DESC`, time.Now()).Scan(&stats)
+		HAVING total > 0 ORDER BY total DESC`).Scan(&stats)
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Smart Disposal", "pageTitle": "Smart Disposal - Berdasarkan Klasifikasi",
 		"klasifikasiList": klasifikasiList, "stats": stats,
@@ -92,8 +96,10 @@ func (h *DisposalHandler) ShowByClassification(c *gin.Context) {
 	var arsipList []models.Arsip
 	var total int64
 	db := database.DB.Model(&models.Arsip{}).
-		Where("kode_klasifikasi_id = ? AND tanggal_retensi_berakhir < ? AND status_arsip NOT IN ('musnah','siap_penyusutan','permanen')",
-			kk.ID, time.Now())
+		Where("arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen')").
+		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Where("arsip.tanggal_dibuat IS NOT NULL").
+		Where("kode_klasifikasi.id = ?", kk.ID)
 	db.Count(&total)
 	perPage := 20
 	page := 1
@@ -125,8 +131,12 @@ func (h *DisposalHandler) ShowByClassification(c *gin.Context) {
 func (h *DisposalHandler) ListArchivesForDisposal(c *gin.Context) {
 	var arsipList []models.Arsip
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("kode_klasifikasi_id = ? AND tanggal_retensi_berakhir < ? AND status_arsip NOT IN ('musnah','siap_penyusutan','permanen')",
-			c.Param("kodeKlasifikasi"), time.Now()).Order("tanggal_retensi_berakhir ASC").Find(&arsipList)
+		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
+		Where("arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen')").
+		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Where("arsip.tanggal_dibuat IS NOT NULL").
+		Where("kode_klasifikasi.id = ?", c.Param("kodeKlasifikasi")).
+		Order("arsip.tanggal_dibuat ASC").Find(&arsipList)
 	c.JSON(http.StatusOK, gin.H{"data": arsipList, "count": len(arsipList)})
 }
 
@@ -207,7 +217,11 @@ func (h *DisposalHandler) ShowSchedule(c *gin.Context) {
 func (h *DisposalHandler) AutoCreateSchedules(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 	var eligible []models.Arsip
-	database.DB.Where("tanggal_retensi_berakhir < ? AND status_arsip NOT IN ('musnah','siap_penyusutan','permanen') AND kode_klasifikasi_id IS NOT NULL", time.Now()).Find(&eligible)
+	database.DB.
+		Where("status_arsip NOT IN ('musnah','siap_penyusutan','permanen')").
+		Where("kode_klasifikasi_id IS NOT NULL").
+		Where("tanggal_dibuat IS NOT NULL").
+		Where("DATE_ADD(tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").Find(&eligible)
 	count := 0
 	for _, a := range eligible {
 		var existing models.DisposalSchedule
@@ -1065,7 +1079,9 @@ func (h *LaporanExportHandler) DigitalExcel(c *gin.Context) {
 func (h *LaporanExportHandler) RetensiPDF(c *gin.Context) {
 	var list []models.Arsip
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("tanggal_retensi_berakhir < ? AND status_arsip NOT IN ('musnah','siap_penyusutan','permanen')", time.Now()).Order("tanggal_retensi_berakhir").Find(&list)
+		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id AND kode_klasifikasi.is_active = 1").
+		Where("arsip.tanggal_dibuat IS NOT NULL AND arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen') AND DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Order("arsip.tanggal_dibuat").Find(&list)
 	headers := []string{"No", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Tgl Perolehan", "Retensi Berakhir", "Status"}
 	rows := [][]string{}
 	for i, a := range list {
@@ -1089,7 +1105,9 @@ func (h *LaporanExportHandler) RetensiPDF(c *gin.Context) {
 func (h *LaporanExportHandler) RetensiExcel(c *gin.Context) {
 	var list []models.Arsip
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("tanggal_retensi_berakhir < ? AND status_arsip NOT IN ('musnah','siap_penyusutan','permanen')", time.Now()).Order("tanggal_retensi_berakhir").Find(&list)
+		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id AND kode_klasifikasi.is_active = 1").
+		Where("arsip.tanggal_dibuat IS NOT NULL AND arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen') AND DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Order("arsip.tanggal_dibuat").Find(&list)
 	rows := [][]string{}
 	for i, a := range list {
 		kk := ""

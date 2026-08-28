@@ -374,31 +374,39 @@ func (h *RoleHandler) UpdatePermissions(c *gin.Context) {
 type PemusnahanHandler struct{}
 
 // getExpiredArsipForPemusnahan returns archives whose retention has expired,
-// matched with kode_klasifikasi where penyusutan_arsip is 'musnah' (case-insensitive),
-// and not already in any active (diajukan/disetujui) pemusnahan.
-// LOGIC:
+// computed on-the-fly from kode_klasifikasi.RetensiAktif + RetensiInaktif years
+// matched with penyusutan_arsip = 'musnah' (case-insensitive), and not already
+// in any active (diajukan/disetujui) pemusnahan.
+//
+// LOGIC (computed via relasi, TIDAK bergantung pada arsip.tanggal_retensi_berakhir):
 //   1. Arsip dengan status_arsip bukan 'musnah', 'siap_penyusutan', 'permanen'
-//   2. Tanggal retensi sudah lewat (< today)
-//   3. Kode klasifikasi terkait memiliki penyusutan_arsip = 'musnah' (LOWERCASE comparison)
-//   4. Belum ada di pengajuan pemusnahan yang aktif (diajukan/disetujui)
+//   2. Kode klasifikasi terkait aktif (is_active=1) dan memiliki penyusutan_arsip = 'musnah'
+//   3. Klasifikasi memiliki total retensi > 0 (RetensiAktif + RetensiInaktif > 0)
+//   4. Tanggal retensi yang dihitung (arsip.tanggal_dibuat + total_retensi tahun) < today
+//   5. Belum ada di pengajuan pemusnahan yang aktif
+//
+// Dengan logika ini, setiap arsip PASTI masuk jika klasifikasinya musnah dan
+// tanggal_dibuat-nya cukup lama, walaupun arsip.tanggal_retensi_berakhir NULL.
 func getExpiredArsipForPemusnahan() []models.Arsip {
 	var expiredArsip []models.Arsip
-	now := time.Now().Format("2006-01-02")
+	// Hitung tanggal_retensi_berakhir on-the-fly dari relasi kode_klasifikasi
+	// DATE_ADD(tanggal_dibuat, INTERVAL (retensi_aktif+retensi_inaktif) YEAR) < today
 	database.DB.
 		Preload("KodeKlasifikasi").
 		Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
 		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
-		Where("arsip.tanggal_retensi_berakhir IS NOT NULL").
-		Where("arsip.tanggal_retensi_berakhir < ?", now).
 		Where("LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ?", "musnah").
 		Where("kode_klasifikasi.is_active = ?", true).
+		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
+		Where("arsip.tanggal_dibuat IS NOT NULL").
+		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
 		// Exclude arsip already in pemusnahan_arsip_items (new Go structure)
 		Where("arsip.id NOT IN (SELECT pi.arsip_id FROM pemusnahan_arsip_items pi INNER JOIN pemusnahan_arsip pa ON pa.id = pi.pemusnahan_id WHERE pa.status IN ('diajukan','disetujui') AND pa.deleted_at IS NULL)").
-		// Exclude arsip already in pemusnahan_arsip.arsip_id (legacy Laravel structure, backward compat)
+		// Exclude arsip already in pemusnahan_arsip.arsip_id (legacy Laravel structure)
 		Where("arsip.id NOT IN (SELECT pa2.arsip_id FROM pemusnahan_arsip pa2 WHERE pa2.arsip_id IS NOT NULL AND pa2.arsip_id != '' AND pa2.status IN ('diajukan','disetujui') AND pa2.deleted_at IS NULL)").
 		Where("arsip.deleted_at IS NULL").
-		Order("arsip.tanggal_retensi_berakhir ASC").
+		Order("arsip.tanggal_dibuat ASC").
 		Limit(100).
 		Find(&expiredArsip)
 	return expiredArsip
@@ -466,14 +474,14 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 
 func (h *PemusnahanHandler) Create(c *gin.Context) {
 	var arsipList []models.Arsip
-	now := time.Now().Format("2006-01-02")
 	db := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
 		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
-		Where("arsip.tanggal_retensi_berakhir IS NOT NULL").
-		Where("arsip.tanggal_retensi_berakhir < ?", now).
 		Where("LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ?", "musnah").
 		Where("kode_klasifikasi.is_active = ?", true).
+		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
+		Where("arsip.tanggal_dibuat IS NOT NULL").
+		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
 		Where("arsip.deleted_at IS NULL").
 		Where("arsip.id NOT IN (SELECT pi.arsip_id FROM pemusnahan_arsip_items pi INNER JOIN pemusnahan_arsip pa ON pa.id = pi.pemusnahan_id WHERE pa.status IN ('diajukan','disetujui') AND pa.deleted_at IS NULL)").
 		Where("arsip.id NOT IN (SELECT pa2.arsip_id FROM pemusnahan_arsip pa2 WHERE pa2.arsip_id IS NOT NULL AND pa2.arsip_id != '' AND pa2.status IN ('diajukan','disetujui') AND pa2.deleted_at IS NULL)").
