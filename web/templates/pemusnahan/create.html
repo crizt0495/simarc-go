@@ -221,18 +221,43 @@
 {{end}}
 {{define "scripts"}}
 <script>
-$(document).ready(function() {
-    $('#selectAll').on('change', function() {
-        $('.arsip-checkbox').prop('checked', $(this).prop('checked')).trigger('change');
+(function() {
+  function updateCount() {
+    const boxes = document.querySelectorAll('.arsip-checkbox');
+    let n = 0;
+    boxes.forEach(function(b) { if (b.checked) n++; });
+    const counter = document.getElementById('selectedCount');
+    const btn = document.getElementById('submitBtn');
+    if (counter) counter.textContent = n;
+    if (btn) btn.disabled = n === 0;
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+      const totalBoxes = boxes.length;
+      selectAll.checked = totalBoxes > 0 && n === totalBoxes;
+      selectAll.indeterminate = n > 0 && n < totalBoxes;
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+      selectAll.addEventListener('change', function() {
+        document.querySelectorAll('.arsip-checkbox').forEach(function(b) { b.checked = selectAll.checked; });
+        updateCount();
+      });
+    }
+    document.querySelectorAll('.arsip-checkbox').forEach(function(b) {
+      b.addEventListener('change', updateCount);
     });
-    $('.arsip-checkbox').on('change', function() {
-        var count = $('.arsip-checkbox:checked').length;
-        $('#selectedCount').text(count);
-        $('#submitBtn').prop('disabled', count === 0);
-    });
-    $('#disposalForm').on('submit', function() {
-        return confirm('Yakin ingin mengajukan ' + $('.arsip-checkbox:checked').length + ' arsip untuk dimusnahkan?');
-    });
-});
+    const form = document.getElementById('disposalForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const n = document.querySelectorAll('.arsip-checkbox:checked').length;
+        if (n === 0) { e.preventDefault(); return; }
+        if (!confirm('Yakin ingin mengajukan ' + n + ' arsip untuk dimusnahkan?')) e.preventDefault();
+      });
+    }
+    updateCount();
+  });
+})();
 </script>
 {{end}}

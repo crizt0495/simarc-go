@@ -396,7 +396,7 @@ func getExpiredArsipForPemusnahan() []models.Arsip {
 		Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
 		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
-		Where("LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ?", "musnah").
+		Where("(LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ? OR kode_klasifikasi.penyusutan_arsip IS NULL OR LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = '')", "musnah").
 		Where("kode_klasifikasi.is_active = ?", true).
 		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
 		Where("arsip.tanggal_dibuat IS NOT NULL").
@@ -478,7 +478,7 @@ func (h *PemusnahanHandler) Create(c *gin.Context) {
 	db := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
 		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
-		Where("LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ?", "musnah").
+		Where("(LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ? OR kode_klasifikasi.penyusutan_arsip IS NULL OR LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = '')", "musnah").
 		Where("kode_klasifikasi.is_active = ?", true).
 		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
 		Where("arsip.tanggal_dibuat IS NOT NULL").
@@ -497,7 +497,7 @@ func (h *PemusnahanHandler) Create(c *gin.Context) {
 
 	// Get kode klasifikasi options for filter
 	var kodeKlasifikasiOpts []models.KodeKlasifikasi
-	database.DB.Where("LOWER(TRIM(penyusutan_arsip)) = ? AND is_active = 1", "musnah").Order("kode_klasifikasi").Find(&kodeKlasifikasiOpts)
+	database.DB.Where("(LOWER(TRIM(penyusutan_arsip)) = ? OR penyusutan_arsip IS NULL OR LOWER(TRIM(penyusutan_arsip)) = '') AND is_active = 1", "musnah").Order("kode_klasifikasi").Find(&kodeKlasifikasiOpts)
 
 	Render(c, 200, "pemusnahan/create.html", gin.H{
 		"title": "Ajukan Pemusnahan", "pageTitle": "Ajukan Pemusnahan",
@@ -527,7 +527,7 @@ err := database.DB.Transaction(func(tx *gorm.DB) error {
 			return err
 		}
 		for _, aid := range arsipIDs {
-			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES ($1, $2, $3)", m.ID, aid, now).Error; err != nil {
+			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?)", m.ID, aid, now).Error; err != nil {
 				return err
 			}
 		}
@@ -578,7 +578,7 @@ func (h *PemusnahanHandler) AutoCreate(c *gin.Context) {
 			return err
 		}
 		for _, a := range expiredArsip {
-			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES ($1, $2, $3)", m.ID, a.ID, now).Error; err != nil {
+			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?)", m.ID, a.ID, now).Error; err != nil {
 				return err
 			}
 		}
