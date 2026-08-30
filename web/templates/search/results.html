@@ -3,7 +3,7 @@
 <div class="row">
     <div class="col-md-12">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h2><i class="bi bi-search me-2"></i>Hasil Pencarian</h2>
+            <h1 class="page-title mb-0"><i class="bi bi-search me-2"></i>Hasil Pencarian</h1>
         </div>
         <div class="card">
             <div class="card-body">
@@ -11,12 +11,12 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="input-group">
-                                <input type="text" class="form-control" name="q" value="{{.Query}}" placeholder="Cari arsip...">
-                                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                                <input type="text" class="form-control" name="q" value="{{.Query}}" placeholder="Cari arsip..." aria-label="Kata kunci pencarian">
+                                <button class="btn btn-primary" type="submit" aria-label="Cari"><i class="bi bi-search"></i></button>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <select name="status" class="form-select">
+                            <select name="status" class="form-select" aria-label="Filter status">
                                 <option value="">Semua Status</option>
                                 <option value="aktif" {{if eq .Status "aktif"}}selected{{end}}>Aktif</option>
                                 <option value="inaktif" {{if eq .Status "inaktif"}}selected{{end}}>Inaktif</option>
@@ -25,7 +25,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="unit_kerja" class="form-select">
+                            <select name="unit_kerja" class="form-select" aria-label="Filter unit kerja">
                                 <option value="">Semua Unit Kerja</option>
                                 {{range .UnitKerjaOptions}}
                                 <option value="{{.ID}}" {{if eq $.UnitKerjaId .ID}}selected{{end}}>{{.NamaUnit}}</option>

@@ -90,7 +90,27 @@
   table.dataTable tbody tr:nth-child(even) { background: var(--surface-2) !important; }
 
   /* Empty state */
-  table.dataTable tbody tr td.dataTables_empty { padding: 3rem 1rem !important; text-align: center; color: var(--ink-4); font-size: 0.9rem; border-radius: var(--r) !important; }
+  table.dataTable tbody tr td.dataTables_empty {
+    padding: 3.5rem 1rem !important;
+    text-align: center;
+    color: var(--ink-4);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    border-radius: var(--r) !important;
+    background: var(--surface-2) !important;
+    border: 1px dashed var(--border-2) !important;
+  }
+  table.dataTable tbody tr td.dataTables_empty::before {
+    content: '';
+    display: block;
+    width: 42px; height: 42px;
+    margin: 0 auto 0.8rem;
+    background: var(--brand-lt, rgba(59,130,246,.1));
+    border-radius: 12px;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232563eb'%3E%3Cpath d='M1.5 1h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5zm0 1v1h10v-1h-10zm0 3v7h10V5h-10zM2 6h1v1H2V6zm2 0h4v1H4V6zm-2 3h1v1H2V9zm2 0h4v1H4V9z'/%3E%3C/svg%3E") center/22px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232563eb'%3E%3Cpath d='M1.5 1h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5zm0 1v1h10v-1h-10zm0 3v7h10V5h-10zM2 6h1v1H2V6zm2 0h4v1H4V6zm-2 3h1v1H2V9zm2 0h4v1H4V9z'/%3E%3C/svg%3E") center/22px no-repeat;
+  }
 
   /* Badges & buttons in table */
   table.dataTable tbody .badge { font-size: 0.7rem; font-weight: 600; padding: 0.35em 0.65em; letter-spacing: 0.02em; border-radius: 6px; }
@@ -416,7 +436,7 @@
 
     {{if .AuthUser}}
     <div class="dropdown">
-      <div class="nav-user" data-bs-toggle="dropdown" aria-expanded="false">
+      <div class="nav-user" data-bs-toggle="dropdown" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false" aria-label="Menu pengguna">
         <div class="nav-avatar">{{slice .AuthUser.Name 0 1}}</div>
         <div class="d-none d-sm-block">
           <div class="nav-user-name">{{.AuthUser.Name}}</div>
@@ -444,6 +464,7 @@
 
 <!-- Main Content -->
 <main class="main-content">
+  <nav class="breadcrumb" id="globalBreadcrumb" aria-label="Breadcrumb"></nav>
   {{block "content" .}}{{end}}
 </main>
 
@@ -615,6 +636,94 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+/* ── Global Breadcrumb ── */
+document.addEventListener('DOMContentLoaded', function() {
+  var bc = document.getElementById('globalBreadcrumb');
+  if (!bc || bc.dataset.built) return;
+  bc.dataset.built = '1';
+
+  var labels = {
+    'dashboard': 'Dashboard',
+    'advanced': 'Lanjutan',
+    'arsip': 'Arsip',
+    'pemberkasan': 'Pemberkasan',
+    'pemusnahan': 'Pemusnahan',
+    'peminjaman': 'Peminjaman',
+    'unit-kerja': 'Unit Kerja',
+    'lokasi-arsip': 'Lokasi Arsip',
+    'users': 'Petugas',
+    'kode-klasifikasi': 'Kode Klasifikasi',
+    'jenis-arsip': 'Jenis Arsip',
+    'search': 'Pencarian',
+    'laporan': 'Laporan',
+    'monitoring': 'Monitoring Retensi',
+    'jadwal-retensi': 'Jadwal Retensi',
+    'roles': 'Role & Hak Akses',
+    'role': 'Role & Hak Akses',
+    'pengaturan': 'Pengaturan',
+    'backup': 'Backup & Restore',
+    'integrations': 'Integrasi Google Sheet',
+    'blockchain': 'Blockchain Audit',
+    'qrcode': 'QR Code',
+    'ocr': 'OCR',
+    'profil': 'Profil Saya',
+    'import-export': 'Impor & Ekspor',
+    'disposal': 'Pemusnahan'
+  };
+  var named = {
+    'create': 'Tambah Baru',
+    'edit': 'Edit',
+    'show': 'Detail',
+    'view': 'Detail',
+    'history': 'Riwayat',
+    'versions': 'Versi',
+    'pemindahan': 'Pemindahan',
+    'scanner': 'Pindai QR',
+    'settings': 'Pengaturan',
+    'statistik': 'Statistik',
+    'aktivitas': 'Log Aktivitas',
+    'lokasi': 'per Lokasi',
+    'arsip': 'Laporan Arsip',
+    'digital': 'Arsip Digital',
+    'klasifikasi': 'Klasifikasi',
+    'pemberkasan': 'Pemberkasan',
+    'retensi': 'Retensi',
+    'pemusnahan': 'Pemusnahan',
+    'permissions': 'Hak Akses'
+  };
+
+  var mapCrumb = function(seg) {
+    if (labels[seg]) return labels[seg];
+    if (seg.indexOf('-') === 0 && named[seg.replace(/^-/, '')]) return named[seg.replace(/^-/, '')];
+    if (named[seg]) return named[seg];
+    var pretty = seg.replace(/[-_]/g, ' ');
+    return pretty.charAt(0).toUpperCase() + pretty.slice(1);
+  };
+
+  var parts = (location.pathname.replace(/\/+$/, '') || '/').split('/').filter(Boolean);
+  var html = '';
+  html += '<a href="/dashboard">Beranda</a>';
+  if (parts.length) {
+    var acc = '';
+    for (var i = 0; i < parts.length; i++) {
+      acc += '/' + parts[i];
+      var isLast = i === parts.length - 1;
+      html += '<span class="breadcrumb-sep" aria-hidden="true">/</span>';
+      var label = mapCrumb(parts[i]);
+      if (isLast || !isKnown(acc)) {
+        html += '<span class="active">' + label + '</span>';
+      } else {
+        html += '<a href="' + acc + '">' + label + '</a>';
+      }
+    }
+  }
+  function isKnown(p) {
+    var known = ['/dashboard','/advanced/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/advanced/integrations','/blockchain','/qrcode','/ocr','/profil','/retention'];
+    return known.indexOf(p) !== -1;
+  }
+  bc.innerHTML = html;
+});
+
 /* ── Global Select2 for all dropdowns ── */
 document.addEventListener('DOMContentLoaded', function() {
   if (window.jQuery && $.fn.select2) {
@@ -678,18 +787,29 @@ document.addEventListener('DOMContentLoaded', function() {
              "<'row'<'col-sm-12'tr>>" +
              "<'row align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
       "drawCallback": function() {
-        var $w = $(this.nTableWrapper);
-        $w.find('.dataTables_filter input').attr('placeholder', 'Ketik untuk mencari...');
-        $w.find('tbody tr').each(function(i) {
-          var $r = $(this);
-          $r.css({opacity:0, transform:'translateY(6px)'});
-          setTimeout(function(){ $r.css({transition:'all 0.2s ease',opacity:1,transform:'translateY(0)'}); }, Math.min(i*15, 300));
-        });
-      },
-      "initComplete": function() {
-        $(this.nTableWrapper).find('.dataTables_filter input').attr('placeholder', 'Ketik untuk mencari...');
+        applyDataTableAria();
       }
     };
+    function applyDataTableAria() {
+      document.querySelectorAll('.dataTables_wrapper').forEach(function(w) {
+        var $w = $(w);
+        var $filter = $w.find('.dataTables_filter input');
+        if ($filter.length) {
+          $filter.attr('placeholder', 'Ketik untuk mencari...').attr('aria-label', 'Cari data');
+          $w.find('.dataTables_filter label').contents().filter(function() { return this.nodeType === 3; }).remove();
+        }
+        $w.find('.paginate_button.first a').attr('aria-label', 'Halaman pertama');
+        $w.find('.paginate_button.previous a').attr('aria-label', 'Halaman sebelumnya');
+        $w.find('.paginate_button.next a').attr('aria-label', 'Halaman berikutnya');
+        $w.find('.paginate_button.last a').attr('aria-label', 'Halaman terakhir');
+        var $len = $w.find('.dataTables_length select');
+        if ($len.length && !$len.attr('aria-label')) {
+          $len.attr('aria-label', 'Jumlah data per halaman');
+          $w.find('.dataTables_length label').contents().filter(function() { return this.nodeType === 3; }).remove();
+        }
+      });
+    }
+    $(document).on('draw.dt', applyDataTableAria);
     $('.datatable').each(function() {
       if (!$.fn.DataTable.isDataTable(this)) {
         var opts = $.extend({}, commonOpts);
@@ -701,6 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $(this).DataTable(opts);
       }
     });
+    setTimeout(applyDataTableAria, 600);
   }
 });
 </script>

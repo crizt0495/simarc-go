@@ -18,8 +18,8 @@
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label fw-bold"><i class="bi bi-folder me-1"></i>Kategori Kode</label>
-                            <select name="filter_kategori" class="form-select">
+                            <label class="form-label fw-bold" for="filter_kategori"><i class="bi bi-folder me-1"></i>Kategori Kode</label>
+                            <select name="filter_kategori" id="filter_kategori" class="form-select">
                                 <option value="">Semua Kategori</option>
                                 {{range .KategoriOptions}}
                                 <option value="{{.}}" {{if eq $.FilterKategori .}}selected{{end}}>
@@ -30,8 +30,8 @@
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label fw-bold"><i class="bi bi-toggle-on me-1"></i>Status</label>
-                            <select name="filter_status" class="form-select">
+                            <label class="form-label fw-bold" for="filter_status"><i class="bi bi-toggle-on me-1"></i>Status</label>
+                            <select name="filter_status" id="filter_status" class="form-select">
                                 <option value="">Semua Status</option>
                                 <option value="1" {{if eq $.FilterStatus "1"}}selected{{end}}>Aktif</option>
                                 <option value="0" {{if eq $.FilterStatus "0"}}selected{{end}}>Non-Aktif</option>
@@ -39,8 +39,8 @@
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label fw-bold"><i class="bi bi-trash3 me-1"></i>Penyusutan</label>
-                            <select name="filter_penyusutan" class="form-select">
+                            <label class="form-label fw-bold" for="filter_penyusutan"><i class="bi bi-trash3 me-1"></i>Penyusutan</label>
+                            <select name="filter_penyusutan" id="filter_penyusutan" class="form-select">
                                 <option value="">Semua Jenis</option>
                                 <option value="dinilai_kembali" {{if eq $.FilterPenyusutan "dinilai_kembali"}}selected{{end}}>Dinilai Kembali</option>
                                 <option value="permanen" {{if eq $.FilterPenyusutan "permanen"}}selected{{end}}>Permanen</option>
@@ -51,8 +51,8 @@
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label fw-bold"><i class="bi bi-shield-check me-1"></i>Keamanan</label>
-                            <select name="filter_keamanan" class="form-select">
+                            <label class="form-label fw-bold" for="filter_keamanan"><i class="bi bi-shield-check me-1"></i>Keamanan</label>
+                            <select name="filter_keamanan" id="filter_keamanan" class="form-select">
                                 <option value="">Semua Tingkat</option>
                                 <option value="terbuka" {{if eq $.FilterKeamanan "terbuka"}}selected{{end}}>Terbuka</option>
                                 <option value="terbatas" {{if eq $.FilterKeamanan "terbatas"}}selected{{end}}>Terbatas</option>

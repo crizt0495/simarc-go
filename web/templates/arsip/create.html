@@ -154,7 +154,7 @@
                             <div class="position-relative">
                                 <div class="date-input-field position-relative">
                                     <i class="bi bi-calendar3 date-input-icon"></i>
-                                    <input type="date" name="tanggal_dibuat" class="form-control" value="{{.TodayDate}}" required>
+                                    <input type="date" name="tanggal_dibuat" class="form-control" value="{{.TodayDate}}" required aria-label="Tanggal Pembuatan">
                                     <div class="date-presets d-flex gap-1 mt-2 flex-wrap" data-for="tanggal_dibuat">
                                         <button type="button" class="date-preset-btn active" data-days="0">Hari Ini</button>
                                         <button type="button" class="date-preset-btn" data-days="-1">Kemarin</button>
@@ -171,7 +171,7 @@
                             <div class="position-relative">
                                 <div class="date-input-field position-relative">
                                     <i class="bi bi-clock-history date-input-icon"></i>
-                                    <input type="date" name="tanggal_retensi_berakhir" class="form-control" value="">
+                                    <input type="date" name="tanggal_retensi_berakhir" class="form-control" value="" aria-label="Tanggal Retensi Berakhir">
                                 </div>
                                 <div id="retensiIndicator" class="mt-2" style="display:none;">
                                     <div class="d-flex align-items-center gap-2">
@@ -213,8 +213,8 @@
                         <div class="row g-2">
                             <div class="col-6">
                                 <div class="form-field">
-                                    <label>Jumlah <span class="req">*</span></label>
-                                    <input type="number" name="jumlah" class="form-control" value="1" min="1" required>
+                                    <label for="jumlah_input">Jumlah <span class="req">*</span></label>
+                                    <input type="number" name="jumlah" id="jumlah_input" class="form-control" value="1" min="1" required>
                                 </div>
                             </div>
                             <div class="col-6">
@@ -488,6 +488,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         updatePresetHighlight(input, wrapper);
                     },
                     onReady: function(selectedDates, dateStr, instance) {
+                        if (instance.altInput) {
+                            var lbl = input.getAttribute('aria-label') || 'Pilih tanggal';
+                            instance.altInput.setAttribute('aria-label', lbl);
+                            instance.altInput.setAttribute('placeholder', lbl);
+                        }
                         updatePresetHighlight(input, wrapper);
                     }
                 });

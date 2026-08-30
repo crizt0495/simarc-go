@@ -1,13 +1,13 @@
 {{define "ocr/index.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
-<div class="page-header mb-4">
-    <div class="d-flex justify-content-between align-items-center">
+<div class="gradient-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-            <h1 class="page-title mb-1 text-white">
+            <h1 class="title mb-1">
                 <i class="bi bi-file-earmark-text"></i>
                 OCR - Text Extraction
             </h1>
-            <p class="text-white-50 mb-0">Extract text from images and PDF documents using advanced AI</p>
+            <div class="subtitle mb-0" style="opacity:0.85">Extract text from images and PDF documents using advanced AI</div>
         </div>
     </div>
 </div>
@@ -70,8 +70,8 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Language</label>
-                        <select class="form-select" id="language" name="language">
+                        <label class="form-label fw-semibold" for="language">Language</label>
+                        <select class="form-select" id="language" name="language" aria-label="Bahasa OCR">
                             {{range .Languages}}
                             <option value="{{.Code}}" {{if eq .Code "eng+ind"}}selected{{end}}>
                                 {{.Name}}
@@ -83,7 +83,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">DPI (for PDF)</label>
+                        <label class="form-label fw-semibold" for="dpi">DPI (for PDF)</label>
                         <input type="number" class="form-control" id="dpi" name="dpi" value="300" min="100" max="600">
                         <small class="text-muted">Higher DPI = better quality but slower</small>
                     </div>
@@ -140,7 +140,7 @@
     .upload-icon { font-size: 4rem; color: #667eea; margin-bottom: 1rem; }
     .upload-area.has-file .upload-icon { color: #28a745; }
     .upload-text { font-size: 1.2rem; font-weight: 600; color: #495057; margin-bottom: 0.5rem; }
-    .upload-subtext { color: #6c757d; font-size: 0.9rem; }
+    .upload-subtext { color: #495057; font-size: 0.9rem; }
     .file-preview { display: none; margin-top: 1.5rem; padding: 1.5rem; background: #f8f9fa; border-radius: 0.5rem; border: 1px solid #dee2e6; }
     .file-preview.show { display: block; animation: slideDown 0.3s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }

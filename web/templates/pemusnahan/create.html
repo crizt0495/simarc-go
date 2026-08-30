@@ -119,8 +119,8 @@
                 </div>
                 <div class="col-md-4">
                     <div class="form-field mb-0">
-                        <label>Filter Kode Klasifikasi</label>
-                        <select class="form-select" name="kode_klasifikasi_id">
+                        <label for="kode_klasifikasi_id">Filter Kode Klasifikasi</label>
+                        <select class="form-select" name="kode_klasifikasi_id" id="kode_klasifikasi_id">
                             <option value="">Semua Kode Klasifikasi</option>
                             {{range .KodeKlasifikasiOptions}}
                             <option value="{{.ID}}" {{if eq .ID $.FilterKodeKlasifikasi}}selected{{end}}>{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>

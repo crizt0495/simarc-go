@@ -114,7 +114,7 @@
     <div class="mon-hero shadow-sm fade-up">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <div class="hero-title"><i class="bi bi-hourglass-split me-2"></i>Monitoring Retensi Arsip</div>
+                <h1 class="hero-title"><i class="bi bi-hourglass-split me-2"></i>Monitoring Retensi Arsip</h1>
                 <div class="hero-sub">Pantau arsip yang masa retensinya akan atau telah berakhir untuk tindak lanjut</div>
             </div>
             <a href="/pemusnahan/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;">
@@ -144,7 +144,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Unit Kerja</label>
-                    <select class="form-select" name="unit_kerja_id" style="font-size:0.85rem;">
+                    <select class="form-select" name="unit_kerja_id" id="unit_kerja_id" aria-label="Unit Kerja" style="font-size:0.85rem;">
                         <option value="">Semua Unit</option>
                         {{range .UnitKerjaList}}
                         <option value="{{.ID}}" {{if eq $.FilterUnitKerjaID .ID}}selected{{end}}>{{.NamaUnit}}</option>

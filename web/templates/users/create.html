@@ -46,23 +46,23 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-field">
-                                <label>Password <span class="req">*</span></label>
-                                <input type="password" class="form-control" name="password" required>
+                                <label for="password">Password <span class="req">*</span></label>
+                                <input type="password" class="form-control" name="password" id="password" required>
                                 <div class="form-text">Minimal 8 karakter</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-field">
-                                <label>Konfirmasi Password <span class="req">*</span></label>
-                                <input type="password" class="form-control" name="password_confirmation" required>
+                                <label for="password_confirmation">Konfirmasi Password <span class="req">*</span></label>
+                                <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" required>
                             </div>
                         </div>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-field">
-                                <label>Role <span class="req">*</span></label>
-                                <select class="form-select" name="role_id" required>
+                                <label for="role_id">Role <span class="req">*</span></label>
+                                <select class="form-select" name="role_id" id="role_id" required>
                                     <option value="">Pilih role</option>
                                     {{range .Roles}}
                                     <option value="{{.ID}}">{{.Name}}</option>
@@ -72,8 +72,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-field">
-                                <label>Unit Kerja</label>
-                                <select class="form-select" name="unit_kerja_id">
+                                <label for="unit_kerja_id">Unit Kerja</label>
+                                <select class="form-select" name="unit_kerja_id" id="unit_kerja_id">
                                     <option value="">Tidak ada unit kerja</option>
                                     {{range .UnitKerja}}
                                     <option value="{{.ID}}">{{.NamaUnit}}</option>

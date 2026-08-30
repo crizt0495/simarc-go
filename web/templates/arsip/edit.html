@@ -166,7 +166,7 @@
     <div class="edit-hero shadow-sm">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <div class="hero-title"><i class="bi bi-pencil-square me-2"></i>Edit Data Arsip</div>
+                <h1 class="hero-title"><i class="bi bi-pencil-square me-2"></i>Edit Data Arsip</h1>
                 <div class="hero-sub">Nomor Registrasi: <span class="fw-800" style="color:#fbbf24;">{{.arsip.NomorArsip}}</span></div>
                 <span class="hero-badge mt-2 d-inline-flex"><i class="bi bi-tag-fill"></i> Sedang Diedit</span>
             </div>
@@ -189,14 +189,14 @@
                 <div class="row g-3">
                     <div class="col-lg-8">
                         <div class="form-field">
-                            <label>Nama Lengkap Dokumen <span class="required">*</span></label>
-                            <input type="text" name="nama_arsip" class="form-control" value="{{.arsip.NamaArsip}}" required>
+                            <label for="nama_arsip">Nama Lengkap Dokumen <span class="required">*</span></label>
+                            <input type="text" name="nama_arsip" id="nama_arsip" class="form-control" value="{{.arsip.NamaArsip}}" required>
                         </div>
                     </div>
                     <div class="col-lg-4">
                         <div class="form-field">
-                            <label>Nomor Registrasi <span class="required">*</span></label>
-                            <input type="text" name="nomor_arsip" class="form-control" value="{{.arsip.NomorArsip}}" required>
+                            <label for="nomor_arsip">Nomor Registrasi <span class="required">*</span></label>
+                            <input type="text" name="nomor_arsip" id="nomor_arsip" class="form-control" value="{{.arsip.NomorArsip}}" required>
                         </div>
                     </div>
                 </div>
@@ -207,7 +207,7 @@
                             <div class="position-relative">
                                 <div class="date-input-field position-relative">
                                     <i class="bi bi-calendar3 date-input-icon"></i>
-                                    <input type="date" name="tanggal_dibuat" class="form-control" value="{{formatDateISO .arsip.TanggalDibuat}}" required>
+                                    <input type="date" name="tanggal_dibuat" class="form-control" value="{{formatDateISO .arsip.TanggalDibuat}}" required aria-label="Tanggal Pembuatan">
                                     <div class="date-presets d-flex gap-1 mt-2 flex-wrap" data-for="tanggal_dibuat">
                                         <button type="button" class="date-preset-btn active" data-days="0">Hari Ini</button>
                                         <button type="button" class="date-preset-btn" data-days="-1">Kemarin</button>
@@ -224,7 +224,7 @@
                             <div class="position-relative">
                                 <div class="date-input-field position-relative">
                                     <i class="bi bi-clock-history date-input-icon"></i>
-                                    <input type="date" name="tanggal_retensi_berakhir" class="form-control" value="{{formatDateISO .arsip.TanggalRetensiAkhir}}">
+                                    <input type="date" name="tanggal_retensi_berakhir" class="form-control" value="{{formatDateISO .arsip.TanggalRetensiAkhir}}" aria-label="Tanggal Retensi Berakhir">
                                 </div>
                                 <div id="retensiIndicator" class="mt-2" style="{{if .arsip.TanggalRetensiAkhir}}display:block;{{else}}display:none;{{end}}">
                                     <div class="d-flex align-items-center gap-2">
@@ -269,8 +269,8 @@
                         <div class="row g-2">
                             <div class="col-6">
                                 <div class="form-field">
-                                    <label>Jumlah <span class="required">*</span></label>
-                                    <input type="number" name="jumlah" class="form-control" value="{{.arsip.Jumlah}}" min="1" required>
+                                    <label for="jumlah_input">Jumlah <span class="required">*</span></label>
+                                    <input type="number" name="jumlah" id="jumlah_input" class="form-control" value="{{.arsip.Jumlah}}" min="1" required>
                                 </div>
                             </div>
                             <div class="col-6">
@@ -329,8 +329,8 @@
 
                 <!-- Uraian -->
                 <div class="form-field">
-                    <label>Ringkasan Singkat (Uraian)</label>
-                    <textarea name="uraian" class="form-control">{{.arsip.Uraian}}</textarea>
+                    <label for="uraian">Ringkasan Singkat (Uraian)</label>
+                    <textarea name="uraian" id="uraian" class="form-control">{{.arsip.Uraian}}</textarea>
                 </div>
             </div>
         </div>
@@ -622,6 +622,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         updatePresetHighlight(input, wrapper);
                     },
                     onReady: function(selectedDates, dateStr, instance) {
+                        if (instance.altInput) {
+                            var lbl = input.getAttribute('aria-label') || 'Pilih tanggal';
+                            instance.altInput.setAttribute('aria-label', lbl);
+                            instance.altInput.setAttribute('placeholder', lbl);
+                        }
                         updatePresetHighlight(input, wrapper);
                     }
                 });

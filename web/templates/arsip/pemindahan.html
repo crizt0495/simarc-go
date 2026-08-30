@@ -340,7 +340,7 @@
     <div class="pindah-hero shadow-sm fade-up">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <div class="hero-title"><i class="bi bi-map me-2"></i>Pemindahan Arsip</div>
+                <h1 class="hero-title"><i class="bi bi-map me-2"></i>Pemindahan Arsip</h1>
                 <div class="hero-sub">Pilih arsip, tentukan lokasi tujuan, dan proses pemindahan secara batch</div>
             </div>
             <div class="d-flex gap-2">
@@ -392,20 +392,20 @@
                                 </div>
                             </div>
                             <div class="col-md-2">
-                                <select class="form-select form-select-sm no-select2" id="fltUnit" onchange="filterArsip()">
+                                <select class="form-select form-select-sm no-select2" id="fltUnit" aria-label="Filter Unit" onchange="filterArsip()">
                                     <option value="">Semua Unit</option>
                                     {{range .UnitOpts}}<option value="{{.NamaUnit}}">{{.NamaUnit}}</option>{{end}}
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <select class="form-select form-select-sm no-select2" id="fltJenis" onchange="filterArsip()">
+                                <select class="form-select form-select-sm no-select2" id="fltJenis" aria-label="Filter Jenis" onchange="filterArsip()">
                                     <option value="">SPJ & Non SPJ</option>
                                     <option value="SPJ">SPJ</option>
                                     <option value="Non SPJ">Non SPJ</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <select class="form-select form-select-sm no-select2" id="fltLokasi" onchange="filterArsip()">
+                                <select class="form-select form-select-sm no-select2" id="fltLokasi" aria-label="Filter Lokasi" onchange="filterArsip()">
                                     <option value="">Semua Lokasi</option>
                                     {{range .LokasiOpts}}<option value="{{.NamaLokasi}}">{{.NamaLokasi}}</option>{{end}}
                                 </select>
@@ -436,7 +436,7 @@
 
                         <!-- Lokasi Tujuan -->
                         <h6 class="fw-700 mb-2" style="font-size:0.85rem;"><i class="bi bi-geo-alt text-primary me-1"></i> Lokasi Tujuan</h6>
-                        <select class="form-select no-select2" id="lokasiSelect" name="lokasi_arsip_id" onchange="onLokasiChange(this)" style="font-size:0.85rem;border-radius:var(--r);">
+                        <select class="form-select no-select2" id="lokasiSelect" name="lokasi_arsip_id" aria-label="Pilih lokasi tujuan pemindahan" onchange="onLokasiChange(this)" style="font-size:0.85rem;border-radius:var(--r);">
                             <option value="">— Pilih Lokasi Tujuan —</option>
                             {{range .LokasiOpts}}
                             <option value="{{.ID}}" data-info="{{if .Deskripsi}}{{.Deskripsi}}{{end}}">{{.NamaLokasi}}</option>

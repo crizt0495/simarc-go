@@ -38,6 +38,136 @@ import (
 
 type DisposalHandler struct{}
 
+type DisposalUrgentItem struct {
+	Classification         string
+	Arsip                  models.Arsip
+	DaysUntilDisposal      int
+	DisposalRecommendation string
+	UrgencyScore           int
+}
+
+type DisposalClassificationStat struct {
+	KodeKlasifikasi      string
+	NamaKlasifikasi      string
+	TotalRetensiTahun    int
+	TotalArsip           int64
+	OverdueDisposal      int64
+	ReadyForDisposal     int64
+	DisposalUrgencyScore int
+}
+
+type DisposalSummary struct {
+	TotalArchives          int64
+	TotalReadyForDisposal  int64
+	TotalOverdue           int64
+	TotalClassifications   int64
+	DisposalByType         map[string]int64
+	UrgentItems            []DisposalUrgentItem
+	Classifications        []DisposalClassificationStat
+}
+
+func disposalRecommendation(daysOverdue int) string {
+	switch {
+	case daysOverdue > 1095:
+		return "permanen"
+	case daysOverdue > 365:
+		return "alih_media"
+	default:
+		return "dimusnahkan"
+	}
+}
+
+func buildDisposalSummary(kodeKlasifikasiID string) DisposalSummary {
+	sum := DisposalSummary{DisposalByType: map[string]int64{}}
+
+	base := database.DB.Model(&models.Arsip{}).Where("deleted_at IS NULL")
+	if kodeKlasifikasiID != "" {
+		base = base.Where("kode_klasifikasi_id = ?", kodeKlasifikasiID)
+	}
+	base.Count(&sum.TotalArchives)
+
+	ready := base.Session(&gorm.Session{}).
+		Where("tanggal_retensi_berakhir < ? AND status_arsip != 'musnah'", time.Now())
+	ready.Count(&sum.TotalReadyForDisposal)
+	ready.Session(&gorm.Session{}).
+		Where("tanggal_retensi_berakhir < ?", time.Now().AddDate(0, 0, -30)).
+		Count(&sum.TotalOverdue)
+
+	var kkCount int64
+	database.DB.Model(&models.KodeKlasifikasi{}).Where("is_active = 1").Count(&kkCount)
+	sum.TotalClassifications = kkCount
+
+	svc := &services.SmartDisposalService{}
+	eligible := svc.GetEligibleArsip()
+	now := time.Now()
+	for _, a := range eligible {
+		if kodeKlasifikasiID != "" && a.KodeKlasifikasiID != kodeKlasifikasiID {
+			continue
+		}
+		daysOverdue := 0
+		if a.TanggalRetensiAkhir != nil {
+			daysOverdue = int(now.Sub(*a.TanggalRetensiAkhir).Hours() / 24)
+			if daysOverdue < 0 {
+				daysOverdue = 0
+			}
+		}
+		rec := disposalRecommendation(daysOverdue)
+		sum.DisposalByType[rec]++
+		score := 25 + (daysOverdue / 10)
+		if score > 100 {
+			score = 100
+		}
+		classification := ""
+		if a.KodeKlasifikasi != nil {
+			classification = a.KodeKlasifikasi.KodeKlasifikasi
+		}
+		sum.UrgentItems = append(sum.UrgentItems, DisposalUrgentItem{
+			Classification:         classification,
+			Arsip:                  a,
+			DaysUntilDisposal:      daysOverdue,
+			DisposalRecommendation: rec,
+			UrgencyScore:           score,
+		})
+	}
+	sort.Slice(sum.UrgentItems, func(i, j int) bool {
+		return sum.UrgentItems[i].DaysUntilDisposal > sum.UrgentItems[j].DaysUntilDisposal
+	})
+	if len(sum.UrgentItems) > 20 {
+		sum.UrgentItems = sum.UrgentItems[:20]
+	}
+
+	var kkList []models.KodeKlasifikasi
+	database.DB.Where("is_active = 1").Order("kode_klasifikasi").Find(&kkList)
+	nowPlus30 := time.Now().AddDate(0, 0, 30)
+	for _, kk := range kkList {
+		stat := DisposalClassificationStat{
+			KodeKlasifikasi:   kk.KodeKlasifikasi,
+			NamaKlasifikasi:   kk.NamaKlasifikasi,
+			TotalRetensiTahun: kk.RetensiAktif + kk.RetensiInaktif,
+		}
+		aDB := database.DB.Model(&models.Arsip{}).
+			Where("deleted_at IS NULL AND kode_klasifikasi_id = ?", kk.ID)
+		aDB.Count(&stat.TotalArsip)
+		aDB.Session(&gorm.Session{}).
+			Where("tanggal_retensi_berakhir < ? AND status_arsip != 'musnah'", time.Now()).
+			Count(&stat.OverdueDisposal)
+		aDB.Session(&gorm.Session{}).
+			Where("tanggal_retensi_berakhir >= ? AND tanggal_retensi_berakhir < ? AND status_arsip != 'musnah'", time.Now(), nowPlus30).
+			Count(&stat.ReadyForDisposal)
+		if stat.OverdueDisposal > 0 {
+			stat.DisposalUrgencyScore = 100
+		} else if stat.ReadyForDisposal > 0 {
+			stat.DisposalUrgencyScore = 60
+		} else if stat.TotalArsip > 0 {
+			stat.DisposalUrgencyScore = 30
+		}
+		if stat.OverdueDisposal > 0 || stat.ReadyForDisposal > 0 {
+			sum.Classifications = append(sum.Classifications, stat)
+		}
+	}
+	return sum
+}
+
 func (h *DisposalHandler) Index(c *gin.Context) {
 	var klasifikasiList []models.KodeKlasifikasi
 	var total int64
@@ -78,6 +208,7 @@ func (h *DisposalHandler) Index(c *gin.Context) {
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Smart Disposal", "pageTitle": "Smart Disposal - Berdasarkan Klasifikasi",
 		"klasifikasiList": klasifikasiList, "stats": stats,
+		"Summary": buildDisposalSummary(""),
 		"Total": total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":  offset + 1,
@@ -119,6 +250,7 @@ func (h *DisposalHandler) ShowByClassification(c *gin.Context) {
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Disposal - " + kk.KodeKlasifikasi, "pageTitle": "Disposal: " + kk.NamaKlasifikasi,
 		"ArsipList": arsipList, "kk": kk,
+		"Summary": buildDisposalSummary(kk.ID),
 		"Total": total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":  offset + 1,
@@ -195,6 +327,7 @@ func (h *DisposalHandler) Schedules(c *gin.Context) {
 		Order("scheduled_date ASC").Limit(perPage).Offset(offset).Find(&schedules)
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Jadwal Disposal", "pageTitle": "Jadwal Disposal", "schedules": schedules, "scheduleMode": true,
+		"Summary": buildDisposalSummary(""),
 		"Total": total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":  offset + 1,

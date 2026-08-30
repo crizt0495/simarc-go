@@ -40,7 +40,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Tahun</label>
-                    <select class="form-select" name="tahun">
+                    <select class="form-select" name="tahun" id="tahun" aria-label="Tahun">
                         <option value="">Semua Tahun</option>
                         {{range .TahunList}}
                         <option value="{{.}}"{{if eq $.RequestTahun .}} selected{{end}}>{{.}}</option>

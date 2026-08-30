@@ -918,7 +918,7 @@ func logActivity(userID, action, desc, modelType, modelID, ipAddress, userAgent 
 func (h *ArsipHandler) View(c *gin.Context) {
 	var arsip models.Arsip
 	if err := database.DB.First(&arsip, "id = ?", c.Param("id")).Error; err != nil || arsip.FilePath == "" {
-		c.String(http.StatusNotFound, "File tidak ditemukan")
+		Render404(c)
 		return
 	}
 	ext := strings.ToLower(filepath.Ext(arsip.FilePath))

@@ -78,7 +78,7 @@
     <div class="jenis-hero shadow-sm fade-up">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <div class="hero-title"><i class="bi bi-folder me-2"></i>Jenis Arsip</div>
+                <h1 class="hero-title"><i class="bi bi-folder me-2"></i>Jenis Arsip</h1>
                 <div class="hero-sub">Kelola kategori dan jenis arsip untuk klasifikasi dokumen</div>
             </div>
             <a href="/jenis-arsip/create" class="btn btn-light btn-sm rounded-pill fw-800 px-3" style="font-size:0.75rem;">
@@ -93,7 +93,7 @@
                 <div class="col-md-5">
                     <div class="input-group">
                         <input type="text" class="form-control" name="search" placeholder="Cari: Kode, Nama, Keterangan..." value="{{.Search}}" style="font-size:0.85rem;">
-                        <button type="submit" class="btn btn-primary" style="font-size:0.85rem;"><i class="bi bi-search"></i></button>
+                        <button type="submit" class="btn btn-primary" style="font-size:0.85rem;" aria-label="Cari"><i class="bi bi-search"></i></button>
                         {{if .Search}}<a href="/jenis-arsip" class="btn btn-outline-secondary" style="font-size:0.85rem;"><i class="bi bi-x-lg"></i></a>{{end}}
                     </div>
                 </div>

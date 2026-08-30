@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.innerHTML = '<i class="bi bi-calendar3"></i>';
             btn.title = 'Pilih tanggal';
             btn.setAttribute('aria-label', 'Buka kalender');
-            btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#64748b;cursor:pointer;padding:4px;z-index:2;line-height:1;';
+            btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#64748b;cursor:pointer;padding:0;z-index:2;line-height:1;min-width:24px;min-height:24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;';
             
             // On click, focus the input which triggers the native date picker
             btn.addEventListener('click', function(e) {
