@@ -2566,14 +2566,12 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 /* 1366px – Standard laptop */
 @media (min-width: 1366px) and (max-width: 1919px) {
     .main-content { padding: 24px 32px; }
-    .container-fluid { max-width: 1400px; margin: 0 auto; }
 }
 
 /* 1920px+ – Ultra-wide */
 @media (min-width: 1920px) {
     body { font-size: 15px; }
-    .main-content { padding: 28px 40px; max-width: 1600px; margin-left: var(--sidebar-w, 260px); margin-right: auto; }
-    .container-fluid { max-width: 1600px; margin: 0 auto; }
+    .main-content { padding: 28px 40px; }
     .nav-search { width: 320px; }
     .card-body { padding: 24px; }
     .table td, .table th { padding: 14px 16px; }
