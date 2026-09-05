@@ -208,15 +208,14 @@
   table.table-premium tbody .btn-soft-dark { background: var(--surface-3); color: var(--ink-4); }
   /* Status badges */
   .status-badge { display: inline-block; }
-  .status-aktif { background: #f0fdf4; color: #16a34a; }
-  .status-inaktif { background: #fefce8; color: #ca8a04; }
-  .status-siap_penyusutan { background: #fff7ed; color: #ea580c; }
-  .status-musnah { background: #fef2f2; color: #dc2626; }
-  .status-permanen { background: var(--brand-lt); color: var(--brand); }
+  .status-aktif, .status-inaktif, .status-siap_penyusutan, .status-musnah, .status-permanen {
+    background: var(--neu-bg, #e0e5ec);
+    color: var(--ink-2);
+    box-shadow: inset 0 0 0 1px rgba(163,177,198,.3), var(--neu-raised-sm);
+  }
   /* File indicator */
-  .file-indicator { width: 32px; height: 32px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; }
-  .file-indicator.bg-success { background: #f0fdf4 !important; color: #22c55e; }
-  .file-indicator.bg-slate-200 { background: var(--surface-3) !important; color: var(--ink-4); }
+  .file-indicator { width: 32px; height: 32px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; background: var(--neu-bg, #e0e5ec); color: var(--ink-2); box-shadow: var(--neu-inset); }
+  .file-indicator.bg-success, .file-indicator.bg-slate-200 { background: var(--neu-bg, #e0e5ec) !important; color: var(--ink-2) !important; box-shadow: var(--neu-inset); }
   /* Empty state in premium table */
   table.table-premium tbody td[colspan] { padding: 3rem 1rem !important; text-align: center; border-radius: var(--r) !important; }
   table.table-premium .empty-state i { font-size: 2.5rem; color: var(--border-2); }

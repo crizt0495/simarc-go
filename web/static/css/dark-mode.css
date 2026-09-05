@@ -12,10 +12,7 @@
    BASE DARK MODE
    ═══════════════════════════════════════════════════════════════ */
 
-body[data-theme="dark"] {
-    background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #0a0e1a 100%);
-    color: var(--neutral-900, #f8fafc);
-}
+body[data-theme="dark"] { background: #1a1a2e; color: #e0e0e0; }
 
 /* ═══════════════════════════════════════════════════════════════
    CARDS & PANELS
@@ -26,9 +23,7 @@ body[data-theme="dark"] {
     border-top-color: var(--neutral-300, #475569);
 }
 
-[data-theme="dark"] .card:hover {
-    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.5));
-}
+[data-theme="dark"] .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.5); transform: translateY(-2px); }
 
 [data-theme="dark"] .premium-card {
     background: var(--neutral-100, #1e293b);
@@ -129,11 +124,7 @@ body[data-theme="dark"] {
     box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.4));
 }
 
-[data-theme="dark"] .sidebar {
-    background: var(--neutral-100, #1e293b);
-    border-right-color: var(--neutral-300, #475569);
-    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.5));
-}
+[data-theme="dark"] .sidebar { background: #1a1a2e; border-right: 1px solid rgba(255,255,255,.06); }
 
 [data-theme="dark"] .sidebar-header {
     border-bottom-color: var(--neutral-300, #475569);
@@ -158,9 +149,7 @@ body[data-theme="dark"] {
    DROPDOWN MENUS
    ═══════════════════════════════════════════════════════════════ */
 
-[data-theme="dark"] .dropdown-item {
-    color: var(--neutral-900, #f8fafc);
-}
+[data-theme="dark"] .dropdown-item { color: #c0c0c0; }
 
 [data-theme="dark"] .dropdown-item:hover,
 [data-theme="dark"] .dropdown-item:focus {
@@ -342,14 +331,9 @@ body[data-theme="dark"] {
     color: var(--neutral-900, #f8fafc);
 }
 
-[data-theme="dark"] .table tbody td {
-    border-bottom-color: var(--neutral-300, #475569);
-    color: var(--neutral-900, #f8fafc);
-}
+[data-theme="dark"] .table tbody td { color: #d0d0d0; }
 
-[data-theme="dark"] .table tbody tr:hover {
-    background: var(--neutral-200, #334155);
-}
+[data-theme="dark"] .table tbody tr:hover { background: rgba(255,255,255,.03); }
 
 [data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) {
     background: rgba(30, 41, 59, 0.3);
@@ -1104,9 +1088,7 @@ body[data-theme="dark"] {
 }
 
 /* ── Dark mode: fix dropdown z-index and pointer-events ── */
-[data-theme="dark"] .dropdown-menu {
-    z-index: 1060;
-}
+[data-theme="dark"] .dropdown-menu { background: #1a1a2e; border-color: rgba(255,255,255,.08); }
 [data-theme="dark"] .dropdown-menu.show {
     pointer-events: auto;
 }
@@ -1605,10 +1587,7 @@ body.theme-aware {
    DASHBOARD STAT CARDS DARK MODE
    ═══════════════════════════════════════════════════════════════ */
 
-[data-theme="dark"] .stat-card {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-}
+[data-theme="dark"] .stat-card { background: #1a1a2e; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
 
 [data-theme="dark"] .stat-card-icon {
     background: rgba(255,255,255,0.08) !important;
@@ -1708,11 +1687,7 @@ body.theme-aware {
    ═══════════════════════════════════════════════════════════════ */
 
 [data-theme="dark"] table.table thead th,
-[data-theme="dark"] .table thead th {
-    background: #1e293b !important;
-    color: #94a3b8 !important;
-    border-bottom-color: #334155 !important;
-}
+[data-theme="dark"] .table thead th { color: #a0a0a0; }
 
 [data-theme="dark"] table.table td,
 [data-theme="dark"] .table td {
@@ -1745,10 +1720,7 @@ body.theme-aware {
    DASHBOARD CARD & CHART DARK MODE
    ═══════════════════════════════════════════════════════════════ */
 
-[data-theme="dark"] .card {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-}
+[data-theme="dark"] .card { background: #1a1a2e; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
 
 [data-theme="dark"] .card-header {
     background: #1e293b !important;
@@ -1805,11 +1777,7 @@ body.theme-aware {
     color: #e2e8f0 !important;
 }
 
-[data-theme="dark"] .alert-danger {
-    background: rgba(239,68,68,0.15) !important;
-    border-color: rgba(239,68,68,0.3) !important;
-    color: #fca5a5 !important;
-}
+[data-theme="dark"] .alert-danger { background: rgba(255,255,255,.05); color: #e0e0e0; }
 
 [data-theme="dark"] .alert-info {
     background: rgba(6,182,212,0.15) !important;
@@ -1817,11 +1785,7 @@ body.theme-aware {
     color: #67e8f9 !important;
 }
 
-[data-theme="dark"] .alert-success {
-    background: rgba(16,185,129,0.15) !important;
-    border-color: rgba(16,185,129,0.3) !important;
-    color: #6ee7b7 !important;
-}
+[data-theme="dark"] .alert-success { background: rgba(255,255,255,.05); color: #e0e0e0; }
 
 /* ═══════════════════════════════════════════════════════════════
    EMPTY STATES DARK MODE
@@ -2414,15 +2378,8 @@ body.theme-aware {
     background: linear-gradient(90deg, #059669, #10b981) !important;
 }
 /* ── Dark mode: SIMARC V4 Modal ── */
-[data-theme="dark"] .sm-content {
-    background: var(--neutral-100, #1e293b);
-    box-shadow:
-        0 25px 50px -12px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.03);
-}
-[data-theme="dark"] .sm-header {
-    border-bottom-color: var(--neutral-300, #475569);
-}
+[data-theme="dark"] .sm-content { background: #1a1a2e; }
+[data-theme="dark"] .sm-header { border-bottom-color: rgba(255,255,255,.08); }
 [data-theme="dark"] .sm-title {
     color: var(--neutral-900, #f8fafc);
 }
@@ -2435,19 +2392,11 @@ body.theme-aware {
 [data-theme="dark"] .sm-body::-webkit-scrollbar-thumb {
     background: var(--neutral-400, #64748b);
 }
-[data-theme="dark"] .sm-footer {
-    border-top-color: var(--neutral-300, #475569);
-}
+[data-theme="dark"] .sm-footer { border-top-color: rgba(255,255,255,.08); }
 [data-theme="dark"] .sm-close,
-[data-theme="dark"] .sm-btn-close {
-    background: var(--neutral-200, #334155);
-    color: var(--neutral-500, #94a3b8);
-}
+[data-theme="dark"] .sm-btn-close { background: rgba(255,255,255,.05); color: #a0a0a0; }
 [data-theme="dark"] .sm-close:hover,
-[data-theme="dark"] .sm-btn-close:hover {
-    background: rgba(59, 130, 246, 0.15);
-    color: var(--primary-400, #60a5fa);
-}
+[data-theme="dark"] .sm-btn-close:hover { background: rgba(255,255,255,.08); color: #e0e0e0; }
 [data-theme="dark"] .sm-btn-cancel {
     background: var(--neutral-200, #334155);
     color: var(--neutral-600, #cbd5e1);

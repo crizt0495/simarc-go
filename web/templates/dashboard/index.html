@@ -12,122 +12,162 @@
 </div>
 {{end}}
 
-<div class="page-header">
+<div class="page-header dashboard-header">
   <div>
     <h1 class="page-title">Dashboard</h1>
     <p class="page-subtitle d-none d-md-block">Selamat datang, <strong>{{.AuthUser.Name}}</strong> — ringkasan status kearsipan organisasi</p>
   </div>
   <div class="page-actions">
-    <button class="btn btn-secondary" onclick="refreshDashboard()" id="btnRefresh">
+    <button class="btn btn-secondary btn-soft-refresh" onclick="refreshDashboard()" id="btnRefresh">
       <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline"> Perbarui Data</span>
     </button>
   </div>
 </div>
 
 <!-- KPI Stats Row 1 (5 cards) -->
-<div class="grid-5 mb-4">
-  <div class="stat-card cursor-pointer" onclick="location.href='/arsip'">
-    <div class="stat-card-icon icon-blue"><i class="bi bi-archive"></i></div>
+<div class="kpi-grid kpi-grid-5 mb-4">
+  <div class="stat-card dash-stat cursor-pointer stat-accent-blue" onclick="location.href='/arsip'">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-blue"><i class="bi bi-archive"></i></div>
+      <span class="stat-card-chip">Semua Data</span>
+    </div>
     <div class="stat-card-value" data-stat="total">{{.Stats.Total}}</div>
     <div class="stat-card-label">Total Arsip</div>
-    <div class="stat-card-trend trend-up"><i class="bi bi-box"></i> Seluruh arsip</div>
+    <div class="stat-card-foot"><i class="bi bi-box"></i> Seluruh arsip</div>
   </div>
-  <div class="stat-card cursor-pointer stat-card-purple" onclick="location.href='/arsip'">
-    <div class="stat-card-icon icon-indigo"><i class="bi bi-box-seam"></i></div>
+  <div class="stat-card dash-stat cursor-pointer stat-accent-indigo" onclick="location.href='/arsip'">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-indigo"><i class="bi bi-box-seam"></i></div>
+      <span class="stat-card-chip">Item Fisik</span>
+    </div>
     <div class="stat-card-value" data-stat="total_items">{{.Stats.TotalItems}}</div>
     <div class="stat-card-label">Total Item Fisik</div>
-    <div class="stat-card-trend trend-up"><i class="bi bi-collection"></i> {{.Stats.Total}} arsip</div>
+    <div class="stat-card-foot"><i class="bi bi-collection"></i> {{.Stats.Total}} arsip</div>
   </div>
-  <div class="stat-card stat-card-success cursor-pointer" onclick="location.href='/arsip?status=aktif'">
-    <div class="stat-card-icon icon-green"><i class="bi bi-check-circle"></i></div>
+  <div class="stat-card dash-stat cursor-pointer stat-accent-green" onclick="location.href='/arsip?status=aktif'">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-green"><i class="bi bi-check-circle"></i></div>
+      <span class="stat-card-chip stat-chip-pct">{{percent (int .Stats.Aktif) (int .Stats.Total)}}% dari total</span>
+    </div>
     <div class="stat-card-value" data-stat="aktif">{{.Stats.Aktif}}</div>
     <div class="stat-card-label">Arsip Aktif</div>
-    <div class="progress mt-2" style="height:4px"><div class="progress-bar" style="width:{{percent (int .Stats.Aktif) (int .Stats.Total)}}%;background:var(--success);"></div></div>
+    <div class="stat-card-progress"><div class="progress-track"><div class="progress-fill progress-fill-green" style="width:{{percent (int .Stats.Aktif) (int .Stats.Total)}}%"></div></div></div>
   </div>
-  <div class="stat-card stat-card-info cursor-pointer" onclick="location.href='/arsip?status=inaktif'">
-    <div class="stat-card-icon icon-purple"><i class="bi bi-pause-circle"></i></div>
+  <div class="stat-card dash-stat cursor-pointer stat-accent-purple" onclick="location.href='/arsip?status=inaktif'">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-purple"><i class="bi bi-pause-circle"></i></div>
+      <span class="stat-card-chip stat-chip-pct">{{percent (int .Stats.Inaktif) (int .Stats.Total)}}% dari total</span>
+    </div>
     <div class="stat-card-value" data-stat="inaktif">{{.Stats.Inaktif}}</div>
     <div class="stat-card-label">Arsip Inaktif</div>
-    <div class="progress mt-2" style="height:4px"><div class="progress-bar" style="width:{{percent (int .Stats.Inaktif) (int .Stats.Total)}}%;background:var(--purple-500)"></div></div>
+    <div class="stat-card-progress"><div class="progress-track"><div class="progress-fill progress-fill-purple" style="width:{{percent (int .Stats.Inaktif) (int .Stats.Total)}}%"></div></div></div>
   </div>
-  <div class="stat-card stat-card-warning cursor-pointer" onclick="location.href='/arsip?status=siap_penyusutan'">
-    <div class="stat-card-icon icon-amber"><i class="bi bi-exclamation-triangle"></i></div>
+  <div class="stat-card dash-stat cursor-pointer stat-accent-amber" onclick="location.href='/arsip?status=siap_penyusutan'">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-amber"><i class="bi bi-exclamation-triangle"></i></div>
+      {{if ne .Stats.SiapPenyusutan 0}}<span class="stat-card-chip stat-chip-danger">Perlu Review</span>{{else}}<span class="stat-card-chip stat-chip-success">Aman</span>{{end}}
+    </div>
     <div class="stat-card-value" data-stat="siap_penyusutan">{{.Stats.SiapPenyusutan}}</div>
     <div class="stat-card-label">Siap Musnah</div>
-    <div class="mt-2">{{if ne .Stats.SiapPenyusutan 0}}<span class="badge badge-danger">Perlu Review</span>{{else}}<span class="badge badge-success">Aman</span>{{end}}</div>
+    <div class="stat-card-foot"><i class="bi bi-trash"></i> Menunggu penyusutan</div>
   </div>
 </div>
 
 <!-- KPI Stats Row 2 (4 cards) -->
-<div class="grid-4 mb-4">
-  <div class="stat-card">
-    <div class="stat-card-icon icon-blue"><i class="bi bi-file-text"></i></div>
+<div class="kpi-grid kpi-grid-4 mb-4">
+  <div class="stat-card dash-stat stat-accent-blue">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-blue"><i class="bi bi-file-text"></i></div>
+      <span class="stat-card-chip">SPJ</span>
+    </div>
     <div class="stat-card-value" data-stat="spj">{{.Stats.Spj}}</div>
     <div class="stat-card-label">Arsip SPJ</div>
+    <div class="stat-card-foot"><i class="bi bi-receipt"></i> Pertanggungjawaban</div>
   </div>
-  <div class="stat-card">
-    <div class="stat-card-icon icon-purple"><i class="bi bi-files"></i></div>
+  <div class="stat-card dash-stat stat-accent-purple">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-purple"><i class="bi bi-files"></i></div>
+      <span class="stat-card-chip">Non-SPJ</span>
+    </div>
     <div class="stat-card-value" data-stat="non_spj">{{.Stats.NonSpj}}</div>
     <div class="stat-card-label">Arsip Non-SPJ</div>
+    <div class="stat-card-foot"><i class="bi bi-collection"></i> Dokumen lain</div>
   </div>
-  <div class="stat-card stat-card-success">
-    <div class="stat-card-icon icon-green"><i class="bi bi-cloud-check"></i></div>
+  <div class="stat-card dash-stat stat-accent-green">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-green"><i class="bi bi-cloud-check"></i></div>
+      <span class="stat-card-chip stat-chip-pct">{{.DigitalFileStats.Percentage}}% dari total</span>
+    </div>
     <div class="stat-card-value" data-stat="with_file">{{.DigitalFileStats.WithDigitalFile}}</div>
     <div class="stat-card-label">Sudah Digital</div>
-    <div class="progress mt-2" style="height:4px"><div class="progress-bar" style="width:{{.DigitalFileStats.Percentage}}%;background:var(--success);"></div></div>
+    <div class="stat-card-progress"><div class="progress-track"><div class="progress-fill progress-fill-green" style="width:{{.DigitalFileStats.Percentage}}%"></div></div></div>
   </div>
-  <div class="stat-card">
-    <div class="stat-card-icon icon-red"><i class="bi bi-cloud-slash"></i></div>
+  <div class="stat-card dash-stat stat-accent-red">
+    <div class="stat-card-top">
+      <div class="stat-card-icon icon-red"><i class="bi bi-cloud-slash"></i></div>
+      {{if ne .Stats.Unclassified 0}}<span class="stat-card-chip stat-chip-warning">Perlu Klasifikasi</span>{{else}}<span class="stat-card-chip">Belum Digital</span>{{end}}
+    </div>
     <div class="stat-card-value" data-stat="without_file">{{.DigitalFileStats.WithoutDigitalFile}}</div>
     <div class="stat-card-label">Belum Digital</div>
-    {{if ne .Stats.Unclassified 0}}<a href="/arsip?no_classification=1" class="badge badge-warning mt-2 text-decoration-none">{{.Stats.Unclassified}} belum terklasifikasi</a>{{end}}
+    {{if ne .Stats.Unclassified 0}}<a href="/arsip?no_classification=1" class="stat-card-link">{{.Stats.Unclassified}} belum terklasifikasi <i class="bi bi-arrow-right"></i></a>{{else}}<div class="stat-card-foot"><i class="bi bi-cloud-download"></i> Siap digitalisasi</div>{{end}}
   </div>
 </div>
 
-<!-- Box Stats + Chart -->
-<div class="row g-3 mb-4">
-  <div class="col-lg-8">
-    <div class="card h-100">
+<!-- Chart & Box Stats -->
+<div class="row g-3 mb-4 dashboard-lower-grid">
+  <div class="col-xl-8">
+    <div class="card h-100 dash-chart-card">
       <div class="card-header">
         <span class="card-title"><i class="bi bi-graph-up-arrow text-brand me-2"></i>Prediksi Pertumbuhan Arsip (6 Bulan)</span>
         <span class="badge badge-primary">Linear Regression</span>
       </div>
-      <div class="card-body">
-        <div style="height:260px;position:relative">
+      <div class="card-body chart-card-body">
+        <div class="chart-wrap">
           <canvas id="forecastChart"></canvas>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-lg-4">
-    <div class="card h-100">
+  <div class="col-xl-4">
+    <div class="card h-100 dash-box-card">
       <div class="card-header">
-        <span class="card-title"><i class="bi bi-box-seam text-brand me-2"></i>Inventaris Box RC</span>
+        <span class="card-title"><i class="bi bi-boxes text-brand me-2"></i>Inventaris Box RC</span>
+        <span class="badge badge-outline" style="cursor:pointer" onclick="SimarcModal.show('modalTotalBox', { size: 'sm' })">{{.BoxStats.TotalRcBoxes}} Total</span>
       </div>
-      <div class="card-body" style="padding:16px">
-        <div class="flex-between mb-3">
-          <span class="text-muted" style="font-size:0.75rem">Total Box</span>
-          <strong class="fw-800" style="font-size:22px;cursor:pointer" onclick="SimarcModal.show('modalTotalBox', { size: 'sm' })" title="Klik untuk lihat daftar box">{{.BoxStats.TotalRcBoxes}}</strong>
+      <div class="card-body box-stats-body">
+        <div class="box-stats-grid">
+          <div class="box-stat-item box-stat-spj" onclick="SimarcModal.show('modalSpjBox', { size: 'sm' })">
+            <div class="box-stat-icon"><i class="bi bi-receipt"></i></div>
+            <div class="box-stat-data">
+              <div class="box-stat-value">{{.BoxStats.BoxMurniSpj}}</div>
+              <div class="box-stat-label">Box SPJ</div>
+            </div>
+          </div>
+          <div class="box-stat-item box-stat-non" onclick="SimarcModal.show('modalNonSpjBox', { size: 'sm' })">
+            <div class="box-stat-icon"><i class="bi bi-files"></i></div>
+            <div class="box-stat-data">
+              <div class="box-stat-value">{{.BoxStats.BoxMurniNonSpj}}</div>
+              <div class="box-stat-label">Box Non-SPJ</div>
+            </div>
+          </div>
+          <div class="box-stat-item box-stat-mix" onclick="SimarcModal.show('modalCampuranBox', { size: 'sm' })">
+            <div class="box-stat-icon"><i class="bi bi-shuffle"></i></div>
+            <div class="box-stat-data">
+              <div class="box-stat-value">{{.BoxStats.BoxCampuran}}</div>
+              <div class="box-stat-label">Box Campuran</div>
+            </div>
+          </div>
+          <div class="box-stat-item box-stat-digital">
+            <div class="box-stat-icon box-stat-icon-brand"><i class="bi bi-cloud-check"></i></div>
+            <div class="box-stat-data">
+              <div class="box-stat-value text-brand">{{printf "%.0f" .BoxStats.RcDigitalPercent}}%</div>
+              <div class="box-stat-label">Digitalisasi</div>
+            </div>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="bg-surface-2 rounded p-3">
-            <div class="text-muted mb-1" style="font-size:0.7rem">Khusus SPJ</div>
-            <div style="font-size:20px;font-weight:800;color:var(--warning);cursor:pointer" onclick="SimarcModal.show('modalSpjBox', { size: 'sm' })" title="Klik untuk lihat daftar box SPJ">{{.BoxStats.BoxMurniSpj}}</div>
-          </div>
-          <div class="bg-surface-2 rounded p-3">
-            <div class="text-muted mb-1" style="font-size:0.7rem">Non-SPJ</div>
-            <div style="font-size:20px;font-weight:800;color:var(--success);cursor:pointer" onclick="SimarcModal.show('modalNonSpjBox', { size: 'sm' })" title="Klik untuk lihat daftar box Non-SPJ">{{.BoxStats.BoxMurniNonSpj}}</div>
-          </div>
-          <div class="bg-surface-2 rounded p-3">
-            <div class="text-muted mb-1" style="font-size:0.7rem">Campuran</div>
-            <div style="font-size:20px;font-weight:800;color:var(--ink-2);cursor:pointer" onclick="SimarcModal.show('modalCampuranBox', { size: 'sm' })" title="Klik untuk lihat daftar box campuran">{{.BoxStats.BoxCampuran}}</div>
-          </div>
-          <div class="bg-brand-lt rounded p-3">
-            <div class="text-muted mb-1" style="font-size:0.7rem">Digitalisasi</div>
-            <div style="font-size:20px;font-weight:800;color:var(--brand)">{{printf "%.1f" .BoxStats.RcDigitalPercent}}%</div>
-          </div>
+        <div class="box-stats-footer">
+          <span class="text-muted"><i class="bi bi-info-circle me-1"></i>Klik angka untuk lihat daftar box</span>
         </div>
-
 <!-- SIMARC V4 Box Modals -->
 <template data-modal="modalTotalBox">
   <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Daftar Box RC</h5><p class="sm-subtitle">Semua box yang terdaftar</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalTotalBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
@@ -158,13 +198,13 @@
 </div>
 
 <!-- Recent Activities -->
-<div class="card">
+<div class="card dash-activity-card">
   <div class="card-header">
     <span class="card-title"><i class="bi bi-clock-history text-brand me-2"></i>Aktivitas Terbaru</span>
     <a href="/laporan/aktivitas" class="btn btn-sm btn-outline-primary rounded-pill px-3">Lihat Semua <i class="bi bi-arrow-right ms-1"></i></a>
   </div>
   <div class="table-wrap table-responsive">
-    <table class="table datatable">
+    <table class="table datatable" id="activityTable">
       <thead>
         <tr>
           <th>Pengguna</th>
@@ -177,17 +217,27 @@
         {{range .RecentActivities}}
         <tr>
           <td>
-            <div class="d-flex align-items-center gap-2">
-              <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:34px;height:34px;background:var(--brand-lt);color:var(--brand);font-weight:700;font-size:13px;flex-shrink:0">{{upperFirst (slice .UserName 0 1)}}</div>
-              <span class="fw-semibold">{{.UserName}}</span>
+            <div class="activity-user-cell">
+              <div class="activity-avatar">{{upperFirst (slice .UserName 0 1)}}</div>
+              <div class="activity-user-info">
+                <span class="fw-semibold activity-username">{{.UserName}}</span>
+              </div>
             </div>
           </td>
           <td><span class="text-muted">{{.Description}}</span></td>
           <td><span class="badge badge-neutral">{{.Action}}</span></td>
-          <td class="text-end"><span class="text-muted small">{{formatDateTime .CreatedAt}}</span></td>
+          <td class="text-end"><span class="text-muted activity-time">{{formatDateTime .CreatedAt}}</span></td>
         </tr>
         {{else}}
-        
+        <tr>
+          <td colspan="4" class="activity-empty">
+            <div class="empty-state">
+              <i class="bi bi-inbox empty-icon"></i>
+              <p class="empty-title">Belum ada aktivitas</p>
+              <p class="empty-desc">Aktivitas terbaru akan muncul di sini</p>
+            </div>
+          </td>
+        </tr>
         {{end}}
       </tbody>
     </table>
@@ -235,30 +285,35 @@ async function pollDashboardStats() {
     if (total > 0) {
       // Aktif progress
       const aktifPct = (d.stats.aktif / total * 100).toFixed(1);
-      const aktifBar = document.querySelector('[data-stat="aktif"]')?.closest('.stat-card')?.querySelector('.progress-bar');
+      const aktifBar = document.querySelector('[data-stat="aktif"]')?.closest('.stat-card')?.querySelector('.progress-fill');
       if (aktifBar) aktifBar.style.width = aktifPct + '%';
+      const aktifChip = document.querySelector('[data-stat="aktif"]')?.closest('.stat-card')?.querySelector('.stat-chip-pct');
+      if (aktifChip) aktifChip.textContent = aktifPct + '% dari total';
 
       // Inaktif progress
       const inaktifPct = (d.stats.inaktif / total * 100).toFixed(1);
-      const inaktifBar = document.querySelector('[data-stat="inaktif"]')?.closest('.stat-card')?.querySelector('.progress-bar');
+      const inaktifBar = document.querySelector('[data-stat="inaktif"]')?.closest('.stat-card')?.querySelector('.progress-fill');
       if (inaktifBar) inaktifBar.style.width = inaktifPct + '%';
+      const inaktifChip = document.querySelector('[data-stat="inaktif"]')?.closest('.stat-card')?.querySelector('.stat-chip-pct');
+      if (inaktifChip) inaktifChip.textContent = inaktifPct + '% dari total';
 
       // Digital progress
       const digitalPct = (d.stats.with_file / total * 100).toFixed(1);
-      const digitalBar = document.querySelector('[data-stat="with_file"]')?.closest('.stat-card')?.querySelector('.progress-bar');
+      const digitalBar = document.querySelector('[data-stat="with_file"]')?.closest('.stat-card')?.querySelector('.progress-fill');
       if (digitalBar) digitalBar.style.width = digitalPct + '%';
+      const digitalChip = document.querySelector('[data-stat="with_file"]')?.closest('.stat-card')?.querySelector('.stat-chip-pct');
+      if (digitalChip) digitalChip.textContent = digitalPct + '% dari total';
     }
 
-    // Update Siap Musnah badge
+    // Update Siap Musnah chip
     const siapStat = d.stats.siap_penyusutan;
     const siapCard = document.querySelector('[data-stat="siap_penyusutan"]')?.closest('.stat-card');
     if (siapCard) {
-      const oldBadge = siapCard.querySelector('.badge');
-      if (oldBadge) oldBadge.remove();
-      const badge = document.createElement('span');
-      badge.className = 'badge mt-1 ' + (siapStat !== 0 ? 'badge-danger' : 'badge-success');
-      badge.textContent = siapStat !== 0 ? 'Perlu Review' : 'Aman';
-      siapCard.appendChild(badge);
+      const chip = siapCard.querySelector('.stat-card-chip');
+      if (chip) {
+        chip.textContent = siapStat !== 0 ? 'Perlu Review' : 'Aman';
+        chip.className = 'stat-card-chip ' + (siapStat !== 0 ? 'stat-chip-danger' : 'stat-chip-success');
+      }
     }
 
     // Update digital percentage text if displayed
