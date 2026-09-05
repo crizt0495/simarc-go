@@ -35,3 +35,7 @@ Thumbs.db
 SIMARC.app
 .vercel
 .env*
+
+# ── Screenshots / captures (local artifacts) ──
+Screenshot_*.png
+screen*.png
