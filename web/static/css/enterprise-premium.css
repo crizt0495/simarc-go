@@ -1053,7 +1053,15 @@ code { color: var(--ink-2); }
 .progress-bar.bg-info { background: #0e7490 !important; color: #fff; }
 .progress-bar.bg-warning { background: #ffc107 !important; color: #161a1d; }
 
-.text-white-50 { color: rgba(255,255,255,.72) !important; }
+.text-white-50 { color: var(--ink-3) !important; }
+
+/* Neumorphism: teks putih pada header/hero yang dulunya gelap kini terang.
+   Teks putih yang ADA DI ATAS background GELAP (avatar bg-primary/danger dst)
+   harus tetap putih. */
+[data-theme="light"] .gradient-header .title { color: var(--ink) !important; }
+[data-theme="light"] .gradient-header .subtitle, .gradient-header .subtitle { color: var(--ink-4) !important; }
+[data-theme="light"] .text-white-50 { color: var(--ink-3) !important; }
+[data-theme="light"] .text-light { color: var(--ink-2) !important; }
 
 .select2-container--default .select2-selection--single .select2-selection__placeholder,
 .select2-container--default .select2-selection--multiple .select2-selection__placeholder {
