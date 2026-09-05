@@ -3,7 +3,7 @@
 <style>
     /* ── Role Page Premium Styles ── */
     .role-hero {
-        background: linear-gradient(135deg, var(--brand) 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%);
         border-radius: var(--r-xl);
         padding: 2rem 2.5rem;
         color: #fff;
@@ -58,7 +58,7 @@
     .kpi-role-card:hover {
         transform: translateY(-4px);
         box-shadow: var(--sh);
-        border-color: var(--brand);
+        border-color: var(--ink-2);
     }
     .kpi-role-card .kpi-accent {
         position: absolute;
@@ -114,7 +114,7 @@
         outline: none;
     }
     .role-search input:focus {
-        border-color: var(--brand);
+        border-color: var(--ink-2);
         box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
     }
     .role-search input::placeholder { color: var(--ink-4); }
@@ -129,7 +129,7 @@
 
     /* ── Enhanced Table ── */
     .role-table thead th {
-        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        background: linear-gradient(135deg, var(--neu-bg), var(--surface-3));
         text-transform: uppercase;
         font-size: 0.65rem;
         font-weight: 800;
@@ -167,11 +167,11 @@
     }
     .role-ident.system {
         background: rgba(124,58,237,0.08);
-        color: #7c3aed;
+        color: var(--ink-3);
     }
     .role-ident.custom {
         background: rgba(26,86,219,0.08);
-        color: var(--brand);
+        color: var(--ink-2);
     }
 
     /* ── Action Buttons (using global .btn-crud from enterprise-premium.css) ── */
@@ -277,8 +277,8 @@
     <div class="row g-3 mb-4">
         <div class="col-md-4 kpi-stagger">
             <div class="kpi-role-card">
-                <div class="kpi-accent" style="background:linear-gradient(90deg,var(--brand),#7c3aed);"></div>
-                <div class="kpi-icon" style="background:#eff6ff;color:var(--brand);"><i class="bi bi-shield-check"></i></div>
+                <div class="kpi-accent" style="background:linear-gradient(90deg,var(--ink-2),var(--ink-3));"></div>
+                <div class="kpi-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-shield-check"></i></div>
                 <div class="kpi-value">{{.TotalRoles}}</div>
                 <div class="kpi-label">Total Role</div>
                 <div class="kpi-deco"><i class="bi bi-shield-check"></i></div>
@@ -286,8 +286,8 @@
         </div>
         <div class="col-md-4 kpi-stagger">
             <div class="kpi-role-card">
-                <div class="kpi-accent" style="background:linear-gradient(90deg,#7c3aed,#ec4899);"></div>
-                <div class="kpi-icon" style="background:#faf5ff;color:#7c3aed;"><i class="bi bi-cpu"></i></div>
+                <div class="kpi-accent" style="background:linear-gradient(90deg,var(--ink-3),#ec4899);"></div>
+                <div class="kpi-icon" style="background:var(--neu-bg);color:var(--ink-3);"><i class="bi bi-cpu"></i></div>
                 <div class="kpi-value">4</div>
                 <div class="kpi-label">Role Sistem Core</div>
                 <div class="kpi-deco"><i class="bi bi-cpu"></i></div>
@@ -295,8 +295,8 @@
         </div>
         <div class="col-md-4 kpi-stagger">
             <div class="kpi-role-card">
-                <div class="kpi-accent" style="background:linear-gradient(90deg,var(--success),#059669);"></div>
-                <div class="kpi-icon" style="background:#f0fdf4;color:var(--success);"><i class="bi bi-key"></i></div>
+                <div class="kpi-accent" style="background:linear-gradient(90deg,var(--ink-2),var(--ink-2));"></div>
+                <div class="kpi-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-key"></i></div>
                 <div class="kpi-value">{{.TotalPermissions}}</div>
                 <div class="kpi-label">Total Hak Akses</div>
                 <div class="kpi-deco"><i class="bi bi-key"></i></div>
@@ -335,7 +335,7 @@
                     <td class="text-center fw-800 text-muted" data-label="Urutan">{{add $.FirstItem $idx}}</td>
                     <td data-label="Role">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;background:linear-gradient(135deg,var(--brand),#7c3aed);color:#fff;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;background:linear-gradient(135deg,var(--ink-2),var(--ink-3));color:#fff;">
                                 <i class="bi bi-person-badge"></i>
                             </div>
                             <div>
@@ -357,12 +357,12 @@
                         </span>
                     </td>
                     <td class="text-center" data-label="Pengguna">
-                        <span class="badge rounded-pill px-3 py-1.5 fw-700" style="background:rgba(2,132,199,0.08);color:var(--info);">
+                        <span class="badge rounded-pill px-3 py-1.5 fw-700" style="background:rgba(2,132,199,0.08);color:var(--ink-2);">
                             <i class="bi bi-people me-1"></i>{{$role.UsersCount}}
                         </span>
                     </td>
                     <td class="text-center" data-label="Hak Akses">
-                        <span class="badge rounded-pill px-3 py-1.5 fw-700" style="background:rgba(26,86,219,0.08);color:var(--brand);">
+                        <span class="badge rounded-pill px-3 py-1.5 fw-700" style="background:rgba(26,86,219,0.08);color:var(--ink-2);">
                             <i class="bi bi-key me-1"></i>{{$role.PermissionsCount}}
                         </span>
                     </td>

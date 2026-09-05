@@ -7,7 +7,7 @@
    ═══════════════════════════════════════════ */
 
 .edit-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
     border-radius: var(--r-xl);
     padding: 2rem 2.5rem;
     color: #fff;
@@ -36,7 +36,7 @@
     display: inline-flex; align-items: center; gap: 0.3rem;
     padding: 0.25rem 0.85rem;
     background: rgba(251,191,36,0.15);
-    color: #fbbf24;
+    color: var(--ink-2);
     border-radius: 50px;
     font-size: 0.7rem; font-weight: 700;
     letter-spacing: 0.03em;
@@ -66,7 +66,7 @@
     display: inline-flex; align-items: center; justify-content: center;
     width: 26px; height: 26px;
     background: var(--brand-lt);
-    color: var(--brand);
+    color: var(--ink-2);
     border-radius: 50rem;
     font-size: 0.7rem; font-weight: 800;
     flex-shrink: 0;
@@ -92,7 +92,7 @@
     margin-bottom: 0.35rem;
 }
 .form-field label .required {
-    color: var(--danger);
+    color: var(--ink-2);
     margin-left: 2px;
 }
 .form-field .form-control,
@@ -110,7 +110,7 @@
 }
 .form-field .form-control:focus,
 .form-field .form-select:focus {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
 }
 .form-field textarea.form-control {
@@ -128,7 +128,7 @@
     background: var(--surface-2);
 }
 .file-drop:hover {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     background: var(--brand-lt);
 }
 .file-drop i { font-size: 2rem; color: var(--ink-4); margin-bottom: 0.5rem; display: block; }
@@ -167,7 +167,7 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-pencil-square me-2"></i>Edit Data Arsip</h1>
-                <div class="hero-sub">Nomor Registrasi: <span class="fw-800" style="color:#fbbf24;">{{.arsip.NomorArsip}}</span></div>
+                <div class="hero-sub">Nomor Registrasi: <span class="fw-800" style="color:var(--ink-2);">{{.arsip.NomorArsip}}</span></div>
                 <span class="hero-badge mt-2 d-inline-flex"><i class="bi bi-tag-fill"></i> Sedang Diedit</span>
             </div>
             <a href="/arsip/{{.arsip.ID}}" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
@@ -383,7 +383,7 @@
                     </div>
                     <div class="card-body-custom">
                         {{if .arsip.FilePath}}
-                        <div class="alert alert-info border-0 d-flex align-items-center mb-3" style="border-radius:var(--r);background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;">
+                        <div class="alert alert-info border-0 d-flex align-items-center mb-3" style="border-radius:var(--r);background:var(--neu-bg);color:var(--ink-2);border:1px solid var(--neu-bg);">
                             <i class="bi bi-file-check-fill fs-4 me-3"></i>
                             <div>
                                 <div class="fw-700 small">BERKAS SUDAH TERSEDIA</div>
@@ -529,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .flatpickr-calendar:before, .flatpickr-calendar:after { display: none; }
 .flatpickr-months {
-    background: var(--surface-2, #f8fafc);
+    background: var(--surface-2, var(--neu-bg));
     border-radius: var(--r-lg, 12px) var(--r-lg, 12px) 0 0;
     padding: 10px 0 8px;
     border-bottom: 1px solid var(--border, #e2e8f0);
@@ -549,16 +549,16 @@ document.addEventListener('DOMContentLoaded', function() {
     transition: all 0.12s ease; border: none !important; margin: 1px;
     max-width: 36px; height: 36px; line-height: 36px;
 }
-.flatpickr-day:hover { background: var(--brand-lt, #dbeafe) !important; color: var(--brand, #2563eb) !important; transform: scale(1.05); }
-.flatpickr-day.today { background: transparent !important; border: 2px solid var(--brand, #2563eb) !important; color: var(--brand, #2563eb) !important; font-weight: 700; }
+.flatpickr-day:hover { background: var(--brand-lt, var(--neu-bg)) !important; color: var(--brand, var(--ink-2)) !important; transform: scale(1.05); }
+.flatpickr-day.today { background: transparent !important; border: 2px solid var(--brand, var(--ink-2)) !important; color: var(--brand, var(--ink-2)) !important; font-weight: 700; }
 .flatpickr-day.selected,
 .flatpickr-day.startRange,
 .flatpickr-day.endRange,
-.flatpickr-day.inRange { background: var(--brand, #2563eb) !important; color: #fff !important; font-weight: 700; box-shadow: 0 2px 8px rgba(37,99,235,0.3) !important; border-color: var(--brand, #2563eb) !important; }
-.flatpickr-day.selected:hover { background: var(--brand-dk, #1d4ed8) !important; }
+.flatpickr-day.inRange { background: var(--brand, var(--ink-2)) !important; color: #fff !important; font-weight: 700; box-shadow: 0 2px 8px rgba(37,99,235,0.3) !important; border-color: var(--brand, var(--ink-2)) !important; }
+.flatpickr-day.selected:hover { background: var(--brand-dk, var(--ink-2)) !important; }
 .flatpickr-day.flatpickr-disabled { color: var(--ink-4, #94a3b8) !important; opacity: 0.4; }
 .flatpickr-prev-month, .flatpickr-next-month { padding: 6px 8px; border-radius: var(--r, 8px); transition: background 0.12s ease; }
-.flatpickr-prev-month:hover, .flatpickr-next-month:hover { background: var(--surface-3, #f1f5f9); }
+.flatpickr-prev-month:hover, .flatpickr-next-month:hover { background: var(--surface-3, var(--surface-3)); }
 .flatpickr-prev-month svg, .flatpickr-next-month svg { fill: var(--ink-3, #64748b); }
 
 .flatpickr-input { display: none !important; }
@@ -567,11 +567,11 @@ document.addEventListener('DOMContentLoaded', function() {
     width: 100%; padding: 0.6rem 0.85rem 0.6rem 2.5rem;
     border: 1.5px solid var(--border, #e2e8f0); border-radius: var(--r, 8px);
     font-size: 0.9rem; font-weight: 600;
-    color: var(--ink, #1e293b); background: var(--surface, #fff);
+    color: var(--ink, var(--ink-2)); background: var(--surface, #fff);
     transition: all 0.2s ease; outline: none; font-family: inherit; cursor: pointer;
 }
 .flatpickr-alt-input:focus {
-    border-color: var(--brand, #2563eb);
+    border-color: var(--brand, var(--ink-2));
     box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
 }
 .flatpickr-alt-input::placeholder { color: var(--ink-4, #94a3b8); font-weight: 500; }
@@ -587,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
     color: var(--ink-4, #94a3b8);
     transition: color 0.2s ease;
 }
-.date-input-field:focus-within .date-input-icon { color: var(--brand, #2563eb); }
+.date-input-field:focus-within .date-input-icon { color: var(--brand, var(--ink-2)); }
 
 .date-preset-btn:hover {
     filter: brightness(0.92);
@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
             wrapper.querySelectorAll('.date-preset-btn').forEach(function(btn) {
                 var btnDays = parseInt(btn.getAttribute('data-days'));
                 if (btnDays === diffDays) {
-                    btn.style.background = 'var(--brand)';
+                    btn.style.background = 'var(--ink-2)';
                     btn.style.color = '#fff';
                 }
             });
@@ -711,23 +711,23 @@ document.addEventListener('DOMContentLoaded', function() {
             indicator.style.display = 'block';
             if (diffDays < 0) {
                 icon.className = 'badge rounded-pill fw-700';
-                icon.style.background = '#fef2f2';
-                icon.style.color = '#dc2626';
+                icon.style.background = 'var(--neu-bg)';
+                icon.style.color = 'var(--ink)';
                 text.textContent = 'Sudah lewat ' + Math.abs(diffDays) + ' hari';
             } else if (diffDays <= 30) {
                 icon.className = 'badge rounded-pill fw-700';
-                icon.style.background = '#fef3c7';
-                icon.style.color = '#b45309';
+                icon.style.background = 'var(--neu-bg)';
+                icon.style.color = 'var(--ink-2)';
                 text.textContent = diffDays + ' hari lagi';
             } else if (diffDays <= 365) {
                 icon.className = 'badge rounded-pill fw-700';
-                icon.style.background = '#dbeafe';
-                icon.style.color = '#2563eb';
+                icon.style.background = 'var(--neu-bg)';
+                icon.style.color = 'var(--ink-2)';
                 text.textContent = Math.floor(diffDays / 30) + ' bulan lagi';
             } else {
                 icon.className = 'badge rounded-pill fw-700';
-                icon.style.background = '#dcfce7';
-                icon.style.color = '#15803d';
+                icon.style.background = 'var(--neu-bg)';
+                icon.style.color = 'var(--ink-2)';
                 text.textContent = Math.floor(diffDays / 365) + ' tahun lagi';
             }
         }

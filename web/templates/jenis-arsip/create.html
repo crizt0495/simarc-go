@@ -3,16 +3,16 @@
 <style>
 .create-wrap { max-width: 800px; margin: 0 auto; }
 .create-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--sh); overflow: hidden; animation: slideUp 0.35s ease both; }
-.create-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%); padding: 1.75rem 2rem; position: relative; overflow: hidden; }
+.create-header { background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%); padding: 1.75rem 2rem; position: relative; overflow: hidden; }
 .create-header::after { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
 .create-header h4 { font-weight: 800; color: #fff; margin-bottom: 0.2rem; position: relative; z-index: 1; }
 .create-header p { color: rgba(255,255,255,0.75); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
 .create-body { padding: 2rem; }
 .form-field { margin-bottom: 1.25rem; }
 .form-field label { display: block; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); margin-bottom: 0.4rem; }
-.form-field label .req { color: var(--danger); margin-left: 2px; }
+.form-field label .req { color: var(--ink-2); margin-left: 2px; }
 .form-field .form-control, .form-field .form-select { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 0.85rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit; }
-.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--ink-2); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
 .form-field textarea.form-control { min-height: 100px; resize: vertical; }
 .form-field .form-text { font-size: 0.72rem; color: var(--ink-4); margin-top: 0.2rem; }
 .side-tips { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 1.25rem; }

@@ -2,7 +2,7 @@
 {{define "content"}}
 <style>
 .p-masthead {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #991b1b 100%);
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, #991b1b 100%);
     border-radius: var(--r-xl);
     padding: 1.5rem 2rem;
     color: #fff;
@@ -40,7 +40,7 @@
     width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid var(--border); border-radius: var(--r);
     font-size: 0.82rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit;
 }
-.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--ink-2); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
 .form-field textarea.form-control { min-height: 70px; resize: vertical; }
 
 .premium-table {
@@ -57,11 +57,11 @@
 }
 .premium-table tbody tr:hover td { background: var(--brand-lt); }
 .premium-table tbody tr:last-child td { border-bottom: none; }
-.premium-table input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--brand); }
+.premium-table input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--ink-2); }
 
 .submit-box {
     background: var(--surface);
-    border: 1px solid var(--brand);
+    border: 1px solid var(--ink-2);
     border-radius: var(--r-lg);
     padding: 1.25rem 1.5rem;
     margin-top: 1.25rem;
@@ -143,7 +143,7 @@
                 <div class="d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom:1px solid var(--border);">
                     <span class="fw-700" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-list-ul me-2"></i>Daftar Arsip Masa Retensi Habis</span>
                     <div class="d-flex align-items-center gap-2">
-                        <input type="checkbox" id="selectAll" style="width:16px;height:16px;accent-color:var(--brand);">
+                        <input type="checkbox" id="selectAll" style="width:16px;height:16px;accent-color:var(--ink-2);">
                         <label for="selectAll" class="fw-600" style="font-size:0.72rem;color:var(--ink-3);">Pilih Semua</label>
                     </div>
                 </div>
@@ -168,13 +168,13 @@
                                     <small style="font-size:0.65rem;background:var(--surface-3);color:var(--ink-3);padding:0.1rem 0.4rem;border-radius:4px;">{{if $a.UnitKerja}}{{$a.UnitKerja.NamaUnit}}{{else}}Tanpa Unit{{end}}</small>
                                 </td>
                                 <td data-label="Kode Klasifikasi">
-                                    <span class="fw-700" style="color:var(--danger);">{{if $a.KodeKlasifikasi}}{{$a.KodeKlasifikasi.KodeKlasifikasi}}{{else}}-{{end}}</span>
+                                    <span class="fw-700" style="color:var(--ink-2);">{{if $a.KodeKlasifikasi}}{{$a.KodeKlasifikasi.KodeKlasifikasi}}{{else}}-{{end}}</span>
                                     <small class="d-block text-muted" style="font-size:0.7rem;">{{if $a.KodeKlasifikasi}}{{$a.KodeKlasifikasi.NamaKlasifikasi}}{{else}}-{{end}}</small>
                                     <small class="text-muted" style="font-size:0.62rem;">{{if $a.KodeKlasifikasi}}Retensi: {{$a.KodeKlasifikasi.RetensiAktif}}+{{$a.KodeKlasifikasi.RetensiInaktif}} thn{{end}}</small>
                                 </td>
                                 <td data-label="Retensi Berakhir">
                                     {{if $a.TanggalRetensiBerakhir}}
-                                    <span style="color:var(--danger);font-weight:700;font-size:0.8rem;">{{$a.TanggalRetensiBerakhir}}</span>
+                                    <span style="color:var(--ink-2);font-weight:700;font-size:0.8rem;">{{$a.TanggalRetensiBerakhir}}</span>
                                     <small class="d-block text-danger" style="font-size:0.68rem;"><i class="bi bi-exclamation-circle"></i> Sudah Berakhir</small>
                                     {{else}}
                                     <span class="text-muted fst-italic" style="font-size:0.78rem;">Belum Diatur</span>
@@ -182,9 +182,9 @@
                                 </td>
                                 <td data-label="Status">
                                     <span class="badge-soft" style="font-size:0.65rem;padding:0.15rem 0.5rem;
-                                        {{if eq $a.StatusArsip "aktif"}}background:#f0fdf4;color:var(--success);
-                                        {{else if eq $a.StatusArsip "inaktif"}}background:#fffbeb;color:var(--warning);
-                                        {{else}}background:var(--brand-lt);color:var(--brand);{{end}}">
+                                        {{if eq $a.StatusArsip "aktif"}}background:var(--neu-bg);color:var(--ink-2);
+                                        {{else if eq $a.StatusArsip "inaktif"}}background:var(--neu-bg);color:var(--ink-2);
+                                        {{else}}background:var(--neu-bg);color:var(--ink-2);{{end}}">
                                         {{$a.StatusArsip}}
                                     </span>
                                 </td>

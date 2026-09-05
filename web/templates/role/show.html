@@ -3,7 +3,7 @@
 <style>
     /* ── Premium Profile Header ── */
     .role-profile-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+        background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
         border-radius: var(--r-xl);
         padding: 2.5rem 3rem;
         color: #fff;
@@ -83,7 +83,7 @@
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.15em;
-        color: var(--brand);
+        color: var(--ink-2);
         margin-bottom: 1.25rem;
         display: flex;
         align-items: center;
@@ -105,7 +105,7 @@
         transition: all 0.2s ease;
     }
     .perm-module-card:hover {
-        border-color: var(--brand);
+        border-color: var(--ink-2);
         box-shadow: var(--sh-sm);
         transform: translateY(-2px);
     }
@@ -137,15 +137,15 @@
         border-radius: 6px;
         font-size: 0.7rem;
         font-weight: 700;
-        background: #eff6ff;
-        color: var(--brand);
-        border: 1px solid #dbeafe;
+        background: var(--neu-bg);
+        color: var(--ink-2);
+        border: 1px solid var(--neu-bg);
         transition: all 0.15s ease;
     }
     .perm-badge:hover {
-        background: var(--brand);
+        background: var(--ink-2);
         color: #fff;
-        border-color: var(--brand);
+        border-color: var(--ink-2);
         transform: scale(1.05);
     }
     .perm-badge i { font-size: 0.6rem; }
@@ -167,7 +167,7 @@
     .user-mini-avatar {
         width: 36px; height: 36px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--brand), #7c3aed);
+        background: linear-gradient(135deg, var(--ink-2), var(--ink-3));
         color: #fff;
         font-weight: 700;
         font-size: 0.8rem;
@@ -190,20 +190,20 @@
         border-radius: 50%;
         flex-shrink: 0;
     }
-    .user-mini-dot.active { background: var(--success); }
-    .user-mini-dot.inactive { background: var(--danger); }
+    .user-mini-dot.active { background: var(--ink-2); }
+    .user-mini-dot.inactive { background: var(--ink-2); }
 
     /* ── Action Sidebar ── */
     .action-side-card {
-        background: linear-gradient(135deg, #eff6ff, #f0f0ff);
+        background: linear-gradient(135deg, var(--neu-bg), #f0f0ff);
         border: 1px solid rgba(26,86,219,0.1);
-        border-left: 3px solid var(--brand);
+        border-left: 3px solid var(--ink-2);
         border-radius: var(--r-lg);
         padding: 1.25rem;
     }
     .action-side-card h6 {
         font-weight: 800;
-        color: var(--brand);
+        color: var(--ink-2);
         margin-bottom: 1rem;
         font-size: 0.8rem;
     }

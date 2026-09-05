@@ -1,7 +1,7 @@
 {{define "blockchain/entity-audit.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-    .blockchain-container { font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
+    .blockchain-container { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--ink-2); }
     .timeline-audit { position: relative; padding: 2rem 0; }
     .timeline-audit::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #e2e8f0; transform: translateX(-50%); }
     .timeline-audit-item { position: relative; width: 50%; padding: 0 3rem; margin-bottom: 3rem; }
@@ -13,8 +13,8 @@
     .audit-card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.03); transition: all 0.3s; }
     .audit-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
     .audit-timestamp { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; display: block; }
-    .audit-action { font-size: 1.1rem; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
-    .hash-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; color: #64748b; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .audit-action { font-size: 1.1rem; font-weight: 800; color: var(--ink-2); margin-bottom: 10px; }
+    .hash-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; background: var(--surface-3); padding: 4px 10px; border-radius: 6px; color: #64748b; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     @media (max-width: 768px) { .timeline-audit::before { left: 20px; } .timeline-audit-item { width: 100%; left: 0 !important; text-align: left !important; padding-left: 50px; } .timeline-dot { left: 10px !important; } }
 </style>
 <div class="blockchain-container pb-5">

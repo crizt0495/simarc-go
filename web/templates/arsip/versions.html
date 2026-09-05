@@ -3,7 +3,7 @@
 <style>
 @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .versions-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
     border-radius: var(--r-xl);
     padding: 1.75rem 2rem;
     position: relative; overflow: hidden;
@@ -22,7 +22,7 @@
     display: inline-flex; align-items: center; gap: 0.35rem;
     padding: 0.25rem 0.85rem;
     background: rgba(251,191,36,0.15);
-    color: #fbbf24;
+    color: var(--ink-2);
     border-radius: 50px;
     font-size: 0.7rem; font-weight: 700;
 }
@@ -44,7 +44,7 @@
     width: 28px; height: 28px;
     border-radius: var(--r);
     background: var(--brand-lt);
-    color: var(--brand);
+    color: var(--ink-2);
     display: flex; align-items: center; justify-content: center;
     font-size: 0.8rem; flex-shrink: 0;
 }
@@ -72,7 +72,7 @@
 .table-version .version-tag {
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 34px; padding: 0.15rem 0.5rem;
-    background: var(--brand-lt); color: var(--brand);
+    background: var(--brand-lt); color: var(--ink-2);
     border-radius: 50rem; font-size: 0.7rem; font-weight: 800;
 }
 .table-version .download-btn {
@@ -110,7 +110,7 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-clock-history me-2"></i>Histori Versi Arsip</h1>
-                <div class="hero-sub">Nomor: <span style="color:#fbbf24;font-weight:700;">{{.arsip.NomorArsip}}</span></div>
+                <div class="hero-sub">Nomor: <span style="color:var(--ink-2);font-weight:700;">{{.arsip.NomorArsip}}</span></div>
                 <span class="version-count-badge mt-2 d-inline-flex"><i class="bi bi-layers-fill"></i> {{len .versions}} Versi</span>
             </div>
             <a href="/arsip/{{.arsip.ID}}" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">

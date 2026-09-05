@@ -6,7 +6,7 @@
    ═══════════════════════════════════════ */
 
 .ba-detail-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
     border-radius: var(--r-xl);
     padding: 2rem 2.5rem;
     color: #fff;
@@ -60,12 +60,12 @@
     transition: all 0.2s ease;
 }
 .detail-card:hover {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     box-shadow: var(--sh-sm);
 }
 .detail-card .dc-header {
     padding: 0.85rem 1.25rem;
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    background: linear-gradient(135deg, var(--neu-bg), var(--surface-3));
     border-bottom: 1px solid var(--border);
     font-weight: 700;
     font-size: 0.8rem;
@@ -114,7 +114,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--brand);
+    color: var(--ink-2);
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
@@ -149,7 +149,7 @@
     transition: all 0.12s ease;
 }
 .arsip-mini-item:hover {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     background: rgba(26,86,219,0.02);
 }
 .arsip-mini-item .ami-num {
@@ -247,7 +247,7 @@
                                 {{if $ba.PihakPertamaNIP}}<div class="party-field"><span class="pf-label">NIP</span><span class="pf-value">{{$ba.PihakPertamaNIP}}</span></div>{{end}}
                                 {{if $ba.PihakPertamaJabatan}}<div class="party-field"><span class="pf-label">Jabatan</span><span class="pf-value">{{$ba.PihakPertamaJabatan}}</span></div>{{end}}
                                 {{if $ba.PihakPertamaUnit}}<div class="party-field"><span class="pf-label">Unit</span><span class="pf-value">{{$ba.PihakPertamaUnit}}</span></div>{{end}}
-                                <div class="mt-2"><span class="badge rounded-pill fw-700" style="font-size:0.6rem;background:rgba(217,119,6,0.1);color:#d97706;"><i class="bi bi-shield me-1"></i>Unit Pengolah</span></div>
+                                <div class="mt-2"><span class="badge rounded-pill fw-700" style="font-size:0.6rem;background:rgba(217,119,6,0.1);color:var(--ink-2);"><i class="bi bi-shield me-1"></i>Unit Pengolah</span></div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -257,7 +257,7 @@
                                 {{if $ba.PihakKeduaNIP}}<div class="party-field"><span class="pf-label">NIP</span><span class="pf-value">{{$ba.PihakKeduaNIP}}</span></div>{{end}}
                                 {{if $ba.PihakKeduaJabatan}}<div class="party-field"><span class="pf-label">Jabatan</span><span class="pf-value">{{$ba.PihakKeduaJabatan}}</span></div>{{end}}
                                 {{if $ba.PihakKeduaUnit}}<div class="party-field"><span class="pf-label">Unit</span><span class="pf-value">{{$ba.PihakKeduaUnit}}</span></div>{{end}}
-                                <div class="mt-2"><span class="badge rounded-pill fw-700" style="font-size:0.6rem;background:rgba(2,132,199,0.1);color:var(--info);"><i class="bi bi-shield-check me-1"></i>Unit Kearsipan</span></div>
+                                <div class="mt-2"><span class="badge rounded-pill fw-700" style="font-size:0.6rem;background:rgba(2,132,199,0.1);color:var(--ink-2);"><i class="bi bi-shield-check me-1"></i>Unit Kearsipan</span></div>
                             </div>
                         </div>
                     </div>
@@ -270,7 +270,7 @@
             <div class="detail-card shadow-sm fade-up-d3">
                 <div class="dc-header">
                     <i class="bi bi-list-check text-primary"></i> Daftar Arsip
-                    <span class="badge rounded-pill fw-700 ms-auto" style="background:rgba(26,86,219,0.1);color:var(--brand);font-size:0.65rem;">{{len $ba.Items}}</span>
+                    <span class="badge rounded-pill fw-700 ms-auto" style="background:rgba(26,86,219,0.1);color:var(--ink-2);font-size:0.65rem;">{{len $ba.Items}}</span>
                 </div>
                 <div class="dc-body" style="max-height:560px;overflow-y:auto;">
                     {{range $i, $item := $ba.Items}}

@@ -4,7 +4,7 @@
 @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }
 
 .history-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
     border-radius: var(--r-xl);
     padding: 1.75rem 2rem;
     position: relative; overflow: hidden;
@@ -49,7 +49,7 @@
 .side-card .card-body-custom { padding: 1.5rem; }
 
 .blockchain-cta {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink) 100%);
     border-radius: var(--r-lg);
     padding: 1.75rem;
     color: #fff;
@@ -85,10 +85,10 @@
     border: 2px solid var(--surface);
     z-index: 2;
 }
-.timeline-dot.success { background: #10b981; color: #fff; }
-.timeline-dot.warning { background: #f59e0b; color: #fff; }
-.timeline-dot.danger { background: #ef4444; color: #fff; }
-.timeline-dot.info { background: #3b82f6; color: #fff; }
+.timeline-dot.success { background: var(--ink-2); color: #fff; }
+.timeline-dot.warning { background: var(--ink-2); color: #fff; }
+.timeline-dot.danger { background: var(--ink-2); color: #fff; }
+.timeline-dot.info { background: var(--ink-2); color: #fff; }
 .timeline-dot.primary { background: #6366f1; color: #fff; }
 .timeline-dot.secondary { background: #64748b; color: #fff; }
 
@@ -129,7 +129,7 @@
     width: 22px; height: 22px;
     border-radius: 50%;
     background: var(--brand-lt);
-    color: var(--brand);
+    color: var(--ink-2);
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 0.6rem; font-weight: 800;
     flex-shrink: 0;
@@ -160,7 +160,7 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-clock-history me-2"></i>Riwayat Audit Trail</h1>
-                <div class="hero-sub">Pelacakan perubahan data untuk arsip <strong style="color:#fbbf24;">{{.arsip.NomorArsip}}</strong></div>
+                <div class="hero-sub">Pelacakan perubahan data untuk arsip <strong style="color:var(--ink-2);">{{.arsip.NomorArsip}}</strong></div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a href="/arsip/{{.arsip.ID}}" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;">
@@ -179,17 +179,17 @@
             <!-- Stats -->
             <div class="side-card mb-3">
                 <div class="card-body-custom">
-                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-bar-chart-fill me-2" style="color:var(--brand);"></i>Ringkasan Aktivitas</h6>
+                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-bar-chart-fill me-2" style="color:var(--ink-2);"></i>Ringkasan Aktivitas</h6>
                     <div class="d-flex flex-column gap-3">
                         <div class="stat-card-mini" style="animation-delay:0s;">
-                            <div class="stat-icon" style="background:var(--brand-lt);color:var(--brand);"><i class="bi bi-file-earmark-text"></i></div>
+                            <div class="stat-icon" style="background:var(--brand-lt);color:var(--ink-2);"><i class="bi bi-file-earmark-text"></i></div>
                             <div>
                                 <div class="stat-label">Total Versi File</div>
                                 <div class="stat-value">{{len .versions}} <span style="font-size:0.7rem;font-weight:600;color:var(--ink-4);">Versi</span></div>
                             </div>
                         </div>
                         <div class="stat-card-mini" style="animation-delay:0.05s;">
-                            <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#10b981;"><i class="bi bi-shield-check"></i></div>
+                            <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:var(--ink-2);"><i class="bi bi-shield-check"></i></div>
                             <div>
                                 <div class="stat-label">Aktivitas Tercatat</div>
                                 <div class="stat-value">{{len .logs}} <span style="font-size:0.7rem;font-weight:600;color:var(--ink-4);">Log</span></div>
@@ -209,7 +209,7 @@
             <!-- Arsip Info -->
             <div class="side-card mb-3">
                 <div class="card-body-custom">
-                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-info-circle-fill me-2" style="color:var(--brand);"></i>Informasi Arsip</h6>
+                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-info-circle-fill me-2" style="color:var(--ink-2);"></i>Informasi Arsip</h6>
                     <div style="font-size:0.8rem;">
                         <div class="d-flex justify-content-between py-1">
                             <span style="color:var(--ink-4);">Dibuat</span>
@@ -233,7 +233,7 @@
 
             <!-- Blockchain CTA -->
             <div class="blockchain-cta">
-                <div class="mb-2"><i class="bi bi-patch-check-fill" style="color:#60a5fa;font-size:1.8rem;"></i></div>
+                <div class="mb-2"><i class="bi bi-patch-check-fill" style="color:var(--ink-3);font-size:1.8rem;"></i></div>
                 <h6 class="fw-800 mb-2" style="font-size:0.9rem;">Integritas Data</h6>
                 <p style="font-size:0.75rem;opacity:0.7;margin-bottom:1rem;">
                     Setiap perubahan pada arsip ini diamankan menggunakan teknologi <strong>Hash Chaining (Internal Blockchain)</strong> untuk menjamin data tidak dimanipulasi.
@@ -296,7 +296,7 @@
             {{if gt (len .versions) 0}}
             <div class="side-card mt-3">
                 <div class="card-body-custom">
-                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-layers-fill me-2" style="color:var(--brand);"></i>Versi File</h6>
+                    <h6 class="fw-800 mb-3" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-layers-fill me-2" style="color:var(--ink-2);"></i>Versi File</h6>
                     <div class="table-responsive">
                         <table class="table table-sm datatable" style="margin-bottom:0;font-size:0.8rem;">
                             <thead>

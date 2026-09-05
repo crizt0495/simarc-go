@@ -4,37 +4,37 @@
     .backup-stat-card { background: white; border-radius: 16px; padding: 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; border: 1px solid #f0f0f0; }
     .backup-stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
     .backup-stat-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
-    .backup-stat-icon.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-    .backup-stat-icon.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
-    .backup-stat-icon.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
-    .backup-stat-icon.info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
-    .backup-stat-content h3 { font-size: 32px; font-weight: 700; color: #212529; margin: 0 0 4px 0; }
+    .backup-stat-icon.primary { background: linear-gradient(135deg, #475569 0%, var(--ink-2) 100%); color: white; }
+    .backup-stat-icon.success { background: linear-gradient(135deg, #475569 0%, var(--ink-2) 100%); color: white; }
+    .backup-stat-icon.warning { background: linear-gradient(135deg, #64748b 0%, #f5576c 100%); color: white; }
+    .backup-stat-icon.info { background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%); color: white; }
+    .backup-stat-content h3 { font-size: 32px; font-weight: 700; color: var(--ink-2); margin: 0 0 4px 0; }
     .backup-stat-content p { font-size: 14px; color: #6c757d; margin: 0; }
     .backup-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .backup-action-card { background: white; border-radius: 12px; padding: 20px; border: 2px solid #e0e0e0; cursor: pointer; transition: all 0.3s ease; }
-    .backup-action-card:hover { border-color: #667eea; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2); transform: translateY(-2px); }
-    .backup-action-card.active { border-color: #667eea; background: #f8f9ff; }
+    .backup-action-card:hover { border-color: #475569; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2); transform: translateY(-2px); }
+    .backup-action-card.active { border-color: #475569; background: #f8f9ff; }
     .backup-action-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px; }
     .backup-action-card h5 { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; }
     .backup-action-card p { margin: 0; font-size: 13px; color: #6c757d; }
     .backup-list { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
     .backup-item { display: flex; align-items: center; padding: 16px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; transition: all 0.2s ease; }
-    .backup-item:hover { background: #f8f9ff; border-color: #667eea; }
-    .backup-item-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; margin-right: 16px; }
+    .backup-item:hover { background: #f8f9ff; border-color: #475569; }
+    .backup-item-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #475569 0%, var(--ink-2) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; margin-right: 16px; }
     .backup-item-content { flex: 1; }
-    .backup-item-name { font-weight: 600; color: #212529; margin-bottom: 4px; }
+    .backup-item-name { font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
     .backup-item-meta { font-size: 13px; color: #6c757d; }
     .backup-item-actions { display: flex; gap: 8px; }
     .progress-container { background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; display: none; }
     .progress-container.active { display: block; }
     .progress-bar-container { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 16px 0; }
-    .progress-bar { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s ease; border-radius: 4px; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, #475569 0%, var(--ink-2) 100%); width: 0%; transition: width 0.3s ease; border-radius: 4px; }
     .restore-section { background: white; border-radius: 16px; padding: 24px; margin-top: 24px; border: 2px dashed #e0e0e0; }
-    .restore-section:hover { border-color: #667eea; }
+    .restore-section:hover { border-color: #475569; }
     .gdrive-section { background: white; border-radius: 16px; padding: 24px; margin-top: 24px; border: 1px solid #e0e0e0; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
     .gdrive-status { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; font-size: 14px; }
-    .gdrive-status.ok { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-    .gdrive-status.missing { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .gdrive-status.ok { background: var(--neu-bg); color: var(--ink-2); border: 1px solid #a7f3d0; }
+    .gdrive-status.missing { background: var(--neu-bg); color: var(--ink-2); border: 1px solid var(--neu-bg); }
 </style>
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
@@ -58,7 +58,7 @@
 </div>
 {{if .IsVercel}}
 <div class="alert alert-info d-flex align-items-start gap-3 mb-4" style="border-radius:12px;">
-    <i class="bi bi-info-circle" style="font-size:24px;color:#0369a1;"></i>
+    <i class="bi bi-info-circle" style="font-size:24px;color:var(--ink-3);"></i>
     <div>
         <strong>Berjalan di Vercel Serverless.</strong><br>
         <span style="font-size:14px;">Backup database menggunakan <strong>GORM export</strong> (tanpa mysqldump). Restore/Import tetap memerlukan <code>mysql</code> binary — gunakan Aiven Console atau jalankan lokal untuk restore.</span>
@@ -72,13 +72,13 @@
         <p>{{if .IsVercel}}Backup via GORM export{{else}}Buat backup database — disimpan di storage lokal{{end}}</p>
     </div>
     <div class="backup-action-card" onclick="createBackupGDrive()">
-        <div class="backup-action-icon success" style="background: linear-gradient(135deg, #4285F4 0%, #34A853 100%);"><i class="bi bi-google"></i></div>
+        <div class="backup-action-icon success" style="background: linear-gradient(135deg, var(--ink-2) 0%, #475569 100%);"><i class="bi bi-google"></i></div>
         <h5>Backup &amp; Upload ke Google Drive</h5>
         <p>Buat backup database lalu unggah otomatis ke Google Drive</p>
     </div>
     {{if .CanRestore}}
     <div class="backup-action-card" onclick="showRestoreModal()"><div class="backup-action-icon success"><i class="bi bi-arrow-counterclockwise"></i></div><h5>Restore Database</h5><p>Restore dari backup file</p></div>
-    <div class="backup-action-card" onclick="showImportModal()"><div class="backup-action-icon success" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"><i class="bi bi-filetype-sql"></i></div><h5>Import Database (.SQL)</h5><p>Unggah dan import database .SQL</p></div>
+    <div class="backup-action-card" onclick="showImportModal()"><div class="backup-action-icon success" style="background: linear-gradient(135deg, #475569 0%, var(--ink-2) 100%);"><i class="bi bi-filetype-sql"></i></div><h5>Import Database (.SQL)</h5><p>Unggah dan import database .SQL</p></div>
     {{else}}
     <div class="backup-action-card" style="opacity:0.5;cursor:not-allowed;" title="mysql tidak tersedia">
         <div class="backup-action-icon success" style="opacity:0.5;"><i class="bi bi-arrow-counterclockwise"></i></div>
@@ -86,7 +86,7 @@
         <p>mysql client tidak tersedia — gunakan Aiven Console</p>
     </div>
     <div class="backup-action-card" style="opacity:0.5;cursor:not-allowed;" title="mysql tidak tersedia">
-        <div class="backup-action-icon success" style="opacity:0.5;background:linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"><i class="bi bi-filetype-sql"></i></div>
+        <div class="backup-action-icon success" style="opacity:0.5;background:linear-gradient(135deg, #475569 0%, var(--ink-2) 100%);"><i class="bi bi-filetype-sql"></i></div>
         <h5>Import Database (.SQL)</h5>
         <p>mysql client tidak tersedia — gunakan Aiven Console</p>
     </div>
@@ -143,7 +143,7 @@
 </div>
 <div class="gdrive-section" id="gdriveSettingsCard">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0"><i class="bi bi-google" style="color:#4285F4;"></i> Google Drive Backup</h5>
+        <h5 class="mb-0"><i class="bi bi-google" style="color:var(--ink-2);"></i> Google Drive Backup</h5>
         <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#gdriveSettingsBody" aria-expanded="false" aria-controls="gdriveSettingsBody"><i class="bi bi-gear"></i> Pengaturan</button>
     </div>
     <div id="gdriveStatus" class="gdrive-status {{if .GDriveClientID}}ok{{else}}missing{{end}} mb-3">
@@ -439,8 +439,8 @@ function showRestoreModal() { document.querySelector('.restore-section').scrollI
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = 'toast-notification ' + type;
-    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:350px;padding:16px 20px;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;border-left:4px solid;' + (type === 'success' ? 'border-color:#10b981;' : type === 'error' ? 'border-color:#ef4444;' : 'border-color:#3b82f6;');
-    toast.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle') + '" style="font-size:24px;color:' + (type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6') + '"></i><span>' + message + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;"><i class="bi bi-x"></i></button>';
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:350px;padding:16px 20px;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;border-left:4px solid;' + (type === 'success' ? 'border-color:var(--ink-2);' : type === 'error' ? 'border-color:var(--ink-2);' : 'border-color:var(--ink-2);');
+    toast.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle') + '" style="font-size:24px;color:' + (type === 'success' ? 'var(--ink-2)' : type === 'error' ? 'var(--ink-2)' : 'var(--ink-2)') + '"></i><span>' + message + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;"><i class="bi bi-x"></i></button>';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
 }

@@ -3,7 +3,7 @@
 <style>
 .job-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem}
 .stat-box{background:white;padding:1rem;border-radius:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.08);text-align:center}
-.stat-box .value{font-size:1.5rem;font-weight:bold;color:#1e293b}
+.stat-box .value{font-size:1.5rem;font-weight:bold;color:var(--ink-2)}
 .stat-box small{color:#64748b}
 .progress-bar{transition:width 0.3s ease}
 </style>
@@ -17,10 +17,10 @@
     </div>
     <div class="job-stats">
         <div class="stat-box"><div class="value">{{.Stats.TotalJobs}}</div><small>Total Jobs</small></div>
-        <div class="stat-box"><div class="value" style="color:#d97706">{{.Stats.Pending}}</div><small>Pending</small></div>
-        <div class="stat-box"><div class="value" style="color:#2563eb">{{.Stats.Processing}}</div><small>Processing</small></div>
-        <div class="stat-box"><div class="value" style="color:#16a34a">{{.Stats.Completed}}</div><small>Completed</small></div>
-        <div class="stat-box"><div class="value" style="color:#dc2626">{{.Stats.Failed}}</div><small>Failed</small></div>
+        <div class="stat-box"><div class="value" style="color:var(--ink-2)">{{.Stats.Pending}}</div><small>Pending</small></div>
+        <div class="stat-box"><div class="value" style="color:var(--ink-2)">{{.Stats.Processing}}</div><small>Processing</small></div>
+        <div class="stat-box"><div class="value" style="color:var(--ink-2)">{{.Stats.Completed}}</div><small>Completed</small></div>
+        <div class="stat-box"><div class="value" style="color:var(--ink-2)">{{.Stats.Failed}}</div><small>Failed</small></div>
     </div>
     <div class="card">
         <div class="card-header"><h5 class="mb-0">Recent Jobs</h5></div>

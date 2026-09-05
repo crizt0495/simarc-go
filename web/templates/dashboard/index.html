@@ -177,13 +177,13 @@
 
 <template data-modal="modalSpjBox">
   <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Khusus SPJ</h5><p class="sm-subtitle">Box dengan arsip SPJ murni</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
-  <div class="sm-body">{{if .BoxStats.ListMurniSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--warning);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
+  <div class="sm-body">{{if .BoxStats.ListMurniSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--ink-2);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
   <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
 </template>
 
 <template data-modal="modalNonSpjBox">
   <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Non-SPJ</h5><p class="sm-subtitle">Box dengan arsip Non-SPJ murni</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalNonSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
-  <div class="sm-body">{{if .BoxStats.ListMurniNonSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniNonSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--success);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
+  <div class="sm-body">{{if .BoxStats.ListMurniNonSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniNonSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--ink-2);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
   <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalNonSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
 </template>
 

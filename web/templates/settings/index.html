@@ -30,7 +30,7 @@
                             <input type="text" class="form-control" 
                                    id="primary_color_text" 
                                    value="{{.ThemeSettings.primary_color}}"
-                                   placeholder="#1e3a8a">
+                                   placeholder="var(--ink-2)">
                         </div>
                         <small class="text-muted">Digunakan untuk tombol, link, dan elemen utama lainnya</small>
                     </div>
@@ -47,7 +47,7 @@
                             <input type="text" class="form-control" 
                                    id="secondary_color_text" 
                                    value="{{.ThemeSettings.secondary_color}}"
-                                   placeholder="#2563eb">
+                                   placeholder="var(--ink-3)">
                         </div>
                         <small class="text-muted">Digunakan untuk elemen pendukung dan hover states</small>
                     </div>
@@ -64,7 +64,7 @@
                             <input type="text" class="form-control" 
                                    id="accent_color_text" 
                                    value="{{.ThemeSettings.accent_color}}"
-                                   placeholder="#06b6d4">
+                                   placeholder="var(--ink-3)">
                         </div>
                         <small class="text-muted">Digunakan untuk highlight dan elemen dekoratif</small>
                     </div>
@@ -200,23 +200,23 @@
                     <h6 class="text-muted small text-uppercase mb-3">Preset Warna Cepat</h6>
                     <div class="d-flex gap-2 flex-wrap">
                         <button class="btn btn-outline-primary btn-sm preset-btn" 
-                                data-primary="#1e3a8a" data-secondary="#2563eb" data-accent="#06b6d4">
+                                data-primary="var(--ink-2)" data-secondary="var(--ink-3)" data-accent="var(--ink-3)">
                             🌊 Ocean Blue
                         </button>
                         <button class="btn btn-outline-success btn-sm preset-btn" 
-                                data-primary="#065f46" data-secondary="#10b981" data-accent="#34d399">
+                                data-primary="#065f46" data-secondary="var(--ink-2)" data-accent="#5a6a7c">
                             🌿 Forest Green
                         </button>
                         <button class="btn btn-outline-danger btn-sm preset-btn" 
-                                data-primary="#991b1b" data-secondary="#ef4444" data-accent="#f87171">
+                                data-primary="#991b1b" data-secondary="var(--ink-2)" data-accent="#f87171">
                             ❤️ Ruby Red
                         </button>
                         <button class="btn btn-outline-warning btn-sm preset-btn" 
-                                data-primary="#92400e" data-secondary="#f59e0b" data-accent="#fbbf24">
+                                data-primary="#92400e" data-secondary="var(--ink-2)" data-accent="var(--ink-2)">
                             🌅 Sunset Gold
                         </button>
                         <button class="btn btn-outline-secondary btn-sm preset-btn" 
-                                data-primary="#5b21b6" data-secondary="#8b5cf6" data-accent="#a78bfa">
+                                data-primary="#5b21b6" data-secondary="#5a6a7c" data-accent="#a78bfa">
                             💜 Royal Purple
                         </button>
                     </div>
@@ -232,21 +232,21 @@
     border: 2px solid var(--platinum);
 }
 .btn-preview-primary {
-    background: var(--primary_color, #1e3a8a);
+    background: var(--primary_color, var(--ink-2));
     border: none;
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 8px;
 }
 .btn-preview-secondary {
-    background: var(--secondary_color, #2563eb);
+    background: var(--secondary_color, var(--ink-2));
     border: none;
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 8px;
 }
 .btn-preview-accent {
-    background: var(--accent_color, #06b6d4);
+    background: var(--accent_color, var(--ink-3));
     border: none;
     color: white;
     padding: 0.5rem 1rem;
@@ -257,20 +257,20 @@
     border-radius: 20px;
 }
 .bg-preview-primary {
-    background: var(--primary_color, #1e3a8a) !important;
+    background: var(--primary_color, var(--ink-2)) !important;
 }
 .bg-preview-secondary {
-    background: var(--secondary_color, #2563eb) !important;
+    background: var(--secondary_color, var(--ink-2)) !important;
 }
 .bg-preview-accent {
-    background: var(--accent_color, #06b6d4) !important;
+    background: var(--accent_color, var(--ink-3)) !important;
 }
 .progress-bar {
     transition: width 0.3s ease;
 }
 .alert-preview {
     background: rgba(6, 182, 212, 0.1);
-    border-left: 4px solid var(--accent_color, #06b6d4);
+    border-left: 4px solid var(--accent_color, var(--ink-3));
     color: var(--deep-navy);
 }
 .card-preview {
@@ -281,7 +281,7 @@
 .icon-preview {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, var(--primary_color, #1e3a8a), var(--secondary_color, #2563eb));
+    background: linear-gradient(135deg, var(--primary_color, var(--ink-2)), var(--secondary_color, var(--ink-2)));
     color: white;
     font-size: 1.25rem;
 }

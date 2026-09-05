@@ -2,7 +2,7 @@
 {{define "content"}}
 <style>
     .retensi-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #d97706 100%);
+        background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
         border-radius: var(--r-xl);
         padding: 1.75rem 2rem;
         color: #fff;
@@ -38,7 +38,7 @@
         gap: 0.85rem;
         transition: all 0.2s ease;
     }
-    .pstat-card:hover { border-color: var(--brand); box-shadow: var(--sh-sm); }
+    .pstat-card:hover { border-color: var(--ink-2); box-shadow: var(--sh-sm); }
     .pstat-icon {
         width: 40px; height: 40px;
         border-radius: var(--r);
@@ -81,11 +81,11 @@
         text-transform: uppercase; letter-spacing: 0.04em;
         white-space: nowrap;
     }
-    .st-badge.draft { background: #f1f5f9; color: #475569; }
-    .st-badge.scheduled { background: #dbeafe; color: #2563eb; }
-    .st-badge.in_progress { background: #fef3c7; color: #b45309; }
-    .st-badge.completed { background: #dcfce7; color: #15803d; }
-    .st-badge.cancelled { background: #fee2e2; color: #b91c1c; }
+    .st-badge.draft { background: var(--surface-3); color: var(--ink-4); }
+    .st-badge.scheduled { background: var(--neu-bg); color: var(--ink-2); }
+    .st-badge.in_progress { background: var(--neu-bg); color: var(--ink-2); }
+    .st-badge.completed { background: var(--neu-bg); color: var(--ink-2); }
+    .st-badge.cancelled { background: var(--neu-bg); color: var(--ink-2); }
     .fade-up { animation: fadeUp 0.35s ease both; }
     .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
     .fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
@@ -130,12 +130,12 @@
     </div>
 
     <div class="progres-stat fade-up-d1">
-        <div class="pstat-card"><div class="pstat-icon" style="background:#eff6ff;color:var(--brand);"><i class="bi bi-calendar-check"></i></div><div><div class="pstat-value">{{.Stats.TotalSchedules}}</div><div class="pstat-label">Total</div></div></div>
-        <div class="pstat-card"><div class="pstat-icon" style="background:#f1f5f9;color:#475569;"><i class="bi bi-pencil"></i></div><div><div class="pstat-value">{{.Stats.Draft}}</div><div class="pstat-label">Draft</div></div></div>
-        <div class="pstat-card"><div class="pstat-icon" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-clock"></i></div><div><div class="pstat-value">{{.Stats.Scheduled}}</div><div class="pstat-label">Terjadwal</div></div></div>
-        <div class="pstat-card"><div class="pstat-icon" style="background:#fef3c7;color:#b45309;"><i class="bi bi-arrow-repeat"></i></div><div><div class="pstat-value">{{.Stats.InProgress}}</div><div class="pstat-label">Proses</div></div></div>
-        <div class="pstat-card"><div class="pstat-icon" style="background:#dcfce7;color:#15803d;"><i class="bi bi-check-circle"></i></div><div><div class="pstat-value">{{.Stats.Completed}}</div><div class="pstat-label">Selesai</div></div></div>
-        <div class="pstat-card"><div class="pstat-icon" style="background:#fee2e2;color:#b91c1c;"><i class="bi bi-exclamation-triangle"></i></div><div><div class="pstat-value">{{.Stats.Overdue}}</div><div class="pstat-label">Terlambat</div></div></div>
+        <div class="pstat-card"><div class="pstat-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-calendar-check"></i></div><div><div class="pstat-value">{{.Stats.TotalSchedules}}</div><div class="pstat-label">Total</div></div></div>
+        <div class="pstat-card"><div class="pstat-icon" style="background:var(--surface-3);color:var(--ink-4);"><i class="bi bi-pencil"></i></div><div><div class="pstat-value">{{.Stats.Draft}}</div><div class="pstat-label">Draft</div></div></div>
+        <div class="pstat-card"><div class="pstat-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-clock"></i></div><div><div class="pstat-value">{{.Stats.Scheduled}}</div><div class="pstat-label">Terjadwal</div></div></div>
+        <div class="pstat-card"><div class="pstat-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-arrow-repeat"></i></div><div><div class="pstat-value">{{.Stats.InProgress}}</div><div class="pstat-label">Proses</div></div></div>
+        <div class="pstat-card"><div class="pstat-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-check-circle"></i></div><div><div class="pstat-value">{{.Stats.Completed}}</div><div class="pstat-label">Selesai</div></div></div>
+        <div class="pstat-card"><div class="pstat-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-exclamation-triangle"></i></div><div><div class="pstat-value">{{.Stats.Overdue}}</div><div class="pstat-label">Terlambat</div></div></div>
     </div>
 
     <div class="card mb-3 fade-up-d2">
@@ -194,7 +194,7 @@
                         <td class="text-muted fw-700" data-label="No">{{add $i $.FirstItem}}</td>
                         <td data-label="Nama">
                             <strong style="font-size:0.88rem;">{{$v.NamaJadwal}}</strong>
-                            {{if $v.IsOverdue}}<span class="st-badge overdue" style="background:#fef2f2;color:#dc2626;font-size:0.55rem;">Overdue</span>{{end}}
+                            {{if $v.IsOverdue}}<span class="st-badge overdue" style="background:var(--neu-bg);color:var(--ink-2);font-size:0.55rem;">Overdue</span>{{end}}
                         </td>
                         <td data-label="Tanggal"><span class="small"><i class="bi bi-calendar3 me-1"></i>{{$v.TanggalJadwal}}</span></td>
                         <td data-label="Jenis"><span class="badge-soft badge-soft-info">{{$v.JenisJadwal}}</span></td>

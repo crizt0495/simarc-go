@@ -10,7 +10,7 @@
 
 /* ── Hero Header ── */
 .arsip-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
     border-radius: var(--r-xl);
     padding: 1.75rem 2rem;
     color: #fff;
@@ -52,7 +52,7 @@
     cursor: default;
 }
 .stat-mini:hover {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     box-shadow: var(--sh-sm);
 }
 .stat-mini-icon {
@@ -104,7 +104,7 @@
 .view-toggle-btn:hover { color: var(--ink-2); }
 .view-toggle-btn.active {
     background: var(--surface);
-    color: var(--brand);
+    color: var(--ink-2);
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 .view-toggle-btn i { font-size: 0.85rem; }
@@ -135,7 +135,7 @@
 .table-premium tbody tr:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    border-color: var(--brand-200, #bfdbfe);
+    border-color: var(--brand-200, var(--neu-bg));
 }
 .table-premium tbody td {
     border: none;
@@ -204,19 +204,19 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 4px;
-    background: var(--brand);
+    background: var(--ink-2);
     transform: scaleY(0);
     transform-origin: top;
     transition: transform 0.25s ease;
 }
 .arsip-card:hover {
-    border-color: var(--brand-200, #bfdbfe);
+    border-color: var(--brand-200, var(--neu-bg));
     box-shadow: 0 8px 24px rgba(0,0,0,0.06);
     transform: translateY(-3px);
 }
 .arsip-card:hover::before { transform: scaleY(1); }
 .arsip-card.is-selected {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     background: linear-gradient(135deg, rgba(59,130,246,0.03), rgba(99,102,241,0.04));
 }
 
@@ -259,7 +259,7 @@
     overflow: hidden;
     word-break: break-word;
 }
-.arsip-card-name:hover { color: var(--brand); }
+.arsip-card-name:hover { color: var(--ink-2); }
 .arsip-card-badges {
     display: flex;
     gap: 0.35rem;
@@ -294,7 +294,7 @@
     white-space: nowrap;
 }
 .arsip-card-field-value.text-money {
-    color: #059669;
+    color: var(--ink-2);
     font-family: 'SF Mono', Menlo, Consolas, monospace;
     font-weight: 800;
 }
@@ -371,12 +371,12 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
 }
-.status-aktif { background: #dcfce7; color: #15803d; }
-.status-inaktif { background: #f1f5f9; color: #475569; }
-.status-siap_penyusutan { background: #fef3c7; color: #b45309; }
-.status-musnah { background: #fee2e2; color: #b91c1c; }
-.status-permanen { background: #e0e7ff; color: #4338ca; }
-.status-diberkaskan { background: #e0f2fe; color: #0369a1; }
+.status-aktif { background: var(--neu-bg); color: var(--ink-2); }
+.status-inaktif { background: var(--surface-3); color: var(--ink-4); }
+.status-siap_penyusutan { background: var(--neu-bg); color: var(--ink-2); }
+.status-musnah { background: var(--neu-bg); color: var(--ink-2); }
+.status-permanen { background: #e0e7ff; color: var(--ink-3); }
+.status-diberkaskan { background: var(--neu-bg); color: var(--ink-3); }
 .status-dipinjam { background: #fce7f3; color: #be185d; }
 
 /* ── Action Buttons (using global .btn-crud from enterprise-premium.css) ── */
@@ -390,8 +390,8 @@
     justify-content: center;
     font-size: 1rem;
 }
-.file-indicator.exists { background: #dcfce7; color: #15803d; }
-.file-indicator.empty { background: #f1f5f9; color: #94a3b8; }
+.file-indicator.exists { background: var(--neu-bg); color: var(--ink-2); }
+.file-indicator.empty { background: var(--surface-3); color: #94a3b8; }
 
 /* ── Filter Active Badges ── */
 .filter-badge {
@@ -446,7 +446,7 @@
 
 /* ── Bulk Toolbar ── */
 .bulk-toolbar {
-    background: linear-gradient(135deg, #eff6ff, #eef2ff);
+    background: linear-gradient(135deg, var(--neu-bg), var(--neu-bg));
     border: 1px solid rgba(26,86,219,0.12);
     border-radius: var(--r-lg);
     padding: 0.75rem 1.25rem;
@@ -460,7 +460,7 @@
 .bulk-toolbar .count-text {
     font-weight: 700;
     font-size: 0.85rem;
-    color: var(--brand);
+    color: var(--ink-2);
 }
 .bulk-toolbar .bulk-actions {
     display: flex;
@@ -503,7 +503,7 @@ mark {
     border-radius: 0.2rem;
     font-weight: 700;
     background: #fef08a;
-    color: #1e293b;
+    color: var(--ink-2);
 }
 
 /* ── Mobile Card View Responsive ── */
@@ -727,7 +727,7 @@ mark {
         {{if .FilterBerkasDigital}}<span class="filter-badge badge-soft-primary"><i class="bi bi-file-earmark"></i> Berkas: {{if eq .FilterBerkasDigital "sudah_ada"}}Ada{{else}}Belum{{end}} <a href="#" class="remove" data-param="status_berkas_digital">&times;</a></span>{{end}}
         {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:var(--pink-500);color:#fff;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
         {{if .FilterPemberkasanID}}<span class="filter-badge badge-soft-info"><i class="bi bi-archive"></i> Pemberkasan <a href="#" class="remove" data-param="pemberkasan_id">&times;</a></span>{{end}}
-        <a href="/arsip" class="filter-badge" style="background:var(--danger);color:#fff;text-decoration:none"><i class="bi bi-x-circle"></i> Hapus Semua</a>
+        <a href="/arsip" class="filter-badge" style="background:var(--ink-2);color:#fff;text-decoration:none"><i class="bi bi-x-circle"></i> Hapus Semua</a>
     </div>
     {{end}}
 
@@ -786,7 +786,7 @@ mark {
                             <a href="/arsip/{{$arsip.ID}}" class="arsip-card-name">{{if $.searchKeyword}}{{highlight $arsip.NamaArsip $.searchKeyword}}{{else}}{{$arsip.NamaArsip}}{{end}}</a>
                             <div class="arsip-card-badges">
                                 <span class="status-badge status-{{$arsip.StatusArsip}}">{{replaceUnderscore $arsip.StatusArsip}}</span>
-                                {{if $arsip.FilePath}}<span class="status-badge" style="background:#dcfce7;color:#15803d;"><i class="bi bi-paperclip me-1"></i>Berkas</span>{{end}}
+                                {{if $arsip.FilePath}}<span class="status-badge" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-paperclip me-1"></i>Berkas</span>{{end}}
                             </div>
                         </div>
                     </div>
@@ -880,7 +880,7 @@ mark {
                                     {{if $arsip.Uraian}}<div class="text-muted mt-1" style="font-size:0.7rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{if $.searchKeyword}}{{highlight (truncate $arsip.Uraian 80) $.searchKeyword}}{{else}}{{truncate $arsip.Uraian 80}}{{end}}</div>{{end}}
                                 </div>
                             </td>
-                            <td class="text-end" data-label="Nominal">{{if $arsip.NilaiAnggaran}}<span class="fw-800 font-monospace" style="color:#059669;font-size:0.78rem;">Rp {{formatNumber $arsip.NilaiAnggaran}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
+                            <td class="text-end" data-label="Nominal">{{if $arsip.NilaiAnggaran}}<span class="fw-800 font-monospace" style="color:var(--ink-2);font-size:0.78rem;">Rp {{formatNumber $arsip.NilaiAnggaran}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
                             <td data-label="Unit"><span class="small fw-600"><i class="bi bi-building text-primary me-1"></i>{{if $arsip.UnitKerja}}{{$arsip.UnitKerja.NamaUnit}}{{else}}-{{end}}</span></td>
                             <td data-label="Tanggal"><span class="small fw-600" style="color:var(--ink-3);"><i class="bi bi-calendar3 me-1"></i>{{formatDate $arsip.TanggalDibuat}}</span></td>
                             <td data-label="Kategori"><span class="status-badge" style="background:rgba(99,102,241,0.1);color:#6366f1;">{{$kategori}}</span></td>
@@ -1457,8 +1457,8 @@ document.addEventListener('DOMContentLoaded', function() {
         c.innerHTML = '';
         if (!timeline.length) { c.innerHTML = '<p class="text-muted text-center py-3 small">Belum ada aktivitas</p>'; return; }
         timeline.forEach(function(item) {
-            const bg = item.color === 'success' ? '#dcfce7' : item.color === 'warning' ? '#fef3c7' : item.color === 'danger' ? '#fee2e2' : '#dbeafe';
-            const fg = item.color === 'success' ? '#15803d' : item.color === 'warning' ? '#b45309' : item.color === 'danger' ? '#b91c1c' : '#2563eb';
+            const bg = item.color === 'success' ? 'var(--neu-bg)' : item.color === 'warning' ? 'var(--neu-bg)' : item.color === 'danger' ? 'var(--neu-bg)' : 'var(--neu-bg)';
+            const fg = item.color === 'success' ? 'var(--ink-2)' : item.color === 'warning' ? 'var(--ink-2)' : item.color === 'danger' ? 'var(--ink-2)' : 'var(--ink-2)';
             const d = document.createElement('div'); d.className = 'd-flex gap-3 mb-3';
             d.innerHTML = '<div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width:36px;height:36px;background:' + bg + ';color:' + fg + ';"><i class="bi bi-' + item.icon + '"></i></div><div class="flex-grow-1"><div class="d-flex justify-content-between"><strong style="font-size:0.85rem;">' + item.title + '</strong><small class="text-muted">' + item.formatted_time + '</small></div><p class="mb-0 text-muted" style="font-size:0.78rem;">' + (item.description || '-') + '</p><small class="fw-600" style="font-size:0.7rem;"><i class="bi bi-person me-1"></i>' + item.user + '</small></div></div>';
             c.appendChild(d);

@@ -8,7 +8,7 @@
 
 /* ── Hero Header ── */
 .pindah-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
     border-radius: var(--r-xl);
     padding: 1.75rem 2rem;
     color: #fff;
@@ -68,7 +68,7 @@
     flex-shrink: 0;
 }
 .step-wizard .step.active {
-    background: var(--brand);
+    background: var(--ink-2);
     color: #fff;
 }
 .step-wizard .step.active .sn {
@@ -76,7 +76,7 @@
 }
 .step-wizard .step.done {
     background: rgba(5,150,105,0.1);
-    color: var(--success);
+    color: var(--ink-2);
 }
 .step-wizard .step.done .sn {
     background: rgba(5,150,105,0.15);
@@ -124,12 +124,12 @@
     transition: all 0.2s ease;
 }
 .content-card:hover {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     box-shadow: var(--sh-sm);
 }
 .content-card .card-hd {
     padding: 0.85rem 1.25rem;
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    background: linear-gradient(135deg, var(--neu-bg), var(--surface-3));
     border-bottom: 1px solid var(--border);
     font-weight: 700;
     font-size: 0.85rem;
@@ -156,18 +156,18 @@
     background: var(--surface);
 }
 .arsip-item:hover {
-    border-color: var(--brand);
+    border-color: var(--ink-2);
     background: rgba(26,86,219,0.03);
     transform: translateX(2px);
 }
 .arsip-item.selected {
-    border-color: var(--brand);
-    background: #eff6ff;
+    border-color: var(--ink-2);
+    background: var(--neu-bg);
     box-shadow: 0 0 0 1px rgba(26,86,219,0.1);
 }
 .arsip-item .form-check-input:checked {
-    background-color: var(--brand);
-    border-color: var(--brand);
+    background-color: var(--ink-2);
+    border-color: var(--ink-2);
 }
 .arsip-item .arsip-jenis {
     font-size: 0.6rem;
@@ -179,16 +179,16 @@
 }
 .arsip-item .arsip-jenis.spj {
     background: rgba(245,158,11,0.1);
-    color: #d97706;
+    color: var(--ink-2);
 }
 .arsip-item .arsip-jenis.non-spj {
     background: rgba(5,150,105,0.1);
-    color: #059669;
+    color: var(--ink-2);
 }
 
 /* ── Selection badge ── */
 .sel-badge {
-    background: var(--brand);
+    background: var(--ink-2);
     color: #fff;
     border-radius: 50px;
     padding: 0.15rem 0.75rem;
@@ -210,20 +210,20 @@
     transition: all 0.15s ease;
 }
 .filter-pill:hover {
-    border-color: var(--brand);
-    color: var(--brand);
+    border-color: var(--ink-2);
+    color: var(--ink-2);
     background: rgba(26,86,219,0.04);
 }
 .filter-pill.active {
-    background: var(--brand);
+    background: var(--ink-2);
     color: #fff;
-    border-color: var(--brand);
+    border-color: var(--ink-2);
 }
 
 /* ── Log item ── */
 .log-item {
     padding: 0.65rem 0.85rem;
-    border-left: 3px solid var(--brand);
+    border-left: 3px solid var(--ink-2);
     margin-bottom: 0.4rem;
     background: var(--surface-2);
     border-radius: 0 var(--r) var(--r) 0;
@@ -231,7 +231,7 @@
     transition: all 0.15s ease;
 }
 .log-item:hover {
-    border-left-color: var(--brand-dk);
+    border-left-color: var(--ink);
     background: rgba(26,86,219,0.03);
 }
 .log-item .log-meta {
@@ -248,7 +248,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    background: linear-gradient(135deg, var(--brand), #7c3aed);
+    background: linear-gradient(135deg, var(--ink-2), var(--ink-3));
     color: #fff;
     padding: 0.2rem 0.75rem;
     border-radius: 50px;
@@ -327,7 +327,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--brand);
+    color: var(--ink-2);
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
@@ -364,10 +364,10 @@
 
     <!-- ZONE 3: STATS ROW -->
     <div class="row g-2 mb-3 fade-up-d1">
-        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#eff6ff;color:var(--brand);"><i class="bi bi-archive"></i></div><div><div class="stat-mini-value">{{.TotalArsip}}</div><div class="stat-mini-label">Total Arsip</div></div></div></div>
-        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#f0fdf4;color:var(--success);"><i class="bi bi-geo-alt"></i></div><div><div class="stat-mini-value">{{.TotalLokasi}}</div><div class="stat-mini-label">Lokasi Tersedia</div></div></div></div>
-        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#fffbeb;color:var(--warning);"><i class="bi bi-arrow-left-right"></i></div><div><div class="stat-mini-value">{{.TotalMutasi}}</div><div class="stat-mini-label">Total Pemindahan</div></div></div></div>
-        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:#fef2f2;color:var(--danger);"><i class="bi bi-clock-history"></i></div><div><div class="stat-mini-value">{{.MutasiBulanIni}}</div><div class="stat-mini-label">Bulan Ini</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-archive"></i></div><div><div class="stat-mini-value">{{.TotalArsip}}</div><div class="stat-mini-label">Total Arsip</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-geo-alt"></i></div><div><div class="stat-mini-value">{{.TotalLokasi}}</div><div class="stat-mini-label">Lokasi Tersedia</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-arrow-left-right"></i></div><div><div class="stat-mini-value">{{.TotalMutasi}}</div><div class="stat-mini-label">Total Pemindahan</div></div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-mini"><div class="stat-mini-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-clock-history"></i></div><div><div class="stat-mini-value">{{.MutasiBulanIni}}</div><div class="stat-mini-label">Bulan Ini</div></div></div></div>
     </div>
 
     <!-- ZONE 4: MAIN CONTENT -->

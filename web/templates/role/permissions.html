@@ -7,7 +7,7 @@
 
     /* ── Header card ── */
     .permission-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 100%);
         border-radius: var(--r-xl);
         padding: 1.75rem 2rem;
         color: #fff;
@@ -76,7 +76,7 @@
         outline: none;
     }
     .perm-search-wrap input:focus {
-        border-color: var(--brand);
+        border-color: var(--ink-2);
         box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
     }
     .perm-search-wrap input::placeholder { color: var(--ink-4); }
@@ -102,7 +102,7 @@
         align-items: center;
         gap: 0.5rem;
     }
-    .global-bar .count-display span { color: var(--brand); }
+    .global-bar .count-display span { color: var(--ink-2); }
 
     /* ── Progress bar mini ── */
     .selection-progress {
@@ -114,14 +114,14 @@
     }
     .selection-progress .fill {
         height: 100%;
-        background: linear-gradient(90deg, var(--brand), #7c3aed);
+        background: linear-gradient(90deg, var(--ink-2), var(--ink-3));
         border-radius: 10px;
         transition: width 0.3s ease;
     }
 
     /* ── Admin Alert ── */
     .admin-alert {
-        background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%);
+        background: linear-gradient(135deg, #2d3748 0%, var(--ink-3) 100%);
         border-radius: var(--r-lg);
         padding: 1.25rem;
         color: #fff;
@@ -158,7 +158,7 @@
         transition: all 0.2s ease;
     }
     .perm-module-card:hover {
-        border-color: var(--brand);
+        border-color: var(--ink-2);
         box-shadow: var(--sh-sm);
     }
     .perm-module-card.hidden-by-search { display: none; }
@@ -168,7 +168,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        background: linear-gradient(135deg, var(--neu-bg), var(--surface-3));
         flex-wrap: wrap;
         gap: 0.5rem;
         cursor: pointer;
@@ -176,7 +176,7 @@
         transition: background 0.15s ease;
     }
     .perm-module-header:hover {
-        background: linear-gradient(135deg, #f1f5f9, #e8ecf1);
+        background: linear-gradient(135deg, var(--surface-3), #e8ecf1);
     }
     .perm-module-header h5 {
         font-weight: 800;
@@ -211,7 +211,7 @@
     }
     .perm-module-header .mod-badge-selected {
         background: rgba(26,86,219,0.1);
-        color: var(--brand);
+        color: var(--ink-2);
         font-size: 0.6rem;
         font-weight: 700;
         padding: 0.15rem 0.5rem;
@@ -238,10 +238,10 @@
         border-radius: 4px;
         transition: all 0.15s ease;
     }
-    .perm-module-header .mod-actions .select-all { color: var(--brand); }
+    .perm-module-header .mod-actions .select-all { color: var(--ink-2); }
     .perm-module-header .mod-actions .select-all:hover { background: rgba(26,86,219,0.08); }
     .perm-module-header .mod-actions .clear-all { color: var(--ink-4); }
-    .perm-module-header .mod-actions .clear-all:hover { color: var(--danger); background: rgba(239,68,68,0.06); }
+    .perm-module-header .mod-actions .clear-all:hover { color: var(--ink-2); background: rgba(239,68,68,0.06); }
 
     .perm-module-body {
         transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), padding 0.2s ease, opacity 0.2s ease;
@@ -261,21 +261,21 @@
     .perm-item {
         padding: 0.65rem 0.85rem;
         border-radius: var(--r);
-        border: 1.5px solid #f1f5f9;
+        border: 1.5px solid var(--surface-3);
         transition: all 0.15s ease;
         cursor: pointer;
         height: 100%;
         background: var(--surface);
     }
     .perm-item:hover {
-        border-color: var(--brand-200, #bfdbfe);
-        background: #f8fafc;
+        border-color: var(--brand-200, var(--neu-bg));
+        background: var(--neu-bg);
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
     .perm-item.selected {
-        border-color: var(--brand);
-        background: #eff6ff;
+        border-color: var(--ink-2);
+        background: var(--neu-bg);
         box-shadow: 0 0 0 1px rgba(26,86,219,0.1);
     }
     .perm-item .form-check-input {
@@ -286,8 +286,8 @@
         margin-top: 0.1rem;
     }
     .perm-item .form-check-input:checked {
-        background-color: var(--brand);
-        border-color: var(--brand);
+        background-color: var(--ink-2);
+        border-color: var(--ink-2);
         box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
     }
     .perm-item .form-check-input:disabled {
@@ -325,11 +325,11 @@
         letter-spacing: 0.04em;
         line-height: 1.2;
     }
-    .perm-type-badge.type-create  { background: rgba(5,150,105,0.1);  color: #059669; }
-    .perm-type-badge.type-view   { background: rgba(2,132,199,0.1);  color: #0284c7; }
-    .perm-type-badge.type-edit   { background: rgba(217,119,6,0.1);  color: #d97706; }
-    .perm-type-badge.type-delete { background: rgba(220,38,38,0.1);  color: #dc2626; }
-    .perm-type-badge.type-other  { background: rgba(124,58,237,0.1); color: #7c3aed; }
+    .perm-type-badge.type-create  { background: rgba(5,150,105,0.1);  color: var(--ink-2); }
+    .perm-type-badge.type-view   { background: rgba(2,132,199,0.1);  color: var(--ink-3); }
+    .perm-type-badge.type-edit   { background: rgba(217,119,6,0.1);  color: var(--ink-2); }
+    .perm-type-badge.type-delete { background: rgba(220,38,38,0.1);  color: var(--ink-2); }
+    .perm-type-badge.type-other  { background: rgba(124,58,237,0.1); color: var(--ink-3); }
 
     /* ── Floating Save Bar ── */
     .save-bar {
@@ -337,7 +337,7 @@
         bottom: 0;
         background: var(--surface);
         border: 1px solid var(--border);
-        border-top: 2px solid var(--brand);
+        border-top: 2px solid var(--ink-2);
         border-radius: var(--r-lg) var(--r-lg) 0 0;
         padding: 1rem 1.5rem;
         display: flex;
@@ -360,7 +360,7 @@
     .save-bar .changes-indicator .dot {
         width: 6px; height: 6px;
         border-radius: 50%;
-        background: var(--brand);
+        background: var(--ink-2);
         animation: pulse 2s ease-in-out infinite;
     }
     @keyframes pulse {
@@ -382,7 +382,7 @@
         white-space: nowrap;
     }
     .save-bar .save-cta .total-badge strong {
-        color: var(--brand);
+        color: var(--ink-2);
     }
 
     /* ── Hidden by search ── */

@@ -28,9 +28,9 @@ border-radius: 6px;
 transition: all 0.15s ease;
 }
 .table-premium .btn-detail:hover {
-background-color: #1a56db;
+background-color: var(--ink-2);
 color: #fff;
-border-color: #1a56db;
+border-color: var(--ink-2);
 }
 </style>
 <div class="page-header">
@@ -243,20 +243,20 @@ function printReport(){
     printWindow.document.write('@page{ margin: 20mm 15mm 25mm 15mm; }');
     printWindow.document.write('@page :first{ margin-top: 15mm; }');
     printWindow.document.write('*{ box-sizing:border-box; }');
-    printWindow.document.write('body{ font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1e293b; line-height: 1.5; padding:0; margin:0; }');
-    printWindow.document.write('.report-header{ text-align:center; margin-bottom:20px; padding-bottom:15px; border-bottom:3px double #1e293b; }');
+    printWindow.document.write('body{ font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: var(--ink-2); line-height: 1.5; padding:0; margin:0; }');
+    printWindow.document.write('.report-header{ text-align:center; margin-bottom:20px; padding-bottom:15px; border-bottom:3px double var(--ink-2); }');
     printWindow.document.write('.report-header h1{ font-size:16px; margin:0 0 3px; text-transform:uppercase; letter-spacing:0.5px; }');
-    printWindow.document.write('.report-header h2{ font-size:13px; margin:0 0 3px; font-weight:normal; color:#475569; }');
+    printWindow.document.write('.report-header h2{ font-size:13px; margin:0 0 3px; font-weight:normal; color:var(--ink-4); }');
     printWindow.document.write('.report-header .sub{ font-size:10px; color:#64748b; }');
     printWindow.document.write('.report-title{ font-size:14px; font-weight:bold; text-align:center; margin:15px 0; text-transform:uppercase; }');
     printWindow.document.write('.stats-row{ display:flex; gap:10px; margin:15px 0; flex-wrap:wrap; }');
     printWindow.document.write('.stat-card{ flex:1; min-width:120px; border:1px solid #e2e8f0; border-radius:6px; padding:10px 12px; text-align:center; }');
     printWindow.document.write('.stat-card .label{ font-size:9px; text-transform:uppercase; color:#64748b; letter-spacing:0.5px; }');
-    printWindow.document.write('.stat-card .value{ font-size:18px; font-weight:bold; color:#1e293b; margin-top:3px; }');
+    printWindow.document.write('.stat-card .value{ font-size:18px; font-weight:bold; color:var(--ink-2); margin-top:3px; }');
     printWindow.document.write('table{ width:100%; border-collapse:collapse; margin:10px 0; }');
-    printWindow.document.write('th{ background:#1e293b !important; color:#fff !important; padding:7px 6px; font-size:9px; text-transform:uppercase; letter-spacing:0.3px; text-align:left; border:1px solid #334155; }');
+    printWindow.document.write('th{ background:var(--ink-2) !important; color:#fff !important; padding:7px 6px; font-size:9px; text-transform:uppercase; letter-spacing:0.3px; text-align:left; border:1px solid var(--ink-3); }');
     printWindow.document.write('td{ padding:5px 6px; font-size:10px; border:1px solid #e2e8f0; vertical-align:top; }');
-    printWindow.document.write('tr:nth-child(even){ background:#f8fafc; }');
+    printWindow.document.write('tr:nth-child(even){ background:var(--neu-bg); }');
     printWindow.document.write('.badge{ display:inline-block; padding:1px 6px; font-size:8px; border-radius:3px; background:#e2e8f0; }');
     printWindow.document.write('.report-footer{ position:fixed; bottom:10px; left:15mm; right:15mm; text-align:center; font-size:8px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:5px; }');
     printWindow.document.write('.report-footer .page:after{ content: counter(page); }');

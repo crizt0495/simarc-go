@@ -6,7 +6,7 @@
 .advanced-header::before{content:'';position:absolute;bottom:-30%;left:10%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.5rem;margin-top:-2rem;padding:0 0.5rem;position:relative;z-index:1}
 .stat-card-modern{background:var(--surface);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh);border:1px solid var(--border);transition:all 0.3s var(--ease-out)}
-.stat-card-modern:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);border-color:var(--brand)}
+.stat-card-modern:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);border-color:var(--ink-2)}
 [data-theme="dark"] .stat-card-modern{background:var(--neutral-100);border-color:var(--neutral-200)}
 .stat-card-modern .icon-box{width:48px;height:48px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;font-size:1.3rem}
 .stat-card-modern .label{font-size:0.8rem;color:var(--ink-4);font-weight:600;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.04em}
@@ -70,7 +70,7 @@
         </div>
         <div class="chart-card-modern">
             <div class="chart-header">
-                <h4><i class="bi bi-bar-chart" style="color:var(--purple-500)"></i> Top 5 Kode Klasifikasi</h4>
+                <h4><i class="bi bi-bar-chart" style="color:var(--ink-3)"></i> Top 5 Kode Klasifikasi</h4>
                 <p>Klasifikasi arsip yang paling sering digunakan</p>
             </div>
             <div id="distributionChart"></div>
@@ -80,7 +80,7 @@
     <div class="charts-grid">
         <div class="chart-card-modern">
             <div class="chart-header">
-                <h4><i class="bi bi-file-earmark-text" style="color:var(--purple-500)"></i> Jenis Dokumen Terbanyak</h4>
+                <h4><i class="bi bi-file-earmark-text" style="color:var(--ink-3)"></i> Jenis Dokumen Terbanyak</h4>
                 <p>Tipe dokumen yang mendominasi</p>
             </div>
             <div id="docTypeChart"></div>
@@ -111,7 +111,7 @@
                 <tbody>
                     {{range .RecentActivity.RecentArchives}}
                     <tr>
-                        <td><span class="fw-semibold" style="color:var(--brand)">{{.NamaArsip}}</span></td>
+                        <td><span class="fw-semibold" style="color:var(--ink-2)">{{.NamaArsip}}</span></td>
                         <td class="text-muted">{{.UnitKerja}}</td>
                         <td class="text-muted small">{{.CreatedAt}}</td>
                         <td class="text-end">
@@ -137,7 +137,7 @@ const chartColors={text:isDark?'#94a3b8':'#64748b',grid:isDark?'rgba(255,255,255
 new ApexCharts(document.querySelector("#growthChart"),{
     series:[{name:'Dokumen Baru',data:[{{range $i,$v:=.ChartsData.Growth.Data}}{{if $i}},{{end}}{{$v}}{{end}}]}],
     chart:{type:'area',height:300,toolbar:{show:false},zoom:{enabled:false},foreColor:chartColors.text},
-    colors:['#3b82f6'],dataLabels:{enabled:false},stroke:{curve:'smooth',width:3},
+    colors:['var(--ink-2)'],dataLabels:{enabled:false},stroke:{curve:'smooth',width:3},
     fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:0.3,opacityTo:0}},
     xaxis:{categories:[{{range $i,$v:=.ChartsData.Growth.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}]},
     grid:{borderColor:chartColors.grid},
@@ -148,14 +148,14 @@ new ApexCharts(document.querySelector("#distributionChart"),{
     series:[{{range $i,$v:=.ChartsData.Distribution.Data}}{{if $i}},{{end}}{{$v}}{{end}}],
     labels:[{{range $i,$v:=.ChartsData.Distribution.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}],
     chart:{type:'donut',height:350,foreColor:chartColors.text},
-    colors:['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'],
+    colors:['var(--ink-2)','var(--ink-2)','var(--ink-2)','var(--ink-2)','#5a6a7c'],
     legend:{position:'bottom'},plotOptions:{pie:{donut:{size:'70%'}}}
 }).render();
 
 new ApexCharts(document.querySelector("#docTypeChart"),{
     series:[{name:'Jumlah',data:[{{range $i,$v:=.ChartsData.DocTypes.Data}}{{if $i}},{{end}}{{$v}}{{end}}]}],
     chart:{type:'bar',height:300,toolbar:{show:false},foreColor:chartColors.text},
-    colors:['#8b5cf6'],
+    colors:['#5a6a7c'],
     plotOptions:{bar:{borderRadius:8,horizontal:true}},
     xaxis:{categories:[{{range $i,$v:=.ChartsData.DocTypes.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}]}
 }).render();
@@ -164,7 +164,7 @@ new ApexCharts(document.querySelector("#retentionChart"),{
     series:[{{range $i,$v:=.ChartsData.Retention.Data}}{{if $i}},{{end}}{{$v}}{{end}}],
     labels:[{{range $i,$v:=.ChartsData.Retention.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}],
     chart:{type:'pie',height:350,foreColor:chartColors.text},
-    colors:['#10b981','#f59e0b','#ef4444'],
+    colors:['var(--ink-2)','var(--ink-2)','var(--ink-2)'],
     legend:{position:'bottom'}
 }).render();
 </script>

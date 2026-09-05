@@ -6,13 +6,13 @@
 .integration-card:hover{transform:translateY(-5px)}
 .integration-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
 .integration-icon{width:50px;height:50px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
-.integration-icon.google{background:#4285f4;color:white}
+.integration-icon.google{background:var(--ink-2);color:white}
 .integration-icon.generic{background:#64748b;color:white}
 .status-indicator{width:10px;height:10px;border-radius:50%;display:inline-block}
-.status-active{background:#16a34a}
+.status-active{background:var(--ink-2)}
 .status-inactive{background:#64748b}
-.status-error{background:#dc2626}
-.gs-endpoint{font-family:monospace;font-size:.8rem;background:#f1f5f9;border-radius:.375rem;padding:.25rem .5rem;display:inline-block;margin:.15rem .25rem .15rem 0}
+.status-error{background:var(--ink-2)}
+.gs-endpoint{font-family:monospace;font-size:.8rem;background:var(--surface-3);border-radius:.375rem;padding:.25rem .5rem;display:inline-block;margin:.15rem .25rem .15rem 0}
 </style>
 <div class="container-fluid">
     {{if .createForm}}
@@ -105,7 +105,7 @@
     </div>
 
     <!-- Panel Google Sheets -->
-    <div class="card mb-4 border-0 shadow-sm" style="border-left:4px solid #4285f4 !important">
+    <div class="card mb-4 border-0 shadow-sm" style="border-left:4px solid var(--ink-2) !important">
         <div class="card-body">
             <div class="d-flex align-items-start gap-3">
                 <div class="integration-icon google"><i class="bi bi-file-earmark-spreadsheet"></i></div>
@@ -142,13 +142,13 @@
             <div class="card"><div class="card-body text-center"><h3>{{.Stats.Total}}</h3><p class="text-muted mb-0">Total Integrasi</p></div></div>
         </div>
         <div class="col-md-3">
-            <div class="card"><div class="card-body text-center"><h3 style="color:#16a34a">{{.Stats.Active}}</h3><p class="text-muted mb-0">Aktif</p></div></div>
+            <div class="card"><div class="card-body text-center"><h3 style="color:var(--ink-2)">{{.Stats.Active}}</h3><p class="text-muted mb-0">Aktif</p></div></div>
         </div>
         <div class="col-md-3">
             <div class="card"><div class="card-body text-center"><h3 style="color:#64748b">{{.Stats.Inactive}}</h3><p class="text-muted mb-0">Nonaktif</p></div></div>
         </div>
         <div class="col-md-3">
-            <div class="card"><div class="card-body text-center"><h3 style="color:#dc2626">{{.Stats.Error}}</h3><p class="text-muted mb-0">Error</p></div></div>
+            <div class="card"><div class="card-body text-center"><h3 style="color:var(--ink-2)">{{.Stats.Error}}</h3><p class="text-muted mb-0">Error</p></div></div>
         </div>
     </div>
 

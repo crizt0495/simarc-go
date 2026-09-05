@@ -25,7 +25,7 @@
     </div>
 </div>
 <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-    <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px 16px 0 0; padding: 1.5rem 2rem;">
+    <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #475569 0%, var(--ink-2) 100%); border-radius: 16px 16px 0 0; padding: 1.5rem 2rem;">
         <h5 class="mb-0 text-white">
             <i class="bi bi-cloud-upload me-2"></i>Upload Document
         </h5>
@@ -105,7 +105,7 @@
 </div>
 <div class="result-section" id="resultSection">
     <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-        <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 16px 16px 0 0; padding: 1.5rem 2rem;">
+        <div class="card-header bg-gradient" style="background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-2) 100%); border-radius: 16px 16px 0 0; padding: 1.5rem 2rem;">
             <h5 class="mb-0 text-white">
                 <i class="bi bi-check-circle me-2"></i>OCR Result
             </h5>
@@ -134,25 +134,25 @@
     </div>
 </div>
 <style>
-    .upload-area { border: 3px dashed #dee2e6; border-radius: 1rem; padding: 3rem 2rem; text-align: center; transition: all 0.3s ease; cursor: pointer; background: #f8f9fa; }
-    .upload-area:hover, .upload-area.drag-over { border-color: #667eea; background: #f0f0ff; transform: translateY(-2px); }
-    .upload-area.has-file { border-color: #28a745; background: #d4edda; }
-    .upload-icon { font-size: 4rem; color: #667eea; margin-bottom: 1rem; }
-    .upload-area.has-file .upload-icon { color: #28a745; }
-    .upload-text { font-size: 1.2rem; font-weight: 600; color: #495057; margin-bottom: 0.5rem; }
-    .upload-subtext { color: #495057; font-size: 0.9rem; }
-    .file-preview { display: none; margin-top: 1.5rem; padding: 1.5rem; background: #f8f9fa; border-radius: 0.5rem; border: 1px solid #dee2e6; }
+    .upload-area { border: 3px dashed #dee2e6; border-radius: 1rem; padding: 3rem 2rem; text-align: center; transition: all 0.3s ease; cursor: pointer; background: var(--surface-3); }
+    .upload-area:hover, .upload-area.drag-over { border-color: #475569; background: #f0f0ff; transform: translateY(-2px); }
+    .upload-area.has-file { border-color: var(--ink-2); background: #d4edda; }
+    .upload-icon { font-size: 4rem; color: #475569; margin-bottom: 1rem; }
+    .upload-area.has-file .upload-icon { color: var(--ink-2); }
+    .upload-text { font-size: 1.2rem; font-weight: 600; color: var(--ink-3); margin-bottom: 0.5rem; }
+    .upload-subtext { color: var(--ink-3); font-size: 0.9rem; }
+    .file-preview { display: none; margin-top: 1.5rem; padding: 1.5rem; background: var(--surface-3); border-radius: 0.5rem; border: 1px solid #dee2e6; }
     .file-preview.show { display: block; animation: slideDown 0.3s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     .result-section { display: none; margin-top: 2rem; }
     .result-section.show { display: block; animation: fadeIn 0.5s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center; }
+    .stat-card { background: linear-gradient(135deg, #475569 0%, var(--ink-2) 100%); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center; }
     .stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
     .stat-label { font-size: 0.85rem; opacity: 0.9; }
     .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
     .loading-overlay.show { display: flex; }
-    .spinner { width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+    .spinner { width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #475569; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .loading-text { color: white; font-size: 1.2rem; margin-top: 1rem; text-align: center; }
     .loading-subtext { color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-top: 0.5rem; }

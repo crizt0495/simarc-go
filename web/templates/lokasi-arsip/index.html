@@ -2,7 +2,7 @@
 {{define "content"}}
 <style>
     .lokasi-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #065f46 100%);
+        background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
         border-radius: var(--r-xl);
         padding: 1.75rem 2rem;
         color: #fff;
@@ -131,14 +131,14 @@
                                 </span>
                             </td>
                             <td class="text-center" data-label="Arsip">
-                                <span class="badge rounded-pill px-3 py-1.5 fw-700" style="background:{{if ne $v.ArsipCount 0}}rgba(26,86,219,0.08);color:var(--brand){{else}}var(--surface-3);color:var(--ink-4){{end}};">
+                                <span class="badge rounded-pill px-3 py-1.5 fw-700" style="background:{{if ne $v.ArsipCount 0}}rgba(26,86,219,0.08);color:var(--ink-2){{else}}var(--surface-3);color:var(--ink-4){{end}};">
                                     <i class="bi bi-archive me-1"></i>{{$v.ArsipCount}}
                                 </span>
                             </td>
                             <td class="text-center" data-label="Aksi">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="/lokasi-arsip/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
-                                    <a href="/arsip/create?lokasi_arsip_id={{$v.ID}}" class="btn-crud" style="background:var(--brand-lt);color:var(--brand);border-radius:var(--r);width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:all 0.15s ease;" title="Tambah Arsip" data-bs-toggle="tooltip"><i class="bi bi-plus-lg" style="font-size:0.75rem;"></i></a>
+                                    <a href="/arsip/create?lokasi_arsip_id={{$v.ID}}" class="btn-crud" style="background:var(--brand-lt);color:var(--ink-2);border-radius:var(--r);width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:all 0.15s ease;" title="Tambah Arsip" data-bs-toggle="tooltip"><i class="bi bi-plus-lg" style="font-size:0.75rem;"></i></a>
                                     <a href="/lokasi-arsip/{{$v.ID}}/edit" class="btn-crud btn-crud-edit" title="Edit" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>
                                     <form action="/lokasi-arsip/{{$v.ID}}/delete" method="POST" class="d-inline">
                                         <button type="button" class="btn-crud btn-crud-del" onclick="if(confirm('Hapus lokasi {{$v.NamaLokasi}}?')){this.closest('form').submit()}" title="Hapus" data-bs-toggle="tooltip"><i class="bi bi-trash3"></i></button>

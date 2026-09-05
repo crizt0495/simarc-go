@@ -2,28 +2,21 @@
 {{define "content"}}
 <style>
 .pemusnahan-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #dc2626 100%);
+    background: var(--neu-bg, #e0e5ec);
+    color: var(--ink);
+    box-shadow: var(--neu-raised);
     border-radius: var(--r-xl);
     padding: 1.75rem 2rem;
-    color: #fff;
     position: relative;
     overflow: hidden;
     margin-bottom: 1.5rem;
 }
-.pemusnahan-hero::after {
-    content: '';
-    position: absolute;
-    top: -40%; right: -5%;
-    width: 280px; height: 280px;
-    background: radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
-}
+.pemusnahan-hero::after { display: none; }
 .pemusnahan-hero .hero-title {
     font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
 }
 .pemusnahan-hero .hero-sub {
-    font-size: 0.8rem; opacity: 0.7; font-weight: 500;
+    font-size: 0.8rem; opacity: 0.7; font-weight: 500; color: var(--ink-4);
 }
 
 .fade-up { animation: fadeUp 0.35s ease both; }
@@ -56,7 +49,7 @@
 .view-toggle-btn:hover { color: var(--ink-2); }
 .view-toggle-btn.active {
     background: var(--surface);
-    color: var(--danger);
+    color: var(--ink-2);
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 .view-toggle-btn i { font-size: 0.85rem; }
@@ -74,12 +67,12 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
 }
-.status-diajukan { background: #fef3c7; color: #b45309; }
-.status-disetujui { background: #dcfce7; color: #15803d; }
-.status-ditolak { background: #fee2e2; color: #b91c1c; }
-.status-selesai { background: #e0f2fe; color: #0369a1; }
-.status-aktif { background: #dcfce7; color: #15803d; }
-.status-inaktif { background: #f1f5f9; color: #475569; }
+.status-diajukan { background: var(--neu-bg); color: var(--ink-2); }
+.status-disetujui { background: var(--neu-bg); color: var(--ink-2); }
+.status-ditolak { background: var(--neu-bg); color: var(--ink-2); }
+.status-selesai { background: var(--neu-bg); color: var(--ink-3); }
+.status-aktif { background: var(--neu-bg); color: var(--ink-2); }
+.status-inaktif { background: var(--surface-3); color: var(--ink-4); }
 
 /* ── Card View ── */
 .pemusnahan-card-grid {
@@ -105,20 +98,20 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 4px;
-    background: var(--danger);
+    background: var(--ink-2);
     transform: scaleY(0);
     transform-origin: top;
     transition: transform 0.25s ease;
 }
 .pemusnahan-card:hover {
-    border-color: #fecaca;
-    box-shadow: 0 8px 24px rgba(220,38,38,0.06);
+    border-color: transparent;
+    box-shadow: var(--neu-hover);
     transform: translateY(-3px);
 }
 .pemusnahan-card:hover::before { transform: scaleY(1); }
-.pemusnahan-card.is-pending { border-left: 4px solid var(--warning); }
-.pemusnahan-card.is-approved { border-left: 4px solid var(--success); }
-.pemusnahan-card.is-rejected { border-left: 4px solid var(--danger); }
+.pemusnahan-card.is-pending { border-left: 4px solid var(--ink-2); }
+.pemusnahan-card.is-approved { border-left: 4px solid var(--ink-2); }
+.pemusnahan-card.is-rejected { border-left: 4px solid var(--ink-2); }
 
 .pemusnahan-card-header {
     display: flex;
@@ -129,14 +122,15 @@
 }
 .pemusnahan-card-icon {
     width: 38px; height: 38px;
-    border-radius: 8px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.05rem;
     flex-shrink: 0;
-    background: rgba(220,38,38,0.08);
-    color: var(--danger);
+    background: var(--neu-bg, #e0e5ec);
+    color: var(--ink-2);
+    box-shadow: var(--neu-inset);
 }
 .pemusnahan-card-title {
     flex: 1;
@@ -154,7 +148,7 @@
     overflow: hidden;
     word-break: break-word;
 }
-.pemusnahan-card-name:hover { color: var(--danger); }
+.pemusnahan-card-name:hover { color: var(--ink-2); }
 .pemusnahan-card-badges {
     display: flex;
     gap: 0.35rem;
@@ -236,11 +230,11 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 3px;
-    background: var(--danger);
+    background: var(--ink-2);
 }
 .expired-card:hover {
-    box-shadow: 0 4px 12px rgba(220,38,38,0.06);
-    transform: translateY(-1px);
+    box-shadow: var(--neu-hover);
+    transform: translateY(-2px);
 }
 .expired-card-title {
     font-size: 0.88rem;
@@ -313,8 +307,8 @@
                         <i class="bi bi-download me-1"></i>Download
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width:140px;">
-                        <li><a class="dropdown-item py-2" href="/pemusnahan/export-excel" target="_blank"><i class="bi bi-file-earmark-excel text-success me-2"></i>Excel (.xlsx)</a></li>
-                        <li><a class="dropdown-item py-2" href="/pemusnahan/export-pdf" target="_blank"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>PDF (.pdf)</a></li>
+                        <li><a class="dropdown-item py-2" href="/pemusnahan/export-excel" target="_blank"><i class="bi bi-file-earmark-excel  me-2"></i>Excel (.xlsx)</a></li>
+                        <li><a class="dropdown-item py-2" href="/pemusnahan/export-pdf" target="_blank"><i class="bi bi-file-earmark-pdf  me-2"></i>PDF (.pdf)</a></li>
                     </ul>
                 </div>
             </div>
@@ -327,7 +321,7 @@
             <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#b45309;font-size:1.2rem;"><i class="bi bi-clock"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:var(--neu-bg);display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:1.2rem;"><i class="bi bi-clock"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Diajukan}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Diajukan</div></div>
                     </div>
                 </div>
@@ -337,7 +331,7 @@
             <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#15803d;font-size:1.2rem;"><i class="bi bi-check-circle"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:var(--neu-bg);display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:1.2rem;"><i class="bi bi-check-circle"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Disetujui}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Disetujui</div></div>
                     </div>
                 </div>
@@ -347,7 +341,7 @@
             <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#b91c1c;font-size:1.2rem;"><i class="bi bi-x-circle"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:var(--neu-bg);display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:1.2rem;"><i class="bi bi-x-circle"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Ditolak}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Ditolak</div></div>
                     </div>
                 </div>
@@ -357,7 +351,7 @@
             <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0369a1;font-size:1.2rem;"><i class="bi bi-archive"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:var(--neu-bg);display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:1.2rem;"><i class="bi bi-archive"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.Stats.Total}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Total Pengajuan</div></div>
                     </div>
                 </div>
@@ -367,7 +361,7 @@
             <div class="card border-0 shadow-sm h-100" style="border-radius:var(--r-lg);">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:40px;height:40px;border-radius:var(--r);background:#f3e8ff;display:flex;align-items:center;justify-content:center;color:#7c3aed;font-size:1.2rem;"><i class="bi bi-file-earmark-x"></i></div>
+                        <div style="width:40px;height:40px;border-radius:var(--r);background:var(--neu-bg);display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:1.2rem;"><i class="bi bi-file-earmark-x"></i></div>
                         <div><div class="fw-800" style="font-size:1.3rem;color:var(--ink-2);">{{.TotalArsipMusnah}}</div><div class="text-muted small fw-600 text-uppercase" style="font-size:0.6rem;letter-spacing:0.04em;">Arsip Dimusnahkan</div></div>
                     </div>
                 </div>
@@ -376,9 +370,9 @@
     </div>
 
     {{if .HasExpired}}
-    <div class="card border-0 shadow-sm mb-3 fade-up-d1" style="border:1px solid #fecaca !important;border-radius:var(--r-lg);overflow:hidden;">
-        <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border-bottom:1px solid #fecdd3;padding:0.85rem 1.25rem;">
-            <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:#b91c1c;"><i class="bi bi-exclamation-triangle-fill me-2"></i>Arsip Siap Dimusnahkan ({{.TotalExpired}})</h5>
+    <div class="card border-0 shadow-sm mb-3 fade-up-d1" style="border:1px solid var(--neu-bg) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg));border-bottom:1px solid var(--neu-bg);padding:0.85rem 1.25rem;">
+            <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:var(--ink-2);"><i class="bi bi-exclamation-triangle-fill me-2"></i>Arsip Siap Dimusnahkan ({{.TotalExpired}})</h5>
             <form action="/pemusnahan/auto-create" method="POST" class="d-inline">
                 <input type="hidden" name="_token" value="{{.CSRFToken}}">
                 <button type="submit" class="btn btn-sm btn-danger rounded-pill fw-700 px-3" style="font-size:0.7rem;" onclick="return confirm('Buat pemusnahan otomatis?')">
@@ -397,12 +391,12 @@
                     <a href="/arsip/{{.ID}}" class="expired-card-title">{{.NamaArsip}}</a>
                     <div class="expired-card-meta">
                         {{if .KodeKlasifikasi}}
-                        <span><i class="bi bi-tag-fill text-danger"></i> <strong style="color:#b91c1c;">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
+                        <span><i class="bi bi-tag-fill "></i> <strong style="color:var(--ink-2);">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
                         <span><i class="bi bi-info-circle"></i> {{.KodeKlasifikasi.NamaKlasifikasi}}</span>
                         {{end}}
                     </div>
                     <div class="expired-card-meta">
-                        <span><i class="bi bi-calendar-x text-danger"></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
+                        <span><i class="bi bi-calendar-x "></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
                         <span><span class="status-badge status-{{.StatusArsip}}">{{.StatusArsip}}</span></span>
                     </div>
                 </div>
@@ -425,9 +419,9 @@
             </div>
         </div>
         <div class="d-flex gap-1 flex-wrap">
-            <a href="/pemusnahan?status=diajukan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#fef3c7;color:#b45309;border:none;">Diajukan</a>
-            <a href="/pemusnahan?status=disetujui" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#dcfce7;color:#15803d;border:none;">Disetujui</a>
-            <a href="/pemusnahan?status=ditolak" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:#fee2e2;color:#b91c1c;border:none;">Ditolak</a>
+            <a href="/pemusnahan?status=diajukan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Diajukan</a>
+            <a href="/pemusnahan?status=disetujui" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Disetujui</a>
+            <a href="/pemusnahan?status=ditolak" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Ditolak</a>
             <a href="/pemusnahan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--surface-3);color:var(--ink-3);border:none;">Semua</a>
         </div>
     </div>
@@ -454,7 +448,7 @@
                                     {{if eq $v.Status "diajukan"}}<span class="status-badge status-diajukan"><i class="bi bi-clock me-1"></i>Diajukan</span>
                                     {{else if eq $v.Status "disetujui"}}<span class="status-badge status-disetujui"><i class="bi bi-check-lg me-1"></i>Disetujui</span>
                                     {{else}}<span class="status-badge status-ditolak"><i class="bi bi-x-lg me-1"></i>Ditolak</span>{{end}}
-                                    {{if $v.IsAuto}}<span class="status-badge" style="background:#dbeafe;color:#1e40af;"><i class="bi bi-robot me-1"></i>Auto</span>
+                                    {{if $v.IsAuto}}<span class="status-badge" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-robot me-1"></i>Auto</span>
                                     {{else}}<span class="status-badge" style="background:var(--surface-3);color:var(--ink-3);"><i class="bi bi-person me-1"></i>Manual</span>{{end}}
                                 </div>
                             </div>
@@ -517,7 +511,7 @@
                             </td>
                             <td data-label="Tanggal"><span class="small"><i class="bi bi-calendar3 me-1"></i>{{formatDate $v.TanggalPengajuan}}</span></td>
                             <td data-label="Pengaju"><span class="small"><i class="bi bi-person me-1"></i>{{if $v.Creator}}{{$v.Creator.Name}}{{else}}-{{end}}</span></td>
-                            <td data-label="Tipe">{{if $v.IsAuto}}<span class="status-badge" style="background:#dbeafe;color:#1e40af;"><i class="bi bi-robot me-1"></i>Auto</span>{{else}}<span class="status-badge" style="background:var(--surface-3);color:var(--ink-3);"><i class="bi bi-person me-1"></i>Manual</span>{{end}}</td>
+                            <td data-label="Tipe">{{if $v.IsAuto}}<span class="status-badge" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-robot me-1"></i>Auto</span>{{else}}<span class="status-badge" style="background:var(--surface-3);color:var(--ink-3);"><i class="bi bi-person me-1"></i>Manual</span>{{end}}</td>
                             <td class="text-center" data-label="Aksi">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="/pemusnahan/{{$v.ID}}" class="btn-crud btn-crud-view" title="Detail" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>

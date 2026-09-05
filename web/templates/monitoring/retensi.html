@@ -2,7 +2,7 @@
 {{define "content"}}
 <style>
     .mon-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #dc2626 100%);
+        background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
         border-radius: var(--r-xl);
         padding: 1.75rem 2rem;
         color: #fff;
@@ -38,7 +38,7 @@
         overflow: hidden;
         transition: all 0.2s ease;
     }
-    .ms-card:hover { border-color: var(--brand); box-shadow: var(--sh-sm); }
+    .ms-card:hover { border-color: var(--ink-2); box-shadow: var(--sh-sm); }
     .ms-card .ms-accent {
         position: absolute; top: 0; left: 0; right: 0; height: 3px;
     }
@@ -124,10 +124,10 @@
     </div>
 
     <div class="mon-stat fade-up-d1">
-        <div class="ms-card"><div class="ms-accent" style="background:var(--danger);"></div><div class="ms-icon" style="background:#fee2e2;color:var(--danger);"><i class="bi bi-exclamation-triangle"></i></div><div class="ms-value">{{.Stats.SudahBerakhir}}</div><div class="ms-label">Sudah Berakhir</div></div>
-        <div class="ms-card"><div class="ms-accent" style="background:var(--warning);"></div><div class="ms-icon" style="background:#fef3c7;color:var(--warning);"><i class="bi bi-clock"></i></div><div class="ms-value">{{.Stats.AkanBerakhir}}</div><div class="ms-label">Akan Berakhir (1 Thn)</div></div>
-        <div class="ms-card"><div class="ms-accent" style="background:var(--info);"></div><div class="ms-icon" style="background:#e0f2fe;color:var(--info);"><i class="bi bi-trash3"></i></div><div class="ms-value">0</div><div class="ms-label">Siap Dimusnahkan</div></div>
-        <div class="ms-card"><div class="ms-accent" style="background:var(--success);"></div><div class="ms-icon" style="background:#dcfce7;color:var(--success);"><i class="bi bi-check-circle"></i></div><div class="ms-value">{{.Stats.MasihAktif}}</div><div class="ms-label">Masih Aktif</div></div>
+        <div class="ms-card"><div class="ms-accent" style="background:var(--ink-2);"></div><div class="ms-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-exclamation-triangle"></i></div><div class="ms-value">{{.Stats.SudahBerakhir}}</div><div class="ms-label">Sudah Berakhir</div></div>
+        <div class="ms-card"><div class="ms-accent" style="background:var(--ink-2);"></div><div class="ms-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-clock"></i></div><div class="ms-value">{{.Stats.AkanBerakhir}}</div><div class="ms-label">Akan Berakhir (1 Thn)</div></div>
+        <div class="ms-card"><div class="ms-accent" style="background:var(--ink-2);"></div><div class="ms-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-trash3"></i></div><div class="ms-value">0</div><div class="ms-label">Siap Dimusnahkan</div></div>
+        <div class="ms-card"><div class="ms-accent" style="background:var(--ink-2);"></div><div class="ms-icon" style="background:var(--neu-bg);color:var(--ink-2);"><i class="bi bi-check-circle"></i></div><div class="ms-value">{{.Stats.MasihAktif}}</div><div class="ms-label">Masih Aktif</div></div>
     </div>
 
     <div class="card mb-3 fade-up-d1">
