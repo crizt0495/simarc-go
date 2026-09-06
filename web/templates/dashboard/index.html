@@ -339,10 +339,10 @@ setTimeout(pollDashboardStats, 2000);
       datasets: [{
         label: 'Prediksi',
         data: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}{{$m.PredictedCount}}{{end}}],
-        borderColor: '#1a56db',
-        backgroundColor: 'rgba(26,86,219,0.08)',
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79,70,229,0.1)',
         borderWidth: 2, fill: true, tension: 0.4,
-        pointBackgroundColor: '#fff', pointBorderColor: '#1a56db',
+        pointBackgroundColor: '#fff', pointBorderColor: '#4f46e5',
         pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
       }]
     },

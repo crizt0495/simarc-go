@@ -53,12 +53,7 @@
             <div class="label">Dokumen Inaktif</div>
             <div class="value">{{.Stats.DokumenInaktif}}</div>
         </div>
-        <div class="stat-card-modern">
-            <div class="icon-box icon-blue"><i class="bi bi-shield-check"></i></div>
-            <div class="label">Akurasi Sistem</div>
-            <div class="value">{{.Stats.AkurasiSistem}}%</div>
         </div>
-    </div>
 
     <div class="charts-grid">
         <div class="chart-card-modern">
@@ -137,8 +132,8 @@ const chartColors={text:isDark?'#94a3b8':'#64748b',grid:isDark?'rgba(255,255,255
 new ApexCharts(document.querySelector("#growthChart"),{
     series:[{name:'Dokumen Baru',data:[{{range $i,$v:=.ChartsData.Growth.Data}}{{if $i}},{{end}}{{$v}}{{end}}]}],
     chart:{type:'area',height:300,toolbar:{show:false},zoom:{enabled:false},foreColor:chartColors.text},
-    colors:['var(--ink-2)'],dataLabels:{enabled:false},stroke:{curve:'smooth',width:3},
-    fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:0.3,opacityTo:0}},
+    colors:['#4f46e5'],dataLabels:{enabled:false},stroke:{curve:'smooth',width:3},
+    fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:0.35,opacityTo:0}},
     xaxis:{categories:[{{range $i,$v:=.ChartsData.Growth.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}]},
     grid:{borderColor:chartColors.grid},
     tooltip:{y:{formatter:(val)=>formatNumber(val)+' Dokumen'}}
@@ -148,14 +143,14 @@ new ApexCharts(document.querySelector("#distributionChart"),{
     series:[{{range $i,$v:=.ChartsData.Distribution.Data}}{{if $i}},{{end}}{{$v}}{{end}}],
     labels:[{{range $i,$v:=.ChartsData.Distribution.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}],
     chart:{type:'donut',height:350,foreColor:chartColors.text},
-    colors:['var(--ink-2)','var(--ink-2)','var(--ink-2)','var(--ink-2)','#5a6a7c'],
+    colors:['#4f46e5','#10b981','#f59e0b','#f43f5e','#0ea5e9','#8b5cf6','#14b8a6','#64748b'],
     legend:{position:'bottom'},plotOptions:{pie:{donut:{size:'70%'}}}
 }).render();
 
 new ApexCharts(document.querySelector("#docTypeChart"),{
     series:[{name:'Jumlah',data:[{{range $i,$v:=.ChartsData.DocTypes.Data}}{{if $i}},{{end}}{{$v}}{{end}}]}],
     chart:{type:'bar',height:300,toolbar:{show:false},foreColor:chartColors.text},
-    colors:['#5a6a7c'],
+    colors:['#4f46e5'],
     plotOptions:{bar:{borderRadius:8,horizontal:true}},
     xaxis:{categories:[{{range $i,$v:=.ChartsData.DocTypes.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}]}
 }).render();
@@ -164,7 +159,7 @@ new ApexCharts(document.querySelector("#retentionChart"),{
     series:[{{range $i,$v:=.ChartsData.Retention.Data}}{{if $i}},{{end}}{{$v}}{{end}}],
     labels:[{{range $i,$v:=.ChartsData.Retention.Labels}}{{if $i}},{{end}}"{{$v}}"{{end}}],
     chart:{type:'pie',height:350,foreColor:chartColors.text},
-    colors:['var(--ink-2)','var(--ink-2)','var(--ink-2)'],
+    colors:['#10b981','#8b5cf6','#ef4444'],
     legend:{position:'bottom'}
 }).render();
 </script>
