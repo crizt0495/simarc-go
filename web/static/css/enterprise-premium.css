@@ -126,7 +126,7 @@ a:focus-visible, .nav-user:focus-visible {
     /* 🎨 Layout */
     --sidebar-width: 300px;
     --sidebar-compact-width: 80px;
-    --sidebar-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --sidebar-transition: transform .25s cubic-bezier(.4, 0, .2, 1);
     --navbar-height: 70px;
 
     /* 🎨 Sidebar */
@@ -163,15 +163,15 @@ a:focus-visible, .nav-user:focus-visible {
     --brand: #5a7fa8;
     --brand-dk: #3d5a7a;
     --brand-lt: rgba(90,127,168,.12);
-    --ink: #2d3748;
-    --ink-2: #3d4a5c;
-    --ink-3: #5a6a7c;
-    --ink-4: #8896a8;
-    --surface: #e0e5ec;
-    --surface-2: #d6dbe5;
-    --surface-3: #ccd2de;
-    --border: rgba(163,177,198,.35);
-    --border-2: rgba(163,177,198,.5);
+    --ink: #0f172a;
+    --ink-2: #1e293b;
+    --ink-3: #475569;
+    --ink-4: #64748b;
+    --surface: #f1f5f9;
+    --surface-2: #e2e8f0;
+    --surface-3: #cbd5e1;
+    --border: rgba(15, 23, 42, 0.08);
+    --border-2: rgba(15, 23, 42, 0.14);
     --success: #4a6a5a;
     --danger: #7a4a4a;
     --warning: #7a6a4a;
@@ -187,18 +187,18 @@ a:focus-visible, .nav-user:focus-visible {
     --navbar-h: 64px;
     --t: .2s ease;
 
-    /* 🎨 Neumorphism Shadows (Light Mode) */
-    --neu-bg: #e0e5ec;
-    --neu-raised: 8px 8px 18px rgba(163,177,198,.45), -8px -8px 18px rgba(255,255,255,.85);
-    --neu-raised-sm: 4px 4px 10px rgba(163,177,198,.35), -4px -4px 10px rgba(255,255,255,.75);
-    --neu-raised-lg: 14px 14px 28px rgba(163,177,198,.5), -14px -14px 28px rgba(255,255,255,.95);
-    --neu-inset: inset 4px 4px 10px rgba(163,177,198,.35), inset -4px -4px 10px rgba(255,255,255,.75);
-    --neu-inset-deep: inset 6px 6px 14px rgba(163,177,198,.4), inset -6px -6px 14px rgba(255,255,255,.8);
+    /* 🎨 Neumorphism Shadows (Light Mode) — refined for performance */
+    --neu-bg: #f1f5f9;
+    --neu-raised: 4px 4px 10px rgba(15, 23, 42, .08), -2px -2px 6px rgba(255, 255, 255, .9);
+    --neu-raised-sm: 2px 2px 6px rgba(15, 23, 42, .06), -1px -1px 3px rgba(255, 255, 255, .85);
+    --neu-raised-lg: 6px 6px 16px rgba(15, 23, 42, .1), -3px -3px 8px rgba(255, 255, 255, .95);
+    --neu-inset: inset 2px 2px 6px rgba(15, 23, 42, .08), inset -1px -1px 3px rgba(255, 255, 255, .85);
+    --neu-inset-deep: inset 3px 3px 8px rgba(15, 23, 42, .1), inset -2px -2px 5px rgba(255, 255, 255, .9);
     --neu-flat: none;
-    --neu-hover: 10px 10px 22px rgba(163,177,198,.5), -10px -10px 22px rgba(255,255,255,.9);
-    --neu-pressed: inset 4px 4px 10px rgba(163,177,198,.4), inset -4px -4px 10px rgba(255,255,255,.8);
-    --neu-shadow-dark: rgba(163,177,198,.5);
-    --neu-shadow-light: rgba(255,255,255,.9);
+    --neu-hover: 5px 5px 12px rgba(15, 23, 42, .1), -2px -2px 6px rgba(255, 255, 255, .95);
+    --neu-pressed: inset 2px 2px 6px rgba(15, 23, 42, .1), inset -1px -1px 3px rgba(255, 255, 255, .9);
+    --neu-shadow-dark: rgba(15, 23, 42, .12);
+    --neu-shadow-light: rgba(255, 255, 255, .95);
 
     /* 🌗 Modal scrim (dimming) — theme-aware */
     --modal-overlay: transparent;
@@ -246,15 +246,26 @@ a:focus-visible, .nav-user:focus-visible {
     --brand: #3b82f6;
     --brand-dk: #60a5fa;
     --brand-lt: rgba(59,130,246,.08);
-    --ink: #ffffff;
-    --ink-2: #f8fafc;
-    --ink-3: #cbd5e1;
-    --ink-4: #94a3b8;
+    --ink: #f8fafc;
+    --ink-2: #e2e8f0;
+    --ink-3: #94a3b8;
+    --ink-4: #64748b;
     --surface: #0f172a;
     --surface-2: #1e293b;
     --surface-3: #334155;
-    --border: rgba(255,255,255,.07);
-    --border-2: rgba(255,255,255,.12);
+    --border: rgba(255,255,255,.08);
+    --border-2: rgba(255,255,255,.15);
+    --neu-bg: #0f172a;
+    --neu-raised: 4px 4px 10px rgba(0, 0, 0, .35), -1px -1px 3px rgba(255, 255, 255, .04);
+    --neu-raised-sm: 2px 2px 6px rgba(0, 0, 0, .25), -1px -1px 2px rgba(255, 255, 255, .03);
+    --neu-raised-lg: 6px 6px 16px rgba(0, 0, 0, .45), -2px -2px 6px rgba(255, 255, 255, .05);
+    --neu-inset: inset 2px 2px 6px rgba(0, 0, 0, .35), inset -1px -1px 3px rgba(255, 255, 255, .04);
+    --neu-inset-deep: inset 3px 3px 8px rgba(0, 0, 0, .4), inset -1px -1px 3px rgba(255, 255, 255, .05);
+    --neu-flat: none;
+    --neu-hover: 5px 5px 12px rgba(0, 0, 0, .4), -1px -1px 3px rgba(255, 255, 255, .05);
+    --neu-pressed: inset 2px 2px 6px rgba(0, 0, 0, .4), inset -1px -1px 3px rgba(255, 255, 255, .04);
+    --neu-shadow-dark: rgba(0, 0, 0, .4);
+    --neu-shadow-light: rgba(255, 255, 255, .04);
     --success: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
@@ -263,6 +274,30 @@ a:focus-visible, .nav-user:focus-visible {
     --sh: 0 4px 16px rgba(0,0,0,.35);
     --sh-lg: 0 12px 40px rgba(0,0,0,.45);
 }
+
+/* Dark-mode hero overrides: hero backgrounds are gradients of --ink (white in dark),
+   so flip text to dark for readability. */
+[data-theme="dark"] .pinjam-hero,
+[data-theme="dark"] .mon-hero,
+[data-theme="dark"] .berkas-hero,
+[data-theme="dark"] .users-hero,
+[data-theme="dark"] .create-header,
+[data-theme="dark"] .edit-header,
+[data-theme="dark"] .pemusnahan-hero { color: #1e293b !important; }
+
+[data-theme="dark"] .pinjam-hero .hero-sub,
+[data-theme="dark"] .mon-hero .hero-sub,
+[data-theme="dark"] .berkas-hero .hero-sub,
+[data-theme="dark"] .users-hero .hero-sub,
+[data-theme="dark"] .create-header p,
+[data-theme="dark"] .edit-header p { opacity: 1; color: #334155; }
+
+[data-theme="light"] .pinjam-hero .hero-sub,
+[data-theme="light"] .mon-hero .hero-sub,
+[data-theme="light"] .berkas-hero .hero-sub,
+[data-theme="light"] .users-hero .hero-sub,
+[data-theme="light"] .create-header p,
+[data-theme="light"] .edit-header p { opacity: 1; color: rgba(255, 255, 255, 0.85); }
 
 /* ═══════════════════════════════════════════════════════════════
    BASE & RESET
@@ -342,31 +377,18 @@ a:hover {
 @keyframes toastSlideIn { from { opacity: 0; transform: translateX(24px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
 @keyframes toastIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
 
-/* Entrance Animations */
-.main-content { animation: pageIn 0.35s cubic-bezier(.4,0,.2,1) both; }
+/* Entrance Animations — kept minimal for fast perceived load */
+.main-content { animation: pageIn 0.2s ease both; }
 
-.table tbody tr { animation: rowFadeIn 0.3s ease both; }
-.table tbody tr:nth-child(1)  { animation-delay: 0.02s; }
-.table tbody tr:nth-child(2)  { animation-delay: 0.04s; }
-.table tbody tr:nth-child(3)  { animation-delay: 0.06s; }
-.table tbody tr:nth-child(4)  { animation-delay: 0.08s; }
-.table tbody tr:nth-child(5)  { animation-delay: 0.10s; }
-.table tbody tr:nth-child(6)  { animation-delay: 0.12s; }
-.table tbody tr:nth-child(7)  { animation-delay: 0.14s; }
-.table tbody tr:nth-child(8)  { animation-delay: 0.16s; }
-.table tbody tr:nth-child(9)  { animation-delay: 0.18s; }
-.table tbody tr:nth-child(10) { animation-delay: 0.20s; }
-.table tbody tr:nth-child(11) { animation-delay: 0.22s; }
-.table tbody tr:nth-child(12) { animation-delay: 0.24s; }
-.table tbody tr:nth-child(13) { animation-delay: 0.26s; }
-.table tbody tr:nth-child(14) { animation-delay: 0.28s; }
-.table tbody tr:nth-child(15) { animation-delay: 0.30s; }
+/* Table rows: no per-row stagger (was heavy on long tables).
+   Just a single quick fade via the parent .table-wrap. */
+.table-wrap, .premium-table-wrap { animation: fadeIn 0.18s ease both; }
 
-.stat-card { animation: statPop 0.4s cubic-bezier(.4,0,.2,1) both; }
-.stat-card:nth-child(1) { animation-delay: 0.05s; }
-.stat-card:nth-child(2) { animation-delay: 0.10s; }
-.stat-card:nth-child(3) { animation-delay: 0.15s; }
-.stat-card:nth-child(4) { animation-delay: 0.20s; }
+.stat-card { animation: statPop 0.25s cubic-bezier(.4,0,.2,1) both; }
+.stat-card:nth-child(1) { animation-delay: 0.02s; }
+.stat-card:nth-child(2) { animation-delay: 0.04s; }
+.stat-card:nth-child(3) { animation-delay: 0.06s; }
+.stat-card:nth-child(4) { animation-delay: 0.08s; }
 
 .animate-fade-in { animation: fadeIn 0.3s ease both; }
 .animate-slide-up { animation: slideUp 0.3s cubic-bezier(.4,0,.2,1) both; }
@@ -417,9 +439,9 @@ a:hover {
     flex-direction: column;
     z-index: var(--z-sidebar, 1020);
     overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 9px 0 30px var(--neu-shadow-dark, rgba(163,177,198,.4));
-    border-right: 1px solid rgba(255,255,255,.6);
+    border-right: 1px solid var(--border-2);
 }
 
 [data-theme="dark"] .sidebar { background: var(--neu-bg); box-shadow: 9px 0 30px rgba(0,0,0,.4); border-right: 1px solid rgba(255,255,255,.05); }
@@ -1053,15 +1075,15 @@ code { color: var(--ink-2); }
 .progress-bar.bg-info { background: #0e7490 !important; color: #fff; }
 .progress-bar.bg-warning { background: #ffc107 !important; color: #161a1d; }
 
-.text-white-50 { color: var(--ink-3) !important; }
+.text-white-50 { color: rgba(255,255,255,.72) !important; }
 
 /* Neumorphism: teks putih pada header/hero yang dulunya gelap kini terang.
    Teks putih yang ADA DI ATAS background GELAP (avatar bg-primary/danger dst)
    harus tetap putih. */
 [data-theme="light"] .gradient-header .title { color: var(--ink) !important; }
 [data-theme="light"] .gradient-header .subtitle, .gradient-header .subtitle { color: var(--ink-4) !important; }
-[data-theme="light"] .text-white-50 { color: var(--ink-3) !important; }
-[data-theme="light"] .text-light { color: var(--ink-2) !important; }
+[data-theme="light"] .text-white-50 { color: rgba(255,255,255,.72) !important; }
+[data-theme="light"] .text-light { color: var(--ink-4) !important; }
 
 .select2-container--default .select2-selection--single .select2-selection__placeholder,
 .select2-container--default .select2-selection--multiple .select2-selection__placeholder {
@@ -1533,8 +1555,8 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 
 .toast {
-    background: var(--ink);
-    color: #fff;
+    background: var(--surface-2);
+    color: var(--ink);
     padding: 12px 18px;
     border-radius: var(--r);
     font-size: 13px;
@@ -1546,9 +1568,9 @@ textarea.form-control { resize: vertical; min-height: 100px; }
     animation: toastSlideIn .25s ease;
 }
 
-.toast-success { background: var(--ink-2); }
-.toast-danger  { background: var(--ink); }
-.toast-warning { background: var(--ink-3); }
+.toast-success { background: var(--surface-2); }
+.toast-danger  { background: var(--surface-3); }
+.toast-warning { background: var(--surface-3); }
 
 /* ═══════════════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════════════
@@ -2220,10 +2242,15 @@ textarea.form-control { resize: vertical; min-height: 100px; }
     background: var(--neu-bg, #e0e5ec);
     border-radius: var(--r-xl);
     padding: 2.5rem 3rem;
-    color: var(--ink);
+    color: var(--ink-2);
     position: relative;
     overflow: hidden;
     box-shadow: var(--neu-raised-lg);
+}
+[data-theme="dark"] .gradient-header {
+    background: var(--surface-2, #1e293b);
+    color: var(--ink);
+    box-shadow: var(--sh-lg);
 }
 
 .gradient-header::after {
