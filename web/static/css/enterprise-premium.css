@@ -99,8 +99,8 @@ a:focus-visible, .nav-user:focus-visible {
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
     --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
     --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
-    --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.15);
-    --shadow-glow-primary: 0 0 20px rgba(59, 130, 246, 0.25);
+    --shadow-glow: 0 0 40px rgba(79, 70, 229, 0.15);
+    --shadow-glow-primary: 0 0 20px rgba(79, 70, 229, 0.25);
     --shadow-glow-success: 0 0 20px rgba(16, 185, 129, 0.25);
 
     /* 🎨 Glass */
@@ -301,29 +301,52 @@ a:focus-visible, .nav-user:focus-visible {
     --c-info-soft: rgba(56, 189, 248, .15);
 }
 
-/* Dark-mode hero overrides: hero backgrounds are gradients of --ink (white in dark),
-   so flip text to dark for readability. */
-[data-theme="dark"] .pinjam-hero,
-[data-theme="dark"] .mon-hero,
-[data-theme="dark"] .berkas-hero,
-[data-theme="dark"] .users-hero,
-[data-theme="dark"] .create-header,
-[data-theme="dark"] .edit-header,
-[data-theme="dark"] .pemusnahan-hero { color: #1e293b !important; }
+/* Hero headers now use fixed colorful gradients (dark in both themes),
+   so text stays white in every mode. */
+[data-theme="dark"] .arsip-hero, [data-theme="light"] .arsip-hero,
+[data-theme="dark"] .ba-hero, [data-theme="light"] .ba-hero,
+[data-theme="dark"] .ba-detail-hero, [data-theme="light"] .ba-detail-hero,
+[data-theme="dark"] .history-hero, [data-theme="light"] .history-hero,
+[data-theme="dark"] .pindah-hero, [data-theme="light"] .pindah-hero,
+[data-theme="dark"] .show-hero, [data-theme="light"] .show-hero,
+[data-theme="dark"] .versions-hero, [data-theme="light"] .versions-hero,
+[data-theme="dark"] .jenis-hero, [data-theme="light"] .jenis-hero,
+[data-theme="dark"] .lokasi-hero, [data-theme="light"] .lokasi-hero,
+[data-theme="dark"] .unit-hero, [data-theme="light"] .unit-hero,
+[data-theme="dark"] .role-hero, [data-theme="light"] .role-hero,
+[data-theme="dark"] .permission-hero, [data-theme="light"] .permission-hero,
+[data-theme="dark"] .retensi-hero, [data-theme="light"] .retensi-hero,
+[data-theme="dark"] .edit-hero, [data-theme="light"] .edit-hero,
+[data-theme="dark"] .explorer-hero, [data-theme="light"] .explorer-hero,
+[data-theme="dark"] .pinjam-hero, [data-theme="light"] .pinjam-hero,
+[data-theme="dark"] .mon-hero, [data-theme="light"] .mon-hero,
+[data-theme="dark"] .berkas-hero, [data-theme="light"] .berkas-hero,
+[data-theme="dark"] .users-hero, [data-theme="light"] .users-hero,
+[data-theme="dark"] .create-header, [data-theme="light"] .create-header,
+[data-theme="dark"] .edit-header, [data-theme="light"] .edit-header,
+[data-theme="dark"] .pemusnahan-hero, [data-theme="light"] .pemusnahan-hero { color: #fff !important; }
 
-[data-theme="dark"] .pinjam-hero .hero-sub,
-[data-theme="dark"] .mon-hero .hero-sub,
-[data-theme="dark"] .berkas-hero .hero-sub,
-[data-theme="dark"] .users-hero .hero-sub,
-[data-theme="dark"] .create-header p,
-[data-theme="dark"] .edit-header p { opacity: 1; color: #334155; }
-
-[data-theme="light"] .pinjam-hero .hero-sub,
-[data-theme="light"] .mon-hero .hero-sub,
-[data-theme="light"] .berkas-hero .hero-sub,
-[data-theme="light"] .users-hero .hero-sub,
-[data-theme="light"] .create-header p,
-[data-theme="light"] .edit-header p { opacity: 1; color: rgba(255, 255, 255, 0.85); }
+[data-theme="dark"] .arsip-hero .hero-sub, [data-theme="light"] .arsip-hero .hero-sub,
+[data-theme="dark"] .ba-hero .hero-sub, [data-theme="light"] .ba-hero .hero-sub,
+[data-theme="dark"] .ba-detail-hero .hero-sub, [data-theme="light"] .ba-detail-hero .hero-sub,
+[data-theme="dark"] .history-hero .hero-sub, [data-theme="light"] .history-hero .hero-sub,
+[data-theme="dark"] .pindah-hero .hero-sub, [data-theme="light"] .pindah-hero .hero-sub,
+[data-theme="dark"] .show-hero .hero-sub, [data-theme="light"] .show-hero .hero-sub,
+[data-theme="dark"] .versions-hero .hero-sub, [data-theme="light"] .versions-hero .hero-sub,
+[data-theme="dark"] .jenis-hero .hero-sub, [data-theme="light"] .jenis-hero .hero-sub,
+[data-theme="dark"] .lokasi-hero .hero-sub, [data-theme="light"] .lokasi-hero .hero-sub,
+[data-theme="dark"] .unit-hero .hero-sub, [data-theme="light"] .unit-hero .hero-sub,
+[data-theme="dark"] .role-hero .hero-sub, [data-theme="light"] .role-hero .hero-sub,
+[data-theme="dark"] .permission-hero .hero-sub, [data-theme="light"] .permission-hero .hero-sub,
+[data-theme="dark"] .retensi-hero .hero-sub, [data-theme="light"] .retensi-hero .hero-sub,
+[data-theme="dark"] .edit-hero .hero-sub, [data-theme="light"] .edit-hero .hero-sub,
+[data-theme="dark"] .explorer-hero .hero-sub, [data-theme="light"] .explorer-hero .hero-sub,
+[data-theme="dark"] .pinjam-hero .hero-sub, [data-theme="light"] .pinjam-hero .hero-sub,
+[data-theme="dark"] .mon-hero .hero-sub, [data-theme="light"] .mon-hero .hero-sub,
+[data-theme="dark"] .berkas-hero .hero-sub, [data-theme="light"] .berkas-hero .hero-sub,
+[data-theme="dark"] .users-hero .hero-sub, [data-theme="light"] .users-hero .hero-sub,
+[data-theme="dark"] .create-header p, [data-theme="light"] .create-header p,
+[data-theme="dark"] .edit-header p, [data-theme="light"] .edit-header p { opacity: 1; color: rgba(255,255,255,.85); }
 
 /* ═══════════════════════════════════════════════════════════════
    BASE & RESET
@@ -488,11 +511,11 @@ a:hover {
 .sidebar-logo-icon {
     width: 40px; height: 40px;
     border-radius: 12px;
-    background: var(--neu-bg, #e0e5ec);
+    background: var(--gradient-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ink-2);
+    color: #fff;
     font-size: 18px;
     flex-shrink: 0;
     box-shadow: var(--neu-raised-sm);
@@ -927,6 +950,14 @@ a:hover {
 .stat-card.stat-card-info::before { background: var(--gradient-info); }
 .stat-card.stat-card-purple::before { background: var(--gradient-purple); }
 .stat-card.stat-card-pink::before { background: var(--gradient-pink); }
+
+/* Colorful stat accents (dashboard) — soft tinted backgrounds */
+.stat-card.stat-accent-blue { box-shadow: var(--neu-raised), inset 4px 0 0 0 var(--c-info); }
+.stat-card.stat-accent-indigo { box-shadow: var(--neu-raised), inset 4px 0 0 0 var(--accent); }
+.stat-card.stat-accent-green { box-shadow: var(--neu-raised), inset 4px 0 0 0 var(--c-success); }
+.stat-card.stat-accent-purple { box-shadow: var(--neu-raised), inset 4px 0 0 0 var(--accent); }
+.stat-card.stat-accent-amber { box-shadow: var(--neu-raised), inset 4px 0 0 0 var(--c-warning); }
+.stat-card.stat-accent-red { box-shadow: var(--neu-raised), inset 4px 0 0 0 var(--c-danger); }
 
 [data-theme="dark"] .stat-card { background: var(--neu-bg); box-shadow: var(--neu-raised); }
 
@@ -1560,7 +1591,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 [data-theme="dark"] .dropdown-menu { background: var(--neutral-100); border-color: var(--neutral-200); }
 [data-theme="dark"] .dropdown-item { color: var(--neutral-900); }
-[data-theme="dark"] .dropdown-item:hover { background: rgba(59, 130, 246, 0.15); }
+[data-theme="dark"] .dropdown-item:hover { background: rgba(79, 70, 229, 0.15); }
 
 /* ═══════════════════════════════════════════════════════════════
    TOASTS
@@ -1850,10 +1881,10 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .sm-btn-primary {
     background: var(--gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%));
     color: #fff;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 0 20px rgba(79, 70, 229, 0.25);
 }
 .sm-btn-primary:hover {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.35);
+    box-shadow: 0 0 30px rgba(79, 70, 229, 0.35);
     transform: translateY(-1px);
 }
 
@@ -2383,7 +2414,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .select2-container--default.select2-container--focus .select2-selection--single,
 .select2-container--default.select2-container--open .select2-selection--single {
     border-color: var(--primary-500);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), var(--shadow-md);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1), var(--shadow-md);
 }
 
 .select2-dropdown {

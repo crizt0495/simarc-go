@@ -30,7 +30,7 @@ meta[name="theme-color"] {
     --mbn-font-size: 12px;
     --mbn-active-color: var(--brand);
     --mbn-inactive-color: #757575;
-    --mbn-active-bg: rgba(var(--primary-rgb, 59,130,246), 0.12);
+    --mbn-active-bg: rgba(79, 70, 229, 0.12);
 
     position: fixed;
     bottom: 0;
@@ -104,7 +104,7 @@ meta[name="theme-color"] {
   }
 
   [data-theme="dark"] .mobile-bottom-nav-item.active {
-    color: #60a5fa;
+    color: #818cf8;
   }
 
   .mobile-bottom-nav-item.active i {
@@ -112,7 +112,7 @@ meta[name="theme-color"] {
   }
 
   [data-theme="dark"] .mobile-bottom-nav-item.active i {
-    color: #60a5fa;
+    color: #818cf8;
   }
 
   /* Active pill background (MD3 style) */
