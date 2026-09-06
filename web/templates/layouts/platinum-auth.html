@@ -59,53 +59,54 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 60% 45% at 10% 20%, rgba(37,99,235,0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(99,102,241,0.06) 0%, transparent 50%),
-        radial-gradient(ellipse 40% 35% at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 40%);
+        radial-gradient(ellipse 60% 45% at 10% 20%, rgba(124,156,217,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(185,163,227,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 35% at 50% 50%, rgba(163,197,133,0.10) 0%, transparent 40%);
     }
     [data-theme="dark"] .auth-bg-gradient {
       background:
-        radial-gradient(ellipse 60% 45% at 10% 20%, rgba(37,99,235,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(99,102,241,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse 40% 35% at 50% 50%, rgba(139,92,246,0.06) 0%, transparent 40%);
+        radial-gradient(ellipse 60% 45% at 10% 20%, rgba(157,181,232,0.16) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(185,163,227,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 35% at 50% 50%, rgba(163,197,133,0.10) 0%, transparent 40%);
     }
     .auth-bg-grid {
       position: absolute;
       inset: 0;
-      opacity: 0.3;
+      opacity: 0.5;
       background-image:
-        linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+        linear-gradient(rgba(43,43,43,0.06) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(43,43,43,0.06) 2px, transparent 2px);
       background-size: 48px 48px;
     }
     [data-theme="dark"] .auth-bg-grid {
       background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        linear-gradient(rgba(255,255,255,0.05) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 2px, transparent 2px);
     }
 
-    /* Floating orbs */
+    /* Floating orbs (muted, brutal) */
     .auth-orb {
       position: absolute;
       border-radius: 50%;
       pointer-events: none;
-      filter: blur(80px);
+      border: 2px solid rgba(43,43,43,.12);
+      filter: none;
     }
     .auth-orb-1 {
-      width: 500px; height: 500px;
-      background: rgba(37,99,235,0.06);
-      top: -150px; left: -100px;
+      width: 320px; height: 320px;
+      background: rgba(124,156,217,0.18);
+      top: -120px; left: -100px;
       animation: orbDrift 25s ease-in-out infinite;
     }
     .auth-orb-2 {
-      width: 400px; height: 400px;
-      background: rgba(139,92,246,0.05);
-      bottom: -120px; right: -80px;
+      width: 260px; height: 260px;
+      background: rgba(185,163,227,0.16);
+      bottom: -100px; right: -80px;
       animation: orbDrift 20s ease-in-out infinite reverse;
     }
     .auth-orb-3 {
-      width: 250px; height: 250px;
-      background: rgba(6,182,212,0.04);
+      width: 180px; height: 180px;
+      background: rgba(163,197,133,0.14);
       top: 50%; left: 60%;
       animation: orbDrift 18s ease-in-out infinite 5s;
     }
@@ -130,20 +131,18 @@
     }
 
     .auth-card {
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: 28px;
+      background: #fff;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-radius: 14px;
       padding: 44px 36px 36px;
-      border: 1px solid rgba(255,255,255,0.5);
-      box-shadow:
-        0 4px 32px rgba(0,0,0,0.04),
-        0 1px 4px rgba(0,0,0,0.02);
+      border: 2px solid #262626;
+      box-shadow: 8px 8px 0 rgba(38,38,38,.2);
     }
     [data-theme="dark"] .auth-card {
-      background: rgba(15,23,42,0.75);
-      border-color: rgba(255,255,255,0.06);
-      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+      background: #24242F;
+      border-color: #3C3C4A;
+      box-shadow: 8px 8px 0 rgba(0,0,0,.5);
     }
 
     /* ── Logo & Header ── */
@@ -155,14 +154,15 @@
       width: 64px;
       height: 64px;
       margin: 0 auto 16px;
-      background: linear-gradient(135deg, var(--ink-2), var(--ink-3));
-      border-radius: 18px;
+      background: #6C5CE7;
+      border: 2px solid #262626;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
       font-size: 30px;
-      box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+      box-shadow: 4px 4px 0 rgba(38,38,38,.2);
       animation: logoFloat 3s ease-in-out infinite;
     }
     @keyframes logoFloat {
@@ -267,20 +267,22 @@
       display: flex;
       align-items: center;
       background: #fff;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 14px;
-      transition: all 0.2s ease;
+      border: 2px solid #262626;
+      border-radius: 10px;
+      transition: all 0.15s ease;
+      box-shadow: 2px 2px 0 rgba(38,38,38,.15);
     }
     [data-theme="dark"] .auth-input-wrap {
-      background: rgba(30,41,59,0.5);
-      border-color: rgba(255,255,255,0.08);
+      background: #1B1B24;
+      border-color: #3C3C4A;
     }
     .auth-input-wrap:focus-within {
-      border-color: var(--ink-2);
-      box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+      border-color: #6C5CE7;
+      box-shadow: 3px 3px 0 rgba(108,92,231,.2);
     }
     [data-theme="dark"] .auth-input-wrap:focus-within {
-      box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+      border-color: #8B7CF0;
+      box-shadow: 3px 3px 0 rgba(139,124,240,.2);
     }
 
     .auth-field-icon {
@@ -337,16 +339,16 @@
       gap: 8px;
       width: 100%;
       height: 52px;
-      border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--ink-2), #6366f1);
+      border: 2px solid #262626;
+      border-radius: 10px;
+      background: #6C5CE7;
       color: #fff;
       font-size: 15px;
-      font-weight: 700;
+      font-weight: 800;
       font-family: inherit;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(.4,0,.2,1);
-      box-shadow: 0 4px 16px rgba(37,99,235,0.25);
+      transition: all 0.15s ease;
+      box-shadow: 4px 4px 0 rgba(38,38,38,.2);
       margin-top: 8px;
       overflow: hidden;
     }
@@ -359,9 +361,9 @@
       transition: opacity 0.3s ease;
       pointer-events: none;
     }
-    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,235,0.35); }
+    .auth-btn:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 rgba(38,38,38,.22); }
     .auth-btn:hover::after { opacity: 1; }
-    .auth-btn:active { transform: translateY(0) scale(0.98); }
+    .auth-btn:active { transform: translate(3px,3px); box-shadow: none; }
     .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
     .auth-btn .spinner {
@@ -395,30 +397,30 @@
       z-index: 100;
       width: 44px;
       height: 44px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.6);
-      border: 1px solid rgba(0,0,0,0.06);
-      color: #64748b;
+      border-radius: 10px;
+      background: #fff;
+      border: 2px solid #262626;
+      color: #5C6470;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
       font-size: 20px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      backdrop-filter: none;
+      box-shadow: 3px 3px 0 rgba(38,38,38,.18);
       animation: fadeIn 0.3s ease 0.4s both;
     }
     .auth-theme-btn:hover {
-      background: #fff;
+      background: #F0EADF;
       color: var(--ink-2);
-      transform: scale(1.05);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transform: translate(-1px,-1px);
+      box-shadow: 4px 4px 0 rgba(38,38,38,.2);
     }
     [data-theme="dark"] .auth-theme-btn {
-      background: rgba(30,41,59,0.6);
-      border-color: rgba(255,255,255,0.06);
-      color: #94a3b8;
+      background: #24242F;
+      border-color: #3C3C4A;
+      color: #C1C4CD;
     }
     [data-theme="dark"] .auth-theme-btn:hover {
       background: var(--ink-2);

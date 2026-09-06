@@ -172,59 +172,59 @@ a:focus-visible, .nav-user:focus-visible {
     --leading-relaxed: 1.625;
     --leading-loose: 2;
 
-    /* 🎨 Soft Neo-Brutalism Tokens (Light) */
-    --brand: #7C9CD9;
-    --brand-dk: #6B8CD0;
-    --brand-lt: rgba(124,156,217,.15);
-    --ink: #1E1E1E;
-    --ink-2: #2E2E2E;
-    --ink-3: #555F6D;
-    --ink-4: #8A93A0;
-    --surface: #F7F5F0;
+    /* 🎨 Soft Neo-Brutalism Tokens (Light) — warm & vibrant */
+    --brand: #6C5CE7;
+    --brand-dk: #5A4BD4;
+    --brand-lt: rgba(108,92,231,.15);
+    --ink: #262626;
+    --ink-2: #3A3A3A;
+    --ink-3: #5C6470;
+    --ink-4: #9099A6;
+    --surface: #FAF6EF;
     --surface-2: #FFFFFF;
-    --surface-3: #EDE9E1;
-    --border: #2B2B2B;
-    --border-2: #2B2B2B;
-    --success: #7FA07A;
-    --danger: #C96A5A;
-    --warning: #C9A84E;
-    --info: #7B9FC0;
+    --surface-3: #F0EADF;
+    --border: #262626;
+    --border-2: #3A3A3A;
+    --success: #2BA383;
+    --danger: #E07A5F;
+    --warning: #D89B21;
+    --info: #4D96FF;
     --r-sm: 6px;
     --r: 10px;
     --r-lg: 12px;
     --r-xl: 14px;
-    --sh-sm: 2px 2px 0 rgba(30,30,30,.2);
-    --sh: 4px 4px 0 rgba(30,30,30,.2);
-    --sh-lg: 6px 6px 0 rgba(30,30,30,.22);
+    --sh-sm: 2px 2px 0 rgba(38,38,38,.2);
+    --sh: 4px 4px 0 rgba(38,38,38,.2);
+    --sh-lg: 6px 6px 0 rgba(38,38,38,.22);
     --sidebar-w: 280px;
     --navbar-h: 64px;
     --t: .15s ease;
 
     /* 🎨 Soft Neo-Brutalism Shadows — hard offset, no blur */
     --neu-bg: #FFFFFF;
-    --neu-raised: 4px 4px 0 rgba(30,30,30,.18);
-    --neu-raised-sm: 2px 2px 0 rgba(30,30,30,.16);
-    --neu-raised-lg: 6px 6px 0 rgba(30,30,30,.2);
-    --neu-inset: inset 2px 2px 0 rgba(30,30,30,.12);
-    --neu-inset-deep: inset 3px 3px 0 rgba(30,30,30,.14);
+    --neu-raised: 4px 4px 0 rgba(38,38,38,.18);
+    --neu-raised-sm: 2px 2px 0 rgba(38,38,38,.16);
+    --neu-raised-lg: 6px 6px 0 rgba(38,38,38,.2);
+    --neu-inset: inset 2px 2px 0 rgba(38,38,38,.12);
+    --neu-inset-deep: inset 3px 3px 0 rgba(38,38,38,.14);
     --neu-flat: none;
-    --neu-hover: 3px 3px 0 rgba(30,30,30,.22);
-    --neu-pressed: inset 2px 2px 0 rgba(30,30,30,.16);
-    --neu-shadow-dark: rgba(30,30,30,.2);
+    --neu-hover: 3px 3px 0 rgba(38,38,38,.22);
+    --neu-pressed: inset 2px 2px 0 rgba(38,38,38,.16);
+    --neu-shadow-dark: rgba(38,38,38,.2);
     --neu-shadow-light: rgba(255,255,255,.5);
 
-    /* Accent & Semantic — Muted pastels (Light) */
-    --accent: #7C9CD9;
-    --accent-strong: #6B8CD0;
-    --accent-soft: rgba(124,156,217,.14);
-    --c-success: #7FA07A;
-    --c-success-soft: rgba(127,160,122,.14);
-    --c-danger: #C96A5A;
-    --c-danger-soft: rgba(201,106,90,.14);
-    --c-warning: #C9A84E;
-    --c-warning-soft: rgba(201,168,78,.14);
-    --c-info: #7B9FC0;
-    --c-info-soft: rgba(123,159,192,.14);
+    /* Accent & Semantic — vibrant, harmonious (Light) */
+    --accent: #6C5CE7;
+    --accent-strong: #5A4BD4;
+    --accent-soft: rgba(108,92,231,.14);
+    --c-success: #2BA383;
+    --c-success-soft: rgba(43,163,131,.14);
+    --c-danger: #E07A5F;
+    --c-danger-soft: rgba(224,122,95,.14);
+    --c-warning: #D89B21;
+    --c-warning-soft: rgba(216,155,33,.14);
+    --c-info: #4D96FF;
+    --c-info-soft: rgba(77,150,255,.14);
 
     /* 🌗 Modal scrim (dimming) — theme-aware */
     --modal-overlay: transparent;
@@ -269,19 +269,19 @@ a:focus-visible, .nav-user:focus-visible {
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7);
-    --brand: #9DB5E8;
-    --brand-dk: #B6C7EF;
-    --brand-lt: rgba(157,181,232,.15);
-    --ink: #F2F0EB;
-    --ink-2: #E4E1D9;
-    --ink-3: #B9BEC8;
-    --ink-4: #8A93A0;
-    --surface: #1A1B1F;
-    --surface-2: #23252B;
-    --surface-3: #2E3138;
-    --border: #3A3D45;
-    --border-2: #4A4E57;
-    --neu-bg: #1A1B1F;
+    --brand: #8B7CF0;
+    --brand-dk: #A79BF5;
+    --brand-lt: rgba(139,124,240,.16);
+    --ink: #F5F2EA;
+    --ink-2: #E7E2D6;
+    --ink-3: #C1C4CD;
+    --ink-4: #9099A6;
+    --surface: #1B1B24;
+    --surface-2: #24242F;
+    --surface-3: #30303D;
+    --border: #3C3C4A;
+    --border-2: #4C4C5C;
+    --neu-bg: #1B1B24;
     --neu-raised: 4px 4px 0 rgba(0,0,0,.5);
     --neu-raised-sm: 2px 2px 0 rgba(0,0,0,.45);
     --neu-raised-lg: 6px 6px 0 rgba(0,0,0,.55);
@@ -292,26 +292,26 @@ a:focus-visible, .nav-user:focus-visible {
     --neu-pressed: inset 2px 2px 0 rgba(0,0,0,.45);
     --neu-shadow-dark: rgba(0,0,0,.5);
     --neu-shadow-light: rgba(255,255,255,.05);
-    --success: #A3C585;
-    --danger: #E08A7A;
-    --warning: #D9BC6A;
-    --info: #8FB3D4;
+    --success: #4FD6B0;
+    --danger: #F2937C;
+    --warning: #E8B84E;
+    --info: #7BB5FF;
     --sh-sm: 2px 2px 0 rgba(0,0,0,.5);
     --sh: 4px 4px 0 rgba(0,0,0,.5);
     --sh-lg: 6px 6px 0 rgba(0,0,0,.5);
 
-    /* Accent & Semantic — muted pastels for dark backgrounds */
-    --accent: #A9BCE8;
-    --accent-strong: #C4D2F0;
-    --accent-soft: rgba(169,188,232,.16);
-    --c-success: #A3C585;
-    --c-success-soft: rgba(163,197,133,.16);
-    --c-danger: #E08A7A;
-    --c-danger-soft: rgba(224,138,122,.16);
-    --c-warning: #E0C26A;
-    --c-warning-soft: rgba(224,194,106,.16);
-    --c-info: #8FB3D4;
-    --c-info-soft: rgba(143,179,212,.16);
+    /* Accent & Semantic — vibrant, harmonious (Dark) */
+    --accent: #8B7CF0;
+    --accent-strong: #A79BF5;
+    --accent-soft: rgba(139,124,240,.16);
+    --c-success: #4FD6B0;
+    --c-success-soft: rgba(79,214,176,.16);
+    --c-danger: #F2937C;
+    --c-danger-soft: rgba(242,147,124,.16);
+    --c-warning: #E8B84E;
+    --c-warning-soft: rgba(232,184,78,.16);
+    --c-info: #7BB5FF;
+    --c-info-soft: rgba(123,181,255,.16);
 }
 
 /* Hero headers now use fixed colorful gradients (dark in both themes),
@@ -3812,20 +3812,20 @@ body { background-color: var(--surface); }
    ═══════════════════════════════════════════════════════════════ */
 .arsip-hero, .ba-hero, .ba-detail-hero, .history-hero, .pindah-hero,
 .show-hero, .versions-hero,
-.explorer-hero { background: #7C9CD9 !important; background-image: none !important; }
+.explorer-hero { background: #6C5CE7 !important; background-image: none !important; }
 
-.pinjam-hero { background: #7FB5E3 !important; background-image: none !important; }
-.berkas-hero { background: #8FBFB0 !important; background-image: none !important; }
-.mon-hero { background: #E0AAA0 !important; background-image: none !important; }
-.users-hero { background: #B9A3E3 !important; background-image: none !important; }
-.jenis-hero { background: #A3C585 !important; background-image: none !important; }
-.lokasi-hero { background: #7FB5C9 !important; background-image: none !important; }
-.unit-hero { background: #93B4E4 !important; background-image: none !important; }
-.role-hero, .permission-hero { background: #B9A3E3 !important; background-image: none !important; }
-.retensi-hero { background: #E0C58F !important; background-image: none !important; }
-.pemusnahan-hero { background: #E08A7A !important; background-image: none !important; }
+.pinjam-hero { background: #4D96FF !important; background-image: none !important; }
+.berkas-hero { background: #2BA383 !important; background-image: none !important; }
+.mon-hero { background: #E07A5F !important; background-image: none !important; }
+.users-hero { background: #9F7AEA !important; background-image: none !important; }
+.jenis-hero { background: #2BA383 !important; background-image: none !important; }
+.lokasi-hero { background: #4D96FF !important; background-image: none !important; }
+.unit-hero { background: #4D96FF !important; background-image: none !important; }
+.role-hero, .permission-hero { background: #9F7AEA !important; background-image: none !important; }
+.retensi-hero { background: #E9B949 !important; background-image: none !important; }
+.pemusnahan-hero { background: #E07A5F !important; background-image: none !important; }
 
-/* Text stays ink (dark) on muted pastel blocks for max contrast/brutal feel */
+/* Text stays ink (dark) on vibrant blocks for max contrast/brutal feel */
 [data-theme] .arsip-hero, [data-theme] .ba-hero, [data-theme] .ba-detail-hero,
 [data-theme] .history-hero, [data-theme] .pindah-hero, [data-theme] .show-hero,
 [data-theme] .versions-hero, [data-theme] .explorer-hero,
@@ -3834,7 +3834,7 @@ body { background-color: var(--surface); }
 [data-theme] .unit-hero, [data-theme] .role-hero, [data-theme] .permission-hero,
 [data-theme] .retensi-hero, [data-theme] .pemusnahan-hero,
 [data-theme] .create-header, [data-theme] .edit-header {
-    color: #1E1E1E !important;
+    color: #262626 !important;
     border: 2px solid var(--border);
     box-shadow: var(--sh);
 }
@@ -3848,7 +3848,7 @@ body { background-color: var(--surface); }
 [data-theme] .retensi-hero .hero-sub, [data-theme] .pemusnahan-hero .hero-sub,
 [data-theme] .create-header p, [data-theme] .edit-header p,
 [data-theme] .explorer-hero .hero-sub {
-    opacity: 1; color: #3A3A3A !important;
+    opacity: 1; color: #5C6470 !important;
 }
 
 /* ── Create / Edit header backgrounds (match module hue family) ── */
@@ -4067,14 +4067,14 @@ body { background-color: var(--surface); }
 a { color: var(--accent); font-weight: 500; }
 
 /* ── Light mode body already has surface ivory bg ── */
-body[data-theme="light"] { background: #F7F5F0; }
+body[data-theme="light"] { background: #FAF6EF; }
 
 /* ── Create/Edit header text: dark ink on beige block ── */
 [data-theme] .create-header h4,
 [data-theme] .edit-header h4,
-[data-theme] .create-header .create-header-title { color: #1E1E1E !important; }
+[data-theme] .create-header .create-header-title { color: #262626 !important; }
 [data-theme] .create-header p,
-[data-theme] .edit-header p { color: #3A3A3A !important; opacity: 1; }
+[data-theme] .edit-header p { color: #5C6470 !important; opacity: 1; }
 
 /* ── Gradient icon helpers keep flat muted (used across modules) ── */
 .icon-blue { background: var(--c-info-soft); color: var(--c-info); }

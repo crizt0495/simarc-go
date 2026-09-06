@@ -1,33 +1,32 @@
 {{define "dashboard/advanced.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-.advanced-header{background:var(--gradient-primary);padding:2.5rem 2rem;border-radius:var(--r-xl);color:#fff;margin-bottom:2.5rem;box-shadow:var(--sh-lg);position:relative;overflow:hidden}
-.advanced-header::after{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none}
-.advanced-header::before{content:'';position:absolute;bottom:-30%;left:10%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.5rem;margin-top:-2rem;padding:0 0.5rem;position:relative;z-index:1}
-.stat-card-modern{background:var(--surface);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh);border:1px solid var(--border);transition:all 0.3s var(--ease-out)}
-.stat-card-modern:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);border-color:var(--ink-2)}
-[data-theme="dark"] .stat-card-modern{background:var(--neutral-100);border-color:var(--neutral-200)}
-.stat-card-modern .icon-box{width:48px;height:48px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;font-size:1.3rem}
-.stat-card-modern .label{font-size:0.8rem;color:var(--ink-4);font-weight:600;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.04em}
+.advanced-header{background:var(--accent,#6C5CE7);padding:2rem;border-radius:12px;color:#262626;margin-bottom:1rem;box-shadow:5px 5px 0 rgba(38,38,38,.2);position:relative;overflow:hidden;border:2px solid var(--border,#262626)}
+.advanced-header::after,.advanced-header::before{content:none}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.5rem;margin-top:1.5rem;padding:0;position:relative;z-index:1}
+.stat-card-modern{background:var(--surface-2,#fff);border-radius:10px;padding:1.5rem;box-shadow:4px 4px 0 rgba(38,38,38,.18);border:2px solid var(--border,#262626);transition:all 0.15s var(--ease-out)}
+.stat-card-modern:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 rgba(38,38,38,.22)}
+[data-theme="dark"] .stat-card-modern{background:#23252B;border-color:#3A3D45}
+.stat-card-modern .icon-box{width:48px;height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;font-size:1.3rem;border:2px solid var(--border,#262626)}
+.stat-card-modern .label{font-size:0.8rem;color:var(--ink-4);font-weight:700;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.04em}
 .stat-card-modern .value{font-size:1.75rem;font-weight:800;color:var(--ink);line-height:1.2}
 .charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2rem}
 @media(max-width:992px){.charts-grid{grid-template-columns:1fr}}
-.chart-card-modern{background:var(--surface);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh);border:1px solid var(--border)}
-[data-theme="dark"] .chart-card-modern{background:var(--neutral-100);border-color:var(--neutral-200)}
+.chart-card-modern{background:var(--surface-2,#fff);border-radius:10px;padding:1.5rem;box-shadow:4px 4px 0 rgba(38,38,38,.18);border:2px solid var(--border,#262626)}
+[data-theme="dark"] .chart-card-modern{background:#23252B;border-color:#3A3D45}
 .chart-card-modern .chart-header{margin-bottom:1.25rem}
-.chart-card-modern .chart-header h4{font-weight:700;color:var(--ink);margin-bottom:0.25rem;font-size:1rem}
+.chart-card-modern .chart-header h4{font-weight:800;color:var(--ink);margin-bottom:0.25rem;font-size:1rem}
 .chart-card-modern .chart-header p{font-size:0.8rem;color:var(--ink-4);margin:0}
-.activity-section-modern{background:var(--surface);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh);border:1px solid var(--border);margin-top:1.5rem}
-[data-theme="dark"] .activity-section-modern{background:var(--neutral-100);border-color:var(--neutral-200)}
+.activity-section-modern{background:var(--surface-2,#fff);border-radius:10px;padding:1.5rem;box-shadow:4px 4px 0 rgba(38,38,38,.18);border:2px solid var(--border,#262626);margin-top:1.5rem}
+[data-theme="dark"] .activity-section-modern{background:#23252B;border-color:#3A3D45}
 </style>
 <div class="container-fluid pb-5 px-0">
     <div class="advanced-header d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
             <h1 class="fw-bold mb-1" style="font-size:1.5rem">📊 Analitik Dashboard</h1>
-            <p class="mb-0 opacity-75" style="font-size:0.9rem">Pemantauan data kearsipan secara real-time</p>
+            <p class="mb-0" style="font-size:0.9rem;opacity:.8;font-weight:600">Pemantauan data kearsipan secara real-time</p>
         </div>
-        <button class="btn btn-light text-primary fw-bold px-4 rounded-pill shadow-sm" onclick="location.reload()">
+        <button class="btn fw-bold px-4" style="background:#fff;border:2px solid #262626;box-shadow:4px 4px 0 rgba(38,38,38,.2);color:#262626" onclick="location.reload()">
             <i class="bi bi-arrow-clockwise me-2"></i>Segarkan Data
         </button>
     </div>
