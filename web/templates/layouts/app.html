@@ -392,9 +392,9 @@
   </style>
 
   <!-- ═══════════════════════════════════════════
-       NEO-BRUTALISM DESIGN OVERRIDE
+       NEO-BRUTALISM DESIGN OVERRIDE (minified)
        ═══════════════════════════════════════════ -->
-  <link href="/css/neo-brutalism.css?v={{.AssetVersion}}" rel="stylesheet">
+  <link href="/css/neo-brutalism.min.css?v={{.AssetVersion}}" rel="stylesheet">
 </head>
 <body>
 
@@ -571,11 +571,13 @@ document.addEventListener('DOMContentLoaded', function() {
     var icon = document.getElementById('themeIcon');
     if (icon) icon.className = saved === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
     document.getElementById('themeToggle').addEventListener('click', function() {
+      html.classList.add('transitioning');
       var t = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', t);
       localStorage.setItem('theme', t);
       icon.className = t === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
       window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: t } }));
+      setTimeout(function(){ html.classList.remove('transitioning'); }, 320);
     });
   });
 })();

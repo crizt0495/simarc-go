@@ -446,9 +446,9 @@
 </style>
 
   <!-- ═══════════════════════════════════════════
-       NEO-BRUTALISM DESIGN OVERRIDE
+       NEO-BRUTALISM DESIGN OVERRIDE (minified)
        ═══════════════════════════════════════════ -->
-  <link href="/css/neo-brutalism.css?v={{.AssetVersion}}" rel="stylesheet">
+  <link href="/css/neo-brutalism.min.css?v={{.AssetVersion}}" rel="stylesheet">
 </head>
 <body class="auth-body">
   <!-- ─── ANIMATED BACKGROUND ─── -->
@@ -492,10 +492,12 @@
     var icon = document.getElementById('authThemeIcon');
     if (icon) icon.className = t === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
     document.getElementById('authThemeBtn').addEventListener('click', function() {
+      html.classList.add('transitioning');
       var nt = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', nt);
       localStorage.setItem('theme', nt);
       icon.className = nt === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+      setTimeout(function(){ html.classList.remove('transitioning'); }, 320);
     });
 
     /* Ripple mouse tracking */

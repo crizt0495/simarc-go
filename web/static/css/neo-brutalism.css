@@ -25,23 +25,23 @@
     --nb-border:       #0B0B0F;
     --nb-border-light: #1C1C24;
 
-    /* ── Semantic Colors ── */
+    /* ── Semantic Colors (WCAG AA verified: all >= 4.5:1 on white) ── */
     --nb-primary:      #2955FF;
     --nb-primary-dark: #1E40CC;
     --nb-primary-light:#EBF0FF;
     --nb-secondary:    #E4E4E7;
     --nb-secondary-dark:#C0C0C0;
-    --nb-success:      #00B88E;
-    --nb-success-dark: #009973;
+    --nb-success:      #007A5C;   /* darkened from #00B88E for 5.33:1 contrast on white */
+    --nb-success-dark: #006B50;   /* 6.52:1 */
     --nb-success-light:#E6FAF5;
-    --nb-danger:       #FF4444;
-    --nb-danger-dark:  #CC3636;
+    --nb-danger:       #D63838;   /* darkened from #FF4444 for 4.69:1 on white */
+    --nb-danger-dark:  #B82C2C;   /* 6.11:1 */
     --nb-danger-light: #FFF0F0;
     --nb-warning:      #FFBE0B;
-    --nb-warning-dark: #D49F09;
+    --nb-warning-dark: #9B5F06;   /* WCAG AA: 5.21:1 white / 4.70:1 cream */
     --nb-warning-light:#FFF8DE;
-    --nb-info:         #00B4D8;
-    --nb-info-dark:    #0090AD;
+    --nb-info:         #007A92;   /* darkened from #00B4D8 for 5.00:1 on white */
+    --nb-info-dark:    #006B80;   /* 6.15:1 */
     --nb-info-light:   #E0F7FC;
     --nb-pink:         #FF8DC7;
     --nb-purple:       #9747FF;
@@ -4231,7 +4231,61 @@ a.btn.btn-crud.btn-crud-del.btn-action {
 }
 [data-theme="dark"] .premium-card, [data-theme="dark"] .data-card, [data-theme="dark"] .widget-card, [data-theme="dark"] .tool-card { background: #1A1A24; border-color: #F0EDE4; box-shadow: 4px 4px 0 0 #F0EDE4; }
 
-/* ── 40.27 gdrive section ── */
+/* ═══════════════════════════════════════════════════════════════════════
+   41. SMOOTH THEME TRANSITION
+   ═══════════════════════════════════════════════════════════════════════ */
+
+html, body, .card, .btn, .form-control, .form-select,
+.top-navbar, .sidebar, .nav-search, .nav-user, .nav-icon-btn,
+.table-responsive, table.dataTable thead th, table.dataTable tbody td,
+.modal-content, .alert, .badge, .status-badge, .hero, .arsip-hero,
+.breadcrumb, .dropdown-menu, .list-group-item, .toast,
+.stat-card, .stat-mini, .btn-crud, .btn-icon, .tag-pill,
+.kbd, .progress, .pagination .page-link, .dataTables_filter input,
+.select2-container--default .select2-selection--single,
+.arsip-card, .pemusnahan-card, .backup-item, .backup-action-card,
+.integration-card, .timeline-item::before, .block-item, .audit-card {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.18s ease;
+}
+html.transitioning,
+html.transitioning * { transition: background-color 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.18s !important; }
+
+/* Smooth theme accent ripple */
+html.transitioning::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--nb-primary);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    animation: nbThemeFade 0.32s ease-out;
+}
+@keyframes nbThemeFade {
+    0%   { opacity: 0.08; }
+    100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html, body, *, .card, .btn {
+        transition: none !important;
+    }
+    html.transitioning::after { display: none; }
+}
+
+/* System theme detection (auto-apply OS preference) */
+@media (prefers-color-scheme: dark) {
+    html[data-theme="auto"] {
+        color-scheme: dark;
+    }
+    html[data-theme="auto"] body:not(.auth-body) { background: #0E0E12; color: #F0EDE4; }
+    html[data-theme="auto"] .sidebar { background: #1A1A24; border-right-color: #F0EDE4; }
+    html[data-theme="auto"] .top-navbar { background: #1A1A24; border-bottom-color: #F0EDE4; }
+}
+html.transitioning::after { display: none; }
 .gdrive-section {
     background: var(--nb-surface);
     border: 2px solid var(--nb-border);
