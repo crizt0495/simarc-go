@@ -294,7 +294,93 @@
                 <a href="/dashboard" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.7rem;">
                     <i class="bi bi-arrow-left me-1"></i>Kembali
                 </a>
-                {{if .HasExpired}}
+                <div class="dropdown d-inline">
+                    <button class="btn btn-primary btn-sm rounded-pill fw-800 px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:0.75rem;">
+                        <i class="bi bi-download me-1"></i>Download Daftar Musnah
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width:260px;padding:0.5rem;">
+                        <li><h6 class="dropdown-header text-uppercase fw-700 small mb-1" style="font-size:0.65rem;letter-spacing:0.06em;">Format File</h6></li>
+                        <li>
+                            <a class="dropdown-item py-2 d-flex align-items-center" href="/pemusnahan/export/arsip-musnah.xlsx" download>
+                                <i class="bi bi-file-earmark-excel-fill text-success me-2" style="font-size:1.2rem;"></i>
+                                <div>
+                                    <div class="fw-700">Excel (.xlsx)</div>
+                                    <small class="text-muted">12 kolom detail</small>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2 d-flex align-items-center" href="/pemusnahan/export/arsip-musnah.pdf" download>
+                                <i class="bi bi-file-earmark-pdf-fill text-danger me-2" style="font-size:1.2rem;"></i>
+                                <div>
+                                    <div class="fw-700">PDF (.pdf)</div>
+                                    <small class="text-muted">Format siap cetak</small>
+                                </div>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-uppercase fw-700 small mb-1" style="font-size:0.65rem;letter-spacing:0.06em;">Total Tercatat</h6></li>
+                        <li>
+                            <div class="px-3 py-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-archive-fill text-secondary" style="font-size:1.1rem;"></i>
+                                    <span class="fw-800" style="font-size:1rem;">{{.TotalArsipMusnah}}</span>
+                                    <span class="text-muted small">arsip telah dimusnahkan</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">Ekspor mengikuti filter di bawah</small>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     DOWNLOAD SECTION — Arsip Dimusnahkan (visible prominently)
+     ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="card border-0 shadow-sm mb-3 fade-up-d1" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--surface);border-bottom:1px solid var(--border);padding:0.85rem 1.25rem;">
+            <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:var(--ink-2);"><i class="bi bi-download-circle me-2"></i>Download Daftar Arsip Dimusnahkan</h5>
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-800" style="font-size:1rem;color:var(--ink-2);">{{.TotalArsipMusnah}}</span>
+                <span class="text-muted small fw-600">arsip</span>
+            </div>
+        </div>
+        <div class="card-body py-3 px-4">
+            <form method="GET" action="/pemusnahan/export/arsip-musnah" id="downloadFilterForm" class="row g-2 align-items-end mb-3">
+                <div class="col-md-4">
+                    <label class="fw-600 mb-1" style="font-size:0.7rem;color:var(--ink-3);">Pencarian</label>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Nomor / nama arsip..." style="font-size:0.8rem;">
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-600 mb-1" style="font-size:0.7rem;color:var(--ink-3);">Dari Tanggal</label>
+                    <input type="date" name="start_date" class="form-control form-control-sm" style="font-size:0.8rem;">
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-600 mb-1" style="font-size:0.7rem;color:var(--ink-3);">Sampai Tanggal</label>
+                    <input type="date" name="end_date" class="form-control form-control-sm" style="font-size:0.8rem;">
+                </div>
+                <div class="col-md-2 d-flex gap-1">
+                    <button type="button" class="btn btn-success btn-sm flex-fill rounded fw-700" onclick="submitDownload('xlsx')" style="font-size:0.75rem;">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm flex-fill rounded fw-700" onclick="submitDownload('pdf')" style="font-size:0.75rem;">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                    </button>
+                </div>
+            </form>
+            <div class="d-flex align-items-center gap-3">
+                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Ekspor mengikuti filter di atas. Tanpa filter = semua arsip musnah.</small>
+            </div>
+        </div>
+    </div>
+    <script>
+    function submitDownload(fmt) {
+        var form = document.getElementById('downloadFilterForm');
+        var qs = new URLSearchParams(new FormData(form)).toString();
+        var url = '/pemusnahan/export/arsip-musnah.' + fmt + (qs ? '?' + qs : '');
+        window.location.href = url;
+    }
+    </script>
+
+    {{if .HasExpired}}
                 <form action="/pemusnahan/auto-create" method="POST" class="d-inline">
                     <input type="hidden" name="_token" value="{{.CSRFToken}}">
                     <button type="submit" class="btn btn-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.7rem;" onclick="return confirm('Buat pengajuan pemusnahan otomatis untuk {{.TotalExpired}} arsip?')">
