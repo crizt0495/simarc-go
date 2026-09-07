@@ -3687,91 +3687,147 @@ func (h *PemusnahanHandler) Show(c *gin.Context) {
 	Render(c, 200, "pemusnahan/show.html", gin.H{"title": "Detail Pemusnahan", "pageTitle": "Detail Pemusnahan", "Item": m})
 }
 
-func (h *PemusnahanHandler) ExportExcel(c *gin.Context) {
-	var list []models.PemusnahanArsip
-	database.DB.Preload("Items.Arsip.KodeKlasifikasi").Preload("Items.Arsip.UnitKerja").Preload("Creator").Preload("UserPengaju").Preload("UserApprove").Order("created_at DESC").Find(&list)
-	rows := [][]string{}
-	for _, p := range list {
-		pengaju := "-"
-		if p.UserPengaju != nil {
-			pengaju = p.UserPengaju.Name
-		} else if p.Creator != nil {
-			pengaju = p.Creator.Name
-		}
-		approver := "-"
-		if p.UserApprove != nil {
-			approver = p.UserApprove.Name
-		}
-		tgl := "-"
-		if p.TanggalPengajuan != nil {
-			tgl = p.TanggalPengajuan.Format("2006-01-02")
-		}
-		status := p.Status
-		alasan := p.AlasanPengajuan
-		if len(p.Items) > 0 {
-			for _, item := range p.Items {
-				arsipNomor := "-"
-				arsipNama := "-"
-				uraian := "-"
-				kk := ""
-				uk := ""
-				if item.Arsip != nil {
-					arsipNomor = item.Arsip.NomorArsip
-					arsipNama = item.Arsip.NamaArsip
-					uraian = item.Arsip.Uraian
-					if item.Arsip.KodeKlasifikasi != nil {
-						kk = item.Arsip.KodeKlasifikasi.KodeKlasifikasi
-					}
-					if item.Arsip.UnitKerja != nil {
-						uk = item.Arsip.UnitKerja.NamaUnit
-					}
-				}
-				rows = append(rows, []string{p.NamaKegiatan, arsipNomor, arsipNama, uraian, kk, uk, alasan, status, tgl, pengaju, approver})
-			}
-		} else {
-			// Fallback for empty items (backward compat with legacy single arsip)
-			rows = append(rows, []string{p.NamaKegiatan, "-", "-", "-", "", "", alasan, status, tgl, pengaju, approver})
+// buildMusnahFilterQuery returns a *gorm.DB applying the same optional filters
+// (search, date range, unit, klasifikasi) that ExportExcel/ExportPDF accept via
+// query-string parameters. This keeps the two exporters in lockstep.
+func buildMusnahFilterQuery(c *gin.Context) *gorm.DB {
+	q := database.DB.Model(&models.Arsip{}).
+		Preload("KodeKlasifikasi").
+		Preload("UnitKerja").
+		Preload("LokasiArsip").
+		Where("arsip.status_arsip = ?", "musnah").
+		Where("arsip.deleted_at IS NULL")
+
+	if s := strings.TrimSpace(c.Query("search")); s != "" {
+		like := "%" + s + "%"
+		q = q.Where("arsip.nomor_arsip LIKE ? OR arsip.nama_arsip LIKE ? OR arsip.uraian LIKE ?", like, like, like)
+	}
+	if v := c.Query("unit_kerja_id"); v != "" {
+		q = q.Where("arsip.unit_kerja_id = ?", v)
+	}
+	if v := c.Query("kode_klasifikasi_id"); v != "" {
+		q = q.Where("arsip.kode_klasifikasi_id = ?", v)
+	}
+	if v := c.Query("start_date"); v != "" {
+		if d, err := time.Parse("2006-01-02", v); err == nil {
+			q = q.Where("arsip.updated_at >= ?", d)
 		}
 	}
-	exportXLSX(c, "Daftar-Pemusnahan-Arsip-"+time.Now().Format("2006-01-02"), []string{"Kegiatan", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Unit Kerja", "Alasan", "Status", "Tgl Pengajuan", "Pengaju", "Persetujuan"}, rows)
+	if v := c.Query("end_date"); v != "" {
+		if d, err := time.Parse("2006-01-02", v); err == nil {
+			// include the entire end day
+			end := d.Add(24 * time.Hour)
+			q = q.Where("arsip.updated_at < ?", end)
+		}
+	}
+	return q
 }
 
-func (h *PemusnahanHandler) ExportPDF(c *gin.Context) {
-	var list []models.PemusnahanArsip
-	database.DB.Preload("Items.Arsip.KodeKlasifikasi").Preload("Items.Arsip.UnitKerja").Preload("Creator").Preload("UserPengaju").Preload("UserApprove").Order("created_at DESC").Find(&list)
-	headers := []string{"No", "Kegiatan", "Nomor Arsip", "Nama Arsip", "Klasifikasi", "Unit Kerja", "Status", "Tgl Pengajuan"}
+// ExportExcel downloads an Excel (.xlsx) of every archive whose status is
+// "musnah" (i.e. archives that have actually been destroyed). Supports
+// the same query filters as the index: ?search=&start_date=&end_date=
+// &unit_kerja_id=&kode_klasifikasi_id=
+func (h *PemusnahanHandler) ExportExcel(c *gin.Context) {
+	var list []models.Arsip
+	buildMusnahFilterQuery(c).Order("arsip.updated_at DESC").Find(&list)
+
+	filename := "Daftar-Arsip-Dimusnahkan-" + time.Now().Format("2006-01-02")
+	headers := []string{"No", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Retensi (Aktif+Inaktif)", "Unit Kerja", "Lokasi", "Status", "Tanggal Dibuat", "Tanggal Retensi Berakhir", "Tgl Dimusnahkan"}
 	rows := [][]string{}
-	rowNum := 1
-	for _, p := range list {
-		tgl := "-"
-		if p.TanggalPengajuan != nil {
-			tgl = p.TanggalPengajuan.Format("02 Jan 2006")
+	for i, a := range list {
+		kk := "-"
+		retensi := "-"
+		if a.KodeKlasifikasi != nil {
+			kk = a.KodeKlasifikasi.KodeKlasifikasi + " - " + a.KodeKlasifikasi.NamaKlasifikasi
+			retensi = fmt.Sprintf("%d + %d tahun", a.KodeKlasifikasi.RetensiAktif, a.KodeKlasifikasi.RetensiInaktif)
 		}
-		if len(p.Items) > 0 {
-			for _, item := range p.Items {
-				arsipNomor := "-"
-				arsipNama := "-"
-				kk := ""
-				uk := ""
-				if item.Arsip != nil {
-					arsipNomor = item.Arsip.NomorArsip
-					arsipNama = item.Arsip.NamaArsip
-					if item.Arsip.KodeKlasifikasi != nil {
-						kk = item.Arsip.KodeKlasifikasi.KodeKlasifikasi
-					}
-					if item.Arsip.UnitKerja != nil {
-						uk = item.Arsip.UnitKerja.NamaUnit
-					}
-				}
-				rows = append(rows, []string{strconv.Itoa(rowNum), p.NamaKegiatan, arsipNomor, arsipNama, kk, uk, p.Status, tgl})
-				rowNum++
-			}
-		} else {
-			rows = append(rows, []string{strconv.Itoa(rowNum), p.NamaKegiatan, "-", "-", "", "", p.Status, tgl})
-			rowNum++
+		uk := "-"
+		if a.UnitKerja != nil {
+			uk = a.UnitKerja.NamaUnit
 		}
+		tglBuat := "-"
+		if a.TanggalDibuat != nil {
+			tglBuat = a.TanggalDibuat.Format("2006-01-02")
+		}
+		tglRetensi := "-"
+		if a.TanggalRetensiAkhir != nil {
+			tglRetensi = a.TanggalRetensiAkhir.Format("2006-01-02")
+		}
+		tglMusnah := "-"
+		if a.UpdatedAt.IsZero() == false {
+			tglMusnah = a.UpdatedAt.Format("2006-01-02 15:04")
+		}
+		rows = append(rows, []string{
+			strconv.Itoa(i + 1),
+			emptyDash(a.NomorArsip),
+			emptyDash(a.NamaArsip),
+			emptyDash(a.Uraian),
+			kk,
+			retensi,
+			uk,
+			emptyDash(getLokasiName(a)),
+			a.StatusArsip,
+			tglBuat,
+			tglRetensi,
+			tglMusnah,
+		})
 	}
-	exportPDF(c, "Daftar-Pemusnahan-Arsip-"+time.Now().Format("2006-01-02"), "Daftar Pemusnahan Arsip", headers, rows)
+	exportXLSX(c, filename, headers, rows)
+}
+
+// ExportPDF downloads a PDF report of every archive whose status is "musnah".
+// Same filter contract as ExportExcel.
+func (h *PemusnahanHandler) ExportPDF(c *gin.Context) {
+	var list []models.Arsip
+	buildMusnahFilterQuery(c).Order("arsip.updated_at DESC").Find(&list)
+
+	filename := "Daftar-Arsip-Dimusnahkan-" + time.Now().Format("2006-01-02")
+	title := "Daftar Arsip yang Telah Dimusnahkan"
+	headers := []string{"No", "Nomor Arsip", "Nama Arsip", "Klasifikasi", "Unit Kerja", "Tgl Retensi", "Tgl Musnah"}
+	rows := [][]string{}
+	for i, a := range list {
+		kk := "-"
+		if a.KodeKlasifikasi != nil {
+			kk = a.KodeKlasifikasi.KodeKlasifikasi
+		}
+		uk := "-"
+		if a.UnitKerja != nil {
+			uk = a.UnitKerja.NamaUnit
+		}
+		tglRetensi := "-"
+		if a.TanggalRetensiAkhir != nil {
+			tglRetensi = a.TanggalRetensiAkhir.Format("02 Jan 2006")
+		}
+		tglMusnah := "-"
+		if a.UpdatedAt.IsZero() == false {
+			tglMusnah = a.UpdatedAt.Format("02 Jan 2006 15:04")
+		}
+		rows = append(rows, []string{
+			strconv.Itoa(i + 1),
+			emptyDash(a.NomorArsip),
+			emptyDash(a.NamaArsip),
+			kk,
+			uk,
+			tglRetensi,
+			tglMusnah,
+		})
+	}
+	exportPDF(c, filename, title, headers, rows)
+}
+
+// getLokasiName returns the nama_lokasi for an arsip if preloaded, else "-".
+func getLokasiName(a models.Arsip) string {
+	if a.LokasiArsip != nil {
+		return a.LokasiArsip.NamaLokasi
+	}
+	return ""
+}
+
+func emptyDash(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return "-"
+	}
+	return s
 }
 
 func (h *PemusnahanHandler) SearchArsip(c *gin.Context) {
