@@ -62,12 +62,13 @@ const D = {
   ink:        '#F0EDE4',
   ink2:       '#D8D4CC',
   ink3:       '#B0ACA4',
-  ink4:       '#888480',
+  ink4:       '#9F9B94',   // WCAG AA 5.69:1 on #22222C
   primary:    '#5B82FF',
   success:    '#00D9A4',
   danger:     '#FF6666',
   warning:    '#FFD43B',
   info:       '#22D3EE',
+  onAccent:   '#0E0E12',   // dark ink for text on bright accent fills
 };
 
 const checks = [
@@ -100,8 +101,10 @@ const checks = [
   ['D ink on bg',            D.ink, D.bg, 4.5],
   ['D ink on surface',       D.ink, D.surface, 4.5],
   ['D ink3 on surface',      D.ink3, D.surface, 4.5],
+  ['D ink3 on surface2',     D.ink3, D.surface2, 4.5],
   ['D ink4 on surface',      D.ink4, D.surface, 4.5],
   ['D ink4 on bg',           D.ink4, D.bg, 4.5],
+  ['D ink4 on surface2',     D.ink4, D.surface2, 4.5],
   // Dark mode — button text / ink-on-fill (4.5)
   ['D inkTxt on primary',    L.ink, D.primary, 4.5],
   ['D inkTxt on success',    L.ink, D.success, 4.5],
@@ -113,6 +116,17 @@ const checks = [
   ['D success on surface',   D.success, D.surface, 3.0],
   ['D danger on surface',    D.danger, D.surface, 3.0],
   ['D info on surface',      D.info, D.surface, 3.0],
+  ['D primary on surface2',  D.primary, D.surface2, 3.0],
+  ['D success on surface2',  D.success, D.surface2, 3.0],
+  ['D danger on surface2',   D.danger, D.surface2, 3.0],
+  ['D info on surface2',     D.info, D.surface2, 3.0],
+  // Soft fill backgrounds — accent text on dark tint (3.0)
+  ['D primary on soft-primary', D.primary, '#1A2240', 3.0],
+  ['D success on soft-success', D.success, '#0A2820', 3.0],
+  ['D danger on soft-danger',   D.danger,  '#2A1010', 3.0],
+  ['D warning on soft-warning', D.warning, '#2A2410', 3.0],
+  ['D info on soft-info',       D.info,    '#0A2430', 3.0],
+  ['D ink3 on soft-primary',    D.ink3,    '#1A2240', 3.0],
 ];
 
 let failures = 0;
@@ -128,7 +142,7 @@ for (const [name, fg, bg, min] of checks) {
 
 console.log('');
 if (failures === 0) {
-  console.log('  ✅  ALL 33 pairings pass WCAG 2.1 AA');
+  console.log(`  ✅  ALL ${checks.length} pairings pass WCAG 2.1 AA`);
   process.exit(0);
 } else {
   console.log(`  ❌  ${failures} failure(s) — fix before release`);
