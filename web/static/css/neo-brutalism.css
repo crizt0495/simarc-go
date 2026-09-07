@@ -125,6 +125,22 @@
    2. BASE & TYPOGRAPHY
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* ── Legacy neumorphic tokens — remapped so old var() usages in
+      templates follow the neo-brutalism theme in BOTH modes ── */
+:root {
+    --neu-bg:          var(--nb-bg);
+    --neu-flat:        var(--nb-surface);
+    --neu-hover:       var(--nb-surface-3);
+    --neu-inset:       var(--nb-shadow-sm);
+    --neu-inset-deep:  inset 3px 3px 0 0 var(--nb-border);
+    --neu-pressed:     inset 0 0 0 2px var(--nb-border);
+    --neu-raised:      var(--nb-shadow);
+    --neu-raised-lg:   var(--nb-shadow-lg);
+    --neu-raised-sm:   var(--nb-shadow-sm);
+    --neu-shadow-dark: var(--nb-ink);
+    --neu-shadow-light:var(--nb-surface);
+}
+
 *, *::before, *::after {
     border-radius: 0 !important;
 }
@@ -1804,6 +1820,17 @@ table.dataTable tbody .btn-sm {
     --nb-border:       #F0EDE4;
     --nb-border-light: #B0ACA4;
     --nb-on-accent:    #0E0E12;   /* always dark text on bright accent fills */
+
+    /* Legacy neumorphic tokens — dark theme remap */
+    --neu-bg:          var(--nb-bg);
+    --neu-flat:        var(--nb-surface);
+    --neu-hover:       var(--nb-surface-3);
+    --neu-inset:       var(--nb-shadow-sm);
+    --neu-raised:      var(--nb-shadow);
+    --neu-raised-lg:   var(--nb-shadow-lg);
+    --neu-raised-sm:   var(--nb-shadow-sm);
+    --neu-shadow-dark: var(--nb-ink);
+    --neu-shadow-light:var(--nb-surface);
 
     --nb-primary:      #5B82FF;
     --nb-primary-dark: #7A9EFF;
@@ -4498,3 +4525,638 @@ html.transitioning::after { display: none; }
     80% { transform: translateX(4px); }
 }
 .backdrop-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   41. SMOOTH THEME TRANSITION
+   ═══════════════════════════════════════════════════════════════════════ */
+
+html, body, .card, .btn, .form-control, .form-select,
+.top-navbar, .sidebar, .nav-search, .nav-user, .nav-icon-btn,
+.table-responsive, table.dataTable thead th, table.dataTable tbody td,
+.modal-content, .alert, .badge, .status-badge, .hero, .arsip-hero,
+.breadcrumb, .dropdown-menu, .list-group-item, .toast,
+.stat-card, .stat-mini, .btn-crud, .btn-icon, .tag-pill,
+.kbd, .progress, .pagination .page-link, .dataTables_filter input,
+.select2-container--default .select2-selection--single,
+.arsip-card, .pemusnahan-card, .backup-item, .backup-action-card,
+.integration-card, .timeline-item::before, .block-item, .audit-card {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.18s ease;
+}
+html.transitioning,
+html.transitioning * { transition: background-color 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.18s !important; }
+
+/* Smooth theme accent ripple */
+html.transitioning::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--nb-primary);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    animation: nbThemeFade 0.32s ease-out;
+}
+@keyframes nbThemeFade {
+    0%   { opacity: 0.08; }
+    100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html, body, *, .card, .btn {
+        transition: none !important;
+    }
+    html.transitioning::after { display: none; }
+}
+
+/* System theme detection (auto-apply OS preference) */
+@media (prefers-color-scheme: dark) {
+    html[data-theme="auto"] {
+        color-scheme: dark;
+    }
+    html[data-theme="auto"] body:not(.auth-body) { background: #0E0E12; color: #F0EDE4; }
+    html[data-theme="auto"] .sidebar { background: #1A1A24; border-right-color: #F0EDE4; }
+    html[data-theme="auto"] .top-navbar { background: #1A1A24; border-bottom-color: #F0EDE4; }
+}
+html.transitioning::after { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   42. TEMPLATE INLINE STYLE OVERRIDES — beat cascade with !important
+   Templates inject <style> blocks AFTER <head> → they win cascade.
+   This section forces neo-brutalism variables on template-injected styles.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Background overrides (templates use `white`, `var(--neu-bg)` old) ── */
+[style*="background: white"],
+[style*="background:#fff"],
+[style*="background:#ffffff"],
+[style*="background:var(--neu-bg)"],
+[style*="background:var(--neu-bg, #e0e5ec)"],
+[style*="background: var(--neu-bg)"],
+[style*="background:linear-gradient(135deg, #475569"],
+[style*="background:linear-gradient(135deg, var(--ink-2)"],
+[style*="background: linear-gradient(135deg, #64748b"],
+[style*="background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3)"] {
+    background: var(--nb-surface) !important;
+}
+
+/* ── Border overrides (templates use #e0e0e0, #e2e8f0, #f0f0f0, #ddd) ── */
+[style*="border: 1px solid #e0e0e0"],
+[style*="border: 2px solid #e0e0e0"],
+[style*="border: 2px dashed #e0e0e0"],
+[style*="border: 1px solid #e2e8f0"],
+[style*="border: 1px solid #f0f0f0"],
+[style*="border: 1px solid #ddd"],
+[style*="border: 1px solid var(--border)"],
+[style*="border-color: #e0e0e0"],
+[style*="border-color: #e2e8f0"],
+[style*="border-color: #f0f0f0"] {
+    border: 2px solid var(--nb-border) !important;
+}
+
+/* ── Border-radius overrides (neo-brutalism = sharp 0) ── */
+[style*="border-radius: 12px"],
+[style*="border-radius: 16px"],
+[style*="border-radius: 24px"],
+[style*="border-radius: 8px"],
+[style*="border-radius: 4px"] {
+    border-radius: 0 !important;
+}
+
+/* ── Box-shadow overrides (templates use soft blur, neo = hard offset) ── */
+[style*="box-shadow: 0 4px 20px"],
+[style*="box-shadow: 0 8px 30px"],
+[style*="box-shadow: 0 4px 15px"],
+[style*="box-shadow: 0 4px 20px rgba(0,0,0,0.08)"],
+[style*="box-shadow: 0 4px 20px rgba(0,0,0,0.12)"],
+[style*="box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2)"],
+[style*="box-shadow: 0 4px 40px rgba(0,0,0,0.06)"],
+[style*="box-shadow: 0 10px 40px rgba(0,0,0,0.06)"] {
+    box-shadow: var(--nb-shadow) !important;
+}
+
+/* ── Color overrides (templates use hardcoded gray) ── */
+[style*="color:#64748b"],
+[style*="color:#94a3b8"],
+[style*="color:#999"],
+[style*="color:#cbd5e1"],
+[style*="color:#6c757d"] {
+    color: var(--nb-ink-4) !important;
+}
+
+/* ── Backup page specific class overrides (template defines these in <style>) ── */
+.backup-stat-card,
+.backup-action-card,
+.backup-item,
+.backup-list,
+.backup-action-icon,
+.restore-section,
+.gdrive-section,
+.progress-container,
+.backup-stat-icon {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow) !important;
+}
+.backup-stat-card:hover,
+.backup-action-card:hover,
+.backup-item:hover {
+    transform: translate(-2px, -2px) !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+    border-color: var(--nb-primary) !important;
+}
+.backup-action-card.active {
+    background: var(--nb-primary-light) !important;
+    border-color: var(--nb-primary) !important;
+}
+.backup-stat-icon.primary,
+.backup-stat-icon.success,
+.backup-stat-icon.warning,
+.backup-stat-icon.info {
+    background: var(--nb-primary) !important;
+    color: #fff !important;
+}
+.backup-stat-icon.warning { background: var(--nb-warning) !important; }
+.backup-stat-icon.info { background: var(--nb-info) !important; }
+.backup-stat-icon.success { background: var(--nb-success) !important; }
+
+/* ── Laporan klasifikasi-detail inline style overrides ── */
+.stat-card.aktif .icon { background: var(--nb-primary) !important; color: #fff !important; }
+.stat-card.inaktif .icon { background: var(--nb-warning) !important; color: var(--nb-ink) !important; }
+.stat-card.susut .icon { background: var(--nb-orange) !important; color: #fff !important; }
+.stat-card.permanen .icon { background: var(--nb-primary) !important; color: #fff !important; }
+.arsip-table th {
+    background: var(--nb-surface-2) !important;
+    color: var(--nb-ink) !important;
+    border-bottom: 3px solid var(--nb-border) !important;
+}
+.arsip-table .uraian { color: var(--nb-ink-3) !important; }
+.empty-state .icon { background: var(--nb-surface-3) !important; color: var(--nb-ink-4) !important; }
+.stat-card.inaktif .value { color: var(--nb-warning-dark) !important; }
+
+/* ── Laporan arsip print styles overrides ── */
+@media print {
+    .report-header .sub { color: var(--nb-ink-4) !important; }
+    .stat-card .label { color: var(--nb-ink-4) !important; }
+    th { background: var(--nb-ink) !important; color: #fff !important; }
+    .report-footer { color: var(--nb-ink-4) !important; border-top: 1px solid var(--nb-border) !important; }
+    .badge { background: var(--nb-surface-3) !important; }
+}
+
+/* ── Integrations page icon override ── */
+[style*="color:#cbd5e1"] { color: var(--nb-ink-4) !important; }
+
+/* ── Mobile offline/share page overrides ── */
+.mobile-offline-card,
+.mobile-share-card {
+    background: var(--nb-surface) !important;
+    border: 3px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+}
+
+/* ── Supervision certificate QR placeholder ── */
+[style*="background:#f0f0f0"],
+[style*="background: #f0f0f0"] {
+    background: var(--nb-surface-2) !important;
+    border: 2px solid var(--nb-border) !important;
+    color: var(--nb-ink-4) !important;
+}
+
+/* ── Arshow GDrive buttons ── */
+.action-bar-btn[style*="background:#fff"],
+.action-bar-btn[style*="background:#fff;"],
+.action-bar-btn[style*="background:white"] {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    color: var(--nb-ink-2) !important;
+}
+.action-bar-btn[style*="color:#6c757d"] {
+    color: var(--nb-ink-4) !important;
+}
+
+/* ── Statistik avatar bg-purple (Bootstrap) ── */
+[style*="background:#6f42c1"] {
+    background: var(--nb-purple) !important;
+}
+
+/* ── Laporan klasifikasi status badge (warning stamp) ── */
+[style*="background:#fef9c3"] {
+    background: var(--nb-warning-light) !important;
+    color: var(--nb-warning-dark) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+}
+
+/* ── OCR alert border-left accent ── */
+[style*="border-left: 5px solid #ffc107"] {
+    border-left: 5px solid var(--nb-warning-dark) !important;
+}
+
+/* ── Arsip kategori badge + history stat icon (indigo) ── */
+[style*="color:#6366f1"] {
+    color: var(--nb-purple) !important;
+}
+[style*="background:rgba(99,102,241,0.1)"] {
+    background: #F3E8FF !important;
+}
+[style*="background:rgba(99,102,241,0.12)"] {
+    background: #F3E8FF !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   43. BLOCKCHAIN CYBER EXPLORER — neo-brutalism variants
+   Templates inject their own <style> with cyber tokens; beat them.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.explorer-hero {
+    background: var(--nb-ink) !important;
+    color: #fff !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-xl) !important;
+    border-radius: 0 !important;
+    padding: 2.5rem 2rem !important;
+    margin-bottom: 1.5rem !important;
+    position: relative;
+    overflow: hidden;
+}
+[data-theme="dark"] .explorer-hero {
+    background: #F0EDE4 !important;
+    color: var(--nb-ink) !important;
+    border-color: var(--nb-border) !important;
+}
+.explorer-hero h1, .explorer-hero h2, .explorer-hero h3 { color: inherit !important; }
+.hero-glow {
+    position: absolute;
+    top: 0; right: 0;
+    width: 240px; height: 240px;
+    background: var(--nb-primary) !important;
+    opacity: 0.15;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 0 !important;
+}
+[data-theme="dark"] .hero-glow { background: var(--nb-primary) !important; }
+
+.health-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.9rem;
+    background: var(--nb-success) !important;
+    color: #fff !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: 2px 2px 0 0 var(--nb-ink);
+    font-weight: 800;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-radius: 0 !important;
+    margin-bottom: 1rem;
+}
+.health-badge.broken {
+    background: var(--nb-danger) !important;
+    color: #fff !important;
+}
+[data-theme="dark"] .health-badge { box-shadow: 2px 2px 0 0 #F0EDE4; }
+[data-theme="dark"] .health-badge.broken { background: #FF6666 !important; }
+
+.stat-box-cyber {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow) !important;
+    padding: 1.25rem !important;
+    transition: all 0.1s;
+}
+.stat-box-cyber:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--nb-shadow-lg);
+}
+[data-theme="dark"] .stat-box-cyber { background: #1A1A24 !important; border-color: #F0EDE4 !important; box-shadow: 4px 4px 0 0 #F0EDE4 !important; }
+
+.stat-label-cyber {
+    color: var(--nb-ink-4) !important;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.25rem;
+}
+.stat-value-cyber {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--nb-ink) !important;
+    letter-spacing: -0.02em;
+}
+[data-theme="dark"] .stat-value-cyber { color: #F0EDE4 !important; }
+
+.card-explorer {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow) !important;
+    overflow: hidden;
+}
+[data-theme="dark"] .card-explorer { background: #1A1A24 !important; border-color: #F0EDE4 !important; box-shadow: 4px 4px 0 0 #F0EDE4 !important; }
+.card-header-explorer {
+    padding: 1.25rem 1.5rem;
+    background: var(--nb-surface-2) !important;
+    border-bottom: 2px solid var(--nb-border) !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+[data-theme="dark"] .card-header-explorer { background: #22222C !important; border-bottom-color: #F0EDE4 !important; }
+
+.verify-form-box {
+    background: var(--nb-primary) !important;
+    color: #fff !important;
+    border: 3px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+    padding: 2rem !important;
+    margin-bottom: 1.25rem !important;
+}
+.verify-form-box * { color: inherit !important; }
+[data-theme="dark"] .verify-form-box { background: #5B82FF !important; color: var(--nb-ink) !important; }
+
+.block-item {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow) !important;
+    padding: 1rem 1.25rem !important;
+    overflow-wrap: break-word;
+}
+.block-item:hover {
+    background: var(--nb-primary-light) !important;
+    transform: translate(-1px, -1px);
+}
+[data-theme="dark"] .block-item { background: #1A1A24 !important; border-color: #F0EDE4 !important; box-shadow: 4px 4px 0 0 #F0EDE4 !important; }
+[data-theme="dark"] .block-item:hover { background: #1A2240 !important; }
+
+.badge-cyber {
+    display: inline-block !important;
+    padding: 0.25rem 0.7rem !important;
+    background: var(--nb-ink) !important;
+    color: var(--nb-warning) !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: 2px 2px 0 0 var(--nb-ink);
+    font-weight: 800;
+    font-size: 0.66rem !important;
+    text-transform: uppercase;
+    border-radius: 0 !important;
+}
+[data-theme="dark"] .badge-cyber { background: #F0EDE4 !important; color: var(--nb-ink) !important; border-color: #F0EDE4 !important; box-shadow: 2px 2px 0 0 #F0EDE4 !important; }
+
+/* ── Select2 component template override (height mismatch) ── */
+.select2-container .select2-selection--single {
+    height: 44px !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    background-color: var(--nb-surface) !important;
+    color: var(--nb-ink) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px !important;
+    color: var(--nb-ink) !important;
+    padding-left: 0.75rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 42px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: var(--nb-ink-4) !important;
+}
+[data-theme="dark"] .select2-container .select2-selection--single { background-color: #1A1A24 !important; color: #F0EDE4 !important; }
+
+/* ── Klasifikasi page custom classes (klasifikasi-page sets its own tokens) ── */
+.klasifikasi-page .card-klas,
+.card-klas {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow) !important;
+    overflow: hidden;
+}
+.klas-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--nb-surface-3) !important;
+    text-decoration: none;
+    color: var(--nb-ink-3) !important;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.1s;
+    cursor: pointer;
+}
+.klas-item:hover {
+    background: var(--nb-primary-light) !important;
+    color: var(--nb-ink) !important;
+    border-color: var(--nb-border) !important;
+}
+.klas-item.active {
+    background: var(--nb-primary) !important;
+    color: #fff !important;
+    border-left: 4px solid var(--nb-border) !important;
+    font-weight: 800;
+}
+.klas-item .badge-count {
+    background: var(--nb-surface-2) !important;
+    color: var(--nb-ink-4) !important;
+    border: 1px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    padding: 1px 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+.klas-item.active .badge-count {
+    background: var(--nb-primary-dark) !important;
+    color: #fff !important;
+}
+.klas-sidebar::-webkit-scrollbar-thumb {
+    background: var(--nb-ink) !important;
+    border-radius: 0 !important;
+}
+[data-theme="dark"] .card-klas,
+[data-theme="dark"] .klasifikasi-page .card-klas { background: #1A1A24 !important; border-color: #F0EDE4 !important; box-shadow: 4px 4px 0 0 #F0EDE4 !important; }
+[data-theme="dark"] .klas-item { color: #B0ACA4 !important; border-bottom-color: #2C2C36 !important; }
+[data-theme="dark"] .klas-item.active { background: #5B82FF !important; color: #0E0E12 !important; border-left-color: #F0EDE4 !important; }
+
+/* ── Generic hardcoded gradient backgrounds (only the obvious offenders) ── */
+[style*="background: linear-gradient(135deg, #475569"],
+[style*="background:linear-gradient(135deg, #475569"],
+[style*="background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-2)"],
+[style*="background:linear-gradient(135deg, var(--ink-2) 0%, var(--ink-2)"],
+[style*="background: linear-gradient(135deg, var(--ink-2) 0%, #475569"],
+[style*="background:linear-gradient(135deg, var(--ink-2) 0%, #475569"],
+[style*="background: linear-gradient(90deg, var(--ink-2), var(--ink-3)"],
+[style*="background:linear-gradient(90deg, var(--ink-2), var(--ink-3)"],
+[style*="background:linear-gradient(135deg, var(--ink-2), var(--ink-3)"] {
+    background: var(--nb-surface) !important;
+}
+[style*="background: linear-gradient(135deg, var(--neu-bg), var(--neu-bg)"] {
+    background: var(--nb-surface-2) !important;
+}
+[style*="background: linear-gradient(90deg, var(--ink-3), #ec4899)"] {
+    background: var(--nb-pink) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   44. REMAINING TEMPLATE INLINE STYLE OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Blockchain show: .hash-box, .json-explorer ── */
+.hash-box {
+    background: var(--nb-surface-3) !important;
+    padding: 0.75rem !important;
+    border-radius: 0 !important;
+    font-family: 'SFMono-Regular', Consolas, monospace !important;
+    font-size: 0.8rem !important;
+    word-break: break-all !important;
+    border: 2px solid var(--nb-border) !important;
+    color: var(--nb-ink-3) !important;
+}
+[data-theme="dark"] .hash-box { background: #22222C !important; color: #B0ACA4 !important; border-color: #F0EDE4 !important; }
+
+.json-explorer {
+    background: var(--nb-ink) !important;
+    color: var(--nb-success) !important;
+    padding: 1.25rem !important;
+    border-radius: 0 !important;
+    font-family: 'SFMono-Regular', Consolas, monospace !important;
+    font-size: 0.8rem !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+}
+[data-theme="dark"] .json-explorer { background: #F0EDE4 !important; color: var(--nb-ink) !important; border-color: #F0EDE4 !important; }
+
+/* ── Blockchain entity-audit: .hash-badge ── */
+.hash-badge {
+    font-family: 'SFMono-Regular', Consolas, monospace !important;
+    font-size: 0.68rem !important;
+    background: var(--nb-surface-3) !important;
+    padding: 0.25rem 0.6rem !important;
+    border-radius: 0 !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: 2px 2px 0 0 var(--nb-ink) !important;
+    color: var(--nb-ink-3) !important;
+    display: inline-block !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+[data-theme="dark"] .hash-badge { background: #22222C !important; color: #B0ACA4 !important; border-color: #F0EDE4 !important; box-shadow: 2px 2px 0 0 #F0EDE4 !important; }
+
+/* ── Entity-audit: .timeline-dot (circular → square) ── */
+.timeline-dot {
+    border-radius: 0 !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: 2px 2px 0 0 var(--nb-ink) !important;
+}
+.timeline-audit::before { background: var(--nb-border) !important; }
+
+/* ── Import-export: .stat-box ── */
+.stat-box {
+    background: var(--nb-surface) !important;
+    padding: 1rem !important;
+    border-radius: 0 !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow) !important;
+    text-align: center !important;
+}
+[data-theme="dark"] .stat-box { background: #1A1A24 !important; border-color: #F0EDE4 !important; box-shadow: 4px 4px 0 0 #F0EDE4 !important; }
+
+/* ── OCR: .upload-area ── */
+.upload-area {
+    border: 3px dashed var(--nb-border) !important;
+    border-radius: 0 !important;
+    padding: 2.5rem 2rem !important;
+    text-align: center !important;
+    background: var(--nb-surface-2) !important;
+    cursor: pointer;
+    transition: all 0.12s !important;
+}
+.upload-area:hover, .upload-area.drag-over {
+    border-style: solid !important;
+    background: var(--nb-primary-light) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--nb-shadow) !important;
+}
+.upload-area.has-file {
+    border-color: var(--nb-success) !important;
+    background: var(--nb-success-light) !important;
+}
+
+/* ── OCR & disposal: .stat-card gradient override ── */
+.ocr-container .stat-card,
+.disposal-container .stat-card {
+    background: var(--nb-surface) !important;
+    color: var(--nb-ink) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow) !important;
+}
+.ocr-container .stat-card .stat-value,
+.disposal-container .stat-card .stat-value {
+    color: var(--nb-ink) !important;
+}
+
+/* ── Disposal page gradient classes ── */
+.gradient-primary, .gradient-success, .gradient-danger, .gradient-warning {
+    background: var(--nb-surface) !important;
+    color: var(--nb-ink) !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-sm) !important;
+    border-radius: 0 !important;
+}
+
+/* ── Error pages (404/403/503): body gradient → flat ── */
+.errors-container body,
+.errors-page body {
+    background: var(--nb-bg) !important;
+}
+.error-card, .error-container {
+    background: var(--nb-surface) !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-xl) !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    animation: none !important;
+}
+[data-theme="dark"] .error-card, [data-theme="dark"] .error-container {
+    background: #1A1A24 !important;
+    border-color: #F0EDE4 !important;
+    box-shadow: 8px 8px 0 0 #F0EDE4 !important;
+    backdrop-filter: none !important;
+}
+.error-icon {
+    border-radius: 0 !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow) !important;
+}
+
+/* ── Settings page: off-white, primary_color, secondary_color ── */
+:root {
+    --off-white: var(--nb-surface-2) !important;
+    --platinum: var(--nb-border) !important;
+    --primary_color: var(--nb-primary) !important;
+    --secondary_color: var(--nb-secondary) !important;
+}
+@media (prefers-color-scheme: dark) {
+    :root { color-scheme: dark; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   END OF NEO-BRUTALISM DESIGN SYSTEM — 100% COVERAGE
+   ═══════════════════════════════════════════════════════════════════════ */
