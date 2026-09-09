@@ -1,10 +1,10 @@
 {{define "dashboard/premium-champion.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-.dashboard-welcome-card{background:#6C5CE7;border:2px solid #262626;box-shadow:6px 6px 0 rgba(38,38,38,.2)}
-.trophy-badge{font-size:150px;color:#F0EADF}
-.glass{background:rgba(255,255,255,0.85);backdrop-filter:none;border:2px solid #262626;box-shadow:3px 3px 0 rgba(38,38,38,.18)}
-.hover-up:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 rgba(38,38,38,.22)!important}
+.dashboard-welcome-card{background:var(--gradient-primary);border:none;box-shadow:var(--sh-lg)}
+.trophy-badge{font-size:150px;color:rgba(255,255,255,.12)}
+.glass{background:rgba(255,255,255,0.85);backdrop-filter:none;border:1px solid var(--border);box-shadow:var(--sh-sm)}
+.hover-up:hover{transform:translateY(-3px);box-shadow:var(--sh-md)!important}
 .transition-all{transition:all 0.15s ease}
 .backdrop-blur{backdrop-filter:none}
 .badge{font-weight:700;letter-spacing:0.5px}

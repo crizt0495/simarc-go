@@ -1,352 +1,202 @@
-/* ═══════════════════════════════════════════════════════════════
-   MOBILE MATERIAL DESIGN 3 — Android-Style Bottom Navigation
-   Loaded AFTER enterprise-premium.css for clean overrides
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   SIMARC — MOBILE MATERIAL DESIGN 3
+   Android-style bottom navigation & touch polish
+   ═══════════════════════════════════════════════ */
 
-/* ── FORCE: Hide all desktop-only mobile leftovers ── */
-@media (max-width: 991px) {
-  .sidebar-toggle,
-  .sidebar-toggle#sidebarToggle,
-  .top-navbar .sidebar-toggle,
-  .navbar-left .sidebar-toggle { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
-  .navbar-brand-mobile { display: flex !important; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; font-size: 16px; color: var(--ink); }
-}
+/* ── Theme color meta ── */
+meta[name="theme-color"] { content: #4f46e5 !important; }
 
-/* ── Theme Color for Android Status Bar ── */
-meta[name="theme-color"] {
-  content: var(--brand) !important;
-}
-@media (prefers-color-scheme: dark) {
-  meta[name="theme-color"] {
-    content: var(--slate-900) !important;
-  }
-}
-
-/* ── Bottom Navigation Bar — Material Design 3 ── */
+/* ── Bottom navigation (Material 3 style) ── */
 @media (max-width: 991px) {
   .mobile-bottom-nav {
-    --mbn-height: 64px;
-    --mbn-icon-size: 24px;
-    --mbn-font-size: 12px;
-    --mbn-active-color: var(--brand);
-    --mbn-inactive-color: #757575;
-    --mbn-active-bg: rgba(79, 70, 229, 0.12);
+    --mbn-height: 56px;
+    --mbn-active-color: var(--accent);
+    --mbn-inactive-color: var(--ink-4);
+    --mbn-active-bg: var(--accent-soft);
 
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: var(--mbn-height);
+    height: calc(var(--mbn-height) + env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background: var(--surface);
     border-top: 1px solid var(--border);
-    box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
     display: flex !important;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-around;
-    z-index: 1050;
+    z-index: var(--z-navbar, 1030);
   }
 
-  /* Dark mode bottom nav */
-  [data-theme="dark"] .mobile-bottom-nav {
-    background: #121212;
-    border-top-color: #2d2d2d;
-    box-shadow: 0 -1px 6px rgba(0,0,0,0.3);
-  }
-
-  /* ── Nav Item ── */
   .mobile-bottom-nav-item {
     flex: 1;
-    max-width: 80px;
     height: var(--mbn-height);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
     text-decoration: none;
     color: var(--mbn-inactive-color);
-    font-size: var(--mbn-font-size);
-    font-weight: 500;
-    letter-spacing: 0.02em;
+    font-size: 10px;
+    font-weight: 600;
     position: relative;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    padding: 8px 0;
-    transition: color 0.15s ease;
-  }
-
-  [data-theme="dark"] .mobile-bottom-nav-item {
-    color: #9e9e9e;
+    padding: 8px 0 4px;
+    transition: color .15s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
   }
 
   .mobile-bottom-nav-item i {
-    font-size: var(--mbn-icon-size);
+    font-size: 20px;
     line-height: 1;
-    transition: color 0.15s ease, transform 0.15s ease;
+    transition: color .15s ease;
   }
 
-  .mobile-bottom-nav-item span {
-    font-size: var(--mbn-font-size);
-    line-height: 1;
-    font-weight: 500;
-  }
+  .mobile-bottom-nav-item span { font-size: 10px; line-height: 1.1; font-weight: 600; }
 
-  /* ── Tap Feedback ── */
-  .mobile-bottom-nav-item:active {
-    transform: scale(0.92);
-    transition: transform 0.08s ease;
-  }
+  .mobile-bottom-nav-item:active { transform: scale(.92); transition: transform .08s ease; }
 
-  /* ── Active State — MD3 Pill Indicator ── */
-  .mobile-bottom-nav-item.active {
-    color: var(--mbn-active-color);
-  }
+  .mobile-bottom-nav-item.active { color: var(--mbn-active-color); }
+  .mobile-bottom-nav-item.active i { color: var(--mbn-active-color); }
 
-  [data-theme="dark"] .mobile-bottom-nav-item.active {
-    color: #818cf8;
-  }
-
-  .mobile-bottom-nav-item.active i {
-    color: var(--mbn-active-color);
-  }
-
-  [data-theme="dark"] .mobile-bottom-nav-item.active i {
-    color: #818cf8;
-  }
-
-  /* Active pill background (MD3 style) */
   .mobile-bottom-nav-item.active::before {
     content: '';
     position: absolute;
-    top: 6px;
+    top: 4px;
     left: 50%;
     transform: translateX(-50%);
-    width: 56px;
-    height: 32px;
-    border-radius: 16px;
+    width: 48px;
+    height: 28px;
+    border-radius: 14px;
     background: var(--mbn-active-bg);
     z-index: -1;
-    transition: opacity 0.2s ease;
   }
 
-  [data-theme="dark"] .mobile-bottom-nav-item.active::before {
-    background: rgba(96, 165, 250, 0.12);
-  }
-}
-
-/* ── Touch Feedback for Buttons ── */
-.btn:active,
-.btn-crud:active,
-.nav-icon-btn:active,
-.dropdown-item:active,
-.page-link:active {
-  transform: scale(0.98);
-  transition: transform 0.08s ease;
-}
-
-/* ── Ripple Effect Class (add .ripple to any element) ── */
-.ripple {
-  position: relative;
-  overflow: hidden;
-}
-.ripple::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.3);
-  border-radius: 50%;
-  transform: scale(0);
-  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-  pointer-events: none;
-}
-.ripple:active::after {
-  transform: scale(4);
-}
-
-/* ── More Menu Dropdown ── */
-@media (max-width: 991px) {
+  /* ── More menu: full-width bottom sheet (Material 3) ── */
   .mobile-more-menu {
     position: fixed !important;
     top: auto !important;
-    right: 8px !important;
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px) !important;
-    left: 8px !important;
-    transform: none !important;
-    width: auto !important;
-    max-height: 65vh;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    transform: translateY(100%) !important;
+    width: 100% !important;
+    max-height: 70vh;
     overflow-y: auto;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0 !important;
+    box-shadow: var(--shadow-xl) !important;
     border: 1px solid var(--border) !important;
-    padding: 8px !important;
-    z-index: 1060 !important;
+    border-bottom: none !important;
+    padding: 16px !important;
+    z-index: var(--z-dropdown, 1060) !important;
     -webkit-overflow-scrolling: touch;
+    background: var(--surface) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform .25s var(--ease-out) !important;
+    pointer-events: auto !important;
+    display: block !important;
   }
 
-  [data-theme="dark"] .mobile-more-menu {
-    background: #1e1e1e !important;
-    border-color: #2d2d2d !important;
-  }
+  .mobile-more-menu.show { transform: translateY(0) !important; }
 
-  /* Section */
-  .mobile-more-section {
-    margin-bottom: 4px;
-  }
-  .mobile-more-section:last-child {
-    margin-bottom: 0;
-  }
+  .mobile-more-section { margin-bottom: 14px; }
+  .mobile-more-section:last-child { margin-bottom: 0; }
 
   .mobile-more-section-title {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 1.1px;
     color: var(--ink-4);
-    padding: 6px 8px 2px;
+    padding: 0 4px 8px;
     user-select: none;
   }
 
-  [data-theme="dark"] .mobile-more-section-title {
-    color: #757575;
-  }
-
-  .mobile-more-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2px;
-  }
+  .mobile-more-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 
   .mobile-more-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 10px 2px;
-    border-radius: 12px;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
     text-decoration: none;
-    color: var(--ink-3);
-    font-size: 10px;
-    font-weight: 500;
-    transition: background 0.15s ease;
-    min-height: 56px;
-    border: none;
-    background: none;
+    color: var(--ink-2);
+    font-size: 12px;
+    font-weight: 600;
+    transition: background .15s ease, color .15s ease;
+    min-height: 40px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
     width: 100%;
     cursor: pointer;
   }
 
-  [data-theme="dark"] .mobile-more-item {
-    color: #b0b0b0;
-  }
+  .mobile-more-item:hover { background: var(--accent-soft); color: var(--accent); }
+  .mobile-more-item:active { transform: scale(.97); }
 
-  .mobile-more-item:hover {
-    background: var(--surface-3);
-  }
+  .mobile-more-item i { font-size: 16px; color: var(--ink-3); }
+  .mobile-more-item:hover i { color: var(--accent); }
+  .mobile-more-item span { font-size: 12px; line-height: 1.2; }
 
-  .mobile-more-item:active {
-    transform: scale(0.95);
-    background: var(--brand-lt);
-  }
+  .mobile-more-item.active { color: var(--accent); }
+  .mobile-more-item.active i { color: var(--accent); }
 
-  [data-theme="dark"] .mobile-more-item:hover {
-    background: rgba(255,255,255,0.08);
-  }
-
-  [data-theme="dark"] .mobile-more-item:active {
-    background: rgba(96,165,250,0.12);
-  }
-
-  .mobile-more-item i {
-    font-size: 20px;
-    color: var(--ink-3);
-  }
-
-  [data-theme="dark"] .mobile-more-item i {
-    color: #b0b0b0;
-  }
-
-  .mobile-more-item span {
-    font-size: 10px;
-    line-height: 1.1;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  /* Active state */
-  .mobile-more-item.active {
-    color: var(--brand);
-  }
-  .mobile-more-item.active i {
-    color: var(--brand);
-  }
-
-  /* Logout button */
   .mobile-more-logout {
-    color: #ef4444 !important;
+    color: var(--c-danger) !important;
+    background: var(--c-danger-soft);
+    border-color: transparent;
   }
-  .mobile-more-logout i {
-    color: #ef4444 !important;
-  }
-  [data-theme="dark"] .mobile-more-logout {
-    color: #f87171 !important;
-  }
-  [data-theme="dark"] .mobile-more-logout i {
-    color: #f87171 !important;
-  }
+  .mobile-more-logout i { color: var(--c-danger) !important; }
 }
 
-/* ── Floating Action Button ── */
+/* ── Touch feedback ── */
+.btn:active,
+.btn-crud:active,
+.nav-icon-btn:active,
+.dropdown-item:active,
+.page-link:active { transform: scale(.98); transition: transform .08s ease; }
+
+/* ── Card elevation on touch ── */
+@media (max-width: 991px) {
+  .card:active { box-shadow: var(--shadow-md) !important; }
+}
+
+/* ── Floating action button ── */
 .fab {
   position: fixed;
-  bottom: calc(64px + 16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(56px + 16px + env(safe-area-inset-bottom, 0px));
   right: 16px;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: var(--brand);
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-xl);
+  background: var(--accent);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(37,99,235,0.3);
-  z-index: 1060;
+  box-shadow: 0 4px 12px rgba(79,70,229,.35);
+  z-index: var(--z-fab, 9999);
   text-decoration: none;
-  font-size: 24px;
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  font-size: 22px;
+  transition: box-shadow .2s ease, transform .15s ease;
 }
-.fab:hover { box-shadow: 0 6px 20px rgba(37,99,235,0.4); transform: translateY(-2px); }
-.fab:active { transform: scale(0.92); }
+.fab:hover { box-shadow: 0 6px 20px rgba(79,70,229,.45); transform: translateY(-2px); }
+.fab:active { transform: scale(.92); }
 
-/* ── Card Elevation on Touch ── */
+/* ── Fluid page transition ── */
 @media (max-width: 991px) {
-  .card { transition: box-shadow 0.15s ease; }
-  .card:active { box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; }
+  .main-content { animation: fadeIn .15s ease; }
+  @keyframes fadeIn { from { opacity: .97; } to { opacity: 1; } }
 }
 
-/* ── iOS Safe Areas ── */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .mobile-bottom-nav {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .fab {
-    bottom: calc(64px + 16px + env(safe-area-inset-bottom));
-  }
-}
-
-/* ── Page Transitions ── */
-@media (max-width: 991px) {
-  .main-content {
-    animation: fadeIn 0.15s ease;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0.96; }
-    to { opacity: 1; }
-  }
-}
-
-/* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0s !important;

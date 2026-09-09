@@ -3,55 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Halaman Tidak Ditemukan - ArsipPro</title>
+<title>Halaman Tidak Ditemukan - SIMARC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" fetchpriority="high">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" media="print" onload="this.media='all';this.onload=null">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"></noscript>
 <style>
-:root{--primary-900:var(--ink-2);--primary-500:var(--ink-2);--primary-400:var(--ink-3);--danger-500:var(--ink-2);--warning-500:var(--ink-2);--success-500:var(--ink-2);--info-500:var(--ink-3);--neutral-900:var(--ink);--neutral-500:#64748b;--gradient-primary:linear-gradient(135deg,var(--ink-2) 0%,var(--ink-2) 100%);--shadow-lg:0 10px 15px -3px rgba(0,0,0,0.08),0 4px 6px -4px rgba(0,0,0,0.08);--shadow-xl:0 20px 25px -5px rgba(0,0,0,0.08),0 8px 10px -6px rgba(0,0,0,0.08)}
-[data-theme="dark"]{--primary-400:var(--ink-3);--primary-500:var(--ink-3);--neutral-900:var(--neu-bg);--neutral-500:#94a3b8}
+:root{--accent:#4f46e5;--accent-strong:#4338ca;--ink:#1e293b;--ink-2:#334155;--ink-3:#64748b;--ink-4:#94a3b8;--surface:#fff;--surface-2:#f8fafc;--surface-3:#f1f5f9;--border:#e2e8f0;--border-2:#cbd5e1;--radius-lg:16px;--radius-md:8px;--shadow-sm:0 1px 3px rgba(15,23,42,.06);--shadow-md:0 10px 15px -3px rgba(15,23,42,.08);--shadow-lg:0 20px 25px -5px rgba(15,23,42,.1)}
+[data-theme="dark"]{--accent:#6366f1;--accent-strong:#818cf8;--ink:#e2e8f0;--ink-2:#cbd5e1;--ink-3:#94a3b8;--ink-4:#64748b;--surface:#1e293b;--surface-2:#0f172a;--surface-3:#334155;--border:#334155;--border-2:#475569}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#FAF6EF;background-attachment:fixed;min-height:100vh;display:flex;align-items:safe center;justify-content:center;padding:2rem;position:relative;overflow-x:hidden}
-[data-theme="dark"] body{background:#1A1B1F}
-body::before,body::after{content:none}
-body::before{top:-200px;right:-200px}
-body::after{bottom:-200px;left:-200px;animation-delay:-10s}
-@keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-50px) scale(1.1)}66%{transform:translate(-20px,30px) scale(0.9)}}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--surface-2);min-height:100vh;display:flex;align-items:safe center;justify-content:center;padding:2rem;position:relative;overflow-x:hidden;color:var(--ink)}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 .error-container{text-align:center;max-width:600px;width:100%;position:relative;z-index:1}
-.error-card{background:#fff;border-radius:14px;padding:3rem 2rem;box-shadow:8px 8px 0 rgba(38,38,38,.2);border:2px solid #262626;animation:slideUp 0.3s ease-out}
-[data-theme="dark"] .error-card{background:#23252B;border-color:#3A3D45;box-shadow:8px 8px 0 rgba(0,0,0,.5)}
-@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-.error-icon{width:120px;height:120px;margin:0 auto 2rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative;border:2px solid #262626;box-shadow:4px 4px 0 rgba(38,38,38,.18)}
-.error-icon::before{content:none}
-@keyframes pulse{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:0.3;transform:scale(1.1)}}
-.error-icon.error-404{background:var(--accent,#6C5CE7);color:#262626}
-.error-code{font-family:'Playfair Display',serif;font-size:6rem;font-weight:700;color:#262626;line-height:1;margin-bottom:1rem}
-.error-title{font-size:1.5rem;font-weight:800;color:#262626;margin-bottom:1rem}
-[data-theme="dark"] .error-title{color:#F2F0EB}
-.error-message{font-size:1rem;color:var(--neutral-500);line-height:1.6;margin-bottom:2rem;font-weight:500}
-.btn-back{display:inline-flex;align-items:center;gap:0.5rem;padding:0.875rem 2rem;background:var(--accent,#6C5CE7);color:#262626;border:2px solid #262626;border-radius:8px;font-weight:800;font-size:1rem;text-decoration:none;box-shadow:4px 4px 0 rgba(38,38,38,.2);transition:all 0.15s ease;position:relative;overflow:hidden}
-.btn-back::before{content:none}
-.btn-back:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 rgba(38,38,38,.22);color:#262626}
-.btn-back:hover::before{left:100%}
-.home-link{display:inline-block;margin-top:1rem;color:var(--accent,#6C5CE7);text-decoration:none;font-weight:800;transition:all 0.15s ease}
-.home-link:hover{color:var(--ink,#262626);transform:translateX(4px)}
-[data-theme="dark"] .home-link{color:var(--accent,#A9BCE8)}
-.theme-toggle{position:absolute;top:2rem;right:2rem;width:48px;height:48px;background:#fff;border:2px solid #262626;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s ease;z-index:10;box-shadow:3px 3px 0 rgba(38,38,38,.2)}
-[data-theme="dark"] .theme-toggle{background:#23252B;border-color:#3A3D45}
-.theme-toggle:hover{transform:rotate(15deg)}
-.theme-toggle i{font-size:1.25rem;color:var(--accent,#6C5CE7)}
-@media(max-width:768px){.error-code{font-size:4rem}.error-icon{width:100px;height:100px;font-size:2.5rem}.error-card{padding:2rem 1.5rem}}
+.error-card{background:var(--surface);border-radius:var(--radius-lg);padding:3rem 2rem;box-shadow:var(--shadow-lg);border:1px solid var(--border);animation:slideUp 0.3s ease-out}
+.error-icon{width:96px;height:96px;margin:0 auto 1.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.6rem;background:var(--accent);color:#fff;box-shadow:0 8px 20px -4px rgba(79,70,229,.35)}
+.error-code{font-weight:800;font-size:5.5rem;color:var(--ink);line-height:1;margin-bottom:0.5rem;letter-spacing:-.04em}
+.error-title{font-size:1.4rem;font-weight:800;color:var(--ink);margin-bottom:0.75rem;letter-spacing:-.02em}
+.error-message{font-size:0.95rem;color:var(--ink-3);line-height:1.6;margin-bottom:2rem;font-weight:500}
+.btn-back{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.75rem 1.75rem;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-weight:700;font-size:0.95rem;text-decoration:none;box-shadow:0 1px 2px rgba(79,70,229,.4);transition:all 0.15s ease}
+.btn-back:hover{transform:translateY(-1px);box-shadow:0 8px 20px -4px rgba(79,70,229,.4);color:#fff}
+.home-link{display:inline-block;margin-top:1rem;color:var(--accent);text-decoration:none;font-weight:700;transition:color 0.15s ease}
+.home-link:hover{color:var(--accent-strong)}
+.theme-toggle{position:absolute;top:1.5rem;right:1.5rem;width:40px;height:40px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s ease;z-index:10;box-shadow:var(--shadow-sm);color:var(--ink-3)}
+.theme-toggle:hover{color:var(--ink);box-shadow:var(--shadow-md)}
+.theme-toggle i{font-size:1.1rem;color:var(--accent)}
+@media(max-width:768px){.error-code{font-size:4rem}.error-card{padding:2rem 1.5rem}}
 </style>
 </head>
 <body>
 <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><i class="bi bi-moon" id="themeIcon"></i></button>
 <div class="error-container">
 <div class="error-card">
-<div class="error-icon error-404"><i class="bi bi-search"></i></div>
+<div class="error-icon"><i class="bi bi-search"></i></div>
 <div class="error-code">404</div>
 <h1 class="error-title">Halaman Tidak Ditemukan</h1>
 <p class="error-message">{{if .Message}}{{.Message}}{{else}}Maaf, halaman yang Anda cari tidak dapat ditemukan. Mungkin halaman telah dipindahkan atau dihapus.{{end}}</p>
