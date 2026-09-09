@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bagikan — {{.AppName}}</title>
   <style>
+:root{--nb-bg:#F7F3EB;--nb-bg-alt:#EFE8D9;--nb-surface:#FFFDF7;--nb-surface-2:#F5EEDD;--nb-surface-3:#E7DDC9;--nb-ink:#14110B;--nb-ink-2:#2A261D;--nb-ink-3:#524C3E;--nb-ink-4:#5F5849;--nb-border:#14110B;--nb-border-light:#2A261D;--nb-primary:#FF4D00;--nb-primary-dark:#B93300;--nb-primary-light:#FFE4D6;--nb-danger:#D7263D;--nb-danger-dark:#B31E31;--nb-danger-light:#FBE3E7;--nb-success:#007A4F;--nb-success-dark:#006B43;--nb-success-light:#DDF5EA;--nb-warning:#FFD11A;--nb-warning-dark:#8F6400;--nb-warning-light:#FFF6CC;--nb-info:#0B7285;--nb-info-dark:#0A5F6E;--nb-info-light:#DDF2F5;--nb-purple:#7C3AED;--nb-indigo:#4F4AD8;--nb-orange:#FF7A00;--nb-pink:#F472B6;--nb-lime:#84CC16;--nb-shadow-sm:3px 3px 0 0 #14110B;--nb-shadow:5px 5px 0 0 #14110B;--nb-shadow-lg:7px 7px 0 0 #14110B;--nb-gap:1.25rem;--nb-on-primary:#14110B;--nb-on-primary-hover:#FFFFFF;--nb-on-success:#FFFFFF;--nb-on-danger:#FFFFFF;--nb-on-warning:#14110B;--nb-on-info:#FFFFFF;--nb-on-dark:#FFFFFF;--nb-on-accent:#FFFFFF;--ink:var(--nb-ink);--ink-2:var(--nb-ink-2);--ink-3:var(--nb-ink-3);--ink-4:var(--nb-ink-4);--surface:var(--nb-surface);--surface-2:var(--nb-surface-2);--surface-3:var(--nb-surface-3);--bg-alt:var(--nb-bg-alt);--border:var(--nb-border);--border-light:var(--nb-border-light);--neu-bg:var(--nb-bg);--primary:var(--nb-primary);--primary-dark:var(--nb-primary-dark);--primary-light:var(--nb-primary-light);--base:var(--nb-surface)}
+
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--neu-bg);color:var(--ink-2);display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:24px}
-    .card{background:#fff;border-radius:24px;box-shadow:0 10px 40px rgba(0,0,0,0.06);padding:48px 40px;max-width:420px;width:100%;text-align:center}
-    .icon{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--nb-ink-3),var(--ink-2));display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;color:#fff;box-shadow:0 8px 24px rgba(102,126,234,0.25)}
+    .card{background:#fff;border-radius:24px;box-shadow: 3px 3px 0 0 #14110B;padding:48px 40px;max-width:420px;width:100%;text-align:center}
+    .icon{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--nb-ink-3),var(--ink-2));display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;color:#fff;box-shadow: 3px 3px 0 0 #14110B}
     h1{font-size:22px;font-weight:800;margin-bottom:8px;letter-spacing:-0.03em}
     p{font-size:14px;color:var(--nb-ink-4);line-height:1.6;margin-bottom:24px}
     .shared-data{background:var(--surface-3);border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;font-size:13px}
     .shared-data .label{font-size:11px;font-weight:700;color:var(--nb-ink-4);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px}
     .shared-data .value{color:var(--ink-2);margin-bottom:12px;word-break:break-word}
     .shared-data .value:last-child{margin-bottom:0}
-    .btn{display:inline-block;padding:12px 24px;border-radius:12px;background:linear-gradient(135deg,var(--ink-2),var(--ink-2));color:#fff;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s ease;box-shadow:0 4px 16px rgba(59,130,246,0.25)}
-    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(59,130,246,0.35)}
+    .btn{display:inline-block;padding:12px 24px;border-radius:12px;background:linear-gradient(135deg,var(--ink-2),var(--ink-2));color:#fff;font-weight:700;font-size:14px;text-decoration:none;transition:all 0.2s ease;box-shadow: 3px 3px 0 0 #14110B}
+    .btn:hover{transform:translateY(-2px);box-shadow: 3px 3px 0 0 #14110B}
     .footer{font-size:11px;color:var(--nb-ink-4);margin-top:28px;padding-top:20px;border-top:1px solid var(--nb-surface-3)}
   </style>
 </head>

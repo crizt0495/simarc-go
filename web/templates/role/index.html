@@ -1,6 +1,7 @@
 {{define "role/index.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
+:root{--brand-200:var(--nb-primary-light);--royal-gold:#c5a880;--royal-gold-dark:#a98b5f;--gradient-primary:linear-gradient(135deg,var(--nb-primary),var(--nb-primary-dark));--gradient-success:linear-gradient(135deg,var(--nb-success),var(--nb-success-dark));--gradient-gold:linear-gradient(135deg,var(--nb-warning),var(--nb-warning-dark));--royal-navy:var(--nb-ink);--ease-out:cubic-bezier(0.34,1.56,0.64,1);--gold:var(--nb-warning);--platinum-navy:var(--nb-ink);--radius-lg:4px;--radius-md:2px;--royal-blue:var(--nb-indigo);--shadow-md:4px 4px 0 0 var(--nb-ink);--shadow-xl:6px 6px 0 0 var(--nb-ink)}
     /* ── Role Page Premium Styles ── */
     .role-hero {
         background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%);
@@ -115,7 +116,7 @@
     }
     .role-search input:focus {
         border-color: var(--ink-2);
-        box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+        box-shadow: 3px 3px 0 0 #14110B;
     }
     .role-search input::placeholder { color: var(--ink-4); }
     .role-search i {
@@ -286,7 +287,7 @@
         </div>
         <div class="col-md-4 kpi-stagger">
             <div class="kpi-role-card">
-                <div class="kpi-accent" style="background:linear-gradient(90deg,var(--ink-3),#ec4899);"></div>
+                <div class="kpi-accent" style="background:linear-gradient(90deg,var(--ink-3),var(--nb-pink));"></div>
                 <div class="kpi-icon" style="background:var(--neu-bg);color:var(--ink-3);"><i class="bi bi-cpu"></i></div>
                 <div class="kpi-value">4</div>
                 <div class="kpi-label">Role Sistem Core</div>

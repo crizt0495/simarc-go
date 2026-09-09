@@ -1,6 +1,7 @@
 {{define "role/permissions.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
+:root{--brand-200:var(--nb-primary-light);--royal-gold:#c5a880;--royal-gold-dark:#a98b5f;--gradient-primary:linear-gradient(135deg,var(--nb-primary),var(--nb-primary-dark));--gradient-success:linear-gradient(135deg,var(--nb-success),var(--nb-success-dark));--gradient-gold:linear-gradient(135deg,var(--nb-warning),var(--nb-warning-dark));--royal-navy:var(--nb-ink);--ease-out:cubic-bezier(0.34,1.56,0.64,1);--gold:var(--nb-warning);--platinum-navy:var(--nb-ink);--radius-lg:4px;--radius-md:2px;--royal-blue:var(--nb-indigo);--shadow-md:4px 4px 0 0 var(--nb-ink);--shadow-xl:6px 6px 0 0 var(--nb-ink)}
     /* ═══════════════════════════════════════
        HAK AKSES — PREMIUM PERMISSION MANAGER
        ═══════════════════════════════════════ */
@@ -77,7 +78,7 @@
     }
     .perm-search-wrap input:focus {
         border-color: var(--ink-2);
-        box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+        box-shadow: 3px 3px 0 0 #14110B;
     }
     .perm-search-wrap input::placeholder { color: var(--ink-4); }
 
@@ -271,12 +272,12 @@
         border-color: var(--brand-200, var(--neu-bg));
         background: var(--neu-bg);
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        box-shadow: 3px 3px 0 0 #14110B;
     }
     .perm-item.selected {
         border-color: var(--ink-2);
         background: var(--neu-bg);
-        box-shadow: 0 0 0 1px rgba(26,86,219,0.1);
+        box-shadow: 3px 3px 0 0 #14110B;
     }
     .perm-item .form-check-input {
         width: 18px; height: 18px;
@@ -288,7 +289,7 @@
     .perm-item .form-check-input:checked {
         background-color: var(--ink-2);
         border-color: var(--ink-2);
-        box-shadow: 0 0 0 2px rgba(26,86,219,0.15);
+        box-shadow: 3px 3px 0 0 #14110B;
     }
     .perm-item .form-check-input:disabled {
         opacity: 0.4;
@@ -346,7 +347,7 @@
         flex-wrap: wrap;
         gap: 0.75rem;
         margin-top: 1.5rem;
-        box-shadow: 0 -8px 30px rgba(0,0,0,0.06);
+        box-shadow: 3px 3px 0 0 #14110B;
         z-index: 100;
     }
     .save-bar .changes-indicator {

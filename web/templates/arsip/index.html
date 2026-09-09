@@ -4,6 +4,7 @@
 {{define "content"}}
 {{template "components/select2.html"}}
 <style>
+:root{--brand-200:var(--nb-primary-light);--royal-gold:#c5a880;--royal-gold-dark:#a98b5f;--gradient-primary:linear-gradient(135deg,var(--nb-primary),var(--nb-primary-dark));--gradient-success:linear-gradient(135deg,var(--nb-success),var(--nb-success-dark));--gradient-gold:linear-gradient(135deg,var(--nb-warning),var(--nb-warning-dark));--royal-navy:var(--nb-ink);--ease-out:cubic-bezier(0.34,1.56,0.64,1);--gold:var(--nb-warning);--platinum-navy:var(--nb-ink);--radius-lg:4px;--radius-md:2px;--royal-blue:var(--nb-indigo);--shadow-md:4px 4px 0 0 var(--nb-ink);--shadow-xl:6px 6px 0 0 var(--nb-ink)}
 /* ═══════════════════════════════════════
    ARSIP — PREMIUM DAFTAR ARSIP
    ═══════════════════════════════════════ */
@@ -135,13 +136,13 @@
 }
 .table-premium tbody tr {
     background: var(--surface);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    box-shadow: 3px 3px 0 0 #14110B;
     transition: all 0.2s ease;
     border: 1px solid var(--border);
 }
 .table-premium tbody tr:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    box-shadow: 3px 3px 0 0 #14110B;
     border-color: var(--brand-200, var(--neu-bg));
 }
 .table-premium tbody td {
@@ -218,7 +219,7 @@
 }
 .arsip-card:hover {
     border-color: var(--brand-200, var(--neu-bg));
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    box-shadow: 3px 3px 0 0 #14110B;
     transform: translateY(-3px);
 }
 .arsip-card:hover::before { transform: scaleY(1); }
@@ -732,7 +733,7 @@ mark {
         {{if .FilterLokasiID}}<span class="filter-badge" style="background:var(--surface-3);color:var(--ink-3)"><i class="bi bi-geo-alt"></i> Lokasi <a href="#" class="remove" data-param="lokasi_arsip_id">&times;</a></span>{{end}}
         {{if or .FilterStartDate .FilterEndDate}}<span class="filter-badge badge-soft-danger"><i class="bi bi-calendar"></i> {{.FilterStartDate}} ~ {{.FilterEndDate}} <a href="#" class="remove" data-params='["start_date","end_date"]'>&times;</a></span>{{end}}
         {{if .FilterBerkasDigital}}<span class="filter-badge badge-soft-primary"><i class="bi bi-file-earmark"></i> Berkas: {{if eq .FilterBerkasDigital "sudah_ada"}}Ada{{else}}Belum{{end}} <a href="#" class="remove" data-param="status_berkas_digital">&times;</a></span>{{end}}
-        {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:var(--pink-500);color:#fff;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
+        {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:var(--nb-pink);color:#fff;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
         {{if .FilterPemberkasanID}}<span class="filter-badge badge-soft-info"><i class="bi bi-archive"></i> Pemberkasan <a href="#" class="remove" data-param="pemberkasan_id">&times;</a></span>{{end}}
         <a href="/arsip" class="filter-badge" style="background:var(--ink-2);color:#fff;text-decoration:none"><i class="bi bi-x-circle"></i> Hapus Semua</a>
     </div>

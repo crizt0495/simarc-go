@@ -24,11 +24,11 @@
 .stat-card.aktif .icon{background:var(--ink-2);color:#fff}
 .stat-card.aktif .value{color:var(--ink-2)}
 .stat-card.inaktif{background:linear-gradient(135deg,var(--neu-bg),var(--nb-warning-light))}
-.stat-card.inaktif .icon{background:#ca8a04;color:#fff}
-.stat-card.inaktif .value{color:#a16207}
+.stat-card.inaktif .icon{background:var(--nb-warning-dark);color:#fff}
+.stat-card.inaktif .value{color:var(--nb-warning-dark)}
 .stat-card.susut{background:linear-gradient(135deg,var(--neu-bg),var(--nb-primary-light))}
-.stat-card.susut .icon{background:#ea580c;color:#fff}
-.stat-card.susut .value{color:#c2410c}
+.stat-card.susut .icon{background:var(--nb-primary-dark);color:#fff}
+.stat-card.susut .value{color:var(--nb-primary-dark)}
 .stat-card.permanen{background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg))}
 .stat-card.permanen .icon{background:var(--ink-2);color:#fff}
 .stat-card.permanen .value{color:var(--ink-2)}
@@ -150,9 +150,9 @@
 
         <!-- Progress bar -->
         <div class="progress-stacked">
-          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenAktif}}%;background:#16a34a" title="Aktif: {{printf "%.1f" $.ArsipStats.PersenAktif}}%"></div>
-          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenInaktif}}%;background:#ca8a04" title="Inaktif: {{printf "%.1f" $.ArsipStats.PersenInaktif}}%"></div>
-          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenSusut}}%;background:#ea580c" title="Siap Susut: {{printf "%.1f" $.ArsipStats.PersenSusut}}%"></div>
+          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenAktif}}%;background:var(--nb-success)" title="Aktif: {{printf "%.1f" $.ArsipStats.PersenAktif}}%"></div>
+          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenInaktif}}%;background:var(--nb-warning)" title="Inaktif: {{printf "%.1f" $.ArsipStats.PersenInaktif}}%"></div>
+          <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenSusut}}%;background:var(--nb-primary)" title="Siap Susut: {{printf "%.1f" $.ArsipStats.PersenSusut}}%"></div>
           <div class="progress-seg" style="width:{{printf "%.1f" $.ArsipStats.PersenPermanen}}%;background:var(--ink-3)" title="Permanen: {{printf "%.1f" $.ArsipStats.PersenPermanen}}%"></div>
         </div>
 
@@ -186,7 +186,7 @@
                     {{if eq .StatusClass "success"}}
                       <span class="badge" style="background:var(--neu-bg);color:var(--ink-2);font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
                     {{else if eq .StatusClass "warning"}}
-                      <span class="badge" style="background:var(--nb-warning-light);color:#a16207;font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
+                      <span class="badge" style="background:var(--nb-warning-light);color:var(--nb-warning-dark);font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
                     {{else if eq .StatusClass "danger"}}
                       <span class="badge" style="background:var(--neu-bg);color:var(--ink-2);font-size:11px;padding:4px 10px;border-radius:8px;font-weight:600">{{.StatusText}}</span>
                     {{else}}
