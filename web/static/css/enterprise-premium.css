@@ -1754,11 +1754,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 .auth-bg-grid {
     position: absolute; inset: 0;
-    background-image:
-        linear-gradient(var(--border) 1.5px, transparent 1.5px),
-        linear-gradient(90deg, var(--border) 1.5px, transparent 1.5px);
-    background-size: 42px 42px;
-    opacity: .06;
+    background: radial-gradient(700px 500px at 50% 30%, rgba(108,92,231,.05) 0%, transparent 70%);
 }
 .auth-orb { position: absolute; border-radius: 50%; border: 2px solid rgba(38,38,38,.08); }
 .auth-orb-1 { width: 280px; height: 280px; top: -90px; left: -70px; background: rgba(108,92,231,.10); animation: orbDrift 22s ease-in-out infinite; }
@@ -2930,7 +2926,6 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes glowPulse { 0%,100% { box-shadow: 3px 3px 0 var(--neu-shadow-dark); } 50% { box-shadow: 6px 6px 0 var(--neu-shadow-dark); } }
 @keyframes shineSweep { 0% { transform: translateX(-120%) skewX(-20deg); } 100% { transform: translateX(240%) skewX(-20deg); } }
-@keyframes gridDrift { 0% { background-position: 0 0; } 100% { background-position: 48px 48px; } }
 @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 @keyframes cornerIn { from { opacity: 0; transform: scale(1.6); } to { opacity: 1; transform: scale(1); } }
 @keyframes pulseDot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.9); opacity: .5; } }
@@ -3105,16 +3100,10 @@ table.dataTable tbody tr {
     bottom: 14px; right: 14px;
 }
 
-/* ── Main content faint animated grid (art depth) ── */
+/* ── Main content solid surface (clean, no grid pattern) ── */
 .main-content {
-    background-image:
-        linear-gradient(var(--border) 1.5px, transparent 1.5px),
-        linear-gradient(90deg, var(--border) 1.5px, transparent 1.5px);
-    background-size: 48px 48px;
-    animation: gridDrift 60s linear infinite;
-    background-color: var(--surface);
+    background: var(--surface);
 }
-[data-theme="dark"] .main-content { background-image: linear-gradient(rgba(255,255,255,.025) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,.025) 1.5px, transparent 1.5px); }
 
 /* ── Dark mode art tweaks ── */
 [data-theme="dark"] .arsip-hero::before, [data-theme="dark"] .show-hero::before,
