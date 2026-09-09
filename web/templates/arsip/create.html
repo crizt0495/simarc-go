@@ -2,19 +2,24 @@
 {{define "content"}}
 {{template "components/select2.html"}}
 <style>
+/* ═══════════════════════════════════════
+   ARSIP CREATE — NEO-BRUTALIST
+   ═══════════════════════════════════════ */
+
 .create-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r-xl);
-    box-shadow: var(--sh);
+    background: var(--nb-surface);
+    border: 2px solid var(--nb-border);
+    box-shadow: var(--nb-shadow);
     overflow: hidden;
-    animation: slideUp 0.35s ease both;
     margin-bottom: 1.5rem;
 }
-.create-card-d1 { animation: slideUp 0.35s ease 0.08s both; }
+.create-card-d1 { animation: nbSlideUp 0.35s ease 0.08s both; }
 
 .create-header {
-    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 50%, var(--ink-2) 100%);
+    background: var(--nb-primary) !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+    border-radius: 0 !important;
     padding: 2rem 2.5rem;
     position: relative;
     overflow: hidden;
@@ -22,38 +27,39 @@
 .create-header::after {
     content: '';
     position: absolute;
-    top: -50%; right: -10%;
-    width: 220px; height: 220px;
-    background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
-    border-radius: 50%;
+    right: -10px; top: -10px;
+    width: 80px; height: 80px;
+    border: 3px solid rgba(255,255,255,0.25);
+    transform: rotate(15deg);
     pointer-events: none;
 }
 .create-header h4 {
     font-weight: 800; color: #fff; margin-bottom: 0.2rem; position: relative; z-index: 1; font-size: 1.35rem;
 }
 .create-header p {
-    color: rgba(255,255,255,0.75); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1;
+    color: rgba(255,255,255,0.85); font-weight: 600; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1;
 }
 
 .card-head {
     padding: 0.9rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface-2);
+    border-bottom: 2px solid var(--nb-border);
+    background: var(--nb-surface-2);
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 .card-head .step-badge {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 24px; height: 24px;
-    background: var(--brand-lt); color: var(--ink-2);
-    border-radius: 50rem;
+    width: 28px; height: 28px;
+    background: var(--nb-primary); color: #fff;
+    border: 2px solid var(--nb-border);
+    box-shadow: 2px 2px 0 0 var(--nb-ink);
     font-size: 0.65rem; font-weight: 800;
     flex-shrink: 0;
 }
 .card-head .step-label {
     font-size: 0.68rem; font-weight: 700;
-    color: var(--ink-3);
+    color: var(--nb-ink);
     text-transform: uppercase; letter-spacing: 0.05em;
 }
 .card-body-custom { padding: 1.5rem; }
@@ -61,48 +67,68 @@
 .form-field { margin-bottom: 1.25rem; }
 .form-field label {
     display: block; font-weight: 600; font-size: 0.8rem;
-    color: var(--ink-2); margin-bottom: 0.35rem;
+    color: var(--nb-ink); margin-bottom: 0.35rem;
 }
-.form-field label .req { color: var(--ink-2); margin-left: 2px; }
+.form-field label .req { color: var(--nb-danger); margin-left: 2px; }
 .form-field .form-control,
 .form-field .form-select {
     width: 100%; padding: 0.55rem 0.85rem;
-    border: 1.5px solid var(--border); border-radius: var(--r);
-    font-size: 0.85rem; color: var(--ink);
-    background: var(--surface); transition: all 0.18s ease;
+    border: 2px solid var(--nb-border); border-radius: 0;
+    font-size: 0.85rem; color: var(--nb-ink);
+    background: var(--nb-surface); transition: all 0.1s;
     outline: none; font-family: inherit;
 }
 .form-field .form-control:focus,
 .form-field .form-select:focus {
-    border-color: var(--ink-2);
-    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    border-color: var(--nb-primary);
+    box-shadow: 4px 4px 0 0 var(--nb-primary);
 }
 .form-field textarea.form-control { min-height: 100px; resize: vertical; }
-.form-field .form-text { font-size: 0.72rem; color: var(--ink-4); margin-top: 0.2rem; }
+.form-field .form-text { font-size: 0.72rem; color: var(--nb-ink-4); margin-top: 0.2rem; font-weight: 600; }
 
 .file-drop {
-    border: 2px dashed var(--border);
-    border-radius: var(--r);
+    border: 3px dashed var(--nb-border);
     padding: 2.5rem 1.5rem;
     text-align: center;
     cursor: pointer;
-    transition: all 0.18s ease;
-    background: var(--surface-2);
+    transition: all 0.1s;
+    background: var(--nb-surface-2);
 }
-.file-drop:hover { border-color: var(--ink-2); background: var(--brand-lt); }
-.file-drop i { font-size: 2rem; color: var(--ink-4); margin-bottom: 0.5rem; display: block; }
-.file-drop .title { font-size: 0.9rem; font-weight: 700; color: var(--ink-2); }
-.file-drop .desc { font-size: 0.75rem; color: var(--ink-4); margin-top: 0.2rem; }
+.file-drop:hover { border-color: var(--nb-primary); background: var(--nb-primary-light); box-shadow: var(--nb-shadow); transform: translate(-2px, -2px); }
+.file-drop i { font-size: 2rem; color: var(--nb-ink-4); margin-bottom: 0.5rem; display: block; }
+.file-drop .title { font-size: 0.9rem; font-weight: 700; color: var(--nb-ink); }
+.file-drop .desc { font-size: 0.75rem; color: var(--nb-ink-4); margin-top: 0.2rem; font-weight: 600; }
 
 .floating-bar {
     position: sticky; bottom: 1.5rem;
-    background: var(--surface);
-    border: 1px solid var(--border); border-radius: var(--r-lg);
+    background: var(--nb-surface);
+    border: 2px solid var(--nb-border);
+    box-shadow: var(--nb-shadow-lg);
     padding: 1rem 1.5rem;
     display: flex; justify-content: space-between; align-items: center;
-    box-shadow: var(--sh-lg); z-index: 100;
+    z-index: 100;
     margin-top: 1.5rem;
 }
+
+.date-preset-btn {
+    background: var(--nb-surface);
+    border: 2px solid var(--nb-border);
+    box-shadow: 2px 2px 0 0 var(--nb-ink);
+    font-weight: 700;
+    font-size: 0.68rem;
+    color: var(--nb-ink-3);
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    transition: all 0.08s;
+}
+.date-preset-btn:hover { background: var(--nb-primary-light); color: var(--nb-primary); }
+.date-preset-btn.active { background: var(--nb-primary); color: #fff; }
+
+.retiens-badge { border: 2px solid var(--nb-border); box-shadow: 2px 2px 0 0 var(--nb-ink); font-weight: 700; }
+.retiens-overdue { background: var(--nb-danger); color: #fff; }
+.retiens-soon { background: var(--nb-warning); color: var(--nb-ink); }
+.retiens-normal { background: var(--nb-success); color: #fff; }
+.retiens-safe { background: var(--nb-primary); color: #fff; }
 
 @media (max-width: 768px) {
     .create-header { padding: 1.25rem; }
