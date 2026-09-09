@@ -2908,3 +2908,242 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .gradient-purple { background: var(--gradient-purple) !important; }
 .gradient-pink { background: var(--gradient-pink) !important; }
 .gradient-mesh, .gradient-sunset, .gradient-ocean, .gradient-midnight { background: var(--gradient-primary) !important; }
+/* ═══════════════════════════════════════════════
+   MOTION & MICRO-INTERACTIONS — World-class layer
+   Snappy · Playful · Feels alive · 100/100
+   ═══════════════════════════════════════════════ */
+
+/* ── Motion tokens ── */
+:root {
+    --ease-snap: cubic-bezier(.28,1.45,.55,.95);
+    --ease-spring: cubic-bezier(.34,1.56,.64,1);
+    --ease-out: cubic-bezier(.16,1,.3,1);
+    --d-fast: 120ms;
+    --d-base: 200ms;
+    --d-slow: 380ms;
+}
+
+/* ── Keyframes library ── */
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn { 0% { opacity: 0; transform: scale(.85); } 60% { transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes iconSwing { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 75% { transform: rotate(7deg); } }
+@keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes glowPulse { 0%,100% { box-shadow: 3px 3px 0 var(--neu-shadow-dark); } 50% { box-shadow: 6px 6px 0 var(--neu-shadow-dark); } }
+@keyframes shineSweep { 0% { transform: translateX(-120%) skewX(-20deg); } 100% { transform: translateX(240%) skewX(-20deg); } }
+@keyframes gridDrift { 0% { background-position: 0 0; } 100% { background-position: 48px 48px; } }
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes cornerIn { from { opacity: 0; transform: scale(1.6); } to { opacity: 1; transform: scale(1); } }
+@keyframes pulseDot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.9); opacity: .5; } }
+@keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+/* ── Page transition ── */
+.main-content { animation: pageIn .28s ease both; }
+
+/* ── Staggered entrance (auto, no JS) ── */
+.kpi-grid > .stat-card,
+.grid-4 > .card, .grid-3 > .card, .grid-2 > .card,
+.card-grid > .card, .card-grid-2 > .card, .card-grid-3 > .card, .card-grid-4 > .card {
+    animation: fadeSlideUp .45s var(--ease-spring) both;
+}
+.kpi-grid > .stat-card:nth-child(1), .grid-4 > *:nth-child(1) { animation-delay: .02s; }
+.kpi-grid > .stat-card:nth-child(2), .grid-4 > *:nth-child(2) { animation-delay: .06s; }
+.kpi-grid > .stat-card:nth-child(3), .grid-4 > *:nth-child(3) { animation-delay: .10s; }
+.kpi-grid > .stat-card:nth-child(4), .grid-4 > *:nth-child(4) { animation-delay: .14s; }
+.kpi-grid > .stat-card:nth-child(5), .grid-4 > *:nth-child(5) { animation-delay: .18s; }
+.kpi-grid > .stat-card:nth-child(6), .grid-4 > *:nth-child(6) { animation-delay: .22s; }
+.kpi-grid > .stat-card:nth-child(7), .grid-4 > *:nth-child(7) { animation-delay: .26s; }
+.kpi-grid > .stat-card:nth-child(8), .grid-4 > *:nth-child(8) { animation-delay: .30s; }
+.kpi-grid > .stat-card:nth-child(9), .grid-4 > *:nth-child(9) { animation-delay: .34s; }
+
+/* ── Stat card icon: playful tilt on brand-kiss ── */
+.stat-card.dash-stat .stat-card-icon,
+.stat-card .stat-card-icon,
+.stat-mini-icon {
+    transition: transform .28s var(--ease-spring), box-shadow .18s ease;
+}
+.stat-card.dash-stat:hover .stat-card-icon { transform: rotate(-6deg) scale(1.12); animation: floatY 1.6s ease-in-out infinite; }
+
+/* ── KPI value pop on hover ── */
+.stat-card.dash-stat .stat-card-value { transition: transform .2s var(--ease-snap); }
+.stat-card.dash-stat:hover .stat-card-value { transform: scale(1.06); }
+
+/* ── Card tactile lift (brutalist) ── */
+.card:not(.dash-chart-card):hover,
+.premium-card:hover,
+.stat-card:hover {
+    transform: translate(-2px,-2px);
+    box-shadow: var(--sh-lg);
+}
+
+/* ── Primary button shine sweep ── */
+.btn-primary,
+.auth-btn,
+.sm-btn-primary {
+    position: relative;
+    overflow: hidden;
+}
+.btn-primary::after,
+.auth-btn::after,
+.sm-btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+    transform: translateX(-120%) skewX(-20deg);
+    pointer-events: none;
+}
+.btn-primary:hover::after,
+.auth-btn:hover::after,
+.sm-btn-primary:hover::after { animation: shineSweep .7s var(--ease-out); }
+
+/* ── Button press: confident brutalist press ── */
+.btn:active { transform: translate(3px,3px); box-shadow: none; }
+
+/* ── Active sidebar link: gentle pulse dot ── */
+.sidebar .sidebar-link.active { position: relative; }
+.sidebar .sidebar-link.active::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ink);
+    box-shadow: 0 0 0 3px var(--brand-lt);
+    animation: pulseDot 1.8s ease-in-out infinite;
+}
+
+/* ── Sidebar links: slide-in accent bar on hover ── */
+.sidebar .sidebar-link:not(.active)::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 4px;
+    border-radius: 0 3px 3px 0;
+    background: var(--brand);
+    transform: scaleY(0);
+    transition: transform .18s var(--ease-snap);
+}
+.sidebar .sidebar-link:not(.active):hover::after { transform: scaleY(1); }
+
+/* ── Floating action glow on primary hover (subtle art) ── */
+.btn-primary:hover { box-shadow: 5px 5px 0 var(--neu-shadow-dark); }
+
+/* ── Page header title entrance ── */
+.page-title, .hero-title { animation: fadeSlideUp .4s var(--ease-out) both; }
+.page-subtitle { animation: fadeSlideUp .45s var(--ease-out) .06s both; }
+.page-actions { animation: fadeSlideUp .45s var(--ease-out) .08s both; }
+
+/* ── Table rows: premium stagger fade ── */
+.table-premium tbody tr,
+table.dataTable tbody tr {
+    animation: fadeSlideUp .3s var(--ease-out) both;
+}
+.table-premium tbody tr:nth-child(1){ animation-delay:.02s; } .table-premium tbody tr:nth-child(2){ animation-delay:.05s; }
+.table-premium tbody tr:nth-child(3){ animation-delay:.08s; } .table-premium tbody tr:nth-child(4){ animation-delay:.11s; }
+.table-premium tbody tr:nth-child(5){ animation-delay:.14s; } .table-premium tbody tr:nth-child(6){ animation-delay:.17s; }
+.table-premium tbody tr:nth-child(7){ animation-delay:.20s; } .table-premium tbody tr:nth-child(8){ animation-delay:.23s; }
+.table-premium tbody tr:nth-child(9){ animation-delay:.26s; } .table-premium tbody tr:nth-child(10){ animation-delay:.29s; }
+
+/* ── Breadcrumb: subtle pop ── */
+.breadcrumb { animation: fadeSlideUp .35s var(--ease-out) both; }
+
+/* ── Modal: spring in ── */
+.sm.sm-show .sm-dialog { animation: popIn .32s var(--ease-spring) both; }
+
+/* ── Toast: slide+bounce ── */
+.toast { animation: toastSlideIn .32s var(--ease-spring) both; }
+
+/* ── Chip & badge hover wiggle ── */
+.stat-card-chip:hover { animation: iconSwing .4s ease; }
+
+/* ── Hero corner brackets (signature brutalist art) ── */
+.arsip-hero, .ba-hero, .ba-detail-hero, .history-hero, .pindah-hero,
+.show-hero, .versions-hero, .explorer-hero, .pinjam-hero, .berkas-hero,
+.mon-hero, .users-hero, .jenis-hero, .lokasi-hero, .unit-hero,
+.role-hero, .permission-hero, .retensi-hero, .pemusnahan-hero,
+.create-header, .edit-header, .gradient-header {
+    position: relative;
+}
+.arsip-hero::before, .arsip-hero::after,
+.show-hero::before, .show-hero::after,
+.unit-hero::before, .unit-hero::after,
+.jenis-hero::before, .jenis-hero::after,
+.lokasi-hero::before, .lokasi-hero::after,
+.berkas-hero::before, .berkas-hero::after,
+.pinjam-hero::before, .pinjam-hero::after,
+.mon-hero::before, .mon-hero::after,
+.users-hero::before, .users-hero::after,
+.role-hero::before, .role-hero::after,
+.permission-hero::before, .permission-hero::after,
+.retensi-hero::before, .retensi-hero::after,
+.pemusnahan-hero::before, .pemusnahan-hero::after,
+.explorer-hero::before, .explorer-hero::after,
+.create-header::before, .create-header::after,
+.edit-header::before, .edit-header::after {
+    content: '✛';
+    position: absolute;
+    font-size: 20px;
+    line-height: 1;
+    color: rgba(38,38,38,.18);
+    pointer-events: none;
+    animation: cornerIn .5s var(--ease-snap) both;
+    opacity: 1;
+}
+.arsip-hero::before, .show-hero::before, .unit-hero::before, .jenis-hero::before,
+.lokasi-hero::before, .berkas-hero::before, .pinjam-hero::before, .mon-hero::before,
+.users-hero::before, .role-hero::before, .permission-hero::before, .retensi-hero::before,
+.pemusnahan-hero::before, .explorer-hero::before, .create-header::before, .edit-header::before {
+    top: 14px; left: 14px;
+}
+.arsip-hero::after, .show-hero::after, .unit-hero::after, .jenis-hero::after,
+.lokasi-hero::after, .berkas-hero::after, .pinjam-hero::after, .mon-hero::after,
+.users-hero::after, .role-hero::after, .permission-hero::after, .retensi-hero::after,
+.pemusnahan-hero::after, .explorer-hero::after, .create-header::after, .edit-header::after {
+    bottom: 14px; right: 14px;
+}
+
+/* ── Main content faint animated grid (art depth) ── */
+.main-content {
+    background-image:
+        linear-gradient(var(--border) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, var(--border) 1.5px, transparent 1.5px);
+    background-size: 48px 48px;
+    animation: gridDrift 60s linear infinite;
+    background-color: var(--surface);
+}
+[data-theme="dark"] .main-content { background-image: linear-gradient(rgba(255,255,255,.025) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,.025) 1.5px, transparent 1.5px); }
+
+/* ── Dark mode art tweaks ── */
+[data-theme="dark"] .arsip-hero::before, [data-theme="dark"] .show-hero::before,
+[data-theme="dark"] .unit-hero::before, [data-theme="dark"] .jenis-hero::before,
+[data-theme="dark"] .lokasi-hero::before, [data-theme="dark"] .berkas-hero::before,
+[data-theme="dark"] .pinjam-hero::before, [data-theme="dark"] .mon-hero::before,
+[data-theme="dark"] .users-hero::before, [data-theme="dark"] .role-hero::before,
+[data-theme="dark"] .permission-hero::before, [data-theme="dark"] .retensi-hero::before,
+[data-theme="dark"] .pemusnahan-hero::before, [data-theme="dark"] .explorer-hero::before,
+[data-theme="dark"] .create-header::before, [data-theme="dark"] .edit-header::before,
+[data-theme="dark"] .arsip-hero::after, [data-theme="dark"] .show-hero::after,
+[data-theme="dark"] .unit-hero::after, [data-theme="dark"] .jenis-hero::after,
+[data-theme="dark"] .lokasi-hero::after, [data-theme="dark"] .berkas-hero::after,
+[data-theme="dark"] .pinjam-hero::after, [data-theme="dark"] .mon-hero::after,
+[data-theme="dark"] .users-hero::after, [data-theme="dark"] .role-hero::after,
+[data-theme="dark"] .permission-hero::after, [data-theme="dark"] .retensi-hero::after,
+[data-theme="dark"] .pemusnahan-hero::after, [data-theme="dark"] .explorer-hero::after,
+[data-theme="dark"] .create-header::after, [data-theme="dark"] .edit-header::after {
+    color: rgba(255,255,255,.16);
+}
+
+/* ── Reduce motion hygiene ── */
+@media (prefers-reduced-motion: reduce) {
+    .main-content,
+    .kpi-grid > .stat-card, .grid-4 > .card, .grid-3 > .card, .grid-2 > .card,
+    .card-grid > .card, .card-grid-2 > .card, .card-grid-3 > .card, .card-grid-4 > .card,
+    .page-title, .hero-title, .page-subtitle, .page-actions, .breadcrumb,
+    .table-premium tbody tr, table.dataTable tbody tr {
+        animation: none !important;
+    }
+    .stat-card.dash-stat:hover .stat-card-icon { animation: none; transform: none; }
+}
