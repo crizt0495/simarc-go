@@ -327,9 +327,11 @@ setInterval(pollDashboardStats, 30000);
 // Also poll on page load after a short delay
 setTimeout(pollDashboardStats, 2000);
 (function() {
+  var root = getComputedStyle(document.documentElement);
+  var brand = root.getPropertyValue('--nb-primary').trim() || '#FF4D00';
   var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  var gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-  var textColor = isDark ? '#94a3b8' : '#64748b';
+  var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,17,11,0.06)';
+  var textColor = isDark ? '#BCB4A4' : '#7A7363';
 
   var ctx = document.getElementById('forecastChart').getContext('2d');
   new Chart(ctx, {
@@ -339,16 +341,16 @@ setTimeout(pollDashboardStats, 2000);
       datasets: [{
         label: 'Prediksi',
         data: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}{{$m.PredictedCount}}{{end}}],
-        borderColor: '#1a56db',
-        backgroundColor: 'rgba(26,86,219,0.08)',
-        borderWidth: 2, fill: true, tension: 0.4,
-        pointBackgroundColor: '#fff', pointBorderColor: '#1a56db',
-        pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
+        borderColor: brand,
+        backgroundColor: brand + '22',
+        borderWidth: 3, fill: true, tension: 0.4,
+        pointBackgroundColor: '#fff', pointBorderColor: brand,
+        pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 7
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 8 } },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: 'var(--nb-ink)', padding: 10 } },
       scales: {
         y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 12 } } },
         x: { grid: { display: false }, ticks: { color: textColor, font: { size: 12 } } }

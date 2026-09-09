@@ -29,7 +29,7 @@
   <!-- ═══════════════════════════════════════════
        CRITICAL CSS (render-blocking, needed immediately)
        ═══════════════════════════════════════════ -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" fetchpriority="high">
   <link href="/css/neo-brutalism.min.css?v={{.AssetVersion}}" rel="stylesheet" fetchpriority="high">
 
@@ -48,304 +48,61 @@
   </noscript>
 
   <style>
-  /* ── Neo-Brutalism DataTables & Premium Table Styling ── */
-  .table-responsive { border: 2px solid var(--nb-border); box-shadow: var(--nb-shadow); overflow-x: auto; border-radius: 0; }
-  .dataTables_wrapper { padding: 0.25rem 0 0 0; font-family: inherit; }
-  table.dataTable, table.table-premium {
-    margin-top: 0 !important; margin-bottom: 0.75rem !important;
-    border-collapse: separate !important; border-spacing: 0 !important; width: 100% !important;
-  }
-
-  /* Header */
-  table.dataTable thead th, table.table-premium thead th {
-    background: var(--nb-surface-2) !important;
-    color: var(--nb-ink) !important; font-weight: 800 !important; text-transform: uppercase;
-    font-size: 0.68rem; letter-spacing: 0.05em; padding: 0.75rem 0.85rem !important;
-    border: none !important; border-bottom: 3px solid var(--nb-border) !important;
-    white-space: nowrap; position: relative; user-select: none;
-  }
-
-  /* Sort icons */
-  table.dataTable thead th.sorting { cursor: pointer; }
-  table.dataTable thead th.sorting:hover { background: var(--nb-primary-light) !important; color: var(--nb-ink) !important; }
-  table.dataTable thead th.sorting:after,
-  table.dataTable thead th.sorting_asc:after,
-  table.dataTable thead th.sorting_desc:after { display: none !important; }
-  table.dataTable thead th.sorting:before { content: '\f282'; font-family: 'bootstrap-icons'; font-size: 0.6rem; margin-left: 5px; opacity: 0.3; }
-  table.dataTable thead th.sorting_asc:before { content: '\f286'; font-family: 'bootstrap-icons'; font-size: 0.65rem; margin-left: 5px; opacity: 1; color: var(--nb-primary); }
-  table.dataTable thead th.sorting_desc:before { content: '\f282'; font-family: 'bootstrap-icons'; font-size: 0.65rem; margin-left: 5px; opacity: 1; color: var(--nb-primary); }
-  table.dataTable thead th.sorting_asc,
-  table.dataTable thead th.sorting_desc { background: var(--nb-primary-light) !important; color: var(--nb-primary) !important; }
-
-  /* Body rows */
-  table.dataTable tbody tr, table.table-premium tbody tr { background: var(--nb-surface); transition: background-color 0.1s; border-radius: 0; }
-  table.dataTable tbody tr:hover, table.table-premium tbody tr:hover { background: var(--nb-primary-light) !important; box-shadow: var(--nb-shadow-sm); }
-  table.dataTable tbody td, table.table-premium tbody td {
-    padding: 0.7rem 0.85rem !important; border: none !important; border-bottom: 2px solid var(--nb-surface-3) !important;
-    background: transparent !important; color: var(--nb-ink-3); vertical-align: middle; font-size: 0.85rem; line-height: 1.5;
-  }
-  table.dataTable tbody tr:nth-child(even), table.table-premium tbody tr:nth-child(even) { background: var(--nb-surface-2) !important; }
-
-  /* Empty state */
-  table.dataTable tbody tr td.dataTables_empty, table.table-premium tbody td[colspan] {
-    padding: 3.5rem 1rem !important;
-    text-align: center;
-    color: var(--nb-ink-4);
-    font-size: 0.9rem;
-    font-weight: 700;
-    background: var(--nb-surface-2) !important;
-    border: 2px dashed var(--nb-border) !important;
-    border-radius: 0 !important;
-  }
-  table.dataTable tbody tr td.dataTables_empty::before {
-    content: '';
-    display: block;
-    width: 42px; height: 42px;
-    margin: 0 auto 0.8rem;
-    background: var(--nb-primary-light);
-    border: 2px solid var(--nb-border);
-    box-shadow: 3px 3px 0 0 var(--nb-ink);
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232563eb'%3E%3Cpath d='M1.5 1h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5zm0 1v1h10v-1h-10zm0 3v7h10V5h-10zM2 6h1v1H2V6zm2 0h4v1H4V6zm-2 3h1v1H2V9zm2 0h4v1H4V9z'/%3E%3C/svg%3E") center/22px no-repeat;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232563eb'%3E%3Cpath d='M1.5 1h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5zm0 1v1h10v-1h-10zm0 3v7h10V5h-10zM2 6h1v1H2V6zm2 0h4v1H4V6zm-2 3h1v1H2V9zm2 0h4v1H4V9z'/%3E%3C/svg%3E") center/22px no-repeat;
-  }
-
-  /* Badges & buttons in table */
-  table.dataTable tbody .badge, table.table-premium tbody .badge { font-size: 0.68rem; font-weight: 700; padding: 0.35em 0.65em; letter-spacing: 0.02em; border: 2px solid var(--nb-border); box-shadow: 2px 2px 0 0 var(--nb-ink); border-radius: 0; }
-  table.dataTable tbody .btn-group .btn, table.dataTable tbody .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; border: 2px solid var(--nb-border); border-radius: 0; transition: all 0.08s; }
-  table.dataTable tbody .btn-group { gap: 3px; }
-  table.dataTable tbody .btn-group .btn:hover { background: var(--nb-primary-light); box-shadow: 2px 2px 0 0 var(--nb-ink); }
-
-  /* Toolbar */
-  .dataTables_length, .dataTables_filter { margin-bottom: 0.75rem; font-size: 0.813rem; color: var(--nb-ink-4); }
-  .dataTables_length label, .dataTables_filter label { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; }
-  .dataTables_length select {
-    padding: 0.3rem 1.8rem 0.3rem 0.6rem; font-size: 0.813rem; font-weight: 700; color: var(--nb-ink-3);
-    background-color: var(--nb-surface); border: 2px solid var(--nb-border); border-radius: 0; box-shadow: 2px 2px 0 0 var(--nb-ink); outline: none; cursor: pointer; min-width: 65px;
-  }
-  .dataTables_length select:focus { border-color: var(--nb-primary); box-shadow: 3px 3px 0 0 var(--nb-primary); }
-  .dataTables_filter input {
-    padding: 0.35rem 0.7rem 0.35rem 2rem; font-size: 0.813rem; color: var(--nb-ink-3); background-color: var(--nb-surface);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: 0.6rem center;
-    border: 2px solid var(--nb-border); border-radius: 0; box-shadow: 2px 2px 0 0 var(--nb-ink); outline: none; min-width: 220px; margin-left: 0.3rem;
-  }
-  .dataTables_filter input:focus { border-color: var(--nb-primary); box-shadow: 3px 3px 0 0 var(--nb-primary); }
-  .dataTables_filter input::placeholder { color: var(--nb-ink-4); }
-
-  /* Info */
-  .dataTables_info { padding-top: 0.75rem !important; font-size: 0.8rem; color: var(--nb-ink-4); font-weight: 700; }
-
-  /* Pagination */
-  .dataTables_paginate { padding-top: 0.5rem !important; }
-  .dataTables_paginate .pagination, .pagination { margin-bottom: 0; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
-  .dataTables_paginate .page-item .page-link, .pagination .page-link {
-    border: 2px solid var(--nb-border) !important; padding: 0.3rem 0.65rem; font-size: 0.8rem; font-weight: 700;
-    color: var(--nb-ink) !important; background-color: var(--nb-surface) !important; border-radius: 0 !important; transition: all 0.08s;
-    display: inline-flex; align-items: center; justify-content: center; min-width: 34px; line-height: 1.2;
-    box-shadow: 2px 2px 0 0 var(--nb-ink); text-decoration: none;
-  }
-  .dataTables_paginate .page-item.active .page-link, .pagination .page-item.active .page-link {
-    background: var(--nb-primary) !important; border-color: var(--nb-border) !important;
-    color: #fff !important; box-shadow: 4px 4px 0 0 var(--nb-ink) !important; font-weight: 800;
-  }
-  .dataTables_paginate .page-item:hover:not(.active) .page-link, .pagination .page-item:hover:not(.active) .page-link { background: var(--nb-primary-light) !important; color: var(--nb-primary) !important; }
-  .dataTables_paginate .page-item { margin: 0 1px; }
-  .dataTables_paginate .page-item.disabled .page-link, .pagination .page-item.disabled .page-link { opacity: 0.4; pointer-events: none; box-shadow: none; border-color: var(--nb-surface-3) !important; }
-
-  /* Processing */
+  /* ── Premium Neo-Brutalism 2.0 — component styles live in
+       /css/neo-brutalism.min.css. This block only carries the slim,
+       app-specific micro-tune rules that belong with the layout. ── */
   .dataTables_processing { background: var(--nb-surface) !important; border: 3px solid var(--nb-border) !important; border-radius: 0 !important; padding: 1.5rem !important; font-weight: 700; color: var(--nb-ink); box-shadow: var(--nb-shadow-lg) !important; }
+  /* Prevent gap on mobile when rotating */
+  html, body { overflow-x: hidden; }
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    .dataTables_wrapper { padding: 0; }
-    .dataTables_length, .dataTables_filter { float: none !important; text-align: left !important; display: block !important; width: 100% !important; }
-    .dataTables_filter input { min-width: 100%; margin-left: 0; margin-top: 4px; width: 100% !important; }
-    .dataTables_length select { min-width: 60px; }
-    .dataTables_info { text-align: left; font-size: 0.75rem; }
-    .dataTables_paginate { float: left !important; }
-    .dataTables_paginate .pagination { justify-content: flex-start; }
-    table.dataTable, table.table-premium { border-spacing: 0 !important; }
-    table.dataTable tbody td, table.table-premium tbody td { padding: 0.55rem 0.6rem !important; font-size: 0.8rem; }
-    table.dataTable thead th, table.table-premium thead th { padding: 0.6rem 0.6rem !important; font-size: 0.62rem; }
-  }
-
-  /* ── Table Premium extras ── */
-  table.table-premium tbody .btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--nb-border) !important; border-radius: 0 !important; font-size: 0.8rem; box-shadow: 2px 2px 0 0 var(--nb-ink); transition: all 0.08s; }
-  table.table-premium tbody .btn-icon:hover { box-shadow: 3px 3px 0 0 var(--nb-ink); transform: translate(-1px, -1px); }
-  table.table-premium tbody .btn-soft-primary { background: var(--nb-primary-light); color: var(--nb-primary); }
-  table.table-premium tbody .btn-soft-success { background: var(--nb-success-light); color: var(--nb-success); }
-  table.table-premium tbody .btn-soft-warning { background: var(--nb-warning-light); color: var(--nb-warning-dark); }
-  table.table-premium tbody .btn-soft-danger { background: var(--nb-danger-light); color: var(--nb-danger); }
-  table.table-premium tbody .btn-soft-dark { background: var(--nb-surface-3); color: var(--nb-ink-4); }
-  /* Status badges */
-  .status-badge { display: inline-block; }
-  .status-aktif, .status-inaktif, .status-siap_penyusutan, .status-musnah, .status-permanen {
-    border: 2px solid var(--nb-border);
-    box-shadow: 2px 2px 0 0 var(--nb-ink);
-    border-radius: 0;
-  }
-  /* File indicator */
-  .file-indicator { width: 32px; height: 32px; border: 2px solid var(--nb-border); border-radius: 0; box-shadow: 2px 2px 0 0 var(--nb-ink); display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; background: var(--nb-surface-2); color: var(--nb-ink); }
-  .file-indicator.bg-success { background: var(--nb-success-light) !important; color: var(--nb-success) !important; }
-  .file-indicator.bg-slate-200 { background: var(--nb-surface-3) !important; color: var(--nb-ink-4) !important; }
-  /* Empty state in premium table */
-  table.table-premium .empty-state i { font-size: 2.5rem; color: var(--nb-ink-4); }
-  table.table-premium .empty-state p { color: var(--nb-ink-4); margin-top: 0.75rem; font-weight: 700; }
-
-  /* ═══════════════════════════════════════════
-     MOBILE ENHANCEMENTS
-     ═══════════════════════════════════════════ */
-
-  /* ── iOS Safe Area Support ── */
+  /* ── iPad/iOS safe-area & touch polish ── */
   @supports (padding: env(safe-area-inset-bottom)) {
-    .main-content { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important; }
+    .main-content { padding-bottom: calc(var(--nb-gap) + env(safe-area-inset-bottom)) !important; }
     .mobile-bottom-nav { padding-bottom: calc(4px + env(safe-area-inset-bottom)) !important; }
     .top-navbar { padding-top: env(safe-area-inset-top); }
-    body.auth-body { padding-top: calc(20px + env(safe-area-inset-top)); padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
-    .auth-theme-btn { bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
-    .floating-bar { bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important; }
-    .position-fixed.bottom-0.end-0 { bottom: calc(0px + env(safe-area-inset-bottom)) !important; }
     .toast-container { bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
-  }
-  @supports (padding: constant(safe-area-inset-bottom)) {
-    /* iOS < 11.2 fallback */
-    .main-content { padding-bottom: calc(1.5rem + constant(safe-area-inset-bottom)) !important; }
-    .mobile-bottom-nav { padding-bottom: calc(4px + constant(safe-area-inset-bottom)) !important; }
+    .position-fixed.bottom-0.end-0 { bottom: calc(0px + env(safe-area-inset-bottom)) !important; }
   }
 
-  /* ── Touch-Friendly Tap Targets (min 44px) ── */
-  @media (pointer: coarse) {
-    .btn, .btn-crud, .sidebar-link, .dropdown-item, .nav-icon-btn,
-    .page-link, .mobile-bottom-nav-item, .filter-badge,
-    .tag-pill, .badge-soft, .status-badge {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .btn-crud {
-      min-width: 44px;
-    }
-    .sidebar-link {
-      padding-top: 12px !important;
-      padding-bottom: 12px !important;
-    }
-    input, select, textarea {
-      font-size: 16px !important; /* Prevents iOS zoom on focus */
-    }
-    .form-control, .form-select {
-      font-size: 16px !important;
-    }
-    .pagination .page-link {
-      min-width: 44px;
-      min-height: 44px;
-    }
-  }
-
-  /* ── Momentum Scrolling for iOS ── */
-  .sidebar-nav, .modal-body,
-  .card-body-scroll, [style*="overflow-y:auto"],
+  /* ── Momentum scrolling for iOS ── */
+  .sidebar-nav, .modal-body, .card-body-scroll, [style*="overflow-y:auto"],
   .explorer-grid, .mon-stat, .progres-stat {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
-  /* Horizontal-only containers (tables): contain horizontal overscroll so
-     side-swipes don't chain to the page, but keep the vertical axis
-     propagating — otherwise a vertical swipe starting on a wide table
-     would be swallowed and the page could not be scrolled. */
-  .table-responsive {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-  }
+  .table-responsive { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 
-  /* ── Mobile Improved Table Horizontal Scroll ── */
-  @media (max-width: 768px) {
-    .table-responsive::-webkit-scrollbar {
-      height: 6px;
-    }
-    .table-responsive::-webkit-scrollbar-thumb {
-      background: var(--nb-border);
-      border-radius: 0;
-    }
-    .table-responsive::-webkit-scrollbar-track {
-      background: transparent;
-    }
-  }
-
-  /* ── Prevent text selection on mobile buttons ── */
-  .btn, .sidebar-link, .mobile-bottom-nav-item, .nav-icon-btn {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  /* ── Mobile bottom nav active state ── */
-  .mobile-bottom-nav-item.active {
-    color: var(--nb-primary) !important;
-  }
-  .mobile-bottom-nav-item.active i,
-  .mobile-bottom-nav-item.active span {
-    color: var(--nb-primary);
-  }
+  /* ── Mobile bottom nav active indicator ── */
+  .mobile-bottom-nav-item { position: relative; }
+  .mobile-bottom-nav-item.active { color: var(--nb-primary) !important; }
+  .mobile-bottom-nav-item.active i, .mobile-bottom-nav-item.active span { color: var(--nb-primary); }
   .mobile-bottom-nav-item.active::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 28px;
-    height: 4px;
-    background: var(--nb-primary);
-    border-radius: 0 0 2px 2px;
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 28px; height: 4px; background: var(--nb-primary);
     box-shadow: 1px 1px 0 0 var(--nb-ink);
   }
 
-  /* ── Mobile fixed floating bar with safe area ── */
-  @media (max-width: 768px) {
-    .floating-bar {
-      margin-left: -16px !important;
-      margin-right: -16px !important;
-      border-radius: 0 !important;
-      border-left: none !important;
-      border-right: none !important;
-      border-bottom: none !important;
-    }
+  /* ── Prevent tap highlight & iOS zoom ── */
+  .btn, .sidebar-link, .mobile-bottom-nav-item, .nav-icon-btn, .dropdown-item,
+  .btn-crud, .page-link, .badge-soft, .status-badge, .tag-pill {
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  @media (pointer: coarse) {
+    .btn, .btn-crud, .sidebar-link, .dropdown-item, .nav-icon-btn,
+    .page-link, .mobile-bottom-nav-item, .filter-badge, .tag-pill,
+    .badge-soft, .status-badge { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    input, select, textarea, .form-control, .form-select { font-size: 16px !important; }
   }
 
-  /* ── Mobile page header compact ── */
-  @media (max-width: 576px) {
-    .page-header .page-title {
-      font-size: 1.1rem !important;
-    }
-    .page-actions .btn {
-      padding: 6px 12px !important;
-      font-size: 0.72rem !important;
-    }
-    .hero-title {
-      font-size: 1.1rem !important;
-    }
-    .hero-sub {
-      font-size: 0.72rem !important;
-    }
-    .stat-value, .stat-card-value {
-      font-size: 1.1rem !important;
-    }
-    .stat-card-value {
-      font-size: 1.3rem !important;
-    }
-    .badge-soft, .badge, .st-badge {
-      font-size: 0.6rem !important;
-    }
-    /* Hero padding compact */
-    .arsip-hero, .pinjam-hero, .lokasi-hero, .jenis-hero, .unit-hero,
-    .berkas-hero, .retensi-hero, .mon-hero, .pemusnahan-hero,
-    .users-hero, .role-hero, .show-hero, .edit-hero, .create-header {
-      padding: 1rem 1.25rem !important;
-    }
-  }
-
-  /* Prevent gap on mobile when rotating */
-  html, body {
-    overflow-x: hidden;
+  /* ── Compact page chrome on small phones ── */
+  @media (max-width: 575.98px) {
+    .page-header .page-title, .hero-title { font-size: 1.1rem !important; }
+    .hero-sub { font-size: 0.72rem !important; }
+    .stat-value, .stat-card-value { font-size: 1.3rem !important; }
+    .badge-soft, .badge, .st-badge { font-size: 0.6rem !important; }
+    .arsip-hero, .pinjam-hero, .lokasi-hero, .jenis-hero, .unit-hero, .berkas-hero,
+    .retensi-hero, .mon-hero, .pemusnahan-hero, .users-hero, .role-hero, .show-hero,
+    .edit-hero, .create-header { padding: 1rem 1.25rem !important; }
   }
   </style>
 
