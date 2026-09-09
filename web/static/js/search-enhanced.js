@@ -129,7 +129,7 @@
             `;
             
             div.innerHTML = `
-                <i class="bi bi-${item.icon}" style="font-size: 1.25rem; color: #0d6efd;"></i>
+                <i class="bi bi-${item.icon}" style="font-size: 1.25rem; color: #FF4D00;"></i>
                 <div style="flex: 1;">
                     <div style="font-weight: 600; color: #212529;">${escapeHtml(item.value)}</div>
                     <div style="font-size: 0.875rem; color: #6c757d;">${escapeHtml(item.highlight)}</div>

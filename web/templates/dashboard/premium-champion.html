@@ -185,9 +185,14 @@
 <script>
 document.addEventListener('DOMContentLoaded',function(){
     const ctx=document.getElementById('archiveTrendChart').getContext('2d');
+    const root=getComputedStyle(document.documentElement);
+    const brand=root.getPropertyValue('--nb-primary').trim()||'#FF4D00';
+    const onAccent=root.getPropertyValue('--nb-on-accent').trim()||'#FFFFFF';
+    const hexToRgb=h=>{const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];};
+    const [r,g,b]=hexToRgb(brand);
     const gradient=ctx.createLinearGradient(0,0,0,400);
-    gradient.addColorStop(0,'rgba(79,70,229,0.4)');
-    gradient.addColorStop(1,'rgba(79,70,229,0)');
+    gradient.addColorStop(0,`rgba(${r},${g},${b},0.4)`);
+    gradient.addColorStop(1,`rgba(${r},${g},${b},0)`);
     new Chart(ctx,{
         type:'line',
         data:{
@@ -195,8 +200,8 @@ document.addEventListener('DOMContentLoaded',function(){
             datasets:[{
                 label:'Volume Arsip',
                 data:[65,78,90,115,142,160,185,210,240,265,290,315],
-                borderColor:'#4f46e5',borderWidth:4,tension:0.4,fill:true,
-                backgroundColor:gradient,pointBackgroundColor:'#4f46e5',pointBorderColor:'#fff',
+                borderColor:brand,borderWidth:4,tension:0.4,fill:true,
+                backgroundColor:gradient,pointBackgroundColor:brand,pointBorderColor:onAccent,
                 pointBorderWidth:2,pointRadius:6,pointHoverRadius:8
             }]
         },

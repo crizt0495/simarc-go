@@ -1,11 +1,11 @@
 {
   "name": "SIMARC (Sistem Informasi Manajemen Arsip Record Center)",
   "short_name": "SIMARC",
-  "description": "Sistem Informasi Manajemen Arsip Record Center dengan Blockchain dengan Blockchain & AI QR",
+  "description": "Sistem Informasi Manajemen Arsip Record Center dengan Blockchain & AI QR",
   "start_url": "/mobile",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1e3a8a",
+  "background_color": "#F7F3EB",
+  "theme_color": "#FF4D00",
   "orientation": "portrait-primary",
   "icons": [
     {
