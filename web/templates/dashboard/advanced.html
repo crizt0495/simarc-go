@@ -1,28 +1,28 @@
 {{define "dashboard/advanced.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-.advanced-header{background:var(--gradient-primary);padding:2rem;border-radius:var(--r-lg);color:#fff;margin-bottom:1rem;box-shadow:var(--sh-lg);position:relative;overflow:hidden;border:none}
+.advanced-header{background:var(--brand);padding:2rem;border-radius:var(--r);color:var(--ink);margin-bottom:1rem;box-shadow:var(--sh);position:relative;overflow:hidden;border:2px solid var(--border)}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.5rem;margin-top:1.5rem;padding:0;position:relative;z-index:1}
-.stat-card-modern{background:var(--surface);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh-sm);border:1px solid var(--border);transition:all 0.15s var(--ease-out)}
-.stat-card-modern:hover{transform:translateY(-2px);box-shadow:var(--sh-md)}
-.stat-card-modern .icon-box{width:48px;height:48px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;font-size:1.3rem;background:var(--surface-2);color:var(--ink-3)}
-.stat-card-modern .label{font-size:0.8rem;color:var(--ink-4);font-weight:700;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.04em}
+.stat-card-modern{background:var(--surface-2);border-radius:var(--r);padding:1.5rem;box-shadow:var(--sh);border:2px solid var(--border);transition:all 0.15s ease}
+.stat-card-modern:hover{transform:translate(-2px,-2px);box-shadow:var(--sh-lg)}
+.stat-card-modern .icon-box{width:48px;height:48px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;font-size:1.3rem;background:var(--neu-bg);color:var(--ink-3);border:2px solid var(--border);box-shadow:var(--neu-inset)}
+.stat-card-modern .label{font-size:0.8rem;color:var(--ink-4);font-weight:800;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.04em}
 .stat-card-modern .value{font-size:1.75rem;font-weight:800;color:var(--ink);line-height:1.2}
 .charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2rem}
 @media(max-width:992px){.charts-grid{grid-template-columns:1fr}}
-.chart-card-modern{background:var(--surface);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh-sm);border:1px solid var(--border)}
+.chart-card-modern{background:var(--surface-2);border-radius:var(--r);padding:1.5rem;box-shadow:var(--sh);border:2px solid var(--border)}
 .chart-card-modern .chart-header{margin-bottom:1.25rem}
 .chart-card-modern .chart-header h4{font-weight:800;color:var(--ink);margin-bottom:0.25rem;font-size:1rem}
 .chart-card-modern .chart-header p{font-size:0.8rem;color:var(--ink-4);margin:0}
-.activity-section-modern{background:var(--surface);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh-sm);border:1px solid var(--border);margin-top:1.5rem}
-.refresh-btn{background:var(--surface);border:1px solid var(--border);color:var(--ink-2);box-shadow:var(--sh-sm);font-weight:700}
-.refresh-btn:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);box-shadow:var(--sh-md)}
+.activity-section-modern{background:var(--surface-2);border-radius:var(--r);padding:1.5rem;box-shadow:var(--sh);border:2px solid var(--border);margin-top:1.5rem}
+.refresh-btn{background:var(--surface-2);border:2px solid var(--border);color:var(--ink-2);box-shadow:var(--neu-raised-sm);font-weight:700}
+.refresh-btn:hover{background:var(--brand-lt);border-color:var(--border);color:var(--brand-dk);box-shadow:var(--neu-raised);transform:translate(-1px,-1px)}
 </style>
 <div class="container-fluid pb-5 px-0">
     <div class="advanced-header d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
             <h1 class="fw-bold mb-1" style="font-size:1.5rem">📊 Analitik Dashboard</h1>
-            <p class="mb-0" style="font-size:0.9rem;opacity:.9;font-weight:600">Pemantauan data kearsipan secara real-time</p>
+            <p class="mb-0" style="font-size:0.9rem;opacity:.7;font-weight:600">Pemantauan data kearsipan secara real-time</p>
         </div>
         <button class="btn fw-bold px-4 refresh-btn" onclick="location.reload()">
             <i class="bi bi-arrow-clockwise me-2"></i>Segarkan Data

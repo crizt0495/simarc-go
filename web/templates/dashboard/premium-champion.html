@@ -1,13 +1,20 @@
 {{define "dashboard/premium-champion.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-.dashboard-welcome-card{background:var(--gradient-primary);border:none;box-shadow:var(--sh-lg)}
-.trophy-badge{font-size:150px;color:rgba(255,255,255,.12)}
-.glass{background:rgba(255,255,255,0.85);backdrop-filter:none;border:1px solid var(--border);box-shadow:var(--sh-sm)}
-.hover-up:hover{transform:translateY(-3px);box-shadow:var(--sh-md)!important}
+.dashboard-welcome-card{background:var(--brand);border:2px solid var(--border);box-shadow:var(--sh-lg)}
+.trophy-badge{font-size:150px;color:rgba(38,38,38,.14)}
+.glass{background:var(--surface-2);backdrop-filter:none;border:2px solid var(--border);box-shadow:var(--neu-raised-sm)}
+.hover-up:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)!important}
 .transition-all{transition:all 0.15s ease}
 .backdrop-blur{backdrop-filter:none}
 .badge{font-weight:700;letter-spacing:0.5px}
+/* Brutalist text-on-brand welcome block */
+.dashboard-welcome-card h1,
+.dashboard-welcome-card p.lead { color: var(--ink) !important; }
+.dashboard-welcome-card .small { color: rgba(38,38,38,.72) !important; }
+.dashboard-welcome-card .bg-white.bg-opacity-10 { background: var(--surface-3) !important; border-color: var(--border) !important; }
+.bg-white.card { background: var(--surface-2) !important; border: 2px solid var(--border) !important; border-radius: var(--r) !important; box-shadow: var(--sh) !important; }
+.card-header.bg-white { background: var(--surface-3) !important; border-bottom: 2px solid var(--border) !important; }
 </style>
 <div class="container-fluid py-4">
     <div class="row mb-4">

@@ -1,18 +1,16 @@
 /* ═══════════════════════════════════════════════
-   SIMARC — MOBILE MATERIAL DESIGN 3
-   Android-style bottom navigation & touch polish
+   SIMARC — NEO-BRUTALISM MOBILE (Material 3 + Brutalist)
+   Android-style bottom nav & touch polish
    ═══════════════════════════════════════════════ */
 
-/* ── Theme color meta ── */
-meta[name="theme-color"] { content: #4f46e5 !important; }
+meta[name="theme-color"] { content: #6C5CE7 !important; }
 
-/* ── Bottom navigation (Material 3 style) ── */
 @media (max-width: 991px) {
   .mobile-bottom-nav {
     --mbn-height: 56px;
-    --mbn-active-color: var(--accent);
+    --mbn-active-color: var(--brand);
     --mbn-inactive-color: var(--ink-4);
-    --mbn-active-bg: var(--accent-soft);
+    --mbn-active-bg: var(--brand);
 
     position: fixed;
     bottom: 0;
@@ -20,8 +18,8 @@ meta[name="theme-color"] { content: #4f46e5 !important; }
     right: 0;
     height: calc(var(--mbn-height) + env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: var(--surface);
-    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    border-top: 2px solid var(--border);
     display: flex !important;
     align-items: flex-start;
     justify-content: space-around;
@@ -39,7 +37,7 @@ meta[name="theme-color"] { content: #4f46e5 !important; }
     text-decoration: none;
     color: var(--mbn-inactive-color);
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     position: relative;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -50,33 +48,29 @@ meta[name="theme-color"] { content: #4f46e5 !important; }
     cursor: pointer;
   }
 
-  .mobile-bottom-nav-item i {
-    font-size: 20px;
-    line-height: 1;
-    transition: color .15s ease;
-  }
+  .mobile-bottom-nav-item i { font-size: 21px; line-height: 1; transition: color .15s ease; }
+  .mobile-bottom-nav-item span { font-size: 10px; line-height: 1.1; font-weight: 700; }
 
-  .mobile-bottom-nav-item span { font-size: 10px; line-height: 1.1; font-weight: 600; }
+  .mobile-bottom-nav-item:active { transform: scale(.9); transition: transform .08s ease; }
 
-  .mobile-bottom-nav-item:active { transform: scale(.92); transition: transform .08s ease; }
-
-  .mobile-bottom-nav-item.active { color: var(--mbn-active-color); }
-  .mobile-bottom-nav-item.active i { color: var(--mbn-active-color); }
+  .mobile-bottom-nav-item.active { color: var(--brand-dk); }
+  .mobile-bottom-nav-item.active i { color: var(--brand-dk); }
 
   .mobile-bottom-nav-item.active::before {
     content: '';
     position: absolute;
-    top: 4px;
+    top: -1px;
     left: 50%;
     transform: translateX(-50%);
-    width: 48px;
-    height: 28px;
-    border-radius: 14px;
+    width: 44px;
+    height: 4px;
     background: var(--mbn-active-bg);
-    z-index: -1;
+    border-radius: 0 0 4px 4px;
+    border: 2px solid var(--border);
+    border-top: none;
   }
 
-  /* ── More menu: full-width bottom sheet (Material 3) ── */
+  /* ── More menu: brutalist bottom sheet ── */
   .mobile-more-menu {
     position: fixed !important;
     top: auto !important;
@@ -85,23 +79,22 @@ meta[name="theme-color"] { content: #4f46e5 !important; }
     left: 0 !important;
     transform: translateY(100%) !important;
     width: 100% !important;
-    max-height: 70vh;
+    max-height: 72vh;
     overflow-y: auto;
-    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0 !important;
-    box-shadow: var(--shadow-xl) !important;
-    border: 1px solid var(--border) !important;
+    border-radius: var(--r-lg) var(--r-lg) 0 0 !important;
+    box-shadow: 0 -6px 0 var(--neu-shadow-dark) !important;
+    border: 2px solid var(--border) !important;
     border-bottom: none !important;
     padding: 16px !important;
     z-index: var(--z-dropdown, 1060) !important;
     -webkit-overflow-scrolling: touch;
-    background: var(--surface) !important;
+    background: var(--surface-2) !important;
     opacity: 1 !important;
     visibility: visible !important;
-    transition: transform .25s var(--ease-out) !important;
+    transition: transform .25s ease !important;
     pointer-events: auto !important;
     display: block !important;
   }
-
   .mobile-more-menu.show { transform: translateY(0) !important; }
 
   .mobile-more-section { margin-bottom: 14px; }
@@ -109,7 +102,7 @@ meta[name="theme-color"] { content: #4f46e5 !important; }
 
   .mobile-more-section-title {
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1.1px;
     color: var(--ink-4);
@@ -125,36 +118,32 @@ meta[name="theme-color"] { content: #4f46e5 !important; }
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
-    padding: 10px 12px;
-    border-radius: var(--radius-md);
+    padding: 11px 12px;
+    border-radius: var(--r-sm);
     text-decoration: none;
     color: var(--ink-2);
     font-size: 12px;
-    font-weight: 600;
-    transition: background .15s ease, color .15s ease;
-    min-height: 40px;
-    border: 1px solid var(--border);
+    font-weight: 700;
+    transition: all .12s ease;
+    min-height: 42px;
+    border: 2px solid var(--border);
     background: var(--surface-2);
+    box-shadow: var(--neu-raised-sm);
     width: 100%;
     cursor: pointer;
   }
-
-  .mobile-more-item:hover { background: var(--accent-soft); color: var(--accent); }
-  .mobile-more-item:active { transform: scale(.97); }
-
+  .mobile-more-item:hover { background: var(--brand); color: var(--ink); box-shadow: var(--neu-raised); transform: translate(-1px,-1px); }
+  .mobile-more-item:active { transform: translate(2px,2px); box-shadow: none; }
   .mobile-more-item i { font-size: 16px; color: var(--ink-3); }
-  .mobile-more-item:hover i { color: var(--accent); }
+  .mobile-more-item:hover i { color: var(--ink); }
   .mobile-more-item span { font-size: 12px; line-height: 1.2; }
+  .mobile-more-item.active { background: var(--brand-lt); color: var(--brand-dk); }
+  .mobile-more-item.active i { color: var(--brand-dk); }
 
-  .mobile-more-item.active { color: var(--accent); }
-  .mobile-more-item.active i { color: var(--accent); }
-
-  .mobile-more-logout {
-    color: var(--c-danger) !important;
-    background: var(--c-danger-soft);
-    border-color: transparent;
-  }
-  .mobile-more-logout i { color: var(--c-danger) !important; }
+  .mobile-more-logout { background: var(--maroon-lt); color: var(--maroon-dk); }
+  .mobile-more-logout i { color: var(--maroon-dk); }
+  .mobile-more-logout:hover { background: var(--maroon); color: var(--ink); }
+  .mobile-more-logout:hover i { color: var(--ink); }
 }
 
 /* ── Touch feedback ── */
@@ -162,39 +151,39 @@ meta[name="theme-color"] { content: #4f46e5 !important; }
 .btn-crud:active,
 .nav-icon-btn:active,
 .dropdown-item:active,
-.page-link:active { transform: scale(.98); transition: transform .08s ease; }
+.page-link:active { transform: translate(2px,2px); box-shadow: none !important; transition: transform .06s ease; }
 
-/* ── Card elevation on touch ── */
+/* ── Card press ── */
 @media (max-width: 991px) {
-  .card:active { box-shadow: var(--shadow-md) !important; }
+  .card:active { box-shadow: var(--neu-inset) !important; transform: translate(2px,2px); }
 }
 
-/* ── Floating action button ── */
+/* ── Floating action button (brutalist) ── */
 .fab {
   position: fixed;
   bottom: calc(56px + 16px + env(safe-area-inset-bottom, 0px));
   right: 16px;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-xl);
-  background: var(--accent);
-  color: #fff;
+  width: 54px;
+  height: 54px;
+  border-radius: var(--r-sm);
+  background: var(--brand);
+  border: 2px solid var(--border);
+  box-shadow: 4px 4px 0 var(--neu-shadow-dark);
+  color: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(79,70,229,.35);
   z-index: var(--z-fab, 9999);
   text-decoration: none;
-  font-size: 22px;
-  transition: box-shadow .2s ease, transform .15s ease;
+  font-size: 24px;
+  transition: box-shadow .15s ease, transform .12s ease;
 }
-.fab:hover { box-shadow: 0 6px 20px rgba(79,70,229,.45); transform: translateY(-2px); }
-.fab:active { transform: scale(.92); }
+.fab:hover { box-shadow: 5px 5px 0 var(--neu-shadow-dark); transform: translate(-1px,-1px); }
+.fab:active { transform: translate(3px,3px); box-shadow: none; }
 
-/* ── Fluid page transition ── */
+/* ── Fluid transition ── */
 @media (max-width: 991px) {
-  .main-content { animation: fadeIn .15s ease; }
-  @keyframes fadeIn { from { opacity: .97; } to { opacity: 1; } }
+  .main-content { animation: pageIn .15s ease; }
 }
 
 @media (prefers-reduced-motion: reduce) {
