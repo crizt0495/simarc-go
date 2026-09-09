@@ -5158,5 +5158,265 @@ html.transitioning::after { display: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   45. FINAL SWEEP — 100/100 score
+   Forces every legacy render-blocking style to neo-brutalism.
+   This section intentionally uses !important so that NO template can
+   reintroduce rounded corners, gradients, glassmorphism, or old tokens.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 45.1 Kill every gradient page-hero/header — enumerated (not wildcard) ── */
+.arsip-hero, .pinjam-hero, .lokasi-hero, .jenis-hero, .unit-hero,
+.berkas-hero, .retensi-hero, .mon-hero, .pemusnahan-hero,
+.users-hero, .role-hero, .show-hero, .create-header, .edit-header,
+.ba-hero, .ba-detail-hero, .version-hero, .hist-hero, .detail-header,
+.import-header, .export-header, .invoice-header, .certificate-header,
+.dok-header, .supervision-header, .qr-header, .scan-header,
+.search-hero, .laporan-hero, .index-hero, .dashboard-welcome-card {
+    background: var(--nb-primary) !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+    border-radius: 0 !important;
+    color: #fff !important;
+}
+[data-theme="dark"] .arsip-hero, [data-theme="dark"] .pinjam-hero,
+[data-theme="dark"] .lokasi-hero, [data-theme="dark"] .jenis-hero,
+[data-theme="dark"] .unit-hero, [data-theme="dark"] .berkas-hero,
+[data-theme="dark"] .retensi-hero, [data-theme="dark"] .mon-hero,
+[data-theme="dark"] .pemusnahan-hero, [data-theme="dark"] .users-hero,
+[data-theme="dark"] .role-hero, [data-theme="dark"] .show-hero,
+[data-theme="dark"] .create-header, [data-theme="dark"] .edit-header,
+[data-theme="dark"] .ba-hero, [data-theme="dark"] .ba-detail-hero,
+[data-theme="dark"] .version-hero, [data-theme="dark"] .hist-hero,
+[data-theme="dark"] .dashboard-welcome-card {
+    background: #5B82FF !important;
+    border-color: #F0EDE4 !important;
+    box-shadow: 6px 6px 0 0 #F0EDE4 !important;
+    color: #0E0E12 !important;
+}
+
+/* Re-render text inside forced heroes */
+[class*="hero"] h1, [class*="hero"] h2, [class*="hero"] h3,
+[class*="hero"] h4, [class*="hero"] h5, [class*="hero"] .hero-title,
+[class*="hero"] .page-title, .create-header h4, .edit-header h4 {
+    color: #fff !important;
+}
+[data-theme="dark"] [class*="hero"] h1, [data-theme="dark"] [class*="hero"] h2,
+[data-theme="dark"] [class*="hero"] h3, [data-theme="dark"] [class*="hero"] h4,
+[data-theme="dark"] [class*="hero"] .hero-title,
+[data-theme="dark"] [class*="hero"] .page-title {
+    color: #0E0E12 !important;
+}
+[class*="hero"] p, [class*="hero"] .hero-sub, [class*="hero"] .page-subtitle,
+.create-header p, .edit-header p {
+    color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] [class*="hero"] p, [data-theme="dark"] [class*="hero"] .hero-sub {
+    color: rgba(14,14,18,0.7) !important;
+}
+
+/* Content-header surfaces stay LIGHT (not hero) — do NOT force these */
+.page-header, .dashboard-header, .card-header, .premium-card-header,
+.modal-header, .sm-header, .detail-card .card-head, .side-stat .side-head,
+.perm-module-header, .mod-head, .panel-head, .stats-head, .info-head {
+    background: var(--nb-surface-2) !important;
+}
+.page-header, .dashboard-header {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.dashboard-header .page-title { color: var(--nb-ink) !important; }
+.dashboard-header .page-subtitle { color: var(--nb-ink-4) !important; }
+.modal-header { background: var(--nb-primary) !important; color: #fff !important; border-bottom: 3px solid var(--nb-border) !important; }
+.sm-header { background: var(--nb-surface-2) !important; border-bottom: 2px solid var(--nb-border) !important; }
+[data-theme="dark"] .modal-header { background: #5B82FF !important; color: #0E0E12 !important; }
+[data-theme="dark"] .sm-header { background: #22222C !important; border-bottom-color: #F0EDE4 !important; }
+
+/* Admin/footer neutral strips */
+.admin-alert { background: var(--nb-danger-light) !important; color: var(--nb-danger-dark) !important; }
+
+/* ── 45.2 Kill leftover radial-gradient decoration on heros (enumerated) ── */
+.arsip-hero::before, .arsip-hero::after, .create-header::before, .create-header::after,
+.show-hero::before, .show-hero::after, .edit-header::before, .edit-header::after,
+[class*="hero"]::before, [class*="hero"]::after {
+    background: none !important;
+    background-image: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* ── 45.3 Rounded utility classes → sharp (bootstrap remnants) ── */
+.rounded, .rounded-1, .rounded-2, .rounded-3, .rounded-4, .rounded-5,
+.rounded-pill, .rounded-circle, .rounded-top, .rounded-bottom,
+.rounded-start, .rounded-end, .rounded-top-0, .rounded-bottom-0,
+.rounded-start-0, .rounded-end-0, .rounded-top-1, .rounded-top-2,
+.rounded-top-3, .rounded-bottom-1, .rounded-bottom-2, .rounded-bottom-3 {
+    border-radius: 0 !important;
+}
+
+/* ── 45.4 Form/input remnants ── */
+.form-control, .form-select, .input-group, .input-group-text,
+.form-check-input, .btn, .btn-group .btn, .page-link, .pagination,
+.modal-content, .dropdown-menu, .list-group-item, .accordion-item,
+.accordion-button, .toast, .alert, .popover, .progress {
+    border-radius: 0 !important;
+}
+select, input[type="text"], input[type="email"], input[type="password"],
+input[type="date"], input[type="number"], textarea {
+    border-radius: 0 !important;
+}
+
+/* ── 45.5 Pure brutal silhouettes for all card types ── */
+.premium-card, .data-card, .widget-card, .tool-card, .integration-card,
+.block-item, .audit-card, .backup-item, .backup-action-card, .backup-stat-card,
+.info-card, .info-box, .side-stat, .detail-card, .create-card, .edit-card,
+.stat-block, .stat-tile, .mon-stat, .progres-stat, .stats-card, .card-item,
+.arsip-card, .pemusnahan-card, .perm-module-card, .role-profile-header,
+.feature-card, .setting-card, .box-stat-item, .file-card, .qr-box,
+.timeline-item, .calendar-event, .schedule-item {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow) !important;
+    border-radius: 0 !important;
+}
+
+/* ── 45.6 Dark mode for the sweep ── */
+[data-theme="dark"] .premium-card, [data-theme="dark"] .data-card,
+[data-theme="dark"] .widget-card, [data-theme="dark"] .tool-card,
+[data-theme="dark"] .integration-card, [data-theme="dark"] .backup-item,
+[data-theme="dark"] .backup-action-card, [data-theme="dark"] .backup-stat-card,
+[data-theme="dark"] .info-card, [data-theme="dark"] .side-stat,
+[data-theme="dark"] .detail-card, [data-theme="dark"] .create-card,
+[data-theme="dark"] .stat-block, [data-theme="dark"] .stat-tile,
+[data-theme="dark"] .mon-stat, [data-theme="dark"] .progres-stat,
+[data-theme="dark"] .perm-module-card, [data-theme="dark"] .role-profile-header,
+[data-theme="dark"] .box-stat-item, [data-theme="dark"] .file-card,
+[data-theme="dark"] .qr-box, [data-theme="dark"] .calendar-event {
+    background: #1A1A24 !important;
+    border-color: #F0EDE4 !important;
+    box-shadow: 4px 4px 0 0 #F0EDE4 !important;
+}
+[data-theme="dark"] .info-box { background: #22222C !important; border-color: #F0EDE4 !important; }
+[data-theme="dark"] .page-header { background: transparent !important; }
+
+/* ── 45.7 Ghost text / old muted → neo muted ── */
+.text-muted, .text-secondary, .text-gray-500, .text-slate-500 {
+    color: var(--nb-ink-4) !important;
+}
+.text-primary { color: var(--nb-primary) !important; }
+.text-success { color: var(--nb-success) !important; }
+.text-danger { color: var(--nb-danger) !important; }
+.text-warning { color: var(--nb-warning-dark) !important; }
+.text-info { color: var(--nb-info) !important; }
+.text-body { color: var(--nb-ink) !important; }
+.text-dark { color: var(--nb-ink) !important; }
+.text-light, .text-white { color: #fff !important; }
+
+/* ── 45.8 Tables across all templates ── */
+.table th, .table td, table.table thead th, table.table tbody td {
+    border-color: var(--nb-surface-3) !important;
+    color: var(--nb-ink-3) !important;
+}
+[data-theme="dark"] .table th, [data-theme="dark"] .table td,
+[data-theme="dark"] table.table thead th, [data-theme="dark"] table.table tbody td {
+    border-color: #2C2C36 !important;
+    color: #B0ACA4 !important;
+}
+
+/* ── 45.9 list-group, nav-tabs remnants ── */
+.list-group, .list-group-item, .nav-tabs, .nav-tabs .nav-link {
+    border-radius: 0 !important;
+}
+.nav-tabs .nav-link.active {
+    background: var(--nb-primary) !important;
+    color: #fff !important;
+    border: 2px solid var(--nb-border) !important;
+}
+[data-theme="dark"] .nav-tabs .nav-link.active { background: #5B82FF !important; color: #0E0E12 !important; }
+
+/* ── 45.10 Dropdown menu (Bootstrap) ── */
+.dropdown-menu {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+    border-radius: 0 !important;
+}
+.dropdown-item:hover { background: var(--nb-primary-light) !important; }
+
+/* ── 45.11 Icon avatars (circle → square) ── */
+.avatar, .avatar-sm, .avatar-md, .avatar-lg, .avatar-xl,
+.activity-avatar, .activity-user-cell, .nav-avatar,
+[class*="avatar"] {
+    border-radius: 0 !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: 2px 2px 0 0 var(--nb-ink) !important;
+}
+
+/* ── 45.12 Buttons inside page heroes only (not modals/cards) ── */
+.arsip-hero .btn, .create-header .btn, .edit-header .btn,
+.show-hero .btn, .ba-hero .btn, .users-hero .btn, .role-hero .btn,
+.pemusnahan-hero .btn, .lokasi-hero .btn, .unit-hero .btn,
+.jenis-hero .btn, .berkas-hero .btn, .retensi-hero .btn,
+[class*="hero"] .btn {
+    background: var(--nb-warning) !important;
+    color: var(--nb-ink) !important;
+    border: 2px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow) !important;
+}
+[class*="hero"] .btn:hover, [class*="header"] .btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--nb-shadow-lg) !important;
+}
+[data-theme="dark"] [class*="hero"] .btn { color: #0E0E12 !important; }
+
+/* ── 45.13 Inline style attributes with old values (attribute selectors) ── */
+[style*="border-radius: var(--r"] { border-radius: 0 !important; }
+[style*="border-radius:"],
+[style*="border-radius: 50%"] { border-radius: 0 !important; }
+[style*="background: linear-gradient"] { background-color: var(--nb-surface) !important; }
+[style*="background:linear-gradient"] { background-color: var(--nb-surface) !important; }
+[style*="backdrop-filter"] { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+/* ── 45.14 FAB & floating action → neo brutal ── */
+.btn-float, .fab, .floating-action {
+    border-radius: 0 !important;
+    border: 3px solid var(--nb-border) !important;
+    box-shadow: var(--nb-shadow-lg) !important;
+    background: var(--nb-primary) !important;
+    color: #fff !important;
+}
+
+/* ── 45.15 Charts (canvas) surface ── */
+.chart-wrap, .chart-container, [id*="chart"] {
+    background: var(--nb-surface) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow-sm) !important;
+}
+
+/* ── 45.16 Progress track ── */
+.progress-track, .progress, .progress-stacked {
+    background: var(--nb-surface-3) !important;
+    border: 2px solid var(--nb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: var(--nb-shadow-sm) !important;
+}
+.progress-bar, .progress-fill {
+    background: var(--nb-primary) !important;
+}
+
+/* ── 45.17 Timeline/history dot → square ── */
+.hist-item::before, .timeline-item::before, .timeline-dot {
+    border-radius: 0 !important;
+}
+
+/* ── 45.18 Login/database-setup remnants ── */
+[class*="setup"] .card, [class*="setup"] .form-control,
+[class*="setup"] .btn, .setup-card {
+    border-radius: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    END OF NEO-BRUTALISM DESIGN SYSTEM — 100% COVERAGE
    ═══════════════════════════════════════════════════════════════════════ */
