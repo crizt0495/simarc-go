@@ -1006,6 +1006,10 @@ func (h *ArsipHandler) ShowMoveLocationForm(c *gin.Context) {
 	Render(c, 200, "arsip/index.html", gin.H{
 		"title": "Pindah Lokasi Arsip", "pageTitle": "Pindah Lokasi Arsip",
 		"arsipList": arsipList, "lokasiOpts": lokasiOpts, "moveMode": true,
+		"TotalResults": len(arsipList), "CurrentPage": 1, "TotalPages": 1,
+		"PageNumbers": []int{1}, "QueryString": template.URL(""),
+		"CanEdit": true, "CanDelete": true, "CanCreate": true,
+		"CanImport": true, "CanOcr": true, "CanBerkaskan": true,
 	})
 }
 
