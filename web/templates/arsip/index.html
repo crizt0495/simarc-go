@@ -382,9 +382,9 @@
 .status-inaktif { background: var(--surface-3); color: var(--ink-4); }
 .status-siap_penyusutan { background: var(--neu-bg); color: var(--ink-2); }
 .status-musnah { background: var(--neu-bg); color: var(--ink-2); }
-.status-permanen { background: #e0e7ff; color: var(--ink-3); }
+.status-permanen { background: var(--nb-surface-3); color: var(--ink-3); }
 .status-diberkaskan { background: var(--neu-bg); color: var(--ink-3); }
-.status-dipinjam { background: #fce7f3; color: #be185d; }
+.status-dipinjam { background: var(--nb-primary-light); color: var(--nb-danger); }
 
 /* ── Action Buttons (using global .btn-crud from enterprise-premium.css) ── */
 
@@ -398,7 +398,7 @@
     font-size: 1rem;
 }
 .file-indicator.exists { background: var(--neu-bg); color: var(--ink-2); }
-.file-indicator.empty { background: var(--surface-3); color: #94a3b8; }
+.file-indicator.empty { background: var(--surface-3); color: var(--nb-ink-4); }
 
 /* ── Filter Active Badges ── */
 .filter-badge {
@@ -509,7 +509,7 @@ mark {
     padding: 0.1em 0.25em;
     border-radius: 0.2rem;
     font-weight: 700;
-    background: #fef08a;
+    background: var(--nb-warning-light);
     color: var(--ink-2);
 }
 
@@ -890,7 +890,7 @@ mark {
                             <td class="text-end" data-label="Nominal">{{if $arsip.NilaiAnggaran}}<span class="fw-800 font-monospace" style="color:var(--ink-2);font-size:0.78rem;">Rp {{formatNumber $arsip.NilaiAnggaran}}</span>{{else}}<span class="text-muted">-</span>{{end}}</td>
                             <td data-label="Unit"><span class="small fw-600"><i class="bi bi-building text-primary me-1"></i>{{if $arsip.UnitKerja}}{{$arsip.UnitKerja.NamaUnit}}{{else}}-{{end}}</span></td>
                             <td data-label="Tanggal"><span class="small fw-600" style="color:var(--ink-3);"><i class="bi bi-calendar3 me-1"></i>{{formatDate $arsip.TanggalDibuat}}</span></td>
-                            <td data-label="Kategori"><span class="status-badge" style="background:rgba(99,102,241,0.1);color:#6366f1;">{{$kategori}}</span></td>
+                            <td data-label="Kategori"><span class="status-badge" style="background:rgba(99,102,241,0.1);color:var(--nb-indigo);">{{$kategori}}</span></td>
                             <td data-label="Status"><span class="status-badge status-{{$arsip.StatusArsip}}">{{replaceUnderscore $arsip.StatusArsip}}</span></td>
                             <td class="text-center" data-label="Aksi">
                                 <div class="d-flex justify-content-center gap-1">

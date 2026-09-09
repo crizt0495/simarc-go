@@ -89,8 +89,8 @@
 .timeline-dot.warning { background: var(--ink-2); color: #fff; }
 .timeline-dot.danger { background: var(--ink-2); color: #fff; }
 .timeline-dot.info { background: var(--ink-2); color: #fff; }
-.timeline-dot.primary { background: #6366f1; color: #fff; }
-.timeline-dot.secondary { background: #64748b; color: #fff; }
+.timeline-dot.primary { background: var(--nb-indigo); color: #fff; }
+.timeline-dot.secondary { background: var(--nb-ink-4); color: #fff; }
 
 .timeline-content {
     background: var(--surface);
@@ -196,7 +196,7 @@
                             </div>
                         </div>
                         <div class="stat-card-mini" style="animation-delay:0.1s;">
-                            <div class="stat-icon" style="background:rgba(99,102,241,0.12);color:#6366f1;"><i class="bi bi-calendar-check"></i></div>
+                            <div class="stat-icon" style="background:rgba(99,102,241,0.12);color:var(--nb-indigo);"><i class="bi bi-calendar-check"></i></div>
                             <div>
                                 <div class="stat-label">Terakhir Diubah</div>
                                 <div class="stat-value" style="font-size:0.85rem;font-weight:700;">{{formatDateTime .arsip.UpdatedAt}}</div>

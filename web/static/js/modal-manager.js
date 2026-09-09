@@ -630,7 +630,7 @@
     duration = duration !== undefined ? duration : 4000;
 
     var icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
-    var colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+    var colors = { success: 'var(--nb-success)', error: 'var(--nb-danger)', warning: 'var(--nb-warning)', info: 'var(--nb-info)' };
     var icon = icons[type] || icons.info;
     var color = colors[type] || colors.info;
 
@@ -649,15 +649,14 @@
     el.setAttribute('role', 'alert');
     el.setAttribute('aria-live', 'polite');
     el.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 18px;' +
-      'background:var(--surface,#fff);border-radius:16px;' +
-      'box-shadow:0 10px 40px rgba(0,0,0,0.12),0 0 0 1px rgba(0,0,0,0.05);' +
+      'background:var(--nb-surface,#fff);border:3px solid var(--nb-border,#000);border-radius:2px;' +
+      'box-shadow:5px 5px 0 0 var(--nb-border,#000);' +
       'animation:smToastIn 0.3s cubic-bezier(0.16,1,0.3,1) both;' +
-      'border-left:4px solid ' + color + ';' +
       'pointer-events:auto;cursor:default;';
 
     el.innerHTML =
       '<i class="bi ' + icon + '" style="color:' + color + ';font-size:1.3rem;flex-shrink:0;"></i>' +
-      '<span style="flex:1;font-size:0.875rem;color:var(--ink,#1e293b);font-weight:500;line-height:1.4;">' +
+      '<span style="flex:1;font-size:0.875rem;color:var(--nb-ink,#14110B);font-weight:500;line-height:1.4;">' +
         esc(message) +
       '</span>' +
       '<button type="button" class="sm-toast-close" aria-label="Tutup notifikasi">' +

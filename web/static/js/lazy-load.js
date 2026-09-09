@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.innerHTML = '<i class="bi bi-calendar3"></i>';
             btn.title = 'Pilih tanggal';
             btn.setAttribute('aria-label', 'Buka kalender');
-            btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#64748b;cursor:pointer;padding:0;z-index:2;line-height:1;min-width:24px;min-height:24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;';
+            btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:var(--nb-ink-4);cursor:pointer;padding:0;z-index:2;line-height:1;min-width:24px;min-height:24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;';
             
             // On click, focus the input which triggers the native date picker
             btn.addEventListener('click', function(e) {
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (parent && !input.id && !parent.querySelector('.date-quick')) {
             var quick = document.createElement('small');
             quick.className = 'date-quick';
-            quick.style.cssText = 'display:block;margin-top:4px;font-size:11px;color:#3b82f6;cursor:pointer;font-weight:600;';
+            quick.style.cssText = 'display:block;margin-top:4px;font-size:11px;color:var(--nb-primary);cursor:pointer;font-weight:600;';
             quick.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Hari Ini';
             quick.addEventListener('click', function() {
                 var today = new Date();

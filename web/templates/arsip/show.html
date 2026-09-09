@@ -446,9 +446,9 @@
                         <a href="/arsip/{{.arsip.ID}}/download" class="action-bar-btn primary" style="padding:0.35rem 0.9rem;font-size:0.75rem;"><i class="bi bi-download"></i> Unduh</a>
                         {{if eq $ext "pdf"}}<a href="/arsip/{{.arsip.ID}}/view" target="_blank" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;"><i class="bi bi-eye"></i> Preview</a>{{end}}
                         {{if .arsip.GoogleDriveFileID}}
-                        <a href="{{.arsip.GoogleDriveURL}}" target="_blank" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid #e0e0e0;color:var(--ink-2);"><i class="bi bi-google"></i> GDrive</a>
+                        <a href="{{.arsip.GoogleDriveURL}}" target="_blank" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid var(--nb-surface-3);color:var(--ink-2);"><i class="bi bi-google"></i> GDrive</a>
                         {{else}}
-                        <button onclick="uploadArsipToDrive('{{.arsip.ID}}', '{{$fileInfo.Filename}}')" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid #e0e0e0;color:#6c757d;"><i class="bi bi-cloud-upload"></i> Ke GDrive</button>
+                        <button onclick="uploadArsipToDrive('{{.arsip.ID}}', '{{$fileInfo.Filename}}')" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid var(--nb-surface-3);color:var(--nb-ink-4);"><i class="bi bi-cloud-upload"></i> Ke GDrive</button>
                         {{end}}
                     </div>
                     {{if and .IsOcrProcessed $fileInfo.OcrText}}
