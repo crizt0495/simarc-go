@@ -74,8 +74,8 @@
 }
 .form-field .form-control:focus,
 .form-field .form-select:focus {
-    border-color: var(--ink-2);
-    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    border-color: var(--brand);
+    box-shadow: var(--neu-inset), 0 0 0 2px var(--brand-lt);
 }
 .form-field textarea.form-control { min-height: 100px; resize: vertical; }
 .form-field .form-text { font-size: 0.72rem; color: var(--ink-4); margin-top: 0.2rem; }
@@ -148,7 +148,7 @@
                     </div>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="form-field">
                             <label><i class="bi bi-calendar3 me-1 text-primary"></i>Tanggal Pembuatan <span class="req">*</span></label>
                             <div class="position-relative">
@@ -165,7 +165,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="form-field">
                             <label>Kategori Arsip</label>
                             <select name="jenis_arsip_id" id="jenis_arsip" class="form-select select2-search">

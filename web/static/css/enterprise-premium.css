@@ -3136,3 +3136,93 @@ table.dataTable tbody tr {
     }
     .stat-card.dash-stat:hover .stat-card-icon { animation: none; transform: none; }
 }
+
+/* ═══════════════════════════════════════════════
+   UI/UX CONSISTENCY HARDENING — overrides for all pages
+   Ensures every page (template inline styles included) matches
+   the Premium Neo-Brutalism system: 2px ink borders + brand focus.
+   ═══════════════════════════════════════════════ */
+
+/* ── Form controls: consistent 2px ink + brutalist insets ── */
+.form-control, .form-select,
+.form-field .form-control, .form-field .form-select {
+    border: 2px solid var(--border) !important;
+    border-radius: var(--r-sm) !important;
+    background: var(--neu-bg) !important;
+    box-shadow: var(--neu-inset) !important;
+    color: var(--ink) !important;
+    font-weight: 500;
+}
+.form-control::placeholder, .form-select::placeholder { color: var(--ink-4) !important; }
+
+.form-control:focus, .form-select:focus,
+.form-field .form-control:focus, .form-field .form-select:focus {
+    border-color: var(--brand) !important;
+    box-shadow: var(--neu-inset), 0 0 0 2px var(--brand-lt) !important;
+    outline: none;
+}
+
+.form-field label, .form-label {
+    font-weight: 700 !important;
+    color: var(--ink-2) !important;
+    font-size: 12px;
+}
+
+/* ── Buttons: 2px ink + immovable hard shadow on defaults ── */
+.btn, .btn-sm, .btn-lg, .btn-outline, .btn-outline-primary,
+.btn-outline-secondary, .btn-outline-success, .btn-outline-danger,
+.btn-outline-warning, .btn-outline-info {
+    border: 2px solid var(--border) !important;
+    border-radius: var(--r-sm) !important;
+}
+
+/* ── Input group text ── */
+.input-group-text {
+    background: var(--surface-3) !important;
+    border: 2px solid var(--border) !important;
+    color: var(--ink-3) !important;
+}
+
+/* ── Text contrast safety on brand backgrounds ── */
+.create-header h4, .edit-header h4, .create-header .create-header-title {
+    color: var(--ink) !important;
+}
+.create-header p, .edit-header p {
+    color: rgba(38,38,38,.72) !important;
+    opacity: 1;
+}
+
+/* ── Tables: consistent sticky-less header border ── */
+.table thead th { border-bottom: 2px solid var(--border) !important; }
+
+/* ── Pagination: chunky brutalist pills ── */
+.page-item .page-link {
+    border: 2px solid var(--border) !important;
+    border-radius: var(--r-sm) !important;
+    box-shadow: var(--neu-raised-sm) !important;
+}
+.page-item.active .page-link {
+    background: var(--brand) !important;
+    color: var(--ink) !important;
+    box-shadow: var(--neu-raised) !important;
+}
+
+/* ── Badges: 2px ink ring remove soft glows ── */
+.badge {
+    border: 2px solid var(--border) !important;
+    border-radius: var(--r-sm) !important;
+    font-weight: 700;
+}
+
+/* ── Dark mode: hardening stays token-driven ── */
+[data-theme="dark"] .form-control, [data-theme="dark"] .form-select,
+[data-theme="dark"] .form-field .form-control, [data-theme="dark"] .form-field .form-select {
+    background: var(--neu-bg) !important;
+    border-color: var(--border) !important;
+    color: var(--ink) !important;
+}
+[data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus,
+[data-theme="dark"] .form-field .form-control:focus, [data-theme="dark"] .form-field .form-select:focus {
+    border-color: var(--brand) !important;
+    box-shadow: var(--neu-inset), 0 0 0 2px var(--brand-lt) !important;
+}
