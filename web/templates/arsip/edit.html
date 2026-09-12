@@ -6,42 +6,6 @@
    ARSIP EDIT — PREMIUM FORM
    ═══════════════════════════════════════════ */
 
-.edit-hero {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    border-radius: var(--r-xl);
-    padding: 2rem 2.5rem;
-    color: #fff;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-.edit-hero::after {
-    content: '';
-    position: absolute;
-    top: -50%; right: -5%;
-    width: 280px; height: 280px;
-    background: radial-gradient(circle, rgba(79,70,229,0.07) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
-}
-.edit-hero .hero-title {
-    font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
-    position: relative; z-index: 1;
-}
-.edit-hero .hero-sub {
-    font-size: 0.8rem; opacity: 0.7; font-weight: 500;
-    position: relative; z-index: 1;
-}
-.edit-hero .hero-badge {
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    padding: 0.25rem 0.85rem;
-    background: rgba(251,191,36,0.15);
-    color: var(--ink-2);
-    border-radius: 50px;
-    font-size: 0.7rem; font-weight: 700;
-    letter-spacing: 0.03em;
-}
-
 .edit-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -52,7 +16,6 @@
 }
 .edit-card-d1 { animation: fadeUp 0.35s ease 0.08s both; }
 .edit-card-d2 { animation: fadeUp 0.35s ease 0.14s both; }
-
 
 .edit-card .card-head {
     padding: 1rem 1.5rem;
@@ -152,8 +115,7 @@
 }
 
 @media (max-width: 768px) {
-    .edit-hero { padding: 1.25rem; }
-    .edit-hero .hero-title { font-size: 1.1rem; }
+
     .edit-card .card-body-custom { padding: 1rem; }
     .file-drop { padding: 1.5rem 1rem; }
     .floating-bar { flex-direction: column; gap: 0.75rem; bottom: 1rem; }

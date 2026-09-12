@@ -5,46 +5,6 @@
    ARSIP SHOW — PREMIUM DETAIL
    ═══════════════════════════════════════════ */
 
-.show-hero {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    border-radius: var(--r-xl);
-    padding: 2rem 2.5rem;
-    color: #fff;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-.show-hero::before {
-    content: '';
-    position: absolute;
-    top: -60%; right: -8%;
-    width: 280px; height: 280px;
-    background: radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
-}
-.show-hero::after {
-    content: '';
-    position: absolute;
-    bottom: -40%; left: -5%;
-    width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
-}
-.show-hero .hero-nomor {
-    font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
-}
-.show-hero .hero-nama {
-    font-size: 0.95rem; opacity: 0.85; font-weight: 500;
-}
-.show-hero .hero-meta {
-    display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.75rem;
-}
-.show-hero .hero-meta-item {
-    font-size: 0.75rem; color: rgba(255,255,255,0.8);
-    display: flex; align-items: center; gap: 0.3rem;
-}
 .show-hero .hero-meta-item strong { color: #fff; }
 
 .st-badge-v2 {
@@ -56,8 +16,8 @@
     white-space: nowrap;
 }
 .st-badge-v2.aktif { background: rgba(16,185,129,0.15); color: var(--ink-2); border: 1px solid rgba(16,185,129,0.25); }
-.st-badge-v2.inaktif { background: rgba(234,179,8,0.15); color: #99480a; border: 1px solid rgba(234,179,8,0.25); }
-.st-badge-v2.siap_penyusutan { background: rgba(251,146,60,0.15); color: #c2410c; border: 1px solid rgba(251,146,60,0.25); }
+.st-badge-v2.inaktif { background: var(--surface-3); color: var(--ink-4); border: 1px solid var(--border); }
+.st-badge-v2.siap_penyusutan { background: var(--warning-lt); color: var(--warning-dk); border: 1px solid var(--warning-lt); }
 .st-badge-v2.musnah { background: rgba(248,113,113,0.15); color: var(--ink-2); border: 1px solid rgba(248,113,113,0.25); }
 .st-badge-v2.permanen { background: rgba(96,165,250,0.15); color: var(--ink-2); border: 1px solid rgba(96,165,250,0.25); }
 .st-badge-v2.diberkaskan { background: rgba(129,140,248,0.15); color: var(--ink-3); border: 1px solid rgba(129,140,248,0.25); }
@@ -74,7 +34,6 @@
 .detail-card-d1 { animation: fadeUp 0.35s ease 0.06s both; }
 .detail-card-d2 { animation: fadeUp 0.35s ease 0.1s both; }
 .detail-card-d3 { animation: fadeUp 0.35s ease 0.14s both; }
-
 
 .detail-card .card-head {
     padding: 0.9rem 1.25rem;
@@ -267,8 +226,7 @@
 .hist-item .hist-desc { font-size: 0.78rem; color: var(--ink-3); margin-top: 0.15rem; }
 
 @media (max-width: 768px) {
-    .show-hero { padding: 1.25rem; }
-    .show-hero .hero-nomor { font-size: 1.15rem; }
+
     .detail-card .card-body-custom { padding: 0.85rem; }
     .info-item { padding: 0.65rem; }
     .action-bar-btn { font-size: 0.72rem; padding: 0.4rem 0.7rem; }
@@ -400,7 +358,7 @@
                         {{if .arsip.GoogleDriveFileID}}
                         <a href="{{.arsip.GoogleDriveURL}}" target="_blank" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid #e0e0e0;color:var(--ink-2);"><i class="bi bi-google"></i> GDrive</a>
                         {{else}}
-                        <button onclick="uploadArsipToDrive('{{.arsip.ID}}', '{{$fileInfo.Filename}}')" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:#fff;border:1px solid #e0e0e0;color:#6c757d;"><i class="bi bi-cloud-upload"></i> Ke GDrive</button>
+                        <button onclick="uploadArsipToDrive('{{.arsip.ID}}', '{{$fileInfo.Filename}}')" class="action-bar-btn" style="padding:0.35rem 0.9rem;font-size:0.75rem;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-3);"><i class="bi bi-cloud-upload"></i> Ke GDrive</button>
                         {{end}}
                     </div>
                     {{if and .IsOcrProcessed $fileInfo.OcrText}}

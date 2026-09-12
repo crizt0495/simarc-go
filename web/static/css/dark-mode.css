@@ -30,13 +30,16 @@
 [data-theme="dark"] .btn-primary:hover { background: var(--brand-dk); border-color: var(--brand-dk); color: #fff; }
 [data-theme="dark"] .btn-crud { background: var(--surface-2); border-color: var(--border); color: var(--ink-3); }
 [data-theme="dark"] .btn-crud:hover { color: var(--ink); border-color: var(--border-2); }
-[data-theme="dark"] .btn-primary { color: #fff; }
 
 /* ── Forms ── */
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
 [data-theme="dark"] .form-control::placeholder { color: var(--ink-4); }
 [data-theme="dark"] .input-group-text { background: var(--surface-3); border-color: var(--border); color: var(--ink-3); }
+[data-theme="dark"] .form-check-input { background-color: var(--surface-2); border-color: var(--border-2); }
+[data-theme="dark"] .form-check-input:checked { background-color: var(--brand); border-color: var(--brand); }
+[data-theme="dark"] .form-check-input:focus { box-shadow: 0 0 0 .2rem var(--brand-lt); }
+[data-theme="dark"] .form-check-label { color: var(--ink-2); }
 
 /* ── Dropdown ── */
 [data-theme="dark"] .dropdown-menu { background: var(--surface-2); border-color: var(--border); box-shadow: var(--sh-lg); }

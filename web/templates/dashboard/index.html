@@ -327,38 +327,45 @@ setInterval(pollDashboardStats, 30000);
 // Also poll on page load after a short delay
 setTimeout(pollDashboardStats, 2000);
 (function() {
-  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  var gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(148,163,184,0.1)';
-  var textColor = isDark ? '#94a3b8' : '#64748b';
+  function drawForecast() {
+    var css = getComputedStyle(document.documentElement);
+    var brand = css.getPropertyValue('--brand').trim(),
+        brandLt = css.getPropertyValue('--brand-lt').trim(),
+        ink3 = css.getPropertyValue('--ink-3').trim(),
+        border = css.getPropertyValue('--border').trim();
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var canvas = document.getElementById('forecastChart');
+    if (!canvas) return;
+    var existing = Chart.getChart(canvas);
+    if (existing) existing.destroy();
 
-  var ctx = document.getElementById('forecastChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}"{{$m.Month}}"{{end}}],
-      datasets: [{
-        label: 'Prediksi',
-        data: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}{{$m.PredictedCount}}{{end}}],
-        borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79,70,235,0.08)',
-        borderWidth: 2, fill: true, tension: 0.4,
-        pointBackgroundColor: '#fff', pointBorderColor: '#4f46e5',
-        pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 8 } },
-      scales: {
-        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 12 } } },
-        x: { grid: { display: false }, ticks: { color: textColor, font: { size: 12 } } }
+    new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}"{{$m.Month}}"{{end}}],
+        datasets: [{
+          label: 'Prediksi',
+          data: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}{{$m.PredictedCount}}{{end}}],
+          borderColor: brand, borderWidth: 2, fill: true, tension: 0.4,
+          backgroundColor: brandLt,
+          pointBackgroundColor: '#fff', pointBorderColor: brand,
+          pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: border }, ticks: { color: ink3, font: { size: 12 } } },
+          x: { grid: { display: false }, ticks: { color: ink3, font: { size: 12 } } }
+        }
       }
-    }
-  });
-
+    });
+  }
+  drawForecast();
   window.addEventListener('themeChanged', function(e) {
     var dark = e.detail.theme === 'dark';
-    ctx.chart && ctx.chart.destroy();
+    drawForecast();
   });
 })();
 </script>

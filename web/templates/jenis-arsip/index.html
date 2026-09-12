@@ -1,30 +1,10 @@
 {{define "jenis-arsip/index.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-    .jenis-hero {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        border-radius: var(--r-xl);
-        padding: 1.75rem 2rem;
-        color: #fff;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-    }
-    .jenis-hero::after {
-        content: '';
-        position: absolute;
-        top: -40%; right: -5%;
-        width: 280px; height: 280px;
-        background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-    .jenis-hero .hero-title {
-        font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
-    }
-    .jenis-hero .hero-sub {
-        font-size: 0.8rem; opacity: 0.7; font-weight: 500;
-    }
+    
+    
+    
+    
     .premium-table thead th {
         background: transparent;
         border: none;
@@ -50,8 +30,7 @@
     .fade-up { animation: fadeUp 0.35s ease both; }
     .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
     @media (max-width: 768px) {
-        .jenis-hero { padding: 1.25rem; }
-        .jenis-hero .hero-title { font-size: 1.1rem; }
+
         .premium-table thead { display: none; }
         .premium-table tbody tr {
             display: block; margin-bottom: 0.75rem;
@@ -75,7 +54,7 @@
 </style>
 
 <div class="container-fluid py-3 py-xl-4">
-    <div class="jenis-hero shadow-sm fade-up">
+    <div class="jenis-hero">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-folder me-2"></i>Jenis Arsip</h1>

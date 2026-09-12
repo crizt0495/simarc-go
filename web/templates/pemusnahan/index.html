@@ -1,23 +1,6 @@
 {{define "pemusnahan/index.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-.pemusnahan-hero {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-    color: #fff;
-    box-shadow: var(--neu-raised);
-    border-radius: var(--r-xl);
-    padding: 1.75rem 2rem;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-.pemusnahan-hero::after { display: none; }
-.pemusnahan-hero .hero-title {
-    font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
-}
-.pemusnahan-hero .hero-sub {
-    font-size: 0.8rem; opacity: 0.7; font-weight: 500; color: var(--ink-4);
-}
 
 .fade-up { animation: fadeUp 0.35s ease both; }
 .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
@@ -67,10 +50,10 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
 }
-.status-diajukan { background: var(--neu-bg); color: var(--ink-2); }
-.status-disetujui { background: var(--neu-bg); color: var(--ink-2); }
-.status-ditolak { background: var(--neu-bg); color: var(--ink-2); }
-.status-selesai { background: var(--neu-bg); color: var(--ink-3); }
+.status-diajukan { background: var(--info-lt); color: var(--info-dk); }
+.status-disetujui { background: var(--success-lt); color: var(--success-dk); }
+.status-ditolak { background: var(--danger-lt); color: var(--danger-dk); }
+.status-selesai { background: var(--surface-3); color: var(--ink-4); }
 .status-aktif { background: var(--success-lt); color: var(--success-dk); }
 .status-inaktif { background: var(--surface-3); color: var(--ink-4); }
 
@@ -275,8 +258,7 @@
 .pemusnahan-card-view::-webkit-scrollbar-track { background: transparent; }
 
 @media (max-width: 768px) {
-    .pemusnahan-hero { padding: 1.25rem; }
-    .pemusnahan-hero .hero-title { font-size: 1.1rem; }
+
     .pemusnahan-card-grid { grid-template-columns: 1fr; }
     .pemusnahan-card-body { grid-template-columns: 1fr 1fr; gap: 0.4rem 0.6rem; }
     .pemusnahan-card-view { max-height: calc(100vh - 380px); }
@@ -284,7 +266,7 @@
 </style>
 
 <div class="container-fluid py-3 py-xl-4">
-    <div class="pemusnahan-hero shadow-sm fade-up">
+    <div class="pemusnahan-hero">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-trash3 me-2"></i>Pemusnahan Arsip</h1>

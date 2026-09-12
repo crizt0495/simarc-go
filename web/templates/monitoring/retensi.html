@@ -1,30 +1,10 @@
 {{define "monitoring/retensi.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-    .mon-hero {
-        background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
-        border-radius: var(--r-xl);
-        padding: 1.75rem 2rem;
-        color: #fff;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-    }
-    .mon-hero::after {
-        content: '';
-        position: absolute;
-        top: -40%; right: -5%;
-        width: 280px; height: 280px;
-        background: radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-    .mon-hero .hero-title {
-        font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
-    }
-    .mon-hero .hero-sub {
-        font-size: 0.8rem; opacity: 0.7; font-weight: 500;
-    }
+    
+    
+    
+    
 
     .mon-stat {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 1.5rem;
@@ -79,14 +59,12 @@
         color: var(--ink-2);
     }
 
-
     .fade-up { animation: fadeUp 0.35s ease both; }
     .fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
     .fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
 
     @media (max-width: 768px) {
-        .mon-hero { padding: 1.25rem; }
-        .mon-hero .hero-title { font-size: 1.1rem; }
+
         .mon-stat { grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .premium-table thead { display: none; }
         .premium-table tbody tr {
@@ -111,7 +89,7 @@
 </style>
 
 <div class="container-fluid py-3 py-xl-4">
-    <div class="mon-hero shadow-sm fade-up">
+    <div class="mon-hero">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-hourglass-split me-2"></i>Monitoring Retensi Arsip</h1>

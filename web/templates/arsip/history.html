@@ -3,23 +3,6 @@
 <style>
 @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }
 
-.history-hero {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    border-radius: var(--r-xl);
-    padding: 1.75rem 2rem;
-    position: relative; overflow: hidden;
-    margin-bottom: 1.5rem;
-    animation: slideUp 0.35s ease both;
-}
-.history-hero::after {
-    content: ''; position: absolute; top: -50%; right: -5%;
-    width: 260px; height: 260px;
-    background: radial-gradient(circle, rgba(79,70,229,0.07) 0%, transparent 70%);
-    border-radius: 50%; pointer-events: none;
-}
-.history-hero .hero-title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem; position: relative; z-index: 1; color: #fff; }
-.history-hero .hero-sub { font-size: 0.8rem; opacity: 0.7; font-weight: 500; position: relative; z-index: 1; color: rgba(255,255,255,0.7); }
-
 .stat-card-mini {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -89,8 +72,8 @@
 .timeline-dot.warning { background: var(--ink-2); color: #fff; }
 .timeline-dot.danger { background: var(--ink-2); color: #fff; }
 .timeline-dot.info { background: var(--ink-2); color: #fff; }
-.timeline-dot.primary { background: #6366f1; color: #fff; }
-.timeline-dot.secondary { background: #64748b; color: #fff; }
+.timeline-dot.primary { background: var(--brand); color: #fff; }
+.timeline-dot.secondary { background: var(--ink-3); color: #fff; }
 
 .timeline-content {
     background: var(--surface);
@@ -145,8 +128,7 @@
 .empty-timeline p { font-size: 0.82rem; color: var(--ink-4); }
 
 @media (max-width:768px) {
-    .history-hero { padding: 1.25rem; }
-    .history-hero .hero-title { font-size: 1.1rem; }
+
     .side-card .card-body-custom { padding: 1rem; }
     .timeline-wrap { padding-left: 2rem; }
     .timeline-dot { left: -2rem; width: 20px; height: 20px; font-size: 0.5rem; }
@@ -196,7 +178,7 @@
                             </div>
                         </div>
                         <div class="stat-card-mini" style="animation-delay:0.1s;">
-                            <div class="stat-icon" style="background:rgba(99,102,241,0.12);color:#6366f1;"><i class="bi bi-calendar-check"></i></div>
+                            <div class="stat-icon" style="background:var(--brand-lt);color:var(--brand);"><i class="bi bi-calendar-check"></i></div>
                             <div>
                                 <div class="stat-label">Terakhir Diubah</div>
                                 <div class="stat-value" style="font-size:0.85rem;font-weight:700;">{{formatDateTime .arsip.UpdatedAt}}</div>

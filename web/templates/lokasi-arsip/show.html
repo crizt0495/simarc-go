@@ -1,30 +1,10 @@
 {{define "lokasi-arsip/show.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-    .show-hero {
-        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-        border-radius: var(--r-xl);
-        padding: 1.75rem 2rem;
-        color: #fff;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-    }
-    .show-hero::after {
-        content: '';
-        position: absolute;
-        top: -40%; right: -5%;
-        width: 280px; height: 280px;
-        background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-    .show-hero .hero-title {
-        font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.2rem;
-    }
-    .show-hero .hero-sub {
-        font-size: 0.8rem; opacity: 0.7; font-weight: 500;
-    }
+    
+    
+    
+    
     .info-card {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -97,8 +77,7 @@
         border-color: rgba(255,255,255,0.4);
     }
     @media (max-width: 768px) {
-        .show-hero { padding: 1.25rem; }
-        .show-hero .hero-title { font-size: 1.1rem; }
+
         .info-card .card-body { padding: 1rem; }
         .premium-table thead { display: none; }
         .premium-table tbody tr {
@@ -124,7 +103,7 @@
 
 <div class="container-fluid py-3 py-xl-4">
     <!-- HERO -->
-    <div class="show-hero shadow-sm fade-up">
+    <div class="show-hero">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-geo-alt me-2"></i>{{.Item.NamaLokasi}}</h1>
