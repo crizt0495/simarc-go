@@ -371,12 +371,12 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
 }
-.status-aktif { background: var(--neu-bg); color: var(--ink-2); }
+.status-aktif { background: var(--success-lt); color: var(--success-dk); }
 .status-inaktif { background: var(--surface-3); color: var(--ink-4); }
-.status-siap_penyusutan { background: var(--neu-bg); color: var(--ink-2); }
-.status-musnah { background: var(--neu-bg); color: var(--ink-2); }
-.status-permanen { background: #e0e7ff; color: var(--ink-3); }
-.status-diberkaskan { background: var(--neu-bg); color: var(--ink-3); }
+.status-siap_penyusutan { background: var(--warning-lt); color: var(--warning-dk); }
+.status-musnah { background: var(--danger-lt); color: var(--danger-dk); }
+.status-permanen { background: var(--brand-lt); color: var(--brand-dk); }
+.status-diberkaskan { background: var(--info-lt); color: var(--info-dk); }
 .status-dipinjam { background: #fce7f3; color: #be185d; }
 
 /* ── Action Buttons (using global .btn-crud from enterprise-premium.css) ── */
@@ -725,7 +725,7 @@ mark {
         {{if .FilterLokasiID}}<span class="filter-badge" style="background:var(--surface-3);color:var(--ink-3)"><i class="bi bi-geo-alt"></i> Lokasi <a href="#" class="remove" data-param="lokasi_arsip_id">&times;</a></span>{{end}}
         {{if or .FilterStartDate .FilterEndDate}}<span class="filter-badge badge-soft-danger"><i class="bi bi-calendar"></i> {{.FilterStartDate}} ~ {{.FilterEndDate}} <a href="#" class="remove" data-params='["start_date","end_date"]'>&times;</a></span>{{end}}
         {{if .FilterBerkasDigital}}<span class="filter-badge badge-soft-primary"><i class="bi bi-file-earmark"></i> Berkas: {{if eq .FilterBerkasDigital "sudah_ada"}}Ada{{else}}Belum{{end}} <a href="#" class="remove" data-param="status_berkas_digital">&times;</a></span>{{end}}
-        {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:var(--pink-500);color:#fff;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
+        {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:#EC4899;color:#fff;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
         {{if .FilterPemberkasanID}}<span class="filter-badge badge-soft-info"><i class="bi bi-archive"></i> Pemberkasan <a href="#" class="remove" data-param="pemberkasan_id">&times;</a></span>{{end}}
         <a href="/arsip" class="filter-badge" style="background:var(--ink-2);color:#fff;text-decoration:none"><i class="bi bi-x-circle"></i> Hapus Semua</a>
     </div>

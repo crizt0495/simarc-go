@@ -18,37 +18,26 @@
         padding: 2rem 2.5rem;
         position: relative;
         overflow: hidden;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+        border-left: 4px solid var(--brand);
     }
     .edit-header.system {
-        background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-2) 100%);
+        background: var(--surface-2);
+        border-left-color: var(--brand);
     }
     .edit-header.custom {
-        background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%);
-    }
-    .edit-header::after {
-        content: '';
-        position: absolute;
-        top: -50%; right: -10%;
-        width: 200px; height: 200px;
-        background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
+        background: var(--surface-2);
+        border-left-color: var(--purple);
     }
     .edit-header h4 {
-        font-weight: 800;
-        color: #fff;
+        font-weight: 700;
+        color: var(--ink);
         margin-bottom: 0.25rem;
         position: relative;
         z-index: 1;
     }
-    .edit-header p {
-        color: rgba(255,255,255,0.75);
-        font-weight: 500;
-        font-size: 0.85rem;
-        margin-bottom: 0;
-        position: relative;
-        z-index: 1;
-    }
+    .edit-header p { color: var(--ink-3); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
 
     .form-field {
         margin-bottom: 1.5rem;
@@ -165,9 +154,9 @@
                     <p class="d-flex align-items-center gap-2">
                         <span>{{.Role.NamaRole}}</span>
                         {{if $isSystem}}
-                            <span class="system-badge-tag"><i class="bi bi-shield-fill-check"></i> System Core</span>
+                            <span class="badge bg-primary"><i class="bi bi-shield-fill-check me-1"></i>System</span>
                         {{else}}
-                            <span class="system-badge-tag" style="background:rgba(255,255,255,0.15);"><i class="bi bi-pencil"></i> Custom</span>
+                            <span class="badge bg-secondary"><i class="bi bi-pencil me-1"></i>Custom</span>
                         {{end}}
                     </p>
                 </div>

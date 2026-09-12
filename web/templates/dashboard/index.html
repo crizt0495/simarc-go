@@ -328,7 +328,7 @@ setInterval(pollDashboardStats, 30000);
 setTimeout(pollDashboardStats, 2000);
 (function() {
   var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  var gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  var gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(148,163,184,0.1)';
   var textColor = isDark ? '#94a3b8' : '#64748b';
 
   var ctx = document.getElementById('forecastChart').getContext('2d');
@@ -340,7 +340,7 @@ setTimeout(pollDashboardStats, 2000);
         label: 'Prediksi',
         data: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}{{$m.PredictedCount}}{{end}}],
         borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79,70,229,0.1)',
+        backgroundColor: 'rgba(79,70,235,0.08)',
         borderWidth: 2, fill: true, tension: 0.4,
         pointBackgroundColor: '#fff', pointBorderColor: '#4f46e5',
         pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
