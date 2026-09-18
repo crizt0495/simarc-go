@@ -1,136 +1,329 @@
 {{define "backup/index.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-    .backup-stat-card { background: white; border-radius: 16px; padding: 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; border: 1px solid #f0f0f0; }
-    .backup-stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
-    .backup-stat-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
-    .backup-stat-icon.primary { background: linear-gradient(135deg, var(--ink-3) 0%, var(--ink-2) 100%); color: white; }
-    .backup-stat-icon.success { background: linear-gradient(135deg, var(--ink-3) 0%, var(--ink-2) 100%); color: white; }
-    .backup-stat-icon.warning { background: linear-gradient(135deg, var(--ink-4) 0%, #f5576c 100%); color: white; }
-    .backup-stat-icon.info { background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%); color: white; }
-    .backup-stat-content h3 { font-size: 32px; font-weight: 700; color: var(--ink-2); margin: 0 0 4px 0; }
-    .backup-stat-content p { font-size: 14px; color: var(--ink-3); margin: 0; }
-    .backup-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .backup-action-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); cursor: pointer; transition: all 0.3s ease; }
-    .backup-action-card:hover { border-color: var(--ink-3); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2); transform: translateY(-2px); }
-    .backup-action-card.active { border-color: var(--ink-3); background: #f8f9ff; }
-    .backup-action-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px; }
-    .backup-action-card h5 { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; }
-    .backup-action-card p { margin: 0; font-size: 13px; color: var(--ink-3); }
-    .backup-list { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .backup-item { display: flex; align-items: center; padding: 16px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; transition: all 0.2s ease; }
-    .backup-item:hover { background: #f8f9ff; border-color: var(--ink-3); }
-    .backup-item-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, var(--ink-3) 0%, var(--ink-2) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; margin-right: 16px; }
-    .backup-item-content { flex: 1; }
-    .backup-item-name { font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
-    .backup-item-meta { font-size: 13px; color: var(--ink-3); }
-    .backup-item-actions { display: flex; gap: 8px; }
-    .progress-container { background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; display: none; }
-    .progress-container.active { display: block; }
-    .progress-bar-container { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 16px 0; }
-    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--ink-3) 0%, var(--ink-2) 100%); width: 0%; transition: width 0.3s ease; border-radius: 4px; }
-    .restore-section { background: white; border-radius: 16px; padding: 24px; margin-top: 24px; border: 2px dashed #e0e0e0; }
-    .restore-section:hover { border-color: var(--ink-3); }
-    .gdrive-section { background: white; border-radius: 16px; padding: 24px; margin-top: 24px; border: 1px solid #e0e0e0; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .gdrive-status { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; font-size: 14px; }
-    .gdrive-status.ok { background: var(--neu-bg); color: var(--ink-2); border: 1px solid #a7f3d0; }
-    .gdrive-status.missing { background: var(--neu-bg); color: var(--ink-2); border: 1px solid var(--neu-bg); }
+    /* ══════════ HERO ══════════ */
+    .bk-hero { position: relative; overflow: hidden; border-radius: var(--r-xl); padding: 30px 34px; margin-bottom: 26px; color: #fff; background: linear-gradient(120deg, #4F46E5 0%, #6D28D9 42%, #7C3AED 68%, #4F46E5 100%); box-shadow: 0 24px 48px -20px rgba(79, 70, 229, .65); isolation: isolate; }
+    .bk-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .28; background: radial-gradient(circle at 82% 18%, rgba(255, 255, 255, .38), transparent 42%), radial-gradient(circle at 12% 115%, rgba(34, 211, 238, .45), transparent 46%), radial-gradient(circle at 60% 120%, rgba(16, 185, 129, .35), transparent 42%); }
+    .bk-hero-inner { display: flex; align-items: center; gap: 22px; justify-content: space-between; flex-wrap: wrap; }
+    .bk-hero-icon { width: 62px; height: 62px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #fff; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .28); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 12px 24px -10px rgba(0, 0, 0, .4); flex-shrink: 0; }
+    .bk-hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255, 255, 255, .85); background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .22); padding: 4px 12px; border-radius: 999px; margin-bottom: 10px; }
+    .bk-hero-title { margin: 0; font-size: 1.65rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.2; }
+    .bk-hero-sub { margin: 6px 0 0; font-size: .86rem; font-weight: 500; color: rgba(255, 255, 255, .82); max-width: 560px; }
+    .bk-hero-side { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .bk-hero-safe { display: inline-flex; align-items: center; gap: 8px; font-size: .76rem; font-weight: 700; color: #fff; background: rgba(16, 185, 129, .28); border: 1px solid rgba(255, 255, 255, .25); padding: 8px 14px; border-radius: 999px; }
+    .bk-hero-safe .dot { width: 8px; height: 8px; border-radius: 50%; background: #34D399; box-shadow: 0 0 0 4px rgba(52, 211, 153, .28); animation: bkPulse 2s ease-in-out infinite; }
+    @keyframes bkPulse { 0%, 100% { box-shadow: 0 0 0 3px rgba(52, 211, 153, .3); } 50% { box-shadow: 0 0 0 7px rgba(52, 211, 153, .08); } }
+    .bk-refresh { display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, .95); color: #4F46E5; border: none; border-radius: 12px; padding: 10px 18px; font-size: .82rem; font-weight: 700; transition: all .2s ease; box-shadow: 0 12px 24px -10px rgba(0, 0, 0, .35); }
+    .bk-refresh:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -10px rgba(0, 0, 0, .4); }
+
+    /* ══════════ STAT CARDS ══════════ */
+    .bk-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 26px; }
+    .bk-stat { position: relative; overflow: hidden; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; box-shadow: var(--sh-sm); display: flex; align-items: center; gap: 14px; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .bk-stat:hover { transform: translateY(-3px); box-shadow: var(--sh-lg); }
+    .bk-stat::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+    .bk-stat::after { content: ''; position: absolute; right: -24px; top: -32px; width: 96px; height: 96px; border-radius: 50%; filter: blur(30px); opacity: .5; pointer-events: none; }
+    .bk-stat-ic { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; box-shadow: 0 10px 18px -6px rgba(15, 23, 42, .35); flex-shrink: 0; }
+    .bk-stat-value { font-size: 1.55rem; font-weight: 800; letter-spacing: -.03em; color: var(--ink); line-height: 1.1; }
+    .bk-stat-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-4); margin-top: 3px; }
+    .bk-stat-indigo::before { background: linear-gradient(180deg, #6366F1, #8B5CF6); }
+    .bk-stat-emerald::before { background: linear-gradient(180deg, #10B981, #34D399); }
+    .bk-stat-amber::before { background: linear-gradient(180deg, #F59E0B, #FB923C); }
+    .bk-stat-sky::before { background: linear-gradient(180deg, #0EA5E9, #818CF8); }
+    .bk-stat-indigo::after { background: rgba(99, 102, 241, .45); }
+    .bk-stat-emerald::after { background: rgba(16, 185, 129, .45); }
+    .bk-stat-amber::after { background: rgba(245, 158, 11, .5); }
+    .bk-stat-sky::after { background: rgba(14, 165, 233, .45); }
+    .bk-stat-indigo .bk-stat-ic { background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+    .bk-stat-emerald .bk-stat-ic { background: linear-gradient(135deg, #10B981, #34D399); }
+    .bk-stat-amber .bk-stat-ic { background: linear-gradient(135deg, #F59E0B, #FB923C); }
+    .bk-stat-sky .bk-stat-ic { background: linear-gradient(135deg, #0EA5E9, #818CF8); }
+
+    /* ══════════ ACTION CARDS ══════════ */
+    .bk-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 26px; }
+    .bk-action { position: relative; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r); padding: 20px 20px 18px; cursor: pointer; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; box-shadow: var(--sh-xs); }
+    .bk-action::before { content: ''; position: absolute; inset: 0; border-radius: inherit; opacity: 0; transition: opacity .25s ease; }
+    .bk-action:hover { transform: translateY(-4px); box-shadow: var(--sh-lg); }
+    .bk-action.disabled { opacity: .55; cursor: not-allowed; }
+    .bk-action.disabled:hover { transform: none; box-shadow: var(--sh-xs); }
+    .bk-action-ic { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; margin-bottom: 14px; box-shadow: 0 12px 18px -8px rgba(15, 23, 42, .35); position: relative; }
+    .bk-action-ic::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, rgba(255, 255, 255, .28), transparent 45%); }
+    .bk-action-ic.indigo { background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+    .bk-action-ic.azure { background: linear-gradient(135deg, #0EA5E9, #22D3EE); }
+    .bk-action-ic.emerald { background: linear-gradient(135deg, #10B981, #34D399); }
+    .bk-action-ic.amber { background: linear-gradient(135deg, #F59E0B, #FB923C); }
+    .bk-action h5 { margin: 0 0 6px; font-size: .96rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em; }
+    .bk-action p { margin: 0; font-size: .76rem; color: var(--ink-3); line-height: 1.5; }
+    .bk-action .bk-arrow { position: absolute; right: 16px; top: 20px; font-size: .82rem; color: var(--ink-4); transition: color .2s ease, transform .2s ease; }
+    .bk-action:hover .bk-arrow { color: var(--brand); transform: translateX(3px); }
+    .bk-action.indigo:hover::before { background: radial-gradient(140% 110% at 0% 0%, rgba(99, 102, 241, .09), transparent 55%); }
+    .bk-action.azure:hover::before { background: radial-gradient(140% 110% at 0% 0%, rgba(14, 165, 233, .09), transparent 55%); }
+    .bk-action.emerald:hover::before { background: radial-gradient(140% 110% at 0% 0%, rgba(16, 185, 129, .09), transparent 55%); }
+    .bk-action.amber:hover::before { background: radial-gradient(140% 110% at 0% 0%, rgba(245, 158, 11, .1), transparent 55%); }
+    .bk-action.indigo:hover { border-color: rgba(99, 102, 241, .5); }
+    .bk-action.azure:hover { border-color: rgba(14, 165, 233, .5); }
+    .bk-action.emerald:hover { border-color: rgba(16, 185, 129, .5); }
+    .bk-action.amber:hover { border-color: rgba(245, 158, 11, .5); }
+
+    /* ══════════ PROGRESS ══════════ */
+    .bk-progress { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r); padding: 22px 24px; margin-bottom: 26px; box-shadow: var(--sh-sm); display: none; }
+    .bk-progress.active { display: block; animation: bkUp .25s ease both; }
+    .bk-progress-head { display: flex; align-items: center; gap: 10px; }
+    .bk-progress-head i { color: var(--brand); }
+    .bk-progress-head h5 { margin: 0; font-size: .95rem; font-weight: 700; color: var(--ink); }
+    .bk-progress-track { height: 10px; border-radius: 50px; background: var(--surface-3); overflow: hidden; margin: 16px 0 10px; }
+    .bk-progress-bar { height: 100%; width: 0%; border-radius: 50px; background: linear-gradient(90deg, #6366F1, #8B5CF6, #D946EF, #6366F1); background-size: 220% 100%; animation: bkFlow 2.4s linear infinite; transition: width .35s cubic-bezier(.16, 1, .3, 1); }
+    @keyframes bkFlow { from { background-position: 0 0; } to { background-position: 220% 0; } }
+    .bk-progress-text { font-size: .78rem; color: var(--ink-3); margin: 0; }
+
+    /* ══════════ ALERT (Vercel) ══════════ */
+    .bk-alert { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: var(--r); background: linear-gradient(120deg, rgba(14, 165, 233, .08), rgba(99, 102, 241, .1)); border: 1px solid rgba(99, 102, 241, .22); font-size: .85rem; color: var(--ink-3); margin-bottom: 22px; }
+    .bk-alert i { font-size: 22px; color: #6366F1; }
+    .bk-alert strong { color: var(--ink-2); }
+    .bk-alert code { background: var(--surface-3); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; color: var(--brand-dk); font-size: .76rem; }
+
+    /* ══════════ BACKUP LIST ══════════ */
+    .bk-list { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 24px; box-shadow: var(--sh-sm); }
+    .bk-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+    .bk-list-toolbar h5 { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--ink); letter-spacing: -.02em; display: inline-flex; align-items: center; gap: 9px; }
+    .bk-list-toolbar h5 .ic { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #4F46E5, #8B5CF6); color: #fff; font-size: 16px; box-shadow: 0 8px 14px -6px rgba(79, 70, 229, .5); }
+    .bk-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .bk-filter { min-width: 150px; }
+    .bk-item { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 12px; background: var(--surface-2); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; position: relative; overflow: hidden; }
+    .bk-item:hover { border-color: var(--border-2); box-shadow: var(--sh); transform: translateY(-2px); }
+    .bk-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #6366F1, #8B5CF6); opacity: 0; transition: opacity .18s ease; }
+    .bk-item:hover::before { opacity: 1; }
+    .bk-item-ic { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; background: linear-gradient(135deg, #4F46E5, #8B5CF6); box-shadow: 0 10px 16px -6px rgba(79, 70, 229, .5); flex-shrink: 0; position: relative; }
+    .bk-item-ic::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, rgba(255, 255, 255, .3), transparent 45%); }
+    .bk-item-body { flex: 1; min-width: 0; }
+    .bk-item-name { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink); font-size: .9rem; word-break: break-all; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; letter-spacing: -.01em; }
+    .bk-item-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 7px; font-size: .76rem; color: var(--ink-3); }
+    .bk-item-meta span { display: inline-flex; align-items: center; gap: 5px; }
+    .bk-item-meta i { color: var(--brand); }
+    .bk-item-meta .size { font-weight: 600; color: var(--ink-2); }
+    .bk-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .bk-item-actions .btn { border-radius: 8px; width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+    .bk-item-actions .btn-primary { background: linear-gradient(135deg, #6366F1, #8B5CF6); border: none; box-shadow: 0 8px 14px -6px rgba(79, 70, 229, .55); }
+    .bk-item-actions .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.06); }
+    .bk-empty { text-align: center; padding: 3.5rem 1rem; }
+    .bk-empty .bk-empty-ic { width: 84px; height: 84px; margin: 0 auto 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(99, 102, 241, .12), rgba(139, 92, 246, .12)); color: #6366F1; font-size: 38px; border: 1px dashed rgba(99, 102, 241, .35); }
+    .bk-empty h6 { font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+    .bk-empty p { color: var(--ink-3); font-size: .85rem; margin-bottom: 16px; }
+
+    /* ══════════ RESTORE ══════════ */
+    .bk-restore { background: var(--surface-2); border: 2px dashed var(--border-2); border-radius: var(--r-xl); padding: 26px; margin-top: 26px; transition: border-color .2s ease, box-shadow .2s ease; }
+    .bk-restore:hover { border-color: var(--brand); box-shadow: 0 16px 34px -18px rgba(79, 70, 229, .35); }
+    .bk-section-title { display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 800; color: var(--ink); letter-spacing: -.02em; margin: 0 0 4px; }
+    .bk-section-title .ic { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; }
+    .bk-section-title .ic.emerald { background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 14px -6px rgba(16, 185, 129, .5); }
+    .bk-section-title .ic.purple { background: linear-gradient(135deg, #8B5CF6, #D946EF); box-shadow: 0 8px 14px -6px rgba(139, 92, 246, .5); }
+    .bk-file-input { position: relative; }
+    .bk-file-input input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2; }
+    .bk-file-drop { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 1px dashed var(--border-2); border-radius: var(--r); background: var(--surface); transition: border-color .2s ease, background .2s ease; }
+    .bk-file-drop i { font-size: 22px; color: var(--brand); }
+    .bk-file-drop .t { font-size: .82rem; font-weight: 700; color: var(--ink-2); }
+    .bk-file-drop .s { font-size: .72rem; color: var(--ink-4); }
+    .bk-file-input:hover .bk-file-drop { border-color: var(--brand); background: var(--brand-lt); }
+
+    /* ══════════ GOOGLE DRIVE ══════════ */
+    .bk-gdrive { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 26px; margin-top: 26px; box-shadow: var(--sh-sm); }
+    .bk-gdrive-status { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-radius: 12px; font-size: .82rem; font-weight: 600; line-height: 1.45; }
+    .bk-gdrive-status i { font-size: 18px; }
+    .bk-gdrive-status.ok { background: var(--success-lt); color: var(--success-dk); border: 1px solid rgba(22, 163, 74, .22); }
+    .bk-gdrive-status.missing { background: var(--warning-lt); color: var(--warning-dk); border: 1px solid rgba(217, 119, 6, .24); }
+    .bk-helper { font-size: .82rem; color: var(--ink-3); border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 14px 16px; line-height: 1.6; }
+    .bk-helper a { color: var(--brand); font-weight: 600; }
+    .bk-helper ol { margin: 8px 0 0; padding-left: 18px; }
+    .bk-helper code { background: var(--surface-3); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; color: var(--brand-dk); font-size: .76rem; }
+
+    /* ══════════ TOAST ══════════ */
+    .bk-toast { position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 340px; max-width: calc(100vw - 40px); padding: 14px 16px; background: var(--surface-2); color: var(--ink); border-radius: 14px; box-shadow: var(--sh-xl); display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-left-width: 4px; font-size: .86rem; opacity: 0; transform: translateY(-10px); transition: opacity .25s ease, transform .25s ease; }
+    .bk-toast.show { opacity: 1; transform: none; }
+    .bk-toast .bk-toast-ic { font-size: 20px; flex-shrink: 0; }
+    .bk-toast-success { border-left-color: #10B981; } .bk-toast-success .bk-toast-ic { color: #10B981; }
+    .bk-toast-error { border-left-color: #EF4444; } .bk-toast-error .bk-toast-ic { color: #EF4444; }
+    .bk-toast-info { border-left-color: #6366F1; } .bk-toast-info .bk-toast-ic { color: #6366F1; }
+    .bk-toast .bk-toast-x { margin-left: auto; background: none; border: none; color: var(--ink-4); font-size: 16px; cursor: pointer; padding: 4px; }
+    .bk-toast .bk-toast-x:hover { color: var(--ink-2); }
+
+    /* ══════════ ANIMATION ══════════ */
+    @keyframes bkUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .bk-hero { animation: bkUp .5s cubic-bezier(.16, 1, .3, 1) both; }
+    .bk-stats, .bk-alert { animation: bkUp .5s cubic-bezier(.16, 1, .3, 1) .06s both; }
+    .bk-actions { animation: bkUp .5s cubic-bezier(.16, 1, .3, 1) .12s both; }
+    .bk-progress, .bk-list { animation: bkUp .5s cubic-bezier(.16, 1, .3, 1) .18s both; }
+    .bk-restore, .bk-gdrive { animation: bkUp .5s cubic-bezier(.16, 1, .3, 1) .24s both; }
+    @media (prefers-reduced-motion: reduce) {
+        .bk-hero, .bk-stats, .bk-alert, .bk-actions, .bk-progress, .bk-list, .bk-restore, .bk-gdrive, .bk-item, .bk-action, .bk-stat { animation: none !important; transition: none !important; }
+    }
+
+    @media (max-width: 992px) {
+        .bk-stats { grid-template-columns: repeat(2, 1fr); }
+        .bk-actions { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+        .bk-hero { padding: 22px 20px; }
+        .bk-hero-title { font-size: 1.25rem; }
+        .bk-hero-sub { font-size: .8rem; }
+        .bk-stats { grid-template-columns: 1fr 1fr; gap: 12px; }
+        .bk-stat { padding: 16px; gap: 12px; }
+        .bk-stat-ic { width: 44px; height: 44px; font-size: 19px; }
+        .bk-stat-value { font-size: 1.25rem; }
+        .bk-actions { grid-template-columns: 1fr; }
+        .bk-item { flex-wrap: wrap; }
+        .bk-item-actions { width: 100%; justify-content: flex-start; }
+        .bk-item-actions .btn { width: 40px; height: 40px; }
+    }
 </style>
-<div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title mb-0"><i class="bi bi-cloud-upload"></i> Backup & Restore</h1>
-            <small class="text-muted">Kelola backup database dan restore data</small>
+<div class="bk-hero">
+    <div class="bk-hero-inner">
+        <div class="d-flex align-items-center gap-3" style="gap:20px;">
+            <div class="bk-hero-icon"><i class="bi bi-database-fill-lock"></i></div>
+            <div>
+                <span class="bk-hero-eyebrow"><i class="bi bi-shield-fill-check"></i> Pusat Perlindungan Data</span>
+                <h1 class="bk-hero-title">Backup &amp; Restore</h1>
+                <p class="bk-hero-sub">Buat, unduh, dan restore database SIMARC dengan aman. Sinkronkan otomatis ke Google Drive.</p>
+            </div>
         </div>
-        <div><button class="btn btn-outline-primary btn-sm" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Refresh</button></div>
+        <div class="bk-hero-side">
+            <span class="bk-hero-safe"><span class="dot"></span> Sistem Aman</span>
+            <button class="bk-refresh" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+        </div>
     </div>
 </div>
-<div class="row mb-4">
-    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon primary"><i class="bi bi-hdd-stack"></i></div><div class="backup-stat-content"><h3>{{.Statistics.TotalBackups}}</h3><p>Total Backups</p></div></div></div>
-    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon success"><i class="bi bi-database"></i></div><div class="backup-stat-content"><h3>{{.Statistics.TotalSizeFormatted}}</h3><p>Total Size</p></div></div></div>
-    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon warning"><i class="bi bi-clock-history"></i></div><div class="backup-stat-content"><h3>{{.Statistics.LastBackupAge}}</h3><p>Last Backup</p></div></div></div>
-    <div class="col-md-3"><div class="backup-stat-card"><div class="backup-stat-icon info"><i class="bi bi-shield-check"></i></div><div class="backup-stat-content"><h3>{{.Statistics.AverageSize}}</h3><p>Avg Size</p></div></div></div>
+<div class="bk-stats">
+    <div class="bk-stat bk-stat-indigo">
+        <div class="bk-stat-ic"><i class="bi bi-database-check"></i></div>
+        <div>
+            <div class="bk-stat-value">{{.Statistics.TotalBackups}}</div>
+            <div class="bk-stat-label">Total Backups</div>
+        </div>
+    </div>
+    <div class="bk-stat bk-stat-emerald">
+        <div class="bk-stat-ic"><i class="bi bi-hdd-stack"></i></div>
+        <div>
+            <div class="bk-stat-value">{{.Statistics.TotalSizeFormatted}}</div>
+            <div class="bk-stat-label">Total Size</div>
+        </div>
+    </div>
+    <div class="bk-stat bk-stat-amber">
+        <div class="bk-stat-ic"><i class="bi bi-clock-history"></i></div>
+        <div>
+            <div class="bk-stat-value" style="font-size:1.05rem;">{{.Statistics.LastBackupAge}}</div>
+            <div class="bk-stat-label">Last Backup</div>
+        </div>
+    </div>
+    <div class="bk-stat bk-stat-sky">
+        <div class="bk-stat-ic"><i class="bi bi-bar-chart-line"></i></div>
+        <div>
+            <div class="bk-stat-value">{{.Statistics.AverageSize}}</div>
+            <div class="bk-stat-label">Avg Size</div>
+        </div>
+    </div>
 </div>
-<div id="progressContainer" class="progress-container">
-    <h5><i class="bi bi-hourglass-split"></i> <span id="progressTitle">Processing...</span></h5>
-    <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
-    <p class="text-muted mb-0" id="progressText">Please wait...</p>
+<div class="bk-actions">
+    <div class="bk-action indigo" onclick="createBackup()">
+        <div class="bk-action-ic indigo"><i class="bi bi-database-fill-add"></i></div>
+        <h5>Backup Database</h5>
+        <p>{{if .IsVercel}}Backup via GORM export{{else}}Buat backup database — disimpan di storage lokal{{end}}</p>
+        <i class="bi bi-arrow-right-circle bk-arrow"></i>
+    </div>
+    <div class="bk-action azure" onclick="createBackupGDrive()">
+        <div class="bk-action-ic azure"><i class="bi bi-google"></i></div>
+        <h5>Backup &amp; Upload GDrive</h5>
+        <p>Buat backup lalu unggah otomatis ke Google Drive</p>
+        <i class="bi bi-arrow-right-circle bk-arrow"></i>
+    </div>
+    {{if .CanRestore}}
+    <div class="bk-action emerald" onclick="showRestoreModal()">
+        <div class="bk-action-ic emerald"><i class="bi bi-arrow-counterclockwise"></i></div>
+        <h5>Restore Database</h5>
+        <p>Restore dari file backup yang tersimpan</p>
+        <i class="bi bi-arrow-right-circle bk-arrow"></i>
+    </div>
+    <div class="bk-action amber" onclick="showImportModal()">
+        <div class="bk-action-ic amber"><i class="bi bi-filetype-sql"></i></div>
+        <h5>Import Database (.SQL)</h5>
+        <p>Unggah dan import database .SQL</p>
+        <i class="bi bi-arrow-right-circle bk-arrow"></i>
+    </div>
+    {{else}}
+    <div class="bk-action emerald disabled" title="mysql tidak tersedia">
+        <div class="bk-action-ic emerald" style="opacity:.7;"><i class="bi bi-arrow-counterclockwise"></i></div>
+        <h5>Restore Database</h5>
+        <p>mysql client tidak tersedia — gunakan Aiven Console</p>
+        <i class="bi bi-lock-fill bk-arrow"></i>
+    </div>
+    <div class="bk-action amber disabled" title="mysql tidak tersedia">
+        <div class="bk-action-ic amber" style="opacity:.7;"><i class="bi bi-filetype-sql"></i></div>
+        <h5>Import Database (.SQL)</h5>
+        <p>mysql client tidak tersedia — gunakan Aiven Console</p>
+        <i class="bi bi-lock-fill bk-arrow"></i>
+    </div>
+    {{end}}
 </div>
 {{if .IsVercel}}
-<div class="alert alert-info d-flex align-items-start gap-3 mb-4" style="border-radius:12px;">
-    <i class="bi bi-info-circle" style="font-size:24px;color:var(--ink-3);"></i>
+<div class="bk-alert">
+    <i class="bi bi-info-circle"></i>
     <div>
         <strong>Berjalan di Vercel Serverless.</strong><br>
         <span style="font-size:14px;">Backup database menggunakan <strong>GORM export</strong> (tanpa mysqldump). Restore/Import tetap memerlukan <code>mysql</code> binary — gunakan Aiven Console atau jalankan lokal untuk restore.</span>
     </div>
 </div>
 {{end}}
-<div class="backup-actions">
-    <div class="backup-action-card" onclick="createBackup()">
-        <div class="backup-action-icon primary"><i class="bi bi-database"></i></div>
-        <h5>Backup Database</h5>
-        <p>{{if .IsVercel}}Backup via GORM export{{else}}Buat backup database — disimpan di storage lokal{{end}}</p>
+<div class="bk-progress" id="progressContainer">
+    <div class="bk-progress-head">
+        <i class="bi bi-hourglass-split"></i>
+        <h5 id="progressTitle">Processing...</h5>
     </div>
-    <div class="backup-action-card" onclick="createBackupGDrive()">
-        <div class="backup-action-icon success" style="background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%);"><i class="bi bi-google"></i></div>
-        <h5>Backup &amp; Upload ke Google Drive</h5>
-        <p>Buat backup database lalu unggah otomatis ke Google Drive</p>
-    </div>
-    {{if .CanRestore}}
-    <div class="backup-action-card" onclick="showRestoreModal()"><div class="backup-action-icon success"><i class="bi bi-arrow-counterclockwise"></i></div><h5>Restore Database</h5><p>Restore dari backup file</p></div>
-    <div class="backup-action-card" onclick="showImportModal()"><div class="backup-action-icon success" style="background: linear-gradient(135deg, var(--ink-3) 0%, var(--ink-2) 100%);"><i class="bi bi-filetype-sql"></i></div><h5>Import Database (.SQL)</h5><p>Unggah dan import database .SQL</p></div>
-    {{else}}
-    <div class="backup-action-card" style="opacity:0.5;cursor:not-allowed;" title="mysql tidak tersedia">
-        <div class="backup-action-icon success" style="opacity:0.5;"><i class="bi bi-arrow-counterclockwise"></i></div>
-        <h5>Restore Database</h5>
-        <p>mysql client tidak tersedia — gunakan Aiven Console</p>
-    </div>
-    <div class="backup-action-card" style="opacity:0.5;cursor:not-allowed;" title="mysql tidak tersedia">
-        <div class="backup-action-icon success" style="opacity:0.5;background:linear-gradient(135deg, var(--ink-3) 0%, var(--ink-2) 100%);"><i class="bi bi-filetype-sql"></i></div>
-        <h5>Import Database (.SQL)</h5>
-        <p>mysql client tidak tersedia — gunakan Aiven Console</p>
-    </div>
-    {{end}}
+    <div class="bk-progress-track"><div class="bk-progress-bar" id="progressBar"></div></div>
+    <p class="bk-progress-text" id="progressText">Please wait...</p>
 </div>
-<div class="backup-list">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="mb-0"><i class="bi bi-archive"></i> Backup Files</h5>
-        <div class="d-flex gap-2">
-            <select class="form-select form-select-sm no-select2" id="filterBackup" style="width: auto;" onchange="filterBackups()">
+<div class="bk-list">
+    <div class="bk-list-toolbar">
+        <h5><span class="ic"><i class="bi bi-archive"></i></span> Backup Files</h5>
+        <div class="bk-tools">
+            <select class="form-select form-select-sm no-select2 bk-filter" id="filterBackup" onchange="filterBackups()">
                 <option value="all">All Backups</option>
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
             </select>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteOldBackups()"><i class="bi bi-trash"></i> Cleanup Old</button>
+            <button class="btn btn-sm btn-soft-danger" onclick="deleteOldBackups()"><i class="bi bi-trash"></i> Cleanup Old</button>
         </div>
     </div>
     <div id="backupListContainer">
         {{range .Backups}}
-        <div class="backup-item" data-date="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
-            <div class="backup-item-icon"><i class="bi bi-file-earmark-zip"></i></div>
-            <div class="backup-item-content">
-                <div class="backup-item-name">{{.FileName}}
-                {{if .GoogleDriveFileID}}<span class="badge badge-soft badge-soft-info ms-2"><i class="bi bi-google"></i> GDrive</span>{{end}}
+        <div class="bk-item backup-item" data-date="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+            <div class="bk-item-ic"><i class="bi bi-file-earmark-code"></i></div>
+            <div class="bk-item-body">
+                <div class="bk-item-name">
+                    {{.FileName}}
+                    <span class="badge badge-soft badge-soft-brand" style="background:var(--brand-lt);color:var(--brand-dk);"><i class="bi bi-filetype-sql"></i> SQL</span>
+                    {{if .GoogleDriveFileID}}<span class="badge badge-soft badge-soft-info"><i class="bi bi-google"></i> GDrive</span>{{end}}
+                </div>
+                <div class="bk-item-meta">
+                    <span class="size"><i class="bi bi-hdd"></i> {{formatBytes .FileSize}}</span>
+                    <span><i class="bi bi-clock"></i> {{.CreatedAt.Format "02 Jan 2006 15:04"}}</span>
+                    <span><i class="bi bi-check-circle" style="color:#10B981;"></i> {{if .Status}}{{.Status}}{{else}}success{{end}}</span>
+                </div>
             </div>
-                <div class="backup-item-meta"><i class="bi bi-hdd"></i> {{formatBytes .FileSize}} • <i class="bi bi-clock"></i> {{.CreatedAt.Format "02 Jan 2006 15:04"}}</div>
-            </div>
-            <div class="backup-item-actions">
-                <a href="/backup/download?filename={{.FileName}}" class="btn btn-sm btn-primary" title="Download"><i class="bi bi-download"></i></a>
+            <div class="bk-item-actions">
+                <a href="/backup/download?filename={{.FileName}}" class="btn btn-primary" title="Download SQL" data-bs-toggle="tooltip"><i class="bi bi-download"></i></a>
                 {{if .GoogleDriveFileID}}
-                <a href="https://drive.google.com/file/d/{{.GoogleDriveFileID}}/view" target="_blank" class="btn btn-sm btn-outline-info" title="Buka di Google Drive"><i class="bi bi-google"></i></a>
+                <a href="https://drive.google.com/file/d/{{.GoogleDriveFileID}}/view" target="_blank" class="btn btn-outline-info" title="Buka di Google Drive" data-bs-toggle="tooltip"><i class="bi bi-google"></i></a>
                 {{else}}
-                <button class="btn btn-sm btn-outline-info" onclick="uploadBackupToDrive('{{.FileName}}')" title="Upload ke Google Drive"><i class="bi bi-cloud-upload"></i></button>
+                <button class="btn btn-outline-info" onclick="uploadBackupToDrive('{{.FileName}}')" title="Upload ke Google Drive" data-bs-toggle="tooltip"><i class="bi bi-cloud-arrow-up"></i></button>
                 {{end}}
-                <button class="btn btn-sm btn-success" onclick="restoreBackup('{{.FileName}}')" title="Restore"><i class="bi bi-arrow-counterclockwise"></i></button>
-                <button class="btn btn-sm btn-danger" onclick="deleteBackup('{{.FileName}}')" title="Delete"><i class="bi bi-trash"></i></button>
+                <button class="btn btn-success" onclick="restoreBackup('{{.FileName}}')" title="Restore" data-bs-toggle="tooltip"><i class="bi bi-arrow-counterclockwise"></i></button>
+                <button class="btn btn-danger" onclick="deleteBackup('{{.FileName}}')" title="Delete" data-bs-toggle="tooltip"><i class="bi bi-trash"></i></button>
             </div>
         </div>
         {{else}}
-        <div class="text-center py-5">
-            <i class="bi bi-inbox" style="font-size: 48px; color: var(--border-2);"></i>
-            <p class="text-muted mt-3">Belum ada backup</p>
-            <button class="btn btn-primary btn-sm" onclick="createBackup()"><i class="bi bi-plus-circle"></i> Buat Backup Pertama</button>
+        <div class="bk-empty">
+            <div class="bk-empty-ic"><i class="bi bi-inbox"></i></div>
+            <h6>Belum ada backup</h6>
+            <p>Buat backup pertama untuk mengamankan data database SIMARC Anda.</p>
+            <button class="btn btn-primary btn-sm" onclick="createBackup()" style="border-radius:10px;padding:.55rem 1.2rem;font-weight:600;"><i class="bi bi-plus-circle"></i> Buat Backup Pertama</button>
         </div>
         {{end}}
     </div>
@@ -141,22 +334,56 @@
     </div>
     {{end}}
 </div>
-<div class="gdrive-section" id="gdriveSettingsCard">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0"><i class="bi bi-google" style="color:var(--ink-2);"></i> Google Drive Backup</h5>
-        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#gdriveSettingsBody" aria-expanded="false" aria-controls="gdriveSettingsBody"><i class="bi bi-gear"></i> Pengaturan</button>
+{{if .CanRestore}}
+<div class="bk-restore restore-section">
+    <h5 class="bk-section-title"><span class="ic emerald"><i class="bi bi-arrow-counterclockwise"></i></span> Quick Restore</h5>
+    <p class="text-muted mb-3" style="font-size:.85rem;">Upload file backup untuk memulihkan database</p>
+    <form action="/backup/restore" method="POST" enctype="multipart/form-data" id="restoreForm">
+        <input type="hidden" name="confirm" value="1">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label small fw-bold">File Backup</label>
+                <div class="bk-file-input">
+                    <input type="file" name="backup_file" accept=".sql,.sql.gz,.enc" required>
+                    <div class="bk-file-drop">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        <div>
+                            <div class="t">Pilih file backup</div>
+                            <div class="s">Supported: .sql, .sql.gz, .enc</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Mode Restore</label>
+                <select class="form-select" name="restore_mode">
+                    <option value="overwrite">Overwrite Existing</option>
+                    <option value="merge">Merge (Skip Duplicates)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-success w-100" style="border-radius:10px;font-weight:600;"><i class="bi bi-arrow-counterclockwise"></i> Restore Now</button>
+            </div>
+        </div>
+    </form>
+</div>
+{{end}}
+<div class="bk-gdrive" id="gdriveSettingsCard">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="bk-section-title"><span class="ic purple"><i class="bi bi-google"></i></span> Google Drive Backup</h5>
+        <button class="btn btn-sm btn-soft-primary" type="button" data-bs-toggle="collapse" data-bs-target="#gdriveSettingsBody" aria-expanded="false" aria-controls="gdriveSettingsBody"><i class="bi bi-gear"></i> Pengaturan</button>
     </div>
-    <div id="gdriveStatus" class="gdrive-status {{if .GDriveClientID}}ok{{else}}missing{{end}} mb-3">
+    <div id="gdriveStatus" class="bk-gdrive-status {{if .GDriveClientID}}ok{{else}}missing{{end}} mb-3">
         {{if .GDriveClientID}}
-        <i class="bi bi-check-circle"></i><span><strong>Terhubung.</strong> Backup akan diunggah ke Google Drive saat Anda memilih "Backup &amp; Upload ke Google Drive".</span>
+        <i class="bi bi-check-circle-fill"></i><span><strong>Terhubung.</strong> Backup akan diunggah ke Google Drive saat Anda memilih "Backup &amp; Upload GDrive".</span>
         {{else}}
-        <i class="bi bi-exclamation-triangle"></i><span><strong>Belum dikonfigurasi.</strong> Masukkan OAuth Client ID Google untuk mengaktifkan upload backup ke Google Drive.</span>
+        <i class="bi bi-exclamation-triangle-fill"></i><span><strong>Belum dikonfigurasi.</strong> Masukkan OAuth Client ID Google untuk mengaktifkan upload backup ke Google Drive.</span>
         {{end}}
     </div>
     <div class="collapse {{if not .GDriveClientID}}show{{end}}" id="gdriveSettingsBody">
-        <div class="alert alert-light border mb-3" style="font-size: 13px; border-radius: 12px;">
+        <div class="bk-helper mb-3">
             <i class="bi bi-info-circle me-1"></i> <strong>Cara mendapatkan Client ID:</strong>
-            <ol class="mb-0 mt-1 ps-3">
+            <ol>
                 <li>Buka <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> &rarr; buat/ pilih project.</li>
                 <li>Aktifkan API <code>Google Drive API</code> (menu <em>APIs &amp; Services</em> &rarr; <em>Library</em>).</li>
                 <li>Buat <strong>OAuth Client ID</strong> tipe <em>Web application</em> (menu <em>Credentials</em> &rarr; <em>Create Credentials</em>), tambahkan <code>http://localhost:8080</code> (atau URL aplikasi) ke <em>Authorized JavaScript origins</em>.</li>
@@ -173,25 +400,11 @@
                 <input type="text" class="form-control" id="gdriveFolderId" placeholder="Kosongkan untuk root Drive" value="{{.GDriveFolderID}}">
             </div>
             <div class="col-md-2 d-flex align-items-end">
-                <button class="btn btn-primary w-100" onclick="gdriveSaveSettings()"><i class="bi bi-save"></i> Simpan</button>
+                <button class="btn btn-primary w-100" onclick="gdriveSaveSettings()" style="border-radius:10px;font-weight:600;"><i class="bi bi-save"></i> Simpan</button>
             </div>
         </div>
     </div>
 </div>
-{{if .CanRestore}}
-<div class="restore-section">
-    <h5><i class="bi bi-arrow-counterclockwise"></i> Quick Restore</h5>
-    <p class="text-muted mb-3">Upload backup file untuk restore</p>
-    <form action="/backup/restore" method="POST" enctype="multipart/form-data" id="restoreForm">
-        <input type="hidden" name="confirm" value="1">
-        <div class="row g-3">
-            <div class="col-md-6"><input type="file" class="form-control" name="backup_file" accept=".sql,.sql.gz,.enc" required><small class="text-muted">Supported: .sql, .sql.gz, .enc</small></div>
-            <div class="col-md-3"><select class="form-select" name="restore_mode"><option value="overwrite">Overwrite Existing</option><option value="merge">Merge (Skip Duplicates)</option></select></div>
-            <div class="col-md-3"><button type="submit" class="btn btn-success w-100"><i class="bi bi-arrow-counterclockwise"></i> Restore Now</button></div>
-        </div>
-    </form>
-</div>
-{{end}}
 <script>
 const GDRIVE_CLIENT_ID = '{{.GDriveClientID}}';
 const GDRIVE_FOLDER_ID = '{{.GDriveFolderID}}';
@@ -295,7 +508,7 @@ function showGDriveSettings() {
 
 function createBackupGDrive() {
     if (!GDRIVE_CLIENT_ID) {
-        showToast('❌ Google Drive belum dikonfigurasi. Isi OAuth Client ID di panel Google Drive Backup di bawah, lalu Simpan.', 'error');
+        showToast('Google Drive belum dikonfigurasi. Isi OAuth Client ID di panel Google Drive Backup di bawah, lalu Simpan.', 'error');
         showGDriveSettings();
         return;
     }
@@ -329,16 +542,16 @@ function createBackupGDrive() {
         updateProgress(100, 'Selesai! Backup terunggah ke Google Drive.');
         setTimeout(() => {
             hideProgress();
-            showToast('✅ Backup berhasil diunggah ke Google Drive', 'success');
+            showToast('Backup berhasil diunggah ke Google Drive', 'success');
             setTimeout(() => location.reload(), 2000);
         }, 600);
     })
-    .catch(error => { hideProgress(); showToast('❌ ' + error.message, 'error'); });
+    .catch(error => { hideProgress(); showToast(error.message, 'error'); });
 }
 
 function uploadBackupToDrive(filename) {
     if (!GDRIVE_CLIENT_ID) {
-        showToast('❌ Google Drive belum dikonfigurasi. Isi OAuth Client ID di panel Google Drive Backup di bawah, lalu Simpan.', 'error');
+        showToast('Google Drive belum dikonfigurasi. Isi OAuth Client ID di panel Google Drive Backup di bawah, lalu Simpan.', 'error');
         showGDriveSettings();
         return;
     }
@@ -362,11 +575,11 @@ function uploadBackupToDrive(filename) {
         updateProgress(100, 'Selesai!');
         setTimeout(() => {
             hideProgress();
-            showToast('✅ File berhasil diunggah ke Google Drive', 'success');
+            showToast('File berhasil diunggah ke Google Drive', 'success');
             setTimeout(() => location.reload(), 1500);
         }, 500);
     })
-    .catch(error => { hideProgress(); showToast('❌ ' + error.message, 'error'); });
+    .catch(error => { hideProgress(); showToast(error.message, 'error'); });
 }
 
 function gdriveSaveSettings() {
@@ -382,13 +595,13 @@ function gdriveSaveSettings() {
     .then(d => {
         hideProgress();
         if (d.success) {
-            showToast('✅ Pengaturan Google Drive disimpan', 'success');
+            showToast('Pengaturan Google Drive disimpan', 'success');
             setTimeout(() => location.reload(), 1200);
         } else {
-            showToast('❌ ' + (d.error || 'Gagal menyimpan pengaturan'), 'error');
+            showToast((d.error || 'Gagal menyimpan pengaturan'), 'error');
         }
     })
-    .catch(e => { hideProgress(); showToast('❌ Error: ' + e.message, 'error'); });
+    .catch(e => { hideProgress(); showToast('Error: ' + e.message, 'error'); });
 }
 
 function createBackup() {
@@ -399,14 +612,14 @@ function createBackup() {
         updateProgress(80, 'Menyimpan file...');
         setTimeout(() => {
             updateProgress(100, 'Selesai!');
-            setTimeout(() => { hideProgress(); if (data.success) { showToast('✅ Backup berhasil: ' + data.filename, 'success'); setTimeout(() => location.reload(), 2000); } else { showToast('❌ Backup gagal: ' + (data.error || 'Unknown error'), 'error'); } }, 500);
+            setTimeout(() => { hideProgress(); if (data.success) { showToast('Backup berhasil: ' + data.filename, 'success'); setTimeout(() => location.reload(), 2000); } else { showToast('Backup gagal: ' + (data.error || 'Unknown error'), 'error'); } }, 500);
         }, 500);
-    }).catch(error => { hideProgress(); showToast('❌ Error: ' + error, 'error'); });
+    }).catch(error => { hideProgress(); showToast('Error: ' + error, 'error'); });
 }
 function deleteBackup(filename) {
     if (!confirm('Apakah Anda yakin ingin menghapus backup ini?')) return;
     fetch('/backup/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: filename }) })
-    .then(response => response.json()).then(data => { if (data.success) { showToast('✅ Backup berhasil dihapus', 'success'); setTimeout(() => location.reload(), 1000); } else { showToast('❌ Delete gagal: ' + data.error, 'error'); } });
+    .then(response => response.json()).then(data => { if (data.success) { showToast('Backup berhasil dihapus', 'success'); setTimeout(() => location.reload(), 1000); } else { showToast('Delete gagal: ' + data.error, 'error'); } });
 }
 function restoreBackup(filename) {
     if (!confirm('PERINGATAN: Restore akan menimpa data existing.\\n\\nFile: ' + filename + '\\n\\nLanjutkan?')) return;
@@ -414,8 +627,8 @@ function restoreBackup(filename) {
     fetch('/backup/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ backup_file: filename, restore_mode: 'overwrite', confirm: true }) })
     .then(response => response.json()).then(data => {
         updateProgress(70, 'Restoring database...');
-        setTimeout(() => { updateProgress(100, 'Restore complete!'); setTimeout(() => { hideProgress(); if (data.success) { showToast('✅ Restore berhasil!<br>' + (data.details || data.message), 'success'); setTimeout(() => location.reload(), 2000); } else { showToast('❌ Restore gagal: ' + (data.error || 'Unknown error'), 'error'); } }, 500); }, 2000);
-    }).catch(error => { hideProgress(); showToast('❌ Error: ' + error.message, 'error'); });
+        setTimeout(() => { updateProgress(100, 'Restore complete!'); setTimeout(() => { hideProgress(); if (data.success) { showToast('Restore berhasil!<br>' + (data.details || data.message), 'success'); setTimeout(() => location.reload(), 2000); } else { showToast('Restore gagal: ' + (data.error || 'Unknown error'), 'error'); } }, 500); }, 2000);
+    }).catch(error => { hideProgress(); showToast('Error: ' + error.message, 'error'); });
 }
 function showProgress(title, percent) { document.getElementById('progressContainer').classList.add('active'); document.getElementById('progressTitle').textContent = title; document.getElementById('progressBar').style.width = percent + '%'; }
 function updateProgress(percent, text) { document.getElementById('progressBar').style.width = percent + '%'; document.getElementById('progressText').textContent = text; }
@@ -434,17 +647,17 @@ function filterBackups() {
         else item.style.display = 'none';
     });
 }
-function deleteOldBackups() { if (!confirm('Hapus backup yang lebih tua dari 30 hari?')) return; showProgress('Membersihkan backup lama...', 0); fetch('/backup/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: 30 }) }).then(r => r.json()).then(d => { hideProgress(); if (d.success) { showToast('✅ ' + d.message, 'success'); setTimeout(() => location.reload(), 1500); } else { showToast('❌ ' + (d.error || 'Gagal'), 'error'); } }).catch(e => { hideProgress(); showToast('❌ Error: ' + e, 'error'); }); }
+function deleteOldBackups() { if (!confirm('Hapus backup yang lebih tua dari 30 hari?')) return; showProgress('Membersihkan backup lama...', 0); fetch('/backup/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: 30 }) }).then(r => r.json()).then(d => { hideProgress(); if (d.success) { showToast(d.message, 'success'); setTimeout(() => location.reload(), 1500); } else { showToast((d.error || 'Gagal'), 'error'); } }).catch(e => { hideProgress(); showToast('Error: ' + e, 'error'); }); }
 function showRestoreModal() { document.querySelector('.restore-section').scrollIntoView({ behavior: 'smooth' }); }
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
-    toast.className = 'toast-notification ' + type;
-    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:350px;padding:16px 20px;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;border-left:4px solid;' + (type === 'success' ? 'border-color:var(--ink-2);' : type === 'error' ? 'border-color:var(--ink-2);' : 'border-color:var(--ink-2);');
-    toast.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle') + '" style="font-size:24px;color:' + (type === 'success' ? 'var(--ink-2)' : type === 'error' ? 'var(--ink-2)' : 'var(--ink-2)') + '"></i><span>' + message + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;"><i class="bi bi-x"></i></button>';
+    toast.className = 'bk-toast bk-toast-' + type;
+    const ic = type === 'success' ? 'check-circle-fill' : type === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill';
+    toast.innerHTML = '<span class="bk-toast-ic"><i class="bi bi-' + ic + '"></i></span><span>' + message + '</span><button class="bk-toast-x" onclick="this.parentElement.remove()"><i class="bi bi-x-lg"></i></button>';
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 5000);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
 }
-
 function showImportModal() {
     SimarcModal.show('importSqlModal')
 }
@@ -452,7 +665,7 @@ function submitImportSql(e) {
     e.preventDefault();
     const fileInput = document.getElementById('sqlFile');
     if (fileInput.files.length === 0) {
-        showToast('❌ Pilih file SQL terlebih dahulu', 'error');
+        showToast('Pilih file SQL terlebih dahulu', 'error');
         return;
     }
     if (!confirm('Apakah Anda yakin ingin mengimpor database? Seluruh data saat ini akan ditimpa.')) {
@@ -463,7 +676,7 @@ function submitImportSql(e) {
     const formData = new FormData();
     formData.append('sql_file', fileInput.files[0]);
     formData.append('confirm', '1');
-    
+
     fetch('/backup/import-sql', {
         method: 'POST',
         body: formData
@@ -474,17 +687,17 @@ function submitImportSql(e) {
             updateProgress(100, 'Import Berhasil!');
             setTimeout(() => {
                 hideProgress();
-                showToast('✅ ' + data.message, 'success');
+                showToast(data.message, 'success');
                 setTimeout(() => location.reload(), 2000);
             }, 1000);
         } else {
             hideProgress();
-            showToast('❌ Import Gagal: ' + (data.error || 'Terjadi kesalahan'), 'error');
+            showToast('Import Gagal: ' + (data.error || 'Terjadi kesalahan'), 'error');
         }
     })
     .catch(error => {
         hideProgress();
-        showToast('❌ Error: ' + error.message, 'error');
+        showToast('Error: ' + error.message, 'error');
     });
 }
 </script>

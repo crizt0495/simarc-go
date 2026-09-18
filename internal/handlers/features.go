@@ -1210,20 +1210,54 @@ func (h *BackupHandler) Download(c *gin.Context) {
 	if filename == "" {
 		filename = c.Query("filename")
 	}
+	filename = strings.TrimSpace(filepath.Base(filename))
+	if filename == "" || filename == "." || strings.ContainsAny(filename, `/\`) {
+		c.String(http.StatusBadRequest, "Filename tidak valid")
+		return
+	}
+
 	var log models.BackupLog
 	if err := database.DB.Where("filename = ?", filename).First(&log).Error; err != nil {
 		c.String(http.StatusNotFound, "Backup tidak ditemukan")
 		return
 	}
+
 	// Coba file lokal
 	if log.FilePath != "" {
-		if _, err := os.Stat(log.FilePath); err == nil {
-			c.Header("Content-Disposition", "attachment; filename="+log.FileName)
-			c.File(log.FilePath)
+		if info, err := os.Stat(log.FilePath); err == nil && !info.IsDir() {
+			serveBackupFile(c, log.FileName, log.FilePath, info.Size())
+			if user := middleware.GetCurrentUser(c); user != nil {
+				logActivity(user.ID, "backup", "Mengunduh backup: "+log.FileName, "backup", log.ID, c.ClientIP(), c.GetHeader("User-Agent"))
+			}
 			return
 		}
 	}
 	c.String(http.StatusNotFound, "File backup tidak ditemukan (mungkin sudah dihapus)")
+}
+
+// backupContentType returns the proper MIME type for a backup file based on its
+// extension so the browser does not mangle the .sql payload.
+func backupContentType(filename string) string {
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".sql":
+		return "application/sql; charset=utf-8"
+	case ".gz":
+		return "application/gzip"
+	case ".enc":
+		return "application/octet-stream"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+// serveBackupFile streams a stored backup file with complete download headers.
+func serveBackupFile(c *gin.Context, filename, filePath string, size int64) {
+	c.Header("Content-Type", backupContentType(filename))
+	c.Header("Content-Length", strconv.FormatInt(size, 10))
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Header("Cache-Control", "no-store, no-cache, must-revalidate")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.File(filePath)
 }
 
 func (h *BackupHandler) Delete(c *gin.Context) {
