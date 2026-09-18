@@ -2,7 +2,7 @@
 {{define "content"}}
 <style>
 .dashboard-welcome-card {
-  background: linear-gradient(135deg, var(--brand) 0%, #6366F1 100%);
+  background: linear-gradient(135deg, var(--chip-bg-2) 0%, var(--chip-bg) 100%);
   border: none;
   border-radius: var(--r-lg);
   box-shadow: var(--sh-lg);
@@ -187,8 +187,8 @@
 document.addEventListener('DOMContentLoaded',function(){
     const ctx=document.getElementById('archiveTrendChart').getContext('2d');
     const gradient=ctx.createLinearGradient(0,0,0,400);
-    gradient.addColorStop(0,'rgba(79,70,229,0.18)');
-    gradient.addColorStop(1,'rgba(79,70,229,0)');
+    gradient.addColorStop(0,'rgba(255,90,54,0.18)');
+    gradient.addColorStop(1,'rgba(255,90,54,0)');
     new Chart(ctx,{
         type:'line',
         data:{

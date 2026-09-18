@@ -3,10 +3,10 @@
 <style>
     /* ── Premium Profile Header ── */
     .role-profile-header {
-        background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+        background: var(--surface-2);
         border-radius: var(--r-xl);
         padding: 2.5rem 3rem;
-        color: #fff;
+        color: var(--ink);
         position: relative;
         overflow: hidden;
         margin-bottom: 2rem;
@@ -17,7 +17,7 @@
         position: absolute;
         top: -30%; right: -10%;
         width: 350px; height: 350px;
-        background: radial-gradient(circle, rgba(79,70,229,0.1) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(255,90,54,0.12) 0%, transparent 70%);
         border-radius: 50%;
         pointer-events: none;
     }
@@ -167,8 +167,8 @@
     .user-mini-avatar {
         width: 36px; height: 36px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--ink-2), var(--ink-3));
-        color: #fff;
+        background: var(--chip-bg);
+        color: var(--chip-text);
         font-weight: 700;
         font-size: 0.8rem;
         display: flex;
@@ -196,7 +196,7 @@
     /* ── Action Sidebar ── */
     .action-side-card {
         background: linear-gradient(135deg, var(--neu-bg), var(--brand-lt));
-        border: 1px solid rgba(26,86,219,0.1);
+        border: 1px solid rgba(11,11,11,0.14);
         border-left: 3px solid var(--ink-2);
         border-radius: var(--r-lg);
         padding: 1.25rem;

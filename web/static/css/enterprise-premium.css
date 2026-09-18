@@ -1603,7 +1603,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .auth-bg-gradient {
     position: absolute; inset: 0;
     background:
-        radial-gradient(800px 500px at 15% 10%, rgba(79,70,229,.06) 0%, transparent 60%),
+        radial-gradient(800px 500px at 15% 10%, rgba(255,90,54,.06) 0%, transparent 60%),
         radial-gradient(600px 400px at 90% 85%, rgba(37,99,235,.05) 0%, transparent 55%);
 }
 .auth-bg-grid { position: absolute; inset: 0; }
@@ -1701,7 +1701,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
     border: 1px solid var(--brand);
     border-radius: 10px;
     background: var(--brand);
-    color: #fff;
+    color: #0B0B0B;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -2697,7 +2697,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 @media (pointer: coarse) {
     .btn, .sidebar-link, .dropdown-item, .nav-icon-btn, .page-link,
     .mobile-bottom-nav-item, .badge-soft { min-height: 44px; }
-    input, select, textarea { font-size: var(--fs-base) !important; }
+    input, select, textarea { font-size: var(--fs-base); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2770,20 +2770,11 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 .form-control, .form-select,
 .form-field .form-control, .form-field .form-select {
-    border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
     background: var(--surface-2) !important;
     color: var(--ink) !important;
     font-weight: 400;
 }
 .form-control::placeholder, .form-select::placeholder { color: var(--ink-4) !important; }
-
-.form-control:focus, .form-select:focus,
-.form-field .form-control:focus, .form-field .form-select:focus {
-    border-color: var(--brand) !important;
-    box-shadow: 0 0 0 3px var(--brand-lt) !important;
-    outline: none;
-}
 
 .form-field label, .form-label {
     font-weight: 600 !important;
@@ -2791,48 +2782,16 @@ textarea.form-control { resize: vertical; min-height: 100px; }
     font-size: var(--fs-xs);
 }
 
-.btn, .btn-sm, .btn-lg, .btn-outline, .btn-outline-primary,
-.btn-outline-secondary, .btn-outline-success, .btn-outline-danger,
-.btn-outline-warning, .btn-outline-info {
-    border-radius: 10px !important;
-}
-
 .input-group-text {
     background: var(--surface-3) !important;
-    border: 1px solid var(--border) !important;
     color: var(--ink-3) !important;
 }
 
-.create-header h4, .edit-header h4, .create-header .create-header-title { color: var(--ink) !important; }
-.create-header p, .edit-header p { color: var(--ink-3) !important; opacity: 1; }
-
 .table thead th { border-bottom: 1px solid var(--border) !important; }
 
-.page-item .page-link {
-    border: 1px solid var(--border) !important;
-    border-radius: 8px !important;
-}
-.page-item.active .page-link {
-    background: var(--brand) !important;
-    border-color: var(--brand) !important;
-    color: #fff !important;
-}
-
 .badge {
-    border-radius: 8px !important;
+    border-radius: 8px;
     font-weight: 600;
-}
-
-[data-theme="dark"] .form-control, [data-theme="dark"] .form-select,
-[data-theme="dark"] .form-field .form-control, [data-theme="dark"] .form-field .form-select {
-    background: var(--surface-2) !important;
-    border-color: var(--border) !important;
-    color: var(--ink) !important;
-}
-[data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus,
-[data-theme="dark"] .form-field .form-control:focus, [data-theme="dark"] .form-field .form-select:focus {
-    border-color: var(--brand) !important;
-    box-shadow: 0 0 0 3px var(--brand-lt) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2851,6 +2810,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 /* ── Sidebar ── */
 .sidebar { border-right: 2px solid var(--ink); }
+.sidebar .sidebar-link { border: 2px solid transparent; }
 .sidebar .sidebar-link:hover { border: 2px solid var(--ink); box-shadow: var(--sh-xs); background: var(--surface-3); }
 .sidebar .sidebar-link.active,
 .sidebar .sidebar-link.active:hover {
@@ -2862,12 +2822,12 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 /* ── Cards ── */
 .card, .glass-card, .card-subtle, .stat-card {
-    border: 3px solid var(--ink) !important;
-    box-shadow: var(--sh) !important;
-    border-radius: var(--r) !important;
+    border: 3px solid var(--ink);
+    box-shadow: var(--sh);
+    border-radius: var(--r);
 }
-.card:hover, .stat-card:hover { box-shadow: var(--sh-lg) !important; border-color: var(--ink) !important; }
-.card-header, .card-footer { border-color: var(--border-2) !important; }
+.card:hover, .stat-card:hover { box-shadow: var(--sh-lg); border-color: var(--ink); }
+.card-header, .card-footer { border-color: var(--border-2); }
 .stat-card .stat-card-icon, .stat-mini-icon, .box-stat-icon { border: 2px solid var(--ink); box-shadow: var(--sh-xs); }
 .stat-card.mini, .stat-card-mini { border: 2px solid var(--ink); box-shadow: var(--sh-sm); }
 
@@ -2878,11 +2838,11 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 /* ── Buttons ── */
 .btn {
     border-width: 3px !important;
-    border-radius: var(--r-sm) !important;
+    border-radius: var(--r-sm);
     box-shadow: var(--sh-xs) !important;
-    font-weight: 700 !important;
+    font-weight: 700;
     letter-spacing: -.01em;
-    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, background .12s ease, color .12s ease !important;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, background .12s ease, color .12s ease;
 }
 .btn:hover { transform: translate(-1px, -1px); box-shadow: var(--sh) !important; }
 .btn:active, .btn:focus { transform: translate(2px, 2px); box-shadow: none !important; }
@@ -2910,7 +2870,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .btn-link { border: none !important; box-shadow: none !important; }
 
 /* ── Badges ── */
-.badge { border: 1px solid var(--ink) !important; }
+.badge { border: 1px solid var(--ink); }
 .badge-soft { border: 1.5px solid var(--ink) !important; box-shadow: var(--sh-xs) !important; }
 .badge-soft-primary, .badge-soft-success, .badge-soft-warning, .badge-soft-danger, .badge-soft-info {
     border: 1.5px solid var(--ink) !important;
@@ -2919,8 +2879,8 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 /* ── Forms ── */
 .form-control, .form-select, .form-field .form-control, .form-field .form-select {
     border: 2px solid var(--ink) !important;
-    box-shadow: var(--inset) !important;
-    border-radius: var(--r-sm) !important;
+    box-shadow: var(--inset);
+    border-radius: var(--r-sm);
 }
 .form-control:focus, .form-select:focus, .form-field .form-control:focus, .form-field .form-select:focus {
     border-color: var(--brand) !important;

@@ -186,7 +186,7 @@
 .arsip-card:hover::before { transform: scaleY(1); }
 .arsip-card.is-selected {
     border-color: var(--ink-2);
-    background: linear-gradient(135deg, rgba(79,70,229,0.03), rgba(99,102,241,0.04));
+    background: linear-gradient(135deg, rgba(255,90,54,0.05), rgba(255,107,74,0.04));
 }
 
 .arsip-card-header {
@@ -416,7 +416,7 @@
 /* ── Bulk Toolbar ── */
 .bulk-toolbar {
     background: linear-gradient(135deg, var(--neu-bg), var(--neu-bg));
-    border: 1px solid rgba(26,86,219,0.12);
+    border: 1px solid rgba(11,11,11,0.16);
     border-radius: var(--r-lg);
     padding: 0.75rem 1.25rem;
     display: flex;
@@ -692,7 +692,7 @@ mark {
         {{if .FilterLokasiID}}<span class="filter-badge" style="background:var(--surface-3);color:var(--ink-3)"><i class="bi bi-geo-alt"></i> Lokasi <a href="#" class="remove" data-param="lokasi_arsip_id">&times;</a></span>{{end}}
         {{if or .FilterStartDate .FilterEndDate}}<span class="filter-badge badge-soft-danger"><i class="bi bi-calendar"></i> {{.FilterStartDate}} ~ {{.FilterEndDate}} <a href="#" class="remove" data-params='["start_date","end_date"]'>&times;</a></span>{{end}}
         {{if .FilterBerkasDigital}}<span class="filter-badge badge-soft-primary"><i class="bi bi-file-earmark"></i> Berkas: {{if eq .FilterBerkasDigital "sudah_ada"}}Ada{{else}}Belum{{end}} <a href="#" class="remove" data-param="status_berkas_digital">&times;</a></span>{{end}}
-        {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:#EC4899;color:#fff;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
+        {{if or .FilterNilaiMin .FilterNilaiMax}}<span class="filter-badge" style="background:var(--brand);color:#0B0B0B;opacity:0.85"><i class="bi bi-currency-dollar"></i> Rp{{.FilterNilaiMin}} ~ Rp{{.FilterNilaiMax}} <a href="#" class="remove" data-params='["nilai_min","nilai_max"]'>&times;</a></span>{{end}}
         {{if .FilterPemberkasanID}}<span class="filter-badge badge-soft-info"><i class="bi bi-archive"></i> Pemberkasan <a href="#" class="remove" data-param="pemberkasan_id">&times;</a></span>{{end}}
         <a href="/arsip" class="filter-badge" style="background:var(--chip-bg);color:var(--chip-text);text-decoration:none"><i class="bi bi-x-circle"></i> Hapus Semua</a>
     </div>
@@ -1405,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 el=document.getElementById('historyArsipNama');if(el)el.textContent = '';
                 el=document.getElementById('historyArsipBadges');if(el)el.innerHTML = '<span class="badge bg-info"><i class="bi bi-geo-alt me-1"></i>' + h.arsip.current_location + '</span><span class="badge bg-success"><i class="bi bi-building me-1"></i>' + h.arsip.unit_kerja + '</span><span class="badge bg-warning text-dark"><i class="bi bi-tags me-1"></i>' + h.arsip.jenis_arsip + '</span>';
                 el=document.getElementById('exportPdfBtn');if(el)el.href = '/arsip/' + id + '/history/export-pdf';
-                el=document.getElementById('historyStats');if(el)el.innerHTML = '<div class="col"><div class="card border-0 h-100" style="background:rgba(26,86,219,0.04);"><div class="card-body text-center p-2"><i class="bi bi-file-earmark-arrow-up text-primary"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.total_versions + '</h4><small class="text-muted">Versi</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(5,150,105,0.04);"><div class="card-body text-center p-2"><i class="bi bi-shield-lock text-success"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.total_actions + '</h4><small class="text-muted">Aksi</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(2,132,199,0.04);"><div class="card-body text-center p-2"><i class="bi bi-map text-info"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.location_changes + '</h4><small class="text-muted">Pindah</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(217,119,6,0.04);"><div class="card-body text-center p-2"><i class="bi bi-clock text-warning"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:0.8rem;">' + h.statistics.last_modified + '</h4><small class="text-muted">Terakhir</small></div></div></div>';
+                el=document.getElementById('historyStats');if(el)el.innerHTML = '<div class="col"><div class="card border-0 h-100" style="background:rgba(11,11,11,0.05);"><div class="card-body text-center p-2"><i class="bi bi-file-earmark-arrow-up text-primary"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.total_versions + '</h4><small class="text-muted">Versi</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(11,11,11,0.05);"><div class="card-body text-center p-2"><i class="bi bi-shield-lock text-success"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.total_actions + '</h4><small class="text-muted">Aksi</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(255,90,54,0.1);"><div class="card-body text-center p-2"><i class="bi bi-map text-info"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:1.1rem;">' + h.statistics.location_changes + '</h4><small class="text-muted">Pindah</small></div></div></div><div class="col"><div class="card border-0 h-100" style="background:rgba(217,119,6,0.04);"><div class="card-body text-center p-2"><i class="bi bi-clock text-warning"></i><h4 class="mt-1 mb-0 fw-800" style="font-size:0.8rem;">' + h.statistics.last_modified + '</h4><small class="text-muted">Terakhir</small></div></div></div>';
                 renderTimeline(h.timeline);
                 renderVersions(h.versions);
             } else {

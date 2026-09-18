@@ -2,10 +2,10 @@
 {{define "content"}}
 <style>
 .p-masthead {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    background: var(--surface-2);
     border-radius: var(--r-xl);
     padding: 1.5rem 2rem;
-    color: #fff;
+    color: var(--ink);
     position: relative;
     overflow: hidden;
     margin-bottom: 1.5rem;
@@ -15,7 +15,7 @@
     position: absolute;
     top: -50%; right: -5%;
     width: 260px; height: 260px;
-    background: radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%);
+    background: none;
     border-radius: 50%;
     pointer-events: none;
 }
@@ -40,7 +40,7 @@
     width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid var(--border); border-radius: var(--r);
     font-size: 0.82rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit;
 }
-.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--ink-2); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+.form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--ink-2); box-shadow: 0 0 0 3px rgba(11,11,11,0.14); }
 .form-field textarea.form-control { min-height: 70px; resize: vertical; }
 
 .premium-table {

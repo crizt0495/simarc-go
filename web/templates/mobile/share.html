@@ -6,17 +6,17 @@
   <title>Bagikan — {{.AppName}}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    :root{--brand:#4F46E5;--brand-dk:#4338CA;--ink:#0F172A;--ink-2:#1E293B;--ink-3:#475569;--ink-4:#94A3B8;--surface:#F8FAFC;--surface-2:#FFFFFF;--surface-3:#F1F5F9;--border:#E2E8F0;--border-2:#CBD5E1;--green:#16A34A;--green-dk:#15803D;--r-sm:10px;--r:16px;--sh-lg:0 10px 15px -3px rgba(15,23,42,.1);--sh-sm:0 1px 3px rgba(15,23,42,.08);--inset:inset 0 1px 2px rgba(15,23,42,.05)}
+    :root{--brand:#FF5A36;--brand-dk:#E2461F;--brand-lt:rgba(255,90,54,.12);--ink:#0B0B0B;--ink-2:#26221E;--ink-3:#6E6862;--ink-4:#9A928A;--surface:#F5EEEC;--surface-2:#FFFFFD;--surface-3:#EBE4E1;--border:#0B0B0B;--border-2:#3D3833;--green:#00C853;--green-dk:#0F7A55;--r-sm:4px;--r:12px;--sh-lg:8px 8px 0 rgba(11,11,11,0.92);--sh-sm:3px 3px 0 rgba(11,11,11,0.92);--inset:inset 0 0 0 1px rgba(11,11,11,0.08)}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:24px}
-    .card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-lg);padding:40px 32px;max-width:420px;width:100%;text-align:center}
-    .icon{width:64px;height:64px;border-radius:50%;background:var(--brand-lt,rgba(79,70,229,.1));color:var(--brand);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px}
+    .card{background:var(--surface-2);border:2px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-lg);padding:40px 32px;max-width:420px;width:100%;text-align:center}
+    .icon{width:64px;height:64px;border-radius:var(--r);background:var(--brand-lt);color:var(--brand-dk);border:2px solid var(--border);box-shadow:3px 3px 0 var(--ink);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px}
     h1{font-size:22px;font-weight:700;margin-bottom:8px;letter-spacing:-.02em;color:var(--ink)}
     p{font-size:14px;color:var(--ink-3);line-height:1.6;margin-bottom:24px}
-    .shared-data{background:var(--surface-3);border:1px solid var(--border);border-radius:var(--r-sm);padding:16px;margin-bottom:24px;text-align:left;font-size:13px}
+    .shared-data{background:var(--surface-3);border:2px solid var(--border);border-radius:var(--r-sm);padding:16px;margin-bottom:24px;text-align:left;font-size:13px;box-shadow:3px 3px 0 var(--ink)}
     .shared-data .label{font-size:11px;font-weight:600;color:var(--ink-4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
     .shared-data .value{color:var(--ink-2);margin-bottom:12px;word-break:break-word}
     .shared-data .value:last-child{margin-bottom:0}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:10px;background:var(--brand);border:none;color:#fff;font-weight:600;font-size:14px;text-decoration:none;transition:all .12s ease;box-shadow:var(--sh-sm);width:100%}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:var(--r-sm);background:var(--brand);border:none;color:#0B0B0B;font-weight:600;font-size:14px;text-decoration:none;transition:all .12s ease;box-shadow:var(--sh-sm);width:100%}
     .btn:hover{background:var(--brand-dk);box-shadow:var(--sh-lg)}
     .btn:active{transform:scale(.98)}
     .footer{font-size:11px;color:var(--ink-4);margin-top:28px;padding-top:20px;border-top:1px solid var(--border)}

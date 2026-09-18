@@ -71,10 +71,10 @@
     </div>
 </div>
 <style>
-    .stat-card { border: none; border-radius: 16px; }
+    .stat-card { border: 2px solid var(--ink); border-radius: var(--r); box-shadow: var(--sh); }
     .gradient-primary { background: linear-gradient(135deg, var(--chip-bg-2) 0%, var(--chip-bg) 100%); }
-    .gradient-warning { background: linear-gradient(135deg, #92400E 0%, #f5576c 100%); }
-    .gradient-danger { background: linear-gradient(135deg, #7F1D1D 0%, #ee5a24 100%); }
+    .gradient-warning { background: linear-gradient(135deg, var(--chip-bg-2) 0%, var(--chip-bg) 100%); border-color: var(--warning); }
+    .gradient-danger { background: linear-gradient(135deg, var(--chip-bg-2) 0%, var(--chip-bg) 100%); border-color: var(--danger); }
     .gradient-success { background: linear-gradient(135deg, var(--chip-bg-2) 0%, var(--chip-bg) 100%); }
     .stat-card .card-body { padding: 1.5rem; }
     .stat-icon i { font-size: 2.5rem; color: rgba(255,255,255,0.5); }

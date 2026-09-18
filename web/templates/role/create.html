@@ -14,7 +14,7 @@
         to { opacity: 1; transform: translateY(0); }
     }
     .create-header {
-        background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%);
+        background: var(--surface-2);
         padding: 2rem 2.5rem;
         position: relative;
         overflow: hidden;
@@ -24,18 +24,18 @@
         position: absolute;
         top: -50%; right: -10%;
         width: 200px; height: 200px;
-        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+        background: none;
         border-radius: 50%;
         pointer-events: none;
     }
     .create-header h4 {
         font-weight: 800;
-        color: #fff;
+        color: var(--ink);
         margin-bottom: 0.25rem;
         position: relative;
         z-index: 1;
     }
-    .\1 p { color: var(--ink-3); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
+    .create-header p { color: var(--ink-3); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
 
     .form-field {
         margin-bottom: 1.5rem;
@@ -81,7 +81,7 @@
     .form-field input:focus,
     .form-field textarea:focus {
         border-color: var(--ink-2);
-        box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+        box-shadow: 0 0 0 3px rgba(11,11,11,0.14);
     }
     .form-field input::placeholder,
     .form-field textarea::placeholder {
@@ -101,7 +101,7 @@
 
     .info-box {
         background: linear-gradient(135deg, var(--neu-bg), var(--brand-lt));
-        border: 1px solid rgba(26,86,219,0.12);
+        border: 1px solid rgba(11,11,11,0.16);
         border-radius: var(--r);
         padding: 1.25rem;
         display: flex;
@@ -133,8 +133,8 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.4rem 1rem;
-        background: linear-gradient(135deg, var(--ink-2), var(--ink-3));
-        color: #fff;
+        background: var(--chip-bg);
+        color: var(--chip-text);
         border-radius: 50px;
         font-weight: 700;
         font-size: 0.8rem;
