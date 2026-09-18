@@ -31,15 +31,15 @@
     --fs-3xl: 1.9rem;
     --fs-4xl: 2.25rem;
 
-    /* NEUTRAL — Deep navy & cool paper */
+    /* NEUTRAL — monochrome off-white canvas + deep navy structural ink */
     --ink: #0C2039;
     --ink-2: #1C3A5C;
     --ink-3: #57708C;
     --ink-4: #879DB4;
 
-    --surface: #F5F8F6;
+    --surface: #F5F5F2;
     --surface-2: #FFFFFF;
-    --surface-3: #E7EEEA;
+    --surface-3: #E7E7E4;
 
     --border: #0C2039;
     --border-2: #3A5672;
@@ -85,12 +85,12 @@
     --c-info: #0284C7;
     --c-info-soft: rgba(2,132,199,.12);
 
-    /* SHADOWS — brutalist hard offset (navy tint) */
-    --sh-xs: 2px 2px 0 rgba(12,32,57,.6);
-    --sh-sm: 4px 4px 0 rgba(12,32,57,.88);
-    --sh: 5px 5px 0 rgba(12,32,57,.88);
-    --sh-lg: 7px 7px 0 rgba(12,32,57,.88);
-    --sh-xl: 9px 9px 0 rgba(12,32,57,.88);
+    /* SHADOWS — brutalist hard offset (solid navy ink, zero blur) */
+    --sh-xs: 2px 2px 0 rgba(12,32,57,.92);
+    --sh-sm: 4px 4px 0 rgba(12,32,57,.92);
+    --sh: 6px 6px 0 rgba(12,32,57,.92);
+    --sh-lg: 8px 8px 0 rgba(12,32,57,.92);
+    --sh-xl: 10px 10px 0 rgba(12,32,57,.92);
     --inset: inset -2px -2px 0 rgba(12,32,57,.08), inset 2px 2px 0 rgba(255,255,255,.7);
     --inset-deep: inset -3px -3px 0 rgba(12,32,57,.12), inset 3px 3px 0 rgba(255,255,255,.8);
     --pressed: inset 3px 3px 0 rgba(12,32,57,.16);
@@ -122,16 +122,16 @@
     --shadow-xl: var(--sh-xl);
     --shadow-inner: var(--inset);
 
-    --gradient-primary: linear-gradient(135deg, #047857 0%, #0E9F6E 100%);
-    --gradient-success: linear-gradient(135deg, #047857 0%, #10B981 100%);
-    --gradient-warning: linear-gradient(135deg, #B45309 0%, #F59E0B 100%);
-    --gradient-danger: linear-gradient(135deg, #B91C1C 0%, #E02424 100%);
-    --gradient-info: linear-gradient(135deg, #0369A1 0%, #2563EB 100%);
-    --gradient-purple: linear-gradient(135deg, #6D28D9 0%, #A78BFA 100%);
-    --gradient-pink: linear-gradient(135deg, #B91C1C 0%, #FB7185 100%);
+    --gradient-primary: #047857;
+    --gradient-success: #059669;
+    --gradient-warning: #D97706;
+    --gradient-danger: #DC2626;
+    --gradient-info: #0284C7;
+    --gradient-purple: #7C3AED;
+    --gradient-pink: #E02424;
 
     /* GLASS */
-    --glass-bg: rgba(245,248,246,.94);
+    --glass-bg: rgba(245,245,242,.94);
     --glass-border: rgba(255,255,255,.8);
     --glass-blur: blur(12px) saturate(180%);
 
@@ -209,27 +209,27 @@
     --border: #060D18;
     --border-2: #2C4A6E;
     --neu-bg: #10253E;
-    --neu-raised: 5px 5px 0 rgba(52,211,153,.28);
-    --neu-raised-sm: 4px 4px 0 rgba(52,211,153,.22);
-    --neu-raised-lg: 7px 7px 0 rgba(52,211,153,.36);
+    --neu-raised: 6px 6px 0 rgba(0,0,0,.55);
+    --neu-raised-sm: 4px 4px 0 rgba(0,0,0,.5);
+    --neu-raised-lg: 8px 8px 0 rgba(0,0,0,.6);
     --neu-inset: inset -2px -2px 0 rgba(0,0,0,.4), inset 2px 2px 0 rgba(52,211,153,.05);
     --neu-inset-deep: inset -3px -3px 0 rgba(0,0,0,.5), inset 3px 3px 0 rgba(52,211,153,.06);
-    --neu-hover: 6px 6px 0 rgba(52,211,153,.34);
+    --neu-hover: 6px 6px 0 rgba(0,0,0,.6);
     --neu-pressed: inset 3px 3px 0 rgba(0,0,0,.45);
     --neu-shadow-dark: rgba(0,0,0,.5);
     --neu-shadow-light: rgba(52,211,153,.1);
     --inset: inset -2px -2px 0 rgba(0,0,0,.4), inset 2px 2px 0 rgba(52,211,153,.05);
     --inset-deep: inset -3px -3px 0 rgba(0,0,0,.5), inset 3px 3px 0 rgba(52,211,153,.06);
     --pressed: inset 3px 3px 0 rgba(0,0,0,.45);
-    --sh-xs: 2px 2px 0 rgba(52,211,153,.2);
-    --sh-sm: 4px 4px 0 rgba(52,211,153,.3);
-    --sh: 5px 5px 0 rgba(52,211,153,.34);
-    --sh-lg: 7px 7px 0 rgba(52,211,153,.4);
+    --sh-xs: 2px 2px 0 rgba(0,0,0,.45);
+    --sh-sm: 4px 4px 0 rgba(0,0,0,.5);
+    --sh: 6px 6px 0 rgba(0,0,0,.55);
+    --sh-lg: 8px 8px 0 rgba(0,0,0,.6);
     --shadow-xs: var(--sh-xs);
     --shadow-sm: var(--sh-sm);
     --shadow-md: var(--sh);
     --shadow-lg: var(--sh-lg);
-    --shadow-xl: 11px 11px 0 rgba(52,211,153,.52);
+    --shadow-xl: 11px 11px 0 rgba(0,0,0,.65);
     --shadow-inner: var(--inset);
     --success: #2FCF94;
     --success-dk: #22B57D;
@@ -2862,7 +2862,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 /* ── Cards ── */
 .card, .glass-card, .card-subtle, .stat-card {
-    border: 2px solid var(--ink) !important;
+    border: 3px solid var(--ink) !important;
     box-shadow: var(--sh) !important;
     border-radius: var(--r) !important;
 }
@@ -2877,10 +2877,10 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 /* ── Buttons ── */
 .btn {
-    border-width: 2px !important;
+    border-width: 3px !important;
     border-radius: var(--r-sm) !important;
     box-shadow: var(--sh-xs) !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     letter-spacing: -.01em;
     transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, background .12s ease, color .12s ease !important;
 }
@@ -2968,6 +2968,21 @@ table.table-premium tbody td, table.dataTable tbody td { border-bottom: 1px soli
 
 /* ── Toast (legacy) ── */
 .toast-notification { border: 2px solid var(--ink); box-shadow: var(--sh-lg); border-radius: var(--r); }
+
+/* ═══════════════════════════════════════════════════════════════
+   BOLD TYPOGRAPHY — heavy weights on headings & stat numbers
+   (neobrutalism recipe: weight 700–800, tight tracking)
+   ═══════════════════════════════════════════════════════════════ */
+
+h1, h2, h3, h4, h5,
+.card-title, .section-title, .page-title,
+.stat-card-value, .stat-number, .stat-value,
+.stat-card .value, .stat-card h3,
+.dashboard-stat .value,
+.hero-title, .widget-title {
+    font-weight: 800 !important;
+    letter-spacing: -.02em;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    CONTRAST HARDENING — text visibility guarantee
