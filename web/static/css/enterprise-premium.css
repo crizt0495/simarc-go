@@ -2968,3 +2968,79 @@ table.table-premium tbody td, table.dataTable tbody td { border-bottom: 1px soli
 
 /* ── Toast (legacy) ── */
 .toast-notification { border: 2px solid var(--ink); box-shadow: var(--sh-lg); border-radius: var(--r); }
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTRAST HARDENING — text visibility guarantee
+   Neutral "chip" fills stay dark in BOTH themes (white text safe)
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --chip-bg: #24405F;
+    --chip-bg-2: #3A5672;
+    --chip-text: #FFFFFF;
+}
+
+/* In dark mode the ink-scale becomes light (it's for text), so filled
+   controls must either use the dark chip fill or dark text on bright fills. */
+[data-theme="dark"] {
+    --chip-bg: #2C4A6E;
+    --chip-bg-2: #42628A;
+    --chip-text: #F2F7F4;
+}
+
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-success,
+[data-theme="dark"] .btn-danger,
+[data-theme="dark"] .btn-info,
+[data-theme="dark"] .btn-warning,
+[data-theme="dark"] .btn-primary:hover,
+[data-theme="dark"] .btn-primary:focus,
+[data-theme="dark"] .btn-primary:active,
+[data-theme="dark"] .btn-success:hover,
+[data-theme="dark"] .btn-success:focus,
+[data-theme="dark"] .btn-success:active,
+[data-theme="dark"] .btn-danger:hover,
+[data-theme="dark"] .btn-danger:focus,
+[data-theme="dark"] .btn-danger:active,
+[data-theme="dark"] .btn-info:hover,
+[data-theme="dark"] .btn-info:focus,
+[data-theme="dark"] .btn-info:active,
+[data-theme="dark"] .btn-warning:hover,
+[data-theme="dark"] .btn-warning:focus,
+[data-theme="dark"] .btn-warning:active,
+[data-theme="dark"] .btn-outline-primary:hover,
+[data-theme="dark"] .btn-outline-success:hover,
+[data-theme="dark"] .btn-outline-danger:hover,
+[data-theme="dark"] .btn-outline-warning:hover,
+[data-theme="dark"] .btn-outline-info:hover,
+[data-theme="dark"] .page-item.active .page-link,
+[data-theme="dark"] .pagination .page-item.active .page-link,
+[data-theme="dark"] .dataTables_paginate .page-item.active .page-link,
+[data-theme="dark"] .select2-results__option--highlighted[aria-selected],
+[data-theme="dark"] .flatpickr-day.selected,
+[data-theme="dark"] .flatpickr-day.startRange,
+[data-theme="dark"] .flatpickr-day.endRange,
+[data-theme="dark"] .flatpickr-day.inRange,
+[data-theme="dark"] .date-preset-btn.active,
+[data-theme="dark"] .nav-badge,
+[data-theme="dark"] .advanced-header,
+[data-theme="dark"] .refresh-btn,
+[data-theme="dark"] .btn-back,
+[data-theme="dark"] .btn-retry,
+[data-theme="dark"] .btn-verify,
+[data-theme="dark"] .st-badge.overdue,
+[data-theme="dark"] .timeline-icon.bg-primary,
+[data-theme="dark"] .timeline-icon.bg-info,
+[data-theme="dark"] .timeline-icon.bg-warning,
+[data-theme="dark"] ::selection { color: #06281C !important; }
+
+[data-theme="dark"] .fab,
+[data-theme="dark"] .sidebar-logo-icon,
+[data-theme="dark"] .auth-logo-icon,
+[data-theme="dark"] .sm-btn-primary,
+[data-theme="dark"] .sm-btn-danger,
+[data-theme="dark"] .sm-btn-success,
+[data-theme="dark"] .sm-btn-info {
+    background: var(--chip-bg) !important;
+    color: var(--chip-text) !important;
+}

@@ -5,7 +5,7 @@
    ARSIP SHOW — PREMIUM DETAIL
    ═══════════════════════════════════════════ */
 
-.show-hero .hero-meta-item strong { color: #fff; }
+.show-hero .hero-meta-item strong { color: var(--brand); }
 
 .st-badge-v2 {
     display: inline-flex; align-items: center; gap: 0.35rem;
@@ -118,13 +118,13 @@
     width: 56px; height: 56px;
     border-radius: var(--r);
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 1.5rem;
+    color: var(--chip-text); font-size: 1.5rem;
     margin: 0 auto 0.65rem;
 }
-.file-icon.pdf { background: linear-gradient(135deg,var(--ink-2),var(--ink-2)); }
-.file-icon.img { background: linear-gradient(135deg,var(--ink-2),var(--ink)); }
-.file-icon.doc { background: linear-gradient(135deg,var(--ink-2),var(--ink-2)); }
-.file-icon.xls { background: linear-gradient(135deg,var(--ink-2),var(--ink-2)); }
+.file-icon.pdf { background: linear-gradient(135deg,var(--chip-bg-2),var(--chip-bg)); }
+.file-icon.img { background: linear-gradient(135deg,var(--chip-bg-2),var(--chip-bg)); }
+.file-icon.doc { background: linear-gradient(135deg,var(--chip-bg-2),var(--chip-bg)); }
+.file-icon.xls { background: linear-gradient(135deg,var(--chip-bg-2),var(--chip-bg)); }
 .file-icon.other { background: linear-gradient(135deg,#6366f1,var(--ink-3)); }
 
 /* ── Sidebar ── */
@@ -188,17 +188,17 @@
     border-color: var(--ink-2); color: var(--ink-2); background: var(--brand-lt);
 }
 .action-bar-btn.primary {
-    background: var(--ink-2); color: #fff; border-color: var(--ink-2);
+    background: var(--chip-bg); color: var(--chip-text); border-color: var(--chip-bg);
 }
-.action-bar-btn.primary:hover { background: var(--ink); }
+.action-bar-btn.primary:hover { background: var(--chip-bg-2); }
 .action-bar-btn.success {
-    background: var(--ink-2); color: #fff; border-color: var(--ink-2);
+    background: var(--chip-bg); color: var(--chip-text); border-color: var(--chip-bg);
 }
-.action-bar-btn.success:hover { background: var(--ink-2); }
+.action-bar-btn.success:hover { background: var(--chip-bg-2); }
 .action-bar-btn.danger {
     background: transparent; color: var(--ink-2); border-color: var(--ink-2);
 }
-.action-bar-btn.danger:hover { background: var(--ink-2); color: #fff; }
+.action-bar-btn.danger:hover { background: var(--chip-bg-2); color: var(--chip-text); }
 
 /* ── History Modal ── */
 .hist-timeline { position: relative; padding-left: 2.5rem; }
@@ -266,7 +266,7 @@
                         </div>
                     </div>
                     <div class="text-end flex-shrink-0">
-                        <span class="st-badge-v2 {{.arsip.StatusArsip}}" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)">{{replaceUnderscore .arsip.StatusArsip}}</span>
+                        <span class="st-badge-v2 {{.arsip.StatusArsip}}">{{replaceUnderscore .arsip.StatusArsip}}</span>
                     </div>
                 </div>
             </div>
@@ -451,7 +451,7 @@
 
 <!-- Toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
-    <div id="liveToast" class="toast" role="alert" style="background:var(--ink);color:#fff;border:none;border-radius:var(--r);">
+    <div id="liveToast" class="toast" role="alert" style="background:var(--chip-bg);color:var(--chip-text);border:none;border-radius:var(--r);">
         <div class="d-flex align-items-center px-3 py-2 gap-2">
             <i class="bi bi-check-circle text-success" id="toastIcon"></i>
             <span class="flex-grow-1 small" id="toastMessage"></span>

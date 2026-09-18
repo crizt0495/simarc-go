@@ -21,7 +21,7 @@
 .stat-card .value{font-size:22px;font-weight:800;letter-spacing:-0.03em;margin-bottom:2px}
 .stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.7}
 .stat-card.aktif{background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg))}
-.stat-card.aktif .icon{background:var(--ink-2);color:#fff}
+.stat-card.aktif .icon{background:var(--chip-bg);color:var(--chip-text)}
 .stat-card.aktif .value{color:var(--ink-2)}
 .stat-card.inaktif{background:linear-gradient(135deg,var(--neu-bg),#fef9c3)}
 .stat-card.inaktif .icon{background:#ca8a04;color:#fff}
@@ -30,7 +30,7 @@
 .stat-card.susut .icon{background:#ea580c;color:#fff}
 .stat-card.susut .value{color:#c2410c}
 .stat-card.permanen{background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg))}
-.stat-card.permanen .icon{background:var(--ink-2);color:#fff}
+.stat-card.permanen .icon{background:var(--chip-bg);color:var(--chip-text)}
 .stat-card.permanen .value{color:var(--ink-2)}
 .progress-stacked{display:flex;height:8px;border-radius:10px;overflow:hidden;margin:12px 0}
 .progress-seg{height:100%;transition:width 0.3s}
@@ -52,7 +52,7 @@
 .top-klas a:hover{background:var(--neu-bg);border-color:var(--neu-bg);color:var(--ink-2)}
 .top-klas a span{color:var(--ink-3);font-weight:400}
 .section-header{background:var(--neu-bg);padding:10px 16px;border-bottom:1px solid var(--border-card);display:flex;align-items:center;justify-content:space-between}
-[data-theme="dark"] .section-header{background:var(--ink-2)}
+[data-theme="dark"] .section-header{background:var(--chip-bg)}
 </style>
 <div class="container-fluid klasifikasi-page">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -104,7 +104,7 @@
           <div class="d-flex align-items-start justify-content-between">
             <div>
               <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="badge" style="background:var(--ink-2);color:#fff;font-size:12px;padding:4px 12px;border-radius:8px">{{.KodeKlasifikasi}}</span>
+                <span class="badge" style="background:var(--chip-bg);color:var(--chip-text);font-size:12px;padding:4px 12px;border-radius:8px">{{.KodeKlasifikasi}}</span>
                 {{if .KlasifikasiKeamanan}}
                 <span class="badge" style="background:var(--surface-3);color:var(--ink-4);font-size:11px;padding:4px 10px;border-radius:8px">{{.KlasifikasiKeamanan}}</span>
                 {{end}}
