@@ -74,11 +74,12 @@
                         <td>{{.CreatedAt}}</td>
                         <td><span class="badge-solid badge-blue">Selesai</span></td>
                     </tr>
-                    {{else}}
-                    <tr><td colspan="4"><div class="empty-state"><i class="bi bi-inbox empty-icon"></i><p class="empty-title">Belum ada aktivitas</p></div></td></tr>
                     {{end}}
                 </tbody>
             </table>
+            {{if not .RecentActivities}}
+            <div class="empty-state"><i class="bi bi-inbox empty-icon"></i><p class="empty-title">Belum ada aktivitas</p></div>
+            {{end}}
         </div>
     </div>
 </div>

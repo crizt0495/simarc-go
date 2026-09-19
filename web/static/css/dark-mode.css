@@ -145,3 +145,15 @@
 [data-theme="dark"] .select2-dropdown { background: var(--surface-2); border-color: var(--border) !important; box-shadow: var(--sh-lg); }
 [data-theme="dark"] .select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--ink); }
 [data-theme="dark"] .select2-results__option { color: var(--ink-2); }
+/* ── Overrides untuk kontras & konsistensi palet premium ── */
+[data-theme="dark"] .text-dark,
+[data-theme="dark"] .text-body { color: var(--ink-2) !important; }
+[data-theme="dark"] .text-muted { color: var(--ink-3) !important; }
+[data-theme="dark"] .mobile-more-section-title,
+[data-theme="dark"] .sidebar-section-label,
+[data-theme="dark"] .nav-user-role,
+[data-theme="dark"] .box-stat-label,
+[data-theme="dark"] .stat-card-foot,
+[data-theme="dark"] .dataTables_empty { color: var(--ink-3) !important; }
+[data-theme="dark"] .breadcrumb a { color: var(--ink-3); }
+[data-theme="dark"] .breadcrumb-sep { color: var(--ink-4); }

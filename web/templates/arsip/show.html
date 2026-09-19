@@ -531,7 +531,7 @@ function renderVersionsTable(v){
     const t=document.getElementById('versionsTableBody');
     if(!t)return;
     t.innerHTML='';
-    if(!v.length){t.innerHTML='<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Belum ada versi</td></tr>';return}
+    if(!v.length)return;
     v.forEach(function(item){
         const tr=document.createElement('tr');
         tr.innerHTML='<td><span class="badge-soft badge-soft-primary">v'+item.nomor_versi+'</span></td><td style="font-size:0.8rem;">'+(item.file_path?item.file_path.split('/').pop():'File')+'</td><td style="font-size:0.8rem;">'+item.diubah_oleh+'</td><td style="font-size:0.8rem;">'+(item.catatan_perubahan||'-')+'</td><td style="font-size:0.75rem;">'+item.created_at+'</td><td><a href="/arsip/version/'+item.id+'/download" class="btn btn-sm btn-outline-primary border-0" title="Unduh" style="font-size:0.8rem;"><i class="bi bi-download"></i></a></td>';

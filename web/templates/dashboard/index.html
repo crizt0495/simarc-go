@@ -228,23 +228,20 @@
           <td><span class="badge badge-neutral">{{.Action}}</span></td>
           <td class="text-end"><span class="text-muted activity-time">{{formatDateTime .CreatedAt}}</span></td>
         </tr>
-        {{else}}
-        <tr>
-          <td colspan="4" class="activity-empty">
-            <div class="empty-state">
-              <i class="bi bi-inbox empty-icon"></i>
-              <p class="empty-title">Belum ada aktivitas</p>
-              <p class="empty-desc">Aktivitas terbaru akan muncul di sini</p>
-            </div>
-          </td>
-        </tr>
         {{end}}
       </tbody>
     </table>
+    {{if not .RecentActivities}}
+    <div class="empty-state">
+      <i class="bi bi-inbox empty-icon"></i>
+      <p class="empty-title">Belum ada aktivitas</p>
+      <p class="empty-desc">Aktivitas terbaru akan muncul di sini</p>
+    </div>
+    {{end}}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/vendor/chart/chart.umd.min.js?v={{.AssetVersion}}"></script>
 <script>
 async function refreshDashboard() {
   const btn = document.getElementById('btnRefresh');

@@ -1,58 +1,58 @@
 {{define "laporan/klasifikasi-detail.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-:root{--radius:14px;--shadow:4px 4px 0 rgba(11,11,11,0.92)}
-.klasifikasi-page{--bg-card:#fff;--bg-hover:var(--neu-bg);--text-title:var(--ink-2);--text-body:var(--ink-4);--border-card:#0B0B0B}
-[data-theme="dark"] .klasifikasi-page{--bg-card:var(--ink-2);--bg-hover:var(--ink-3);--text-title:var(--surface-3);--text-body:#cbd5e1;--border-card:var(--ink-3)}
+:root{--radius:14px;--shadow:4px 4px 0 rgba(25,21,16,.9)}
+.klasifikasi-page{--bg-card:var(--surface-2);--bg-hover:var(--surface-3);--text-title:var(--ink);--text-body:var(--ink-2);--border-card:var(--border);--muted:var(--ink-3);--muted-2:var(--ink-4)}
+[data-theme="dark"] .klasifikasi-page{--bg-card:var(--surface-2);--bg-hover:var(--surface-3);--text-title:var(--ink);--text-body:var(--ink-2);--border-card:var(--border-2);--muted:var(--ink-3);--muted-2:var(--ink-4)}
 .card-klas{background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:all 0.2s}
 .klas-sidebar{max-height:calc(100vh - 200px);overflow-y:auto;scrollbar-width:thin}
 .klas-sidebar::-webkit-scrollbar{width:5px}
-.klas-sidebar::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:10px}
+.klas-sidebar::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px}
 .klas-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-card);text-decoration:none;color:var(--text-body);transition:all 0.15s;cursor:pointer}
 .klas-item:hover{background:var(--bg-hover);color:var(--text-title)}
-.klas-item.active{background:rgba(255,90,54,0.10);border-left:3px solid var(--ink-2);color:var(--ink-2);font-weight:600}
-.klas-item .badge-count{background:#e2e8f0;color:var(--ink-4);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
-.klas-item.active .badge-count{background:rgba(255,90,54,0.15);color:var(--ink-2)}
+.klas-item.active{background:var(--brand-lt);border-left:3px solid var(--brand);color:var(--brand-dk);font-weight:600}
+.klas-item .badge-count{background:var(--surface-3);color:var(--muted-2);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
+.klas-item.active .badge-count{background:var(--brand-lt);color:var(--brand-dk)}
 .klas-item .kode{font-size:12px;font-weight:700;letter-spacing:0.02em}
-.klas-item .nama{font-size:12px;margin-top:2px;opacity:1;color:var(--ink-3)}
+.klas-item .nama{font-size:12px;margin-top:2px;opacity:1;color:var(--muted)}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
 .stat-card{border-radius:12px;padding:16px;text-align:center}
 .stat-card .icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px}
 .stat-card .value{font-size:22px;font-weight:800;letter-spacing:-0.03em;margin-bottom:2px}
-.stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.7}
-.stat-card.aktif{background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg))}
+.stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.7;color:var(--muted)}
+.stat-card.aktif{background:var(--surface-2);border:1px solid var(--border-card)}
 .stat-card.aktif .icon{background:var(--chip-bg);color:var(--chip-text)}
-.stat-card.aktif .value{color:var(--ink-2)}
-.stat-card.inaktif{background:linear-gradient(135deg,var(--neu-bg),#fef9c3)}
-.stat-card.inaktif .icon{background:#ca8a04;color:#0B0B0B}
-.stat-card.inaktif .value{color:#a16207}
-.stat-card.susut{background:linear-gradient(135deg,var(--neu-bg),#ffedd5)}
-.stat-card.susut .icon{background:#ea580c;color:#0B0B0B}
-.stat-card.susut .value{color:#c2410c}
-.stat-card.permanen{background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg))}
+.stat-card.aktif .value{color:var(--text-title)}
+.stat-card.inaktif{background:var(--surface-2);border:1px solid var(--border-card)}
+.stat-card.inaktif .icon{background:var(--warning);color:var(--on-amber)}
+.stat-card.inaktif .value{color:var(--warning-dk)}
+.stat-card.susut{background:var(--surface-2);border:1px solid var(--border-card)}
+.stat-card.susut .icon{background:var(--brand);color:var(--on-accent)}
+.stat-card.susut .value{color:var(--brand-dk)}
+.stat-card.permanen{background:var(--surface-2);border:1px solid var(--border-card)}
 .stat-card.permanen .icon{background:var(--chip-bg);color:var(--chip-text)}
-.stat-card.permanen .value{color:var(--ink-2)}
+.stat-card.permanen .value{color:var(--text-title)}
 .progress-stacked{display:flex;height:8px;border-radius:10px;overflow:hidden;margin:12px 0}
 .progress-seg{height:100%;transition:width 0.3s}
 .arsip-table{width:100%;border-collapse:separate;border-spacing:0 4px}
-.arsip-table th{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.arsip-table th{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-2);border-bottom:2px solid var(--border-2);white-space:nowrap}
 .arsip-table td{padding:10px 14px;font-size:13px;background:var(--bg-card);border-bottom:1px solid var(--border-card)}
 .arsip-table tr td:first-child{border-radius:10px 0 0 10px}
 .arsip-table tr td:last-child{border-radius:0 10px 10px 0}
 .arsip-table tr:hover td{background:var(--bg-hover)}
-.arsip-table .nomor{font-weight:700;color:var(--ink-2);font-size:12px}
+.arsip-table .nomor{font-weight:700;color:var(--text-title);font-size:12px}
 .arsip-table .nama{font-weight:600;color:var(--text-title)}
-.arsip-table .uraian{font-size:11px;color:#94a3b8;margin-top:2px}
+.arsip-table .uraian{font-size:11px;color:var(--muted);margin-top:2px}
 .empty-state{padding:60px 20px;text-align:center}
-.empty-state .icon{width:72px;height:72px;border-radius:20px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;color:#94a3b8}
+.empty-state .icon{width:72px;height:72px;border-radius:20px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;color:var(--muted-2)}
 .empty-state h5{font-weight:700;margin-bottom:6px;color:var(--text-title)}
-.empty-state p{color:var(--ink-3);font-size:13px;max-width:400px;margin:0 auto}
+.empty-state p{color:var(--muted);font-size:13px;max-width:400px;margin:0 auto}
 .top-klas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.top-klas a{padding:8px 16px;border-radius:10px;background:var(--neu-bg);border:1px solid #e2e8f0;text-decoration:none;font-size:13px;font-weight:600;color:var(--ink-4);transition:all 0.15s}
-.top-klas a:hover{background:var(--neu-bg);border-color:var(--neu-bg);color:var(--ink-2)}
-.top-klas a span{color:var(--ink-3);font-weight:400}
-.section-header{background:var(--neu-bg);padding:10px 16px;border-bottom:1px solid var(--border-card);display:flex;align-items:center;justify-content:space-between}
-[data-theme="dark"] .section-header{background:var(--chip-bg)}
+.top-klas a{padding:8px 16px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);text-decoration:none;font-size:13px;font-weight:600;color:var(--muted);transition:all 0.15s}
+.top-klas a:hover{background:var(--surface-3);border-color:var(--border);color:var(--text-title)}
+.top-klas a span{color:var(--muted);font-weight:400}
+.section-header{background:var(--surface-2);padding:10px 16px;border-bottom:1px solid var(--border-card);display:flex;align-items:center;justify-content:space-between}
+[data-theme="dark"] .section-header{background:var(--surface-2)}
 </style>
 <div class="container-fluid klasifikasi-page">
   <div class="d-flex align-items-center justify-content-between mb-3">

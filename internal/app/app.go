@@ -280,6 +280,8 @@ func registerStaticRoutes(r *gin.Engine) {
 	r.HEAD("/js/*filepath", serveStaticFile("web/static/js", immutable))
 	r.GET("/images/*filepath", serveStaticFile("web/static/images", immutable))
 	r.HEAD("/images/*filepath", serveStaticFile("web/static/images", immutable))
+	r.GET("/vendor/*filepath", serveStaticFile("web/static/vendor", immutable))
+	r.HEAD("/vendor/*filepath", serveStaticFile("web/static/vendor", immutable))
 	r.GET("/storage/*filepath", serveStaticFile("public/storage", "public, max-age=3600"))
 	r.HEAD("/storage/*filepath", serveStaticFile("public/storage", "public, max-age=3600"))
 	r.GET("/sw.js", func(c *gin.Context) {
