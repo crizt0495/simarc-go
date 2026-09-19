@@ -59,6 +59,23 @@
     --info-dk: #2947A5;
     --info-lt: rgba(52,88,199,.12);
 
+    /* BOOTSTRAP TOKENS -> palet premium (utilitas .bg-*/.text-*/.table-*/focus) */
+    --bs-body-color: var(--ink);
+    --bs-body-bg: var(--surface);
+    --bs-secondary-color: var(--ink-3);
+    --bs-tertiary-color: var(--ink-4);
+    --bs-emphasis-color: var(--ink);
+    --bs-primary: #B14A28;
+    --bs-primary-rgb: 177,74,40;
+    --bs-success: #1F7A4A;
+    --bs-success-rgb: 31,122,74;
+    --bs-info: #3458C7;
+    --bs-info-rgb: 52,88,199;
+    --bs-warning: #B67F1C;
+    --bs-warning-rgb: 182,127,28;
+    --bs-danger: #B4362A;
+    --bs-danger-rgb: 180,54,42;
+
     /* VIBRANT ACCENTS (charts / icons only) */
     --purple: #6E5BC0;
     --purple-dk: #5A48AD;
@@ -272,6 +289,23 @@
     --c-warning-soft: rgba(232,194,74,.15);
     --c-info: #7C96FF;
     --c-info-soft: rgba(124,150,255,.16);
+
+    /* BOOTSTRAP TOKENS (dark) -> palet premium */
+    --bs-body-color: var(--ink);
+    --bs-body-bg: var(--surface);
+    --bs-secondary-color: var(--ink-3);
+    --bs-tertiary-color: var(--ink-4);
+    --bs-emphasis-color: var(--ink);
+    --bs-primary: #D96A45;
+    --bs-primary-rgb: 217,106,69;
+    --bs-success: #3CC98F;
+    --bs-success-rgb: 60,201,143;
+    --bs-info: #7C96FF;
+    --bs-info-rgb: 124,150,255;
+    --bs-warning: #E8C24A;
+    --bs-warning-rgb: 232,194,74;
+    --bs-danger: #FF7065;
+    --bs-danger-rgb: 255,112,101;
     --glass-bg: rgba(21,18,14,.88);
     --glass-border: rgba(255,255,255,.09);
     --modal-overlay: rgba(0,0,0,.72);
@@ -2001,13 +2035,38 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .text-xs { font-size: .65rem; } .text-sm { font-size: .75rem; }
 .text-base { font-size: .875rem; } .text-lg { font-size: 1rem; }
 .text-xl { font-size: 1.125rem; } .text-2xl { font-size: 1.5rem; }
-.text-muted { color: var(--ink-4); }
+.text-muted { color: var(--ink-4) !important; }
 .text-brand { color: var(--brand); }
-.text-success { color: var(--c-success); }
-.text-danger { color: var(--c-danger); }
-.text-warning { color: var(--c-warning); }
-.text-info { color: var(--c-info); }
-.text-secondary { color: var(--ink-3); }
+.text-primary { color: var(--brand) !important; }
+.text-secondary { color: var(--ink-3) !important; }
+.text-success { color: var(--c-success) !important; }
+.text-danger { color: var(--c-danger) !important; }
+.text-warning { color: var(--c-warning) !important; }
+.text-info { color: var(--c-info) !important; }
+.text-dark { color: var(--ink-2) !important; }
+
+/* Foreground badge yang benar terhadap background palet premium
+   (teks tersembunyi bila diferensiasi warna dihilangkan) */
+.badge.bg-primary, .badge.bg-success, .badge.bg-info, .badge.bg-danger,
+.badge.bg-secondary, .badge.bg-dark { color: var(--on-accent) !important; }
+.badge.bg-warning, .badge.bg-light { color: var(--on-amber) !important; }
+
+/* Kartu berwarna: latar & teks data-ink palet (teks putih di atas kanvas kalah bila .card menimpa) */
+html .card.bg-primary, html .card.bg-primary :is(h1,h2,h3,h4,h5,h6) { background: var(--brand) !important; color: var(--on-accent) !important; }
+html .card.bg-info, html .card.bg-info :is(h1,h2,h3,h4,h5,h6) { background: var(--info) !important; color: var(--on-accent) !important; }
+html .card.bg-success, html .card.bg-success :is(h1,h2,h3,h4,h5,h6) { background: var(--success) !important; color: var(--on-accent) !important; }
+html .card.bg-danger, html .card.bg-danger :is(h1,h2,h3,h4,h5,h6) { background: var(--danger) !important; color: var(--on-accent) !important; }
+html .card.bg-warning, html .card.bg-warning :is(h1,h2,h3,h4,h5,h6) { background: var(--warning) !important; color: var(--on-amber) !important; }
+html .card.bg-secondary, html .card.bg-secondary :is(h1,h2,h3,h4,h5,h6) { background: var(--ink-3) !important; color: var(--on-accent) !important; }
+
+/* Placeholder select2 mengikuti skala ink (bukan #999 mendekati pucat) */
+.select2-container .select2-selection__placeholder,
+.select2-container--bootstrap5 .select2-selection--single .select2-selection__placeholder { color: var(--ink-4) !important; }
+
+/* Tabel informasi Bootstrap dinilai ulang memakai tint palet */
+.table-info { --bs-table-bg: var(--info-lt); --bs-table-color: var(--ink-2); --bs-table-border-color: var(--border-2); }
+.table-primary { --bs-table-bg: var(--brand-lt); --bs-table-color: var(--ink-2); --bs-table-border-color: var(--border-2); }
+.table-success { --bs-table-bg: var(--success-lt); --bs-table-color: var(--ink-2); --bs-table-border-color: var(--border-2); }
 
 .fw-500 { font-weight: 500; } .fw-600 { font-weight: 600; }
 .fw-700 { font-weight: 700; } .fw-800 { font-weight: 800; }

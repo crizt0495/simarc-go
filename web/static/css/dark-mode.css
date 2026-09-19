@@ -157,3 +157,35 @@
 [data-theme="dark"] .dataTables_empty { color: var(--ink-3) !important; }
 [data-theme="dark"] .breadcrumb a { color: var(--ink-3); }
 [data-theme="dark"] .breadcrumb-sep { color: var(--ink-4); }
+
+/* Utilitas teks Bootstrap — warna palet gelap */
+[data-theme="dark"] .text-primary { color: var(--brand) !important; }
+[data-theme="dark"] .text-secondary { color: var(--ink-3) !important; }
+[data-theme="dark"] .text-success, [data-theme="dark"] .text-info { color: var(--c-success) !important; }
+[data-theme="dark"] .text-info, [data-theme="dark"] .text-info-strong { color: var(--c-info) !important; }
+[data-theme="dark"] .text-danger { color: var(--c-danger) !important; }
+[data-theme="dark"] .text-warning { color: var(--c-warning) !important; }
+
+/* ── Badge gelap: foreground eksplisit, menang atas .text-dark/.text-white ── */
+[data-theme="dark"] .badge.bg-primary,
+[data-theme="dark"] .badge.bg-success,
+[data-theme="dark"] .badge.bg-info,
+[data-theme="dark"] .badge.bg-danger,
+[data-theme="dark"] .badge.bg-secondary,
+[data-theme="dark"] .badge.bg-dark { color: var(--on-accent) !important; }
+[data-theme="dark"] .badge.bg-warning,
+[data-theme="dark"] .badge.bg-light { color: var(--on-amber) !important; }
+
+/* ── Header/footer card mengikuti permukaan gelap (hindari putih di mode gelap) ── */
+[data-theme="dark"] .card-header.bg-white,
+[data-theme="dark"] .card-footer.bg-white,
+[data-theme="dark"] .card.bg-white { background-color: var(--surface-3) !important; }
+
+
+
+/* Kartu statistik mode gelap: warna pigmen data-ink agar teks putih terbaca */
+[data-theme="dark"] .card.bg-primary, [data-theme="dark"] .card.bg-primary :is(h1,h2,h3,h4,h5,h6) { background: #9C3A1C !important; color: var(--ink-2) !important; }
+[data-theme="dark"] .card.bg-info, [data-theme="dark"] .card.bg-info :is(h1,h2,h3,h4,h5,h6) { background: #3458C7 !important; color: var(--ink-2) !important; }
+[data-theme="dark"] .card.bg-success, [data-theme="dark"] .card.bg-success :is(h1,h2,h3,h4,h5,h6) { background: #165E38 !important; color: var(--ink-2) !important; }
+[data-theme="dark"] .card.bg-danger, [data-theme="dark"] .card.bg-danger :is(h1,h2,h3,h4,h5,h6) { background: #972A20 !important; color: var(--ink-2) !important; }
+[data-theme="dark"] .card.bg-warning, [data-theme="dark"] .card.bg-warning :is(h1,h2,h3,h4,h5,h6) { background: #9A6A12 !important; color: var(--ink-2) !important; }
