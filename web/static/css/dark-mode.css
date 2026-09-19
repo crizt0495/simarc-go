@@ -26,8 +26,8 @@
 [data-theme="dark"] .btn-secondary:hover { color: var(--ink); background: var(--surface-3); }
 [data-theme="dark"] .btn-outline { color: var(--ink-2); }
 [data-theme="dark"] .btn-outline:hover { background: var(--surface-3); }
-[data-theme="dark"] .btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: var(--sh-sm); }
-[data-theme="dark"] .btn-primary:hover { background: var(--brand-dk); border-color: var(--brand-dk); color: #fff; }
+[data-theme="dark"] .btn-primary { background: var(--brand); border-color: var(--brand); color: #181512; box-shadow: var(--sh-sm); }
+[data-theme="dark"] .btn-primary:hover { background: var(--brand-dk); border-color: var(--brand-dk); color: #181512; }
 [data-theme="dark"] .btn-crud { background: var(--surface-2); border-color: var(--border); color: var(--ink-3); }
 [data-theme="dark"] .btn-crud:hover { color: var(--ink); border-color: var(--border-2); }
 
@@ -54,7 +54,7 @@
 [data-theme="dark"] .sidebar-footer { border-top-color: var(--border); }
 [data-theme="dark"] .sidebar-user { background: var(--surface-3); border-color: var(--border); }
 [data-theme="dark"] .sidebar-user-avatar { background: var(--brand-lt); color: var(--brand); }
-[data-theme="dark"] .sidebar-logo-icon { background: var(--brand); color: #fff; }
+[data-theme="dark"] .sidebar-logo-icon { background: var(--brand); color: #181512; }
 [data-theme="dark"] .sidebar .sidebar-link:hover { background: var(--surface-3); }
 [data-theme="dark"] .sidebar .sidebar-link.active { background: var(--brand-lt); }
 [data-theme="dark"] .sidebar-footer-link:hover { background: var(--surface-3); }
@@ -79,7 +79,7 @@
 /* ── Pagination ── */
 [data-theme="dark"] .page-item .page-link { background: var(--surface-2); border-color: var(--border); color: var(--ink-3); }
 [data-theme="dark"] .page-item .page-link:hover { background: var(--surface-3); color: var(--ink); }
-[data-theme="dark"] .page-item.active .page-link { background: var(--brand); border-color: var(--brand); color: #fff; }
+[data-theme="dark"] .page-item.active .page-link { background: var(--brand); border-color: var(--brand); color: #181512; }
 
 /* ── Alerts ── */
 [data-theme="dark"] .alert { background: var(--surface-2); border-color: var(--border); color: var(--ink-2); }
@@ -127,10 +127,10 @@
 [data-theme="dark"] .box-stat-icon { background: var(--surface-3); }
 [data-theme="dark"] .activity-avatar { background: var(--brand-lt); color: var(--brand); }
 [data-theme="dark"] .auth-card { background: var(--surface-2); border-color: var(--border); box-shadow: var(--sh-lg); }
-[data-theme="dark"] .auth-header .auth-logo { background: var(--brand); color: #fff; }
+[data-theme="dark"] .auth-header .auth-logo { background: var(--brand); color: #181512; }
 [data-theme="dark"] .auth-input { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
 [data-theme="dark"] .auth-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-lt); }
-[data-theme="dark"] .auth-btn { background: var(--brand); color: #fff; border-color: var(--brand); }
+[data-theme="dark"] .auth-btn { background: var(--brand); color: #181512; border-color: var(--brand); }
 [data-theme="dark"] .auth-btn:hover { background: var(--brand-dk); }
 [data-theme="dark"] .auth-theme-btn { background: var(--surface-2); border-color: var(--border); color: var(--ink-3); }
 

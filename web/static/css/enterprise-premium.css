@@ -10,6 +10,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
+    color-scheme: light;
     /* PRIMARY — Pop Orange (signature accent) */
     --brand: #FF5A36;
     --brand-dk: #E2461F;
@@ -37,9 +38,9 @@
     --ink-3: #6E6862;
     --ink-4: #9A928A;
 
-    --surface: #F5EEEC;
-    --surface-2: #FFFFFD;
-    --surface-3: #EBE4E1;
+    --surface: #FAF6F3;
+    --surface-2: #FFFFFF;
+    --surface-3: #F0E9E4;
 
     --border: #0B0B0B;
     --border-2: #3D3833;
@@ -195,6 +196,7 @@
 }
 
 [data-theme="dark"] {
+    color-scheme: dark;
     --brand: #FF6B4A;
     --brand-dk: #FF5A36;
     --brand-lt: rgba(255,107,74,.16);
@@ -203,12 +205,12 @@
     --ink-2: #E0D8D4;
     --ink-3: #B0A8A2;
     --ink-4: #8A827C;
-    --surface: #121212;
-    --surface-2: #1C1B1B;
-    --surface-3: #292725;
+    --surface: #171513;
+    --surface-2: #201D1A;
+    --surface-3: #2B2723;
     --border: #000000;
     --border-2: #3A3A3A;
-    --neu-bg: #1C1B1B;
+    --neu-bg: #201D1A;
     --neu-raised: 6px 6px 0 rgba(0,0,0,.55);
     --neu-raised-sm: 4px 4px 0 rgba(0,0,0,.5);
     --neu-raised-lg: 8px 8px 0 rgba(0,0,0,.6);
@@ -1557,7 +1559,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
     line-height: 1.2;
 }
 .page-item .page-link:hover { background: var(--surface-3); color: var(--ink); border-color: var(--border-2); }
-.page-item.active .page-link { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.page-item.active .page-link { background: var(--brand); border-color: var(--brand); color: #0B0B0B; font-weight: 600; }
 .page-item.active .page-link:hover { background: var(--brand-dk); }
 .page-item.disabled .page-link { opacity: .4; pointer-events: none; }
 
