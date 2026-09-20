@@ -1,11 +1,14 @@
 {
-  "name": "simarc-modal-tests",
+  "name": "simarc",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "css:minify": "node scripts/minify-css.js",
+    "css:watch": "node scripts/minify-css.js --watch",
+    "test:a11y": "node scripts/wcag-audit.js"
   },
   "devDependencies": {
     "jsdom": "^25.0.0",

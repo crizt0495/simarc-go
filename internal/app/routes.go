@@ -209,6 +209,8 @@ func registerRoutes(r *gin.Engine) {
 		// ═══════════════════════════════════════════
 		auth.GET("/pemusnahan/export-excel", pemusnahH.ExportExcel)
 		auth.GET("/pemusnahan/export-pdf", pemusnahH.ExportPDF)
+		auth.GET("/pemusnahan/export/arsip-musnah.xlsx", pemusnahH.ExportExcel)
+		auth.GET("/pemusnahan/export/arsip-musnah.pdf", pemusnahH.ExportPDF)
 		auth.GET("/pemusnahan/ajax/search-arsip", pemusnahH.SearchArsip)
 		auth.GET("/pemusnahan/ajax/arsip/:id", pemusnahH.GetArsipDetail)
 		auth.GET("/pemusnahan", pemusnahH.Index)

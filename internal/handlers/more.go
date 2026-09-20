@@ -379,23 +379,21 @@ type PemusnahanHandler struct{}
 // in any active (diajukan/disetujui) pemusnahan.
 //
 // LOGIC (computed via relasi, TIDAK bergantung pada arsip.tanggal_retensi_berakhir):
-//   1. Arsip dengan status_arsip bukan 'musnah', 'siap_penyusutan', 'permanen'
+//   1. Arsip dengan status_arsip bukan 'musnah' atau 'permanen'
 //   2. Kode klasifikasi terkait aktif (is_active=1) dan memiliki penyusutan_arsip = 'musnah'
 //   3. Klasifikasi memiliki total retensi > 0 (RetensiAktif + RetensiInaktif > 0)
 //   4. Tanggal retensi yang dihitung (arsip.tanggal_dibuat + total_retensi tahun) < today
 //   5. Belum ada di pengajuan pemusnahan yang aktif
 //
-// Dengan logika ini, setiap arsip PASTI masuk jika klasifikasinya musnah dan
-// tanggal_dibuat-nya cukup lama, walaupun arsip.tanggal_retensi_berakhir NULL.
+// NOTE: arsip dengan status 'siap_penyusutan' SERTA 'aktif'/'inaktif' diikutsertakan,
+// agar halaman pemusnahan dan dashboard konsisten dalam menampilkan jumlah "Arsip Siap Musnah".
 func getExpiredArsipForPemusnahan() []models.Arsip {
 	var expiredArsip []models.Arsip
-	// Hitung tanggal_retensi_berakhir on-the-fly dari relasi kode_klasifikasi
-	// DATE_ADD(tanggal_dibuat, INTERVAL (retensi_aktif+retensi_inaktif) YEAR) < today
 	database.DB.
 		Preload("KodeKlasifikasi").
 		Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
-		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
+		Where("arsip.status_arsip NOT IN ('musnah', 'permanen')").
 		Where("(LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ? OR kode_klasifikasi.penyusutan_arsip IS NULL OR LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = '')", "musnah").
 		Where("kode_klasifikasi.is_active = ?", true).
 		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
@@ -477,7 +475,7 @@ func (h *PemusnahanHandler) Create(c *gin.Context) {
 	var arsipList []models.Arsip
 	db := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
-		Where("arsip.status_arsip NOT IN ('musnah', 'siap_penyusutan', 'permanen')").
+		Where("arsip.status_arsip NOT IN ('musnah', 'permanen')").
 		Where("(LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ? OR kode_klasifikasi.penyusutan_arsip IS NULL OR LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = '')", "musnah").
 		Where("kode_klasifikasi.is_active = ?", true).
 		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
