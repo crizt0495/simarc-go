@@ -2,7 +2,7 @@
 {{define "content"}}
 <style>
 .integration-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;margin-bottom:2rem}
-.integration-card{background:white;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,0.08);transition:transform 0.3s}
+.integration-card{background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh-sm);transition:transform 0.3s}
 .integration-card:hover{transform:translateY(-5px)}
 .integration-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
 .integration-icon{width:50px;height:50px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
@@ -123,7 +123,7 @@
                     </div>
                     <details class="mt-2">
                         <summary class="text-primary" style="cursor:pointer">Contoh script untuk Google Sheets</summary>
-                        <pre class="bg-light p-3 mt-2 rounded" style="font-size:.78rem">function tarikData() {
+                        <pre class="bg-light p-3 mt-2 rounded" style="font-size:.78rem;background:var(--surface-3)!important">function tarikData() {
   const url = '{{.AppURL}}/api/apps-script/summary';
   const res = UrlFetchApp.fetch(url);
   const data = JSON.parse(res.getContentText());

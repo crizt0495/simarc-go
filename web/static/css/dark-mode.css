@@ -161,7 +161,7 @@
 /* Utilitas teks Bootstrap — warna palet gelap */
 [data-theme="dark"] .text-primary { color: var(--brand) !important; }
 [data-theme="dark"] .text-secondary { color: var(--ink-3) !important; }
-[data-theme="dark"] .text-success, [data-theme="dark"] .text-info { color: var(--c-success) !important; }
+[data-theme="dark"] .text-success, [data-theme="dark"] .text-success-strong { color: var(--c-success) !important; }
 [data-theme="dark"] .text-info, [data-theme="dark"] .text-info-strong { color: var(--c-info) !important; }
 [data-theme="dark"] .text-danger { color: var(--c-danger) !important; }
 [data-theme="dark"] .text-warning { color: var(--c-warning) !important; }

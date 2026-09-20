@@ -30,10 +30,10 @@
             width: 100%;
             max-height: 400px;
             overflow-y: auto;
-            background: white;
-            border: 1px solid #dee2e6;
+            background: var(--surface-2);
+            border: 1px solid var(--border-2);
             border-radius: 0.5rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            box-shadow: var(--sh-sm);
             margin-top: 0.25rem;
             display: none;
         `;
@@ -122,17 +122,17 @@
             div.style.cssText = `
                 padding: 0.75rem 1rem;
                 cursor: pointer;
-                border-bottom: 1px solid #f8f9fa;
+                border-bottom: 1px solid var(--surface-3);
                 display: flex;
                 align-items: center;
                 gap: 0.75rem;
             `;
             
             div.innerHTML = `
-                <i class="bi bi-${item.icon}" style="font-size: 1.25rem; color: #0d6efd;"></i>
+                <i class="bi bi-${item.icon}" style="font-size: 1.25rem; color: var(--info);"></i>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #212529;">${escapeHtml(item.value)}</div>
-                    <div style="font-size: 0.875rem; color: #6c757d;">${escapeHtml(item.highlight)}</div>
+                    <div style="font-weight: 600; color: var(--ink);">${escapeHtml(item.value)}</div>
+                    <div style="font-size: 0.875rem; color: var(--ink-3);">${escapeHtml(item.highlight)}</div>
                 </div>
                 <span class="badge bg-light text-dark">${escapeHtml(item.type)}</span>
             `;
@@ -156,7 +156,7 @@
         if (active) active.classList.remove('active');
         
         element.classList.add('active');
-        element.style.backgroundColor = '#e9ecef';
+        element.style.backgroundColor = 'var(--surface-3)';
         
         // Scroll into view if needed
         element.scrollIntoView({ block: 'nearest' });

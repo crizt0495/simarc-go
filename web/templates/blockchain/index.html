@@ -44,12 +44,13 @@
                     </div>
                 </div>
                 <div class="col-lg-5 d-none d-lg-block text-center">
-                    <div class="p-4 bg-black text-white rounded-4 border border-2 border-dark" style="box-shadow: 6px 6px 0 rgba(11,11,11,1);">
+                    <div 
+ class="p-4 rounded-4 border border-2" style="background:var(--chip-bg);color:var(--chip-text);border-color:var(--chip-bg);box-shadow:var(--sh-lg);">
                         <i class="bi bi-cpu fs-1 mb-2 text-info d-block"></i>
                         <h6 class="fw-800 text-info">Internal Ledger Active</h6>
-                        <code class="text-white opacity-50 small">SHA-256 Chaining Protocol v2.0</code>
-                        <hr class="border-white opacity-10">
-                        <div class="text-start small opacity-75">
+                        <code class="opacity-60 small" style="color:var(--chip-text)">SHA-256 Chaining Protocol v2.0</code>
+                        <hr class="opacity-10" style="border-color:var(--chip-bg-2)">
+                        <div class="text-start small opacity-75" style="color:var(--chip-text)">
                             <div><i class="bi bi-clock me-2"></i>Last Block: {{if .Blocks}}{{ (index .Blocks 0).Timestamp }}{{else}}-{{end}}</div>
                             <div class="text-truncate"><i class="bi bi-hash me-2"></i>Head: {{if .Blocks}}{{ (index .Blocks 0).CurrentHash }}{{else}}-{{end}}</div>
                         </div>

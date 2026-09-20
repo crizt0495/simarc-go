@@ -630,7 +630,7 @@
     duration = duration !== undefined ? duration : 4000;
 
     var icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
-    var colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+    var colors = { success: "var(--success)", error: "var(--danger)", warning: "var(--warning)", info: "var(--info)" };
     var icon = icons[type] || icons.info;
     var color = colors[type] || colors.info;
 
@@ -649,8 +649,8 @@
     el.setAttribute('role', 'alert');
     el.setAttribute('aria-live', 'polite');
     el.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 18px;' +
-      'background:var(--surface,#fff);border-radius:16px;' +
-      'box-shadow:0 10px 40px rgba(0,0,0,0.12),0 0 0 1px rgba(0,0,0,0.05);' +
+      'background:var(--surface,#fff);border-radius:var(--r-lg);' +
+      'box-shadow:var(--sh-sm);border:1px solid var(--border-2);border-top:0;border-right:0;' +
       'animation:smToastIn 0.3s cubic-bezier(0.16,1,0.3,1) both;' +
       'border-left:4px solid ' + color + ';' +
       'pointer-events:auto;cursor:default;';
