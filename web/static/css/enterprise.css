@@ -1862,7 +1862,7 @@ input[type="date"], input[type="datetime-local"], input[type="tel"], textarea {
   border: 1px solid var(--nb-border-strong);
   border-radius: 10px;
   background: var(--nb-surface);
-  font-size: 16px;
+  font-size: 16px !important;
   font-weight: 500;
   font-family: inherit;
   color: var(--nb-ink);
