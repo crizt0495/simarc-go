@@ -62,6 +62,24 @@ func computeAssetVersion() string {
 	return hex.EncodeToString(h.Sum(nil))[:12]
 }
 
+// requestBaseURL returns the scheme://host that the client actually used to
+// reach this server (e.g. "http://192.168.1.11:8080" when a LAN client opens
+// the app). Templates use this for generated links/URLs so they keep working
+// for every client on the same WiFi/LAN, instead of always pointing back at
+// APP_URL (which usually is localhost).
+func requestBaseURL(c *gin.Context) string {
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	} else if fwd := strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")); fwd != "" {
+		scheme = fwd
+	}
+	if host := strings.TrimSpace(c.Request.Host); host != "" {
+		return scheme + "://" + host
+	}
+	return strings.TrimRight(config.App.AppURL, "/")
+}
+
 // Render renders a template with base data injected
 func Render(c *gin.Context, status int, tmpl string, data gin.H) {
 	if data == nil {
@@ -85,7 +103,7 @@ func Render(c *gin.Context, status int, tmpl string, data gin.H) {
 
 	data["CSRFToken"] = middleware.GetCSRFToken(c)
 	data["AppName"] = config.App.AppName
-	data["AppURL"] = strings.TrimRight(config.App.AppURL, "/")
+	data["AppURL"] = requestBaseURL(c)
 	data["Year"] = time.Now().Year()
 	data["CurrentPath"] = c.Request.URL.Path
 	data["AssetVersion"] = assetVersion

@@ -1,4 +1,7 @@
 // Command server runs SIMARC as a standalone HTTP server (local / VPS).
+// The server binds to all interfaces so any client on the same WiFi/LAN can
+// reach it; the LAN IP printed in the banner is auto-detected (or overridden
+// via the LAN_IP environment variable).
 package main
 
 import (
@@ -11,6 +14,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -18,17 +22,126 @@ import (
 	"arsippro/internal/config"
 )
 
-func getLANIP() string {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
+// isVirtualIface reports whether the interface is a known virtual, container,
+// VPN, tunnel or VM bridge that should never be advertised as the LAN address.
+func isVirtualIface(name string) bool {
+	lower := strings.ToLower(name)
+	skips := []string{
+		"lo", "docker", "veth", "br-", "virbr", "vmnet", "vboxnet",
+		"tailscale", "tun", "tap", "wg", "zt", "ppp", "sit",
+	}
+	for _, s := range skips {
+		if strings.HasPrefix(lower, s) {
+			return true
+		}
+	}
+	return false
+}
+
+// isPrivateIPv4 reports whether ip is in an RFC1918 private range
+// (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) — i.e. a real WiFi/LAN address.
+func isPrivateIPv4(ip net.IP) bool {
+	ip = ip.To4()
+	if ip == nil {
+		return false
+	}
+	return ip[0] == 10 ||
+		(ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31) ||
+		(ip[0] == 192 && ip[1] == 168)
+}
+
+// lanIPCandidates enumerates all up, non-loopback, non-virtual interfaces and
+// returns their IPv4 addresses ordered by preference: private (RFC1918) LAN
+// addresses first, then any other routable address.
+func lanIPCandidates() []string {
+	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "127.0.0.1"
+		return nil
 	}
-	defer conn.Close()
-	addr := conn.LocalAddr().(*net.UDPAddr)
-	if addr.IP.IsLoopback() {
-		return "127.0.0.1"
+	var preferred, other []string
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		if isVirtualIface(iface.Name) {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			ip4 := ip.To4()
+			if ip4 == nil || ip4.IsLoopback() {
+				continue
+			}
+			s := ip4.String()
+			if isPrivateIPv4(ip4) {
+				preferred = append(preferred, s)
+			} else {
+				other = append(other, s)
+			}
+		}
 	}
-	return addr.IP.String()
+	return append(preferred, other...)
+}
+
+// getLANIP returns the best LAN/WiFi IPv4 address to advertise.
+// A LAN_IP environment variable always wins (useful on machines with many
+// interfaces or for deployments). Otherwise the first private IPv4 from a
+// real (non-virtual) interface is used; it falls back to any non-loopback
+// IPv4, and finally to 127.0.0.1. This never depends on internet access,
+// unlike the previous UDP-dial-to-8.8.8.8 approach.
+func getLANIP() string {
+	if override := strings.TrimSpace(os.Getenv("LAN_IP")); override != "" {
+		return override
+	}
+	if ips := lanIPCandidates(); len(ips) > 0 {
+		return ips[0]
+	}
+	return "127.0.0.1"
+}
+
+// bannerLine centers text inside a box of the given inner width.
+func bannerLine(text string, width int) string {
+	if len(text) > width {
+		text = text[:width]
+	}
+	padding := width - len(text)
+	left := padding / 2
+	right := padding - left
+	return "  ║" + strings.Repeat(" ", left) + text + strings.Repeat(" ", right) + "║"
+}
+
+// printBanner prints the startup box with local/network URLs, auto-detected
+// LAN IP, and the active database (MySQL/MariaDB).
+func printBanner(port, lanIP string) {
+	w := 60
+	bar := func(r rune) string { return "  " + string(r) + strings.Repeat("═", w) + string(r) }
+
+	fmt.Println()
+	fmt.Println(bar('╔'))
+	fmt.Println(bannerLine("S I M A R C", w))
+	fmt.Println(bannerLine("Sistem Informasi Manajemen Arsip Record Center", w))
+	fmt.Println(bannerLine("", w))
+	fmt.Println(bar('╠'))
+	fmt.Println(bannerLine(fmt.Sprintf("Local     : http://127.0.0.1:%s", port), w))
+	fmt.Println(bannerLine(fmt.Sprintf("Network   : http://%s:%s", lanIP, port), w))
+	fmt.Println(bannerLine(fmt.Sprintf("Database  : MySQL  (%s:%s/%s)", config.App.DBHost, config.App.DBPort, config.App.DBName), w))
+	fmt.Println(bannerLine("", w))
+	fmt.Println(bannerLine("Client di WiFi/LAN yang sama bisa akses:", w))
+	fmt.Println(bannerLine(fmt.Sprintf("-> http://%s:%s", lanIP, port), w))
+	fmt.Println(bannerLine("", w))
+	fmt.Println(bannerLine("Tekan Ctrl+C untuk berhenti", w))
+	fmt.Println(bar('╚'))
+	fmt.Println()
 }
 
 func openBrowser(url string) {
@@ -62,26 +175,7 @@ func main() {
 	if config.IsVercel() {
 		log.Printf("Vercel deployment detected, listening on :%s", port)
 	} else {
-		fmt.Println()
-		fmt.Println("  ╔══════════════════════════════════════════════════════════╗")
-		fmt.Println("  ║                                                          ║")
-		fmt.Println("  ║            S I M A R C                                      ║")
-		fmt.Println("  ║     Sistem Informasi Manajemen Arsip Record Center           ║")
-		fmt.Println("  ║                                                              ║")
-		fmt.Println("  ║                                                          ║")
-		fmt.Println("  ╠══════════════════════════════════════════════════════════╣")
-		fmt.Println("  ║                                                          ║")
-		fmt.Printf("  ║   Local     :  http://127.0.0.1:%-5s                    ║\n", port)
-		fmt.Printf("  ║   Network   :  http://%s:%-5s                   ║\n", lanIP, port)
-		fmt.Println("  ║                                                          ║")
-		fmt.Println("  ║   Client di jaringan yang sama bisa akses:               ║")
-		fmt.Printf("  ║   -> http://%s:%-5s                            ║\n", lanIP, port)
-		fmt.Println("  ║                                                          ║")
-		fmt.Println("  ║   Tekan Ctrl+C untuk berhenti                            ║")
-		fmt.Println("  ║                                                          ║")
-		fmt.Println("  ╚══════════════════════════════════════════════════════════╝")
-		fmt.Println()
-
+		printBanner(port, lanIP)
 		openBrowser(fmt.Sprintf("http://%s:%s", lanIP, port))
 	}
 
@@ -91,7 +185,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("SIMARC starting on %s", addr)
+		log.Printf("SIMARC starting on %s (LAN: http://%s:%s)", addr, lanIP, port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}

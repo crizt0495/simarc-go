@@ -19,19 +19,40 @@ echo -e "  ${C}${B}   SIMARC — Arsip Record Center${N}"
 echo -e "  ${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${N}\n"
 
 # ── 0. Auto-detect LAN IP (cross-platform) ────────────────────────────────
+# Prefer real WiFi/LAN interfaces (wl*/en*/eth*); skip virtual bridges
+# (docker/virbr/br-/veth/tailscale/tun/tap) and loopback, so the address
+# printed for clients is always the actual WiFi/LAN address.
+is_virtual_iface() {
+    case "$1" in
+        lo|docker*|veth*|virbr*|br-*|tailscale*|vmnet*|vboxnet*|tun*|tap*|wg*|zt*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+is_private_v4() {
+    case "$1" in
+        192.168.*|10.*|172.1[6-9].*|172.2[0-9].*|172.3[0-1].*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
 detect_lan_ip() {
-    local ip=""
-    # Linux: ip command
+    local ip="" dev=""
+    # Manual override wins over everything
+    if [[ -n "${LAN_IP:-}" ]]; then echo "${LAN_IP}"; return; fi
+    # Linux: ip command — interface-ordered enumeration
     if command -v ip &>/dev/null; then
-        ip=$(ip -4 addr show | grep -oE 'inet [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | grep -v '127.0.0.1' | head -1 | awk '{print $2}')
+        while read -r dev ip; do
+            [[ "$ip" == 127.* ]] && continue
+            if is_virtual_iface "$dev"; then continue; fi
+            if is_private_v4 "$ip"; then echo "$ip"; return; fi
+        done < <(ip -4 -o addr show 2>/dev/null | awk '{print $2, $4}' | cut -d/ -f1 | tr -d ':' )
     fi
     # macOS: ifconfig
     if [[ -z "$ip" ]] && command -v ifconfig &>/dev/null; then
-        ip=$(ifconfig | grep -oE 'inet [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | grep -v '127.0.0.1' | head -1 | awk '{print $2}')
+        ip=$(ifconfig | grep -oE 'inet [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | grep -v '127.0.0.1' | awk '{print $2}' | while read -r c; do is_private_v4 "$c" && { echo "$c"; break; }; done)
     fi
     # Fallback: hostname (Linux)
-    if [[ -z "$ip" ]] && command -v hostname &>/dev/null; then
-        ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    if [[ -z "$ip" || "$ip" == 127.* ]] && command -v hostname &>/dev/null; then
+        ip=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -vE '^(127\.|169\.254\.)' | head -1)
     fi
     echo "${ip:-127.0.0.1}"
 }
