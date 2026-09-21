@@ -3,7 +3,9 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"arsippro/internal/config"
@@ -445,9 +447,10 @@ func SiapDimusnahkanCount() int64 {
 func (h *PemusnahanHandler) Index(c *gin.Context) {
 	var list []models.PemusnahanArsip
 	var total int64
+	status := c.Query("status")
 	db := database.DB.Model(&models.PemusnahanArsip{}).Preload("Creator").Preload("Items").Preload("Items.Arsip")
-	if v := c.Query("status"); v != "" {
-		db = db.Where("status = ?", v)
+	if status != "" {
+		db = db.Where("status = ?", status)
 	}
 	db.Count(&total)
 	page := 1
@@ -504,8 +507,9 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 		"List": list, "Total": total, "Stats": stats, "Page": page,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":    offset + 1,
-		"HasPages":     totalPages > 1,
-		"HasFilters":   false,
+		"HasPages":   totalPages > 1,
+		"HasFilters": status != "",
+		"CurrentStatus": status,
 		"ExpiredArsip": expiredArsip,
 		"TotalExpired": siapDimusnahkan,
 		"HasExpired":   siapDimusnahkan > 0,
@@ -517,26 +521,47 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 }
 
 func (h *PemusnahanHandler) Create(c *gin.Context) {
+	// Dasar: arsip kategori musnah dengan masa retensi habis dan belum masuk
+	// pengajuan aktif — sama dengan kelompok "Siap Dimusnahkan" di index.
+	base := pemusnahanExpiredQuery()
+	search := strings.TrimSpace(c.Query("search"))
+	if search != "" {
+		like := "%" + escapeLike(search) + "%"
+		base = base.Where("(arsip.nama_arsip LIKE ? OR arsip.nomor_arsip LIKE ?)", like, like)
+	}
+	kodeKlasifikasiID := c.Query("kode_klasifikasi_id")
+	if kodeKlasifikasiID != "" {
+		base = base.Where("arsip.kode_klasifikasi_id = ?", kodeKlasifikasiID)
+	}
+
+	var total int64
+	base.Count(&total)
+	perPage := 100
+	totalPages := (int(total) + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	page := 1
+	if p, _ := strconv.Atoi(c.Query("page")); p > 0 {
+		page = p
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * perPage
+
+	// Query-string yang mempertahankan filter saat pindah halaman
+	qs := url.Values{}
+	if search != "" {
+		qs.Set("search", search)
+	}
+	if kodeKlasifikasiID != "" {
+		qs.Set("kode_klasifikasi_id", kodeKlasifikasiID)
+	}
+	filterQS := qs.Encode()
+
 	var arsipList []models.Arsip
-	db := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
-		Where("arsip.status_arsip NOT IN ('musnah', 'permanen')").
-		Where("(LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = ? OR kode_klasifikasi.penyusutan_arsip IS NULL OR LOWER(TRIM(kode_klasifikasi.penyusutan_arsip)) = '')", "musnah").
-		Where("kode_klasifikasi.is_active = ?", true).
-		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
-		Where("arsip.tanggal_dibuat IS NOT NULL").
-		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
-		Where("arsip.deleted_at IS NULL").
-		Where("arsip.id NOT IN (SELECT pi.arsip_id FROM pemusnahan_arsip_items pi INNER JOIN pemusnahan_arsip pa ON pa.id = pi.pemusnahan_id WHERE pa.status IN ('diajukan','disetujui') AND pa.deleted_at IS NULL)").
-		Where("arsip.id NOT IN (SELECT pa2.arsip_id FROM pemusnahan_arsip pa2 WHERE pa2.arsip_id IS NOT NULL AND pa2.arsip_id != '' AND pa2.status IN ('diajukan','disetujui') AND pa2.deleted_at IS NULL)").
-		Order("arsip.tanggal_retensi_berakhir ASC")
-	if q := c.Query("search"); q != "" {
-		db = db.Where("(arsip.nama_arsip LIKE ? OR arsip.nomor_arsip LIKE ?)", "+"+q+"*")
-	}
-	if v := c.Query("kode_klasifikasi_id"); v != "" {
-		db = db.Where("arsip.kode_klasifikasi_id = ?", v)
-	}
-	db.Limit(100).Find(&arsipList)
+	base.Order("arsip.tanggal_dibuat ASC").Limit(perPage).Offset(offset).Find(&arsipList)
 
 	// Get kode klasifikasi options for filter
 	var kodeKlasifikasiOpts []models.KodeKlasifikasi
@@ -544,10 +569,21 @@ func (h *PemusnahanHandler) Create(c *gin.Context) {
 
 	Render(c, 200, "pemusnahan/create.html", gin.H{
 		"title": "Ajukan Pemusnahan", "pageTitle": "Ajukan Pemusnahan",
-		"List": arsipList, "Search": c.Query("search"),
+		"List": arsipList, "Search": search,
 		"KodeKlasifikasiOptions": kodeKlasifikasiOpts,
-		"FilterKodeKlasifikasi":  c.Query("kode_klasifikasi_id"),
+		"FilterKodeKlasifikasi":  kodeKlasifikasiID,
+		"Total": total, "Page": page, "TotalPages": totalPages,
+		"HasPages": totalPages > 1, "FilterQS": filterQS,
 	})
+}
+
+// escapeLike meloloskan wildcard MySQL dalam pola LIKE agar pencarian
+// diperlakukan sebagai teks literal.
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `%`, `\%`)
+	s = strings.ReplaceAll(s, `_`, `\_`)
+	return s
 }
 
 func (h *PemusnahanHandler) Store(c *gin.Context) {
@@ -558,6 +594,30 @@ func (h *PemusnahanHandler) Store(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/pemusnahan/create")
 		return
 	}
+
+	// Validasi sisi server: hanya arsip yang masih ELIGIBLE (kategori musnah +
+	// retensi habis + belum dalam pengajuan aktif) yang boleh diajukan.
+	// Mencegah penyisipan arsip arbitrer lewat POST.
+	var eligibleIDs []string
+	pemusnahanExpiredQuery().
+		Where("arsip.id IN ?", arsipIDs).
+		Pluck("arsip.id", &eligibleIDs)
+	if len(eligibleIDs) == 0 {
+		middleware.SetFlash(c, "error", "Tidak ada arsip yang memenuhi syarat untuk dimusnahkan (retensi habis, kategori musnah, belum dalam pengajuan).")
+		c.Redirect(http.StatusFound, "/pemusnahan/create")
+		return
+	}
+	// Dedupe agar tidak ada arsip ganda dalam satu pengajuan
+	seen := make(map[string]struct{})
+	uniqueIDs := eligibleIDs[:0]
+	for _, id := range eligibleIDs {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		uniqueIDs = append(uniqueIDs, id)
+	}
+
 	now := time.Now()
 	m := models.PemusnahanArsip{
 		ID: uuid.New().String(), NamaKegiatan: c.PostForm("alasan_pengajuan"),
@@ -565,17 +625,17 @@ func (h *PemusnahanHandler) Store(c *gin.Context) {
 		UserPengajuID: user.ID,
 		IsAuto: false,
 	}
-err := database.DB.Transaction(func(tx *gorm.DB) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&m).Error; err != nil {
 			return err
 		}
-		for _, aid := range arsipIDs {
+		for _, aid := range uniqueIDs {
 			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?)", m.ID, aid, now).Error; err != nil {
 				return err
 			}
 		}
 		// Update status arsip to siap_penyusutan
-		if err := tx.Model(&models.Arsip{}).Where("id IN ?", arsipIDs).Update("status_arsip", "siap_penyusutan").Error; err != nil {
+		if err := tx.Model(&models.Arsip{}).Where("id IN ?", uniqueIDs).Update("status_arsip", "siap_penyusutan").Error; err != nil {
 			return err
 		}
 		return nil
@@ -586,7 +646,7 @@ err := database.DB.Transaction(func(tx *gorm.DB) error {
 		c.Redirect(http.StatusFound, "/pemusnahan/create")
 		return
 	}
-	middleware.SetFlash(c, "success", fmt.Sprintf("Pemusnahan berhasil diajukan untuk %d arsip.", len(arsipIDs)))
+	middleware.SetFlash(c, "success", fmt.Sprintf("Pemusnahan berhasil diajukan untuk %d arsip.", len(uniqueIDs)))
 	c.Redirect(http.StatusFound, "/pemusnahan")
 }
 

@@ -141,7 +141,7 @@
         <div class="p-card p-card-d1">
             <div class="card-body-custom p-0">
                 <div class="d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom:1px solid var(--border);">
-                    <span class="fw-700" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-list-ul me-2"></i>Daftar Arsip Masa Retensi Habis</span>
+                    <span class="fw-700" style="font-size:0.82rem;color:var(--ink-2);"><i class="bi bi-list-ul me-2"></i>Daftar Arsip Masa Retensi Habis{{if .Total}} <span class="badge rounded-pill fw-700 ms-1" style="background:var(--surface-3);color:var(--ink-3);font-size:0.65rem;">{{.Total}}</span>{{end}}</span>
                     <div class="d-flex align-items-center gap-2">
                         <input type="checkbox" id="selectAll" style="width:16px;height:16px;accent-color:var(--ink-2);">
                         <label for="selectAll" class="fw-600" style="font-size:0.72rem;color:var(--ink-3);">Pilih Semua</label>
@@ -190,11 +190,27 @@
                                 </td>
                             </tr>
                             {{else}}
-                            
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="mb-2"><i class="bi bi-inbox text-muted opacity-25" style="font-size:2.5rem;"></i></div>
+                                    <div class="fw-700 text-muted" style="font-size:0.85rem;">Tidak ada arsip yang cocok</div>
+                                    <div class="text-muted small mt-1">Ubah kata kunci pencarian atau filter kode klasifikasi.</div>
+                                </td>
+                            </tr>
                             {{end}}
                         </tbody>
                     </table>
                 </div>
+                {{if .HasPages}}
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top flex-wrap gap-2" style="background:var(--surface-2);">
+                    <small class="text-muted fw-600">Halaman <strong>{{.Page}}</strong> dari <strong>{{.TotalPages}}</strong></small>
+                    <nav><ul class="pagination pagination-sm mb-0">
+                        {{if gt .Page 1}}<li class="page-item"><a class="page-link" href="?{{if .FilterQS}}{{.FilterQS}}&{{end}}page={{sub .Page 1}}">&laquo;</a></li>{{end}}
+                        <li class="page-item active"><span class="page-link">{{.Page}} / {{.TotalPages}}</span></li>
+                        {{if lt .Page .TotalPages}}<li class="page-item"><a class="page-link" href="?{{if .FilterQS}}{{.FilterQS}}&{{end}}page={{add .Page 1}}">&raquo;</a></li>{{end}}
+                    </ul></nav>
+                </div>
+                {{end}}
             </div>
         </div>
 

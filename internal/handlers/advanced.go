@@ -3819,11 +3819,12 @@ func emptyDash(s string) string {
 }
 
 func (h *PemusnahanHandler) SearchArsip(c *gin.Context) {
-	q := c.Query("q")
+	q := strings.TrimSpace(c.Query("q"))
 	var results []models.Arsip
 	if q != "" {
+		like := "%" + escapeLike(q) + "%"
 		database.DB.Preload("KodeKlasifikasi").
-			Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?)) AND status_arsip != 'musnah'", q).
+			Where("(arsip.nama_arsip LIKE ? OR arsip.nomor_arsip LIKE ?) AND arsip.status_arsip != 'musnah'", like, like).
 			Limit(20).Find(&results)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": results})

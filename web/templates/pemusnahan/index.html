@@ -37,6 +37,13 @@
 }
 .view-toggle-btn i { font-size: 0.85rem; }
 
+/* ── Filter pills aktif ── */
+.pemusnahan-filter-active {
+    background: var(--ink-2) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
 /* ── Status Badges ── */
 .status-badge {
     display: inline-flex;
@@ -436,10 +443,10 @@
             </div>
         </div>
         <div class="d-flex gap-1 flex-wrap">
-            <a href="/pemusnahan?status=diajukan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Diajukan</a>
-            <a href="/pemusnahan?status=disetujui" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Disetujui</a>
-            <a href="/pemusnahan?status=ditolak" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Ditolak</a>
-            <a href="/pemusnahan" class="btn btn-sm rounded-pill fw-700 px-2" style="font-size:0.65rem;background:var(--surface-3);color:var(--ink-3);border:none;">Semua</a>
+            <a href="/pemusnahan?status=diajukan" class="btn btn-sm rounded-pill fw-700 px-2 {{if eq .CurrentStatus "diajukan"}}pemusnahan-filter-active{{end}}" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Diajukan</a>
+            <a href="/pemusnahan?status=disetujui" class="btn btn-sm rounded-pill fw-700 px-2 {{if eq .CurrentStatus "disetujui"}}pemusnahan-filter-active{{end}}" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Disetujui</a>
+            <a href="/pemusnahan?status=ditolak" class="btn btn-sm rounded-pill fw-700 px-2 {{if eq .CurrentStatus "ditolak"}}pemusnahan-filter-active{{end}}" style="font-size:0.65rem;background:var(--neu-bg);color:var(--ink-2);border:none;">Ditolak</a>
+            <a href="/pemusnahan" class="btn btn-sm rounded-pill fw-700 px-2 {{if not .CurrentStatus}}pemusnahan-filter-active{{end}}" style="font-size:0.65rem;background:var(--surface-3);color:var(--ink-3);border:none;">Semua</a>
         </div>
     </div>
 
@@ -554,9 +561,9 @@
         <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top flex-wrap gap-2" style="background:var(--surface-2);">
             <small class="text-muted fw-600">Halaman <strong>{{.Page}}</strong> dari <strong>{{.TotalPages}}</strong></small>
             <nav><ul class="pagination pagination-sm mb-0">
-                {{if gt .Page 1}}<li class="page-item"><a class="page-link" href="?page={{sub .Page 1}}">&laquo;</a></li>{{end}}
+                {{if gt .Page 1}}<li class="page-item"><a class="page-link" href="?{{if .CurrentStatus}}status={{.CurrentStatus}}&{{end}}page={{sub .Page 1}}">&laquo;</a></li>{{end}}
                 <li class="page-item active"><span class="page-link">{{.Page}} / {{.TotalPages}}</span></li>
-                {{if lt .Page .TotalPages}}<li class="page-item"><a class="page-link" href="?page={{add .Page 1}}">&raquo;</a></li>{{end}}
+                {{if lt .Page .TotalPages}}<li class="page-item"><a class="page-link" href="?{{if .CurrentStatus}}status={{.CurrentStatus}}&{{end}}page={{add .Page 1}}">&raquo;</a></li>{{end}}
             </ul></nav>
         </div>
         {{end}}
