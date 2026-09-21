@@ -28,6 +28,8 @@ function minify(css) {
   let inString = false;
   let stringChar = '';
   let inUrl = false;
+  let inSelector = false; // Track if we're in a selector (before {)
+  let braceDepth = 0;
   const n = css.length;
 
   while (i < n) {
@@ -57,16 +59,33 @@ function minify(css) {
       continue;
     }
 
+    // Track selector context (before {)
+    if (ch === '{') {
+      inSelector = false;
+      braceDepth++;
+    } else if (ch === '}') {
+      braceDepth = Math.max(0, braceDepth - 1);
+    } else if (!inString && ch !== ' ' && ch !== '\n' && ch !== '\t' && ch !== '\r' && ch !== ';' && ch !== ':' && ch !== ',' && ch !== '{' && ch !== '}') {
+      // We're in a selector if we're at braceDepth 0 and not inside a rule body
+      if (braceDepth === 0) {
+        inSelector = true;
+      }
+    }
+
     // Collapse runs of whitespace to a single space, except inside urls
     if (/\s/.test(ch)) {
       while (i < n && /\s/.test(css[i])) i++;
       // Only keep a space if it separates two non-whitespace tokens that need it
       const prev = out[out.length - 1];
       const nxt = css[i];
+      // Preserve space in selectors (descendant combinator) - space between selectors
+      // Also keep space if it separates two tokens that need it (like in values)
       const needsSpace = prev && nxt &&
         /[a-zA-Z0-9_-]/.test(prev) && /[a-zA-Z0-9_-]/.test(nxt);
-      // Keep space around : ; , { } is NOT needed
-      if (needsSpace) out += ' ';
+      // Also preserve space in selectors (before { or after combinators)
+      const inSelectorContext = inSelector && prev && nxt &&
+        (/[.#:]/.test(prev) || /[.#:]/.test(nxt) || prev === ')' || nxt === '(');
+      if (needsSpace || inSelectorContext) out += ' ';
       continue;
     }
 
