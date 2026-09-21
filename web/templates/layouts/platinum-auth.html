@@ -69,14 +69,15 @@
     /* Logo & header */
     .auth-header { text-align: center; margin-bottom: 28px; }
     .auth-header .auth-logo {
-      width: 64px; height: 64px; margin: 0 auto 18px;
+      width: 64px; height: 64px; margin: 0 auto 16px;
       background: linear-gradient(135deg, var(--nb-primary), var(--nb-primary-deep));
       border-radius: 16px; box-shadow: var(--nb-shadow-primary);
       display: flex; align-items: center; justify-content: center;
       color: var(--nb-on-accent); font-size: 28px;
     }
-    .auth-header h1 { font-size: 22px; font-weight: 700; color: var(--nb-ink); letter-spacing: -.02em; margin-bottom: 6px; }
-    .auth-header p { font-size: 13px; color: var(--nb-ink-4); margin: 0; }
+    .auth-header h1 { font-size: 22px; font-weight: 700; color: var(--nb-ink); letter-spacing: -.02em; margin-bottom: 4px; }
+    .auth-header .auth-subtitle { font-size: 13px; font-weight: 600; color: var(--nb-primary); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .auth-header .auth-desc { font-size: 13px; color: var(--nb-ink-4); margin: 0; line-height: 1.5; }
 
     /* Alerts */
     .auth-alert {
@@ -113,6 +114,7 @@
 
     /* Footer */
     .auth-footer { text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--nb-border); font-size: 12px; color: var(--nb-ink-4); }
+    .auth-footer-name { font-weight: 600; color: var(--nb-ink-3); margin-bottom: 4px; }
     .auth-footer i { font-size: 10px; }
 
     /* Theme toggle */
@@ -167,13 +169,15 @@
           <i class="bi bi-archive-fill"></i>
         </div>
         <h1>Selamat Datang</h1>
-        <p>Masuk untuk mengakses sistem kearsipan elektronik</p>
+        <p class="auth-subtitle">Sistem Informasi Manajemen Arsip Record Center</p>
+        <p class="auth-desc">Masuk untuk mengakses sistem kearsipan elektronik</p>
       </div>
 
       {{block "content" .}}{{end}}
 
       <div class="auth-footer">
-        &copy; {{.Year}}{{if .LANIP}} &middot; <i class="bi bi-wifi"></i> {{.LANIP}}{{end}}
+        <p class="auth-footer-name">Sistem Informasi Manajemen Arsip Record Center</p>
+        <p>&copy; {{.Year}}{{if .LANIP}} &middot; <i class="bi bi-wifi"></i> {{.LANIP}}{{end}}</p>
       </div>
     </div>
   </div>
