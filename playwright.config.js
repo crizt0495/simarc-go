@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 /**
  * SIMARC Visual Regression — Playwright.
  *
- * Running against the production build ensures the neo-brutalism design
+ * Running against the production build ensures the enterprise design
  * system renders consistently. First run: `npx playwright test --update-snapshots`.
  * Requires: `npm i -D @playwright/test && npx playwright install chromium`.
  */
