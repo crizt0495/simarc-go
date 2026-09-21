@@ -1134,8 +1134,14 @@ func backupWithMysqldump(isJSON bool) ([]byte, error) {
 		"--routines",
 		"--triggers",
 		"--events",
-		dbName,
 	}
+	// Skip tabel warisan/debug yang tidak dipakai aplikasi Go (Telescope
+	// Laravel ~95MB, cache AI, dan duplikat skema Laravel). Backup jadi jauh
+	// lebih kecil dan restore lebih cepat tanpa kehilangan data aplikasi.
+	for _, t := range legacyBackupExcludeTables() {
+		args = append(args, "--ignore-table="+dbName+"."+t)
+	}
+	args = append(args, dbName)
 
 	cmd := exec.Command("mysqldump", args...)
 	if dbPass != "" {
@@ -1167,6 +1173,39 @@ func backupWithMysqldump(isJSON bool) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// legacyBackupExcludeTables returns the legacy/debug tables present in the
+// current database that should be skipped when creating a backup. Only tables
+// that actually exist are returned so mysqldump never fails on a missing one.
+func legacyBackupExcludeTables() []string {
+	excluded := map[string]bool{
+		// Laravel Telescope debug traces (~95MB on migrated installs)
+		"telescope_entries": true, "telescope_entries_tags": true, "telescope_monitoring": true,
+		// Caches — dapat dihasilkan ulang, bukan data
+		"ai_classification_cache": true, "ai_classification_caches": true, "analytics_cache": true,
+		// Infrastruktur / autentikasi Laravel lama
+		"failed_jobs": true, "jobs": true, "migrations": true, "tenants": true,
+		// Duplikat skema Laravel (aplikasi Go memakai bentuk tunggal: arsip, jadwal_retensi, dll)
+		"arsips": true, "jadwal_retensis": true, "jadwal_retensi_arsips": true,
+		"jenis_arsips": true, "kode_klasifikasis": true, "pemberkasans": true,
+		"unit_kerjas": true, "pemusnahan_arsips": true,
+	}
+	var rows []struct {
+		TableName string `gorm:"column:table_name"`
+	}
+	if err := database.DB.Raw(
+		"SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()",
+	).Scan(&rows).Error; err != nil {
+		return nil
+	}
+	var out []string
+	for _, r := range rows {
+		if excluded[r.TableName] {
+			out = append(out, r.TableName)
+		}
+	}
+	return out
 }
 
 // saveBackupAndRespond saves the backup to disk, logs it, and responds.

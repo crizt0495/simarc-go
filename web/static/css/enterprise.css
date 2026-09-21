@@ -146,6 +146,49 @@
   /* ── Legacy brand extras (kept for named pages) ── */
   --accent:         var(--nb-primary);
   --accent-cyan:    #0891B2;
+
+  /* ── Status tint pairs (dk/lt) — dipakai banyak halaman ── */
+  --danger-dk:      var(--nb-danger-dark);
+  --danger-lt:      var(--nb-danger-light);
+  --success-dk:     var(--nb-success-dark);
+  --success-lt:     var(--nb-success-light);
+  --warning-dk:     var(--nb-warning-dark);
+  --warning-lt:     var(--nb-warning-light);
+  --warning-50:     rgba(180, 83, 9, 0.12);
+  --info-dk:        var(--nb-info-dark);
+  --info-lt:        var(--nb-info-light);
+
+  /* ── Chip / pill surfaces ── */
+  --chip-bg:        var(--nb-secondary);
+  --chip-bg-2:      var(--nb-surface-3);
+  --chip-text:      var(--nb-ink-2);
+
+  /* ── Legacy c-* status aliases (peminjaman page) ── */
+  --c-danger:       var(--nb-danger);
+  --c-danger-soft:  var(--nb-danger-light);
+  --c-success:      var(--nb-success);
+  --c-success-soft: var(--nb-success-light);
+  --c-warning:      var(--nb-warning);
+  --c-warning-soft: var(--nb-warning-light);
+  --c-info:         var(--nb-info);
+  --c-info-soft:    var(--nb-info-light);
+
+  /* ── Accent text / misc ── */
+  --on-accent:      var(--nb-on-accent);
+  --on-amber:       #78350F;
+  --brand-xl:       rgba(37, 99, 235, 0.16);
+  --inset:          var(--neu-inset-deep);
+  --sh-xs:          var(--nb-shadow-sm);
+
+  /* ── Chroma accents (select2, role, dashboards) ── */
+  --blue-dk:        #1D4ED8;
+  --blue-lt:        rgba(37, 99, 235, 0.12);
+  --green-dk:       #065F46;
+  --green-lt:       rgba(4, 120, 87, 0.12);
+  --purple:         #7C3AED;
+  --purple-dk:      #5B21B6;
+  --purple-lt:      rgba(124, 58, 237, 0.12);
+  --blue:           var(--nb-primary);
   --brand-200:      var(--nb-primary-light);
   --bs-primary:     var(--nb-primary);
   --deep-navy:      var(--nb-ink);
