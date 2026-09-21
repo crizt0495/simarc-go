@@ -38,6 +38,14 @@ func cacheUser(userID string, user *models.User) {
 	userCacheMu.Unlock()
 }
 
+// InvalidateUserCache drops a cached user so the next request reloads from
+// the database (used after profile/theme updates for instant reflection).
+func InvalidateUserCache(userID string) {
+	userCacheMu.Lock()
+	delete(userCache, userID)
+	userCacheMu.Unlock()
+}
+
 func getCachedUser(userID string) *models.User {
 	userCacheMu.RLock()
 	entry, ok := userCache[userID]
@@ -51,12 +59,6 @@ func getCachedUser(userID string) *models.User {
 		return nil
 	}
 	return entry.user
-}
-
-func InvalidateUserCache(userID string) {
-	userCacheMu.Lock()
-	delete(userCache, userID)
-	userCacheMu.Unlock()
 }
 
 func InvalidateAllUserCaches() {

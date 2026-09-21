@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -12,6 +13,8 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -86,9 +89,14 @@ func Render(c *gin.Context, status int, tmpl string, data gin.H) {
 		data = gin.H{}
 	}
 
-	// Inject current user
+	// Inject current user + user theme overrides
 	if user, ok := c.Get("user"); ok {
 		data["AuthUser"] = user
+		if u, isUser := user.(*models.User); isUser {
+			// template.CSS marks the block as trusted so html/template does not
+			// replace it with ZgotmplZ inside the <style> CSS context.
+			data["ThemeCSS"] = template.CSS(themeCSSForUser(u))
+		}
 	}
 
 	// Inject flash messages
@@ -133,6 +141,107 @@ func RedirectWithSuccess(c *gin.Context, url, message string) {
 func RedirectWithError(c *gin.Context, url, message string) {
 	middleware.SetFlash(c, "error", message)
 	c.Redirect(http.StatusFound, url)
+}
+
+// themeMapFor returns the user's saved theme settings with defaults filled in.
+func themeMapFor(user *models.User) map[string]string {
+	themeMap := map[string]string{
+		"primary_color":   "#1e3a8a",
+		"secondary_color": "#2563eb",
+		"accent_color":    "#06b6d4",
+		"sidebar_theme":   "dark",
+		"header_theme":    "light",
+		"border_radius":   "12",
+	}
+	if user == nil || strings.TrimSpace(user.ThemeSettings) == "" {
+		return themeMap
+	}
+	var stored map[string]string
+	if err := json.Unmarshal([]byte(user.ThemeSettings), &stored); err != nil {
+		return themeMap
+	}
+	for k, v := range stored {
+		if v != "" {
+			themeMap[k] = v
+		}
+	}
+	return themeMap
+}
+
+// hexColorRe validates #rrggbb colors
+var hexColorRe = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+
+// themeCSSForUser returns a :root{...} block that overrides the app's brand
+// colors and border radius with the user's saved theme settings (from
+// /settings). It returns "" when the user has not customized the theme, so
+// the default enterprise look stays untouched.
+func themeCSSForUser(user *models.User) string {
+	if user == nil || strings.TrimSpace(user.ThemeSettings) == "" {
+		return ""
+	}
+	var theme map[string]string
+	if err := json.Unmarshal([]byte(user.ThemeSettings), &theme); err != nil {
+		return ""
+	}
+	primary := strings.TrimSpace(theme["primary_color"])
+	if !hexColorRe.MatchString(primary) {
+		return ""
+	}
+	radius := 10
+	if v, err := strconv.Atoi(strings.TrimSpace(theme["border_radius"])); err == nil {
+		radius = clampI(v, 4, 24)
+	}
+	accent := strings.TrimSpace(theme["accent_color"])
+	if !hexColorRe.MatchString(accent) {
+		accent = ""
+	}
+
+	darker := shadeHex(primary, 0.78)
+	tint := lightTintHex(primary)
+	var b strings.Builder
+	b.WriteString(":root{")
+	fmt.Fprintf(&b, "--brand:%s;--brand-dk:%s;--brand-lt:%s;", primary, darker, tint)
+	fmt.Fprintf(&b, "--primary:%s;--primary-blue:%s;--bs-primary:%s;--nb-primary:%s;--nb-primary-dark:%s;--nb-primary-light:%s;",
+		primary, primary, primary, primary, darker, tint)
+	if accent != "" {
+		fmt.Fprintf(&b, "--accent:%s;", accent)
+	}
+	fmt.Fprintf(&b, "--r:%dpx;--r-sm:%dpx;--r-lg:%dpx;--r-xl:%dpx;", radius,
+		clampI(radius-2, 4, 24), clampI(radius+3, 4, 28), clampI(radius+5, 4, 32))
+	b.WriteString("}")
+	return b.String()
+}
+
+func clampI(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// shadeHex scales the RGB channels of a #rrggbb color by factor (0<f<1 = darker).
+func shadeHex(hex string, f float64) string {
+	r, g, bl := parseHexColor(hex)
+	return fmt.Sprintf("#%02X%02X%02X", int(float64(r)*f), int(float64(g)*f), int(float64(bl)*f))
+}
+
+// lightTintHex mixes a #rrggbb color with white 93% → pale brand tint,
+// matching the enterprise soft-tint look (e.g. #EFF4FF for the default blue).
+func lightTintHex(hex string) string {
+	r, g, b := parseHexColor(hex)
+	mix := func(c int) int { return int(float64(c)*0.07 + 255*0.93) }
+	return fmt.Sprintf("#%02X%02X%02X", mix(r), mix(g), mix(b))
+}
+
+func parseHexColor(hex string) (int, int, int) {
+	if len(hex) != 7 {
+		return 0, 0, 0
+	}
+	v, _ := strconv.ParseUint(hex[1:], 16, 32)
+	return int(v >> 16 & 0xFF), int(v >> 8 & 0xFF), int(v & 0xFF)
 }
 
 // Abort403 returns 403 page

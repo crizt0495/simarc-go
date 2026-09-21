@@ -893,6 +893,7 @@ func (h *PengaturanHandler) Index(c *gin.Context) {
 
 	Render(c, 200, "pengaturan/index.html", gin.H{
 		"title": "Pengaturan - SIMARC", "pageTitle": "Pengaturan Sistem",
+		"ThemeSettings": themeMapFor(user),
 		"Stats": gin.H{
 			"TotalUsers":     totalUsers,
 			"TotalArsip":     totalArsip,

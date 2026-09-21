@@ -3073,23 +3073,9 @@ type SettingsThemeHandler struct{}
 
 func (h *SettingsThemeHandler) Index(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
-	var themeMap map[string]string
-	if user.ThemeSettings != "" {
-		json.Unmarshal([]byte(user.ThemeSettings), &themeMap)
-	}
-	if themeMap == nil {
-		themeMap = map[string]string{
-			"primary_color":   "#1e3a8a",
-			"secondary_color": "#2563eb",
-			"accent_color":    "#06b6d4",
-			"sidebar_theme":   "dark",
-			"header_theme":    "light",
-			"border_radius":   "12",
-		}
-	}
 	Render(c, 200, "settings/index.html", gin.H{
 		"title": "Pengaturan", "pageTitle": "Pengaturan Tampilan",
-		"themeSettings": themeMap,
+		"ThemeSettings": themeMapFor(user),
 	})
 }
 
@@ -3123,6 +3109,7 @@ func (h *SettingsThemeHandler) UpdateTheme(c *gin.Context) {
 	}
 	data, _ := json.Marshal(theme)
 	database.DB.Model(&models.User{}).Where("id = ?", user.ID).Update("theme_settings", string(data))
+	middleware.InvalidateUserCache(user.ID)
 	middleware.SetFlash(c, "success", "Tema berhasil diperbarui.")
 	c.Redirect(http.StatusFound, "/settings")
 }
@@ -3130,6 +3117,7 @@ func (h *SettingsThemeHandler) UpdateTheme(c *gin.Context) {
 func (h *SettingsThemeHandler) ResetTheme(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 	database.DB.Model(&models.User{}).Where("id = ?", user.ID).Update("theme_settings", "")
+	middleware.InvalidateUserCache(user.ID)
 	middleware.SetFlash(c, "success", "Tema berhasil direset.")
 	c.Redirect(http.StatusFound, "/settings")
 }
