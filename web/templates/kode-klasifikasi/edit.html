@@ -1,8 +1,8 @@
 {{define "kode-klasifikasi/edit.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 <style>
-    .edit-header h4 { font-weight: 700; color: var(--ink); letter-spacing: -0.03em; position: relative; z-index: 1; margin: 0; }
-    .edit-header p { color: var(--ink-3); font-size: 0.8rem; position: relative; z-index: 1; margin: 0.15rem 0 0 0; }
+    .edit-hero h4 { font-weight: 700; color: #fff; letter-spacing: -0.03em; position: relative; z-index: 1; margin: 0; }
+    .edit-hero p { color: rgba(255,255,255,0.85); font-size: 0.8rem; position: relative; z-index: 1; margin: 0.15rem 0 0 0; }
 .edit-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); overflow: hidden; animation: slideUp 0.35s ease 0.08s both; }
 .edit-card .card-body-custom { padding: 1.75rem; }
 .form-field { margin-bottom: 1.25rem; }
@@ -11,11 +11,11 @@
 .form-field .form-control, .form-field .form-select { width: 100%; padding: 0.55rem 0.85rem; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 0.85rem; color: var(--ink); background: var(--surface); transition: all 0.18s ease; outline: none; font-family: inherit; }
 .form-field .form-control:focus, .form-field .form-select:focus { border-color: var(--ink-2); box-shadow: 0 0 0 3px rgba(11,11,11,0.14); }
 .form-field textarea.form-control { min-height: 80px; resize: vertical; }
-@media (max-width:768px) { .edit-header { padding: 1.25rem; } .edit-card .card-body-custom { padding: 1rem; } }
+@media (max-width:768px) { .edit-hero { padding: 1.25rem; } .edit-card .card-body-custom { padding: 1rem; } }
 </style>
 
 <div class="container-fluid py-3 py-xl-4">
-    <div class="edit-header shadow-sm">
+    <div class="edit-hero shadow-sm">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h4><i class="bi bi-tags me-2"></i>Edit Kode Klasifikasi</h4>

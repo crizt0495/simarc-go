@@ -100,6 +100,9 @@
     <a href="/jadwal-retensi" class="sidebar-link {{if eq .CurrentPath "/jadwal-retensi"}}active{{end}}">
       <i class="bi bi-calendar-check"></i> Jadwal Retensi
     </a>
+    <a href="/disposal" class="sidebar-link {{if eq .CurrentPath "/disposal"}}active{{end}}">
+      <i class="bi bi-arrow-right-left"></i> Dashboard Penyusutan
+    </a>
 
     <div class="sidebar-section-label">Administrasi</div>
     <a href="/roles" class="sidebar-link {{if eq .CurrentPath "/roles"}}active{{end}}">
@@ -113,6 +116,12 @@
     </a>
     <a href="/advanced/integrations" class="sidebar-link {{if hasPrefix .CurrentPath "/advanced/integrations"}}active{{end}}">
       <i class="bi bi-table"></i> Integrasi Google Sheet
+    </a>
+    <a href="/advanced/qrcode" class="sidebar-link {{if hasPrefix .CurrentPath "/advanced/qrcode"}}active{{end}}">
+      <i class="bi bi-qr-code"></i> QR Code Arsip
+    </a>
+    <a href="/advanced/import-export" class="sidebar-link {{if hasPrefix .CurrentPath "/advanced/import-export"}}active{{end}}">
+      <i class="bi bi-arrow-left-right"></i> Import / Export
     </a>
     <a href="/blockchain" class="sidebar-link {{if eq .CurrentPath "/blockchain"}}active{{end}}">
       <i class="bi bi-shield-check"></i> Blockchain Audit

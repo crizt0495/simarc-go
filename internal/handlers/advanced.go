@@ -3650,7 +3650,7 @@ func (h *KodeKlasifikasiHandler) Show(c *gin.Context) {
 	var arsipList []models.Arsip
 	database.DB.Preload("UnitKerja").Where("kode_klasifikasi_id = ?", m.ID).Order("nomor_arsip").Find(&arsipList)
 	Render(c, 200, "kode-klasifikasi/show.html", gin.H{
-		"title": m.NamaKlasifikasi, "pageTitle": "Detail Kode Klasifikasi", "m": m, "ArsipList": arsipList,
+		"title": m.NamaKlasifikasi, "pageTitle": "Detail Kode Klasifikasi", "Item": m, "ArsipList": arsipList,
 	})
 }
 

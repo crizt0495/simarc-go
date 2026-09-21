@@ -14,7 +14,7 @@
         to { opacity: 1; transform: translateY(0); }
     }
     .create-header {
-        background: var(--surface-2);
+        background: linear-gradient(120deg, var(--nb-primary-deep) 0%, var(--nb-primary) 60%, #3B82F6 100%);
         padding: 2rem 2.5rem;
         position: relative;
         overflow: hidden;
@@ -24,18 +24,18 @@
         position: absolute;
         top: -50%; right: -10%;
         width: 200px; height: 200px;
-        background: none;
+        background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 60%);
         border-radius: 50%;
         pointer-events: none;
     }
     .create-header h4 {
         font-weight: 800;
-        color: var(--ink);
+        color: #fff;
         margin-bottom: 0.25rem;
         position: relative;
         z-index: 1;
     }
-    .create-header p { color: var(--ink-3); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
+    .create-header p { color: rgba(255,255,255,0.85); font-weight: 500; font-size: 0.85rem; margin-bottom: 0; position: relative; z-index: 1; }
 
     .form-field {
         margin-bottom: 1.5rem;

@@ -1,11 +1,18 @@
 {{define "pemberkasan/edit.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
-<div class="row">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h2><i class="bi bi-folder me-2"></i>Edit Pemberkasan</h2>
+<div class="container-fluid py-3 py-xl-4">
+    <div class="edit-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="hero-title"><i class="bi bi-folder me-2"></i>Edit Pemberkasan</h1>
+                <div class="hero-sub">Perbarui informasi berkas dan susun ulang arsip</div>
+            </div>
+            <a href="/pemberkasan" class="btn btn-outline-light btn-sm rounded-pill fw-700 px-3" style="font-size:0.75rem;"><i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline ms-1">Kembali</span></a>
         </div>
+    </div>
 
+    <div class="row">
+        <div class="col-md-12">
         <div class="card">
             <div class="card-body">
                 <form method="POST" action="/pemberkasan/{{.Item.ID}}">
@@ -74,5 +81,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 {{end}}

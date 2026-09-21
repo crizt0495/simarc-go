@@ -774,7 +774,8 @@ kbd {
 .berkas-hero, .retensi-hero, .mon-hero, .pemusnahan-hero,
 .users-hero, .role-hero, .show-hero, .edit-hero, .create-header,
 .import-header, .dok-header, .gov-header, .ba-hero, .explorer-hero,
-.search-hero, .advanced-header, .dashboard-welcome-card, .pindah-hero {
+.search-hero, .advanced-header, .dashboard-welcome-card, .pindah-hero,
+.kode-hero {
   position: relative;
   display: flex;
   align-items: center;
@@ -801,7 +802,7 @@ kbd {
 [data-theme="dark"] .gov-header, [data-theme="dark"] .ba-hero,
 [data-theme="dark"] .explorer-hero, [data-theme="dark"] .search-hero,
 [data-theme="dark"] .advanced-header, [data-theme="dark"] .dashboard-welcome-card,
-[data-theme="dark"] .pindah-hero {
+[data-theme="dark"] .pindah-hero, [data-theme="dark"] .kode-hero {
   background: linear-gradient(120deg, #132551 0%, #1B3C7A 60%, #24498C 100%);
 }
 
@@ -813,7 +814,7 @@ kbd {
 .edit-hero::after, .create-header::after, .import-header::after,
 .dok-header::after, .gov-header::after, .ba-hero::after,
 .explorer-hero::after, .search-hero::after, .advanced-header::after,
-.pindah-hero::after {
+.pindah-hero::after, .kode-hero::after {
   content: '';
   position: absolute;
   right: -60px; top: -80px;
