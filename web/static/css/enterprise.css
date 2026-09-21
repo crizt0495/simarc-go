@@ -1139,7 +1139,7 @@ kbd {
   padding: 1rem 1.15rem;
   border-bottom: 1px solid var(--nb-border);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 16px;
   color: var(--nb-ink);
   display: flex;
   align-items: center;
@@ -1300,7 +1300,7 @@ kbd {
   width: 34px; height: 34px;
   padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.9rem;
+  font-size: 16px;
   border-radius: 8px;
 }
 .btn-icon i { font-size: 1rem; }
@@ -1862,7 +1862,7 @@ input[type="date"], input[type="datetime-local"], input[type="tel"], textarea {
   border: 1px solid var(--nb-border-strong);
   border-radius: 10px;
   background: var(--nb-surface);
-  font-size: 0.9rem;
+  font-size: 16px;
   font-weight: 500;
   font-family: inherit;
   color: var(--nb-ink);
