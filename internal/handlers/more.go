@@ -373,12 +373,12 @@ func (h *RoleHandler) UpdatePermissions(c *gin.Context) {
 
 type PemusnahanHandler struct{}
 
-// pemusnahanExpiredQuery base query untuk arsip yang masa retensinya habis
-// (penyusutan = 'musnah') dan belum masuk pengajuan pemusnahan aktif.
-// Logika dihitung langsung dari kode_klasifikasi (retensi_aktif + retensi_inaktif),
-// TIDAK bergantung pada arsip.tanggal_retensi_berakhir, sehingga hasilnya selalu
-// konsisten antara dashboard dan halaman pemusnahan.
-func pemusnahanExpiredQuery() *gorm.DB {
+// pemusnahanKategoriQuery base query untuk SEMUA arsip berkategori musnah
+// (kode klasifikasi penyusutan_arsip = 'musnah'): belum berstatus
+// musnah/permanen, belum masuk pengajuan aktif, belum dihapus. Tanpa syarat
+// masa retensi — dipakai oleh pemusnahanExpiredQuery (retensi habis) dan
+// pemusnahanBerjalanQuery (retensi masih berjalan).
+func pemusnahanKategoriQuery() *gorm.DB {
 	return database.DB.
 		Model(&models.Arsip{}).
 		Preload("KodeKlasifikasi").
@@ -389,12 +389,29 @@ func pemusnahanExpiredQuery() *gorm.DB {
 		Where("kode_klasifikasi.is_active = ?", true).
 		Where("(kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) > 0").
 		Where("arsip.tanggal_dibuat IS NOT NULL").
-		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
 		// Exclude arsip already in pemusnahan_arsip_items (new Go structure)
 		Where("arsip.id NOT IN (SELECT pi.arsip_id FROM pemusnahan_arsip_items pi INNER JOIN pemusnahan_arsip pa ON pa.id = pi.pemusnahan_id WHERE pa.status IN ('diajukan','disetujui') AND pa.deleted_at IS NULL)").
 		// Exclude arsip already in pemusnahan_arsip.arsip_id (legacy Laravel structure)
 		Where("arsip.id NOT IN (SELECT pa2.arsip_id FROM pemusnahan_arsip pa2 WHERE pa2.arsip_id IS NOT NULL AND pa2.arsip_id != '' AND pa2.status IN ('diajukan','disetujui') AND pa2.deleted_at IS NULL)").
 		Where("arsip.deleted_at IS NULL")
+}
+
+// pemusnahanExpiredQuery base query untuk arsip yang masa retensinya habis
+// (penyusutan = 'musnah') dan belum masuk pengajuan pemusnahan aktif.
+// Logika dihitung langsung dari kode_klasifikasi (retensi_aktif + retensi_inaktif),
+// TIDAK bergantung pada arsip.tanggal_retensi_berakhir, sehingga hasilnya selalu
+// konsisten antara dashboard dan halaman pemusnahan.
+func pemusnahanExpiredQuery() *gorm.DB {
+	return pemusnahanKategoriQuery().
+		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()")
+}
+
+// pemusnahanBerjalanQuery arsip berkategori musnah yang masa retensinya
+// BELUM habis — otomatis tampil di halaman pemusnahan sebagai antrean
+// "Retensi Masih Berjalan".
+func pemusnahanBerjalanQuery() *gorm.DB {
+	return pemusnahanKategoriQuery().
+		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) >= CURDATE()")
 }
 
 // getExpiredArsipForPemusnahanOpt mengambil daftar arsip siap dimusnahkan.
@@ -474,6 +491,14 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 	expiredArsip := getExpiredArsipForPemusnahan()
 	siapDimusnahkan := SiapDimusnahkanCount()
 
+	// Kelompok "Retensi Masih Berjalan": SEMUA arsip berkategori musnah yang
+	// masa retensinya belum habis — otomatis masuk halaman pemusnahan sebagai
+	// antrean, bukan hanya yang sudah habis masa retensinya.
+	var berjalanArsip []models.Arsip
+	pemusnahanBerjalanQuery().Order("arsip.tanggal_dibuat ASC").Limit(100).Find(&berjalanArsip)
+	var totalBerjalan int64
+	pemusnahanBerjalanQuery().Count(&totalBerjalan)
+
 	Render(c, 200, "pemusnahan/index.html", gin.H{
 		"title": "Pemusnahan Arsip - SIMARC", "pageTitle": "Pemusnahan Arsip",
 		"List": list, "Total": total, "Stats": stats, "Page": page,
@@ -484,6 +509,9 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 		"ExpiredArsip": expiredArsip,
 		"TotalExpired": siapDimusnahkan,
 		"HasExpired":   siapDimusnahkan > 0,
+		"BerjalanArsip": berjalanArsip,
+		"TotalBerjalan": totalBerjalan,
+		"HasBerjalan":   totalBerjalan > 0,
 		"TotalArsipMusnah": totalArsipMusnah,
 	})
 }

@@ -388,6 +388,41 @@
     </div>
     {{end}}
 
+    {{if .HasBerjalan}}
+    <div class="card border-0 shadow-sm mb-3 fade-up-d1" style="border:1px solid var(--neu-bg) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg));border-bottom:1px solid var(--neu-bg);padding:0.85rem 1.25rem;">
+            <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:var(--ink-2);"><i class="bi bi-hourglass-split me-2"></i>Arsip Kategori Musnah — Retensi Masih Berjalan ({{.TotalBerjalan}})</h5>
+            <span class="badge rounded-pill fw-700 px-3" style="background:var(--surface-3);color:var(--ink-3);font-size:0.65rem;">Kode klasifikasi penyusutan = musnah</span>
+        </div>
+        <div style="padding:0.75rem;">
+            <div class="pemusnahan-card-grid">
+                {{range .BerjalanArsip}}
+                <div class="expired-card">
+                    <div class="pemusnahan-card-field">
+                        <span class="pemusnahan-card-field-label">Nomor</span>
+                        <span class="pemusnahan-card-field-value font-monospace">{{.NomorArsip}}</span>
+                    </div>
+                    <a href="/arsip/{{.ID}}" class="expired-card-title">{{.NamaArsip}}</a>
+                    <div class="expired-card-meta">
+                        {{if .KodeKlasifikasi}}
+                        <span><i class="bi bi-tag-fill "></i> <strong style="color:var(--ink-2);">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
+                        <span><i class="bi bi-info-circle"></i> {{.KodeKlasifikasi.NamaKlasifikasi}}</span>
+                        {{end}}
+                    </div>
+                    <div class="expired-card-meta">
+                        <span><i class="bi bi-calendar-check "></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
+                        <span><span class="status-badge status-{{.StatusArsip}}">{{.StatusArsip}}</span></span>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{if gt .TotalBerjalan 100}}
+            <div class="text-center text-muted small fw-600 mt-3 py-1">Menampilkan 100 dari {{.TotalBerjalan}} arsip berkategori musnah. Gunakan menu Arsip → Pencarian untuk daftar lengkap.</div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+
     <!-- View Toggle + Filter -->
     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2 fade-up-d2">
         <div class="d-flex align-items-center gap-2">
