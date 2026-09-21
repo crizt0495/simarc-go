@@ -1209,14 +1209,35 @@ func legacyBackupExcludeTables() []string {
 }
 
 // saveBackupAndRespond saves the backup to disk, logs it, and responds.
+// maxBackupContentBytes membatasi penyimpanan konten dump di kolom
+// backup_logs.file_content. Menjaga ukuran tetap jauh di bawah
+// max_allowed_packet MySQL (umumnya 16MB) sehingga INSERT backup tidak gagal.
+// Backup yang lebih besar tetap tersimpan sebagai file lokal & berfungsi
+// penuh untuk unduhan/restore di lingkungan non-serverless.
+const maxBackupContentBytes = 12 * 1024 * 1024
+
 func saveBackupAndRespond(c *gin.Context, isJSON bool, timestamp string, sqlData []byte, user *models.User) {
 	filename := fmt.Sprintf("backup_%s.sql", timestamp)
 
 	localPath := filepath.Join(config.BackupDir(), filename)
+	// Simpan path absolut supaya lookup download tidak bergantung pada
+	// working directory proses (systemd/cron/Vercel bisa berbeda).
+	if abs, err := filepath.Abs(localPath); err == nil {
+		localPath = abs
+	}
 	os.MkdirAll(filepath.Dir(localPath), 0755)
 	if err := os.WriteFile(localPath, sqlData, 0644); err != nil {
 		respondError(c, isJSON, "Gagal menyimpan backup lokal: "+err.Error())
 		return
+	}
+
+	// Simpan isi dump juga di database (LONGBLOB) sebagai cadangan unduhan
+	// untuk lingkungan tanpa disk persisten (Vercel serverless) atau saat
+	// file lokal terhapus. Dibatas ≤ maxBackupContentBytes agar tidak
+	// melampaui max_allowed_packet MySQL.
+	var content []byte
+	if len(sqlData) <= maxBackupContentBytes {
+		content = sqlData
 	}
 
 	log := models.BackupLog{
@@ -1226,6 +1247,7 @@ func saveBackupAndRespond(c *gin.Context, isJSON bool, timestamp string, sqlData
 		BackupType:  "database",
 		Status:      "success",
 		CompletedAt: &[]time.Time{time.Now()}[0],
+		Content:     content,
 	}
 	database.DB.Create(&log)
 
@@ -1271,6 +1293,18 @@ func (h *BackupHandler) Download(c *gin.Context) {
 			return
 		}
 	}
+
+	// Fallback: sajikan dari konten yang tersimpan di database — bekerja di
+	// Vercel serverless (disk ephemeral), saat file lokal terhapus, maupun
+	// bila server dijalankan dari working directory berbeda.
+	if len(log.Content) > 0 {
+		serveBackupBytes(c, log.FileName, log.Content)
+		if user := middleware.GetCurrentUser(c); user != nil {
+			logActivity(user.ID, "backup", "Mengunduh backup (dari database): "+log.FileName, "backup", log.ID, c.ClientIP(), c.GetHeader("User-Agent"))
+		}
+		return
+	}
+
 	c.String(http.StatusNotFound, "File backup tidak ditemukan (mungkin sudah dihapus)")
 }
 
@@ -1297,6 +1331,18 @@ func serveBackupFile(c *gin.Context, filename, filePath string, size int64) {
 	c.Header("Cache-Control", "no-store, no-cache, must-revalidate")
 	c.Header("X-Content-Type-Options", "nosniff")
 	c.File(filePath)
+}
+
+// serveBackupBytes serves backup content held in memory (database fallback)
+// with the same download headers as serveBackupFile.
+func serveBackupBytes(c *gin.Context, filename string, data []byte) {
+	ct := backupContentType(filename)
+	c.Header("Content-Type", ct)
+	c.Header("Content-Length", strconv.Itoa(len(data)))
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Header("Cache-Control", "no-store, no-cache, must-revalidate")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Data(http.StatusOK, ct, data)
 }
 
 func (h *BackupHandler) Delete(c *gin.Context) {

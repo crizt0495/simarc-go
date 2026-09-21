@@ -22,7 +22,7 @@ import (
 // the stored version matches — critical for Vercel serverless where new
 // instances start constantly and a full migration per cold start made every
 // request slow.
-const SchemaVersion = "2026.08.26-01"
+const SchemaVersion = "2026.09.22-01"
 
 // tableExists returns true when a table exists in the current database.
 func tableExists(name string) bool {
@@ -207,6 +207,7 @@ func Migrate() error {
 	migrateSPMFromUraian()
 	migrateLoginSecurity()
 	addBackupLogGDriveColumns()
+	addBackupLogContentColumn()
 	addArsipGDriveURLColumn()
 
 	// Align legacy Laravel-era integration tables with the Go models.
@@ -501,6 +502,17 @@ func addBackupLogGDriveColumns() {
 	if !columnExists("backup_logs", "google_drive_url") {
 		DB.Exec("ALTER TABLE backup_logs ADD COLUMN google_drive_url TEXT DEFAULT NULL")
 		log.Println("[MIGRASI] Menambahkan kolom google_drive_url ke tabel backup_logs")
+	}
+}
+
+// addBackupLogContentColumn adds the file_content LONGBLOB column to
+// backup_logs so downloads stay available even when the on-disk file is gone
+// (Vercel serverless ephemeral filesystem, deleted files, different cwd).
+func addBackupLogContentColumn() {
+	log.Println("[MIGRASI] Memeriksa kolom file_content di backup_logs...")
+	if !columnExists("backup_logs", "file_content") {
+		DB.Exec("ALTER TABLE backup_logs ADD COLUMN file_content LONGBLOB DEFAULT NULL")
+		log.Println("[MIGRASI] Menambahkan kolom file_content ke tabel backup_logs")
 	}
 }
 

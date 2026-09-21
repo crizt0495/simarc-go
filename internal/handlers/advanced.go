@@ -2304,6 +2304,19 @@ func (h *BackupAdvancedHandler) Restore(c *gin.Context) {
 		defer os.Remove(restoreFilePath)
 	}
 
+	// Fallback: file lokal tidak tersedia (serverless Vercel disk ephemeral /
+	// file dihapus), gunakan konten backup yang tersimpan di database.
+	if _, statErr := os.Stat(restoreFilePath); os.IsNotExist(statErr) {
+		var log models.BackupLog
+		if err := database.DB.Where("filename = ?", filename).First(&log).Error; err == nil && len(log.Content) > 0 {
+			tmpFile := filepath.Join(os.TempDir(), "restore-"+filepath.Base(filename))
+			if werr := os.WriteFile(tmpFile, log.Content, 0644); werr == nil {
+				defer os.Remove(tmpFile)
+				restoreFilePath = tmpFile
+			}
+		}
+	}
+
 	if _, err := os.Stat(restoreFilePath); os.IsNotExist(err) {
 		if isJSON {
 			c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "File backup tidak ditemukan: " + restoreFilePath})

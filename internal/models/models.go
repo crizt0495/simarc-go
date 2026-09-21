@@ -608,6 +608,11 @@ type BackupLog struct {
 	Notes             string     `gorm:"type:text" json:"notes"`
 	CreatedAt         time.Time  `json:"created_at"`
 	CompletedAt       *time.Time `json:"completed_at"`
+	// Content menyimpan isi dump SQL di database (LONGBLOB) sehingga backup
+	// tetap bisa diunduh meskipun file lokal hilang (mis. serverless Vercel
+	// yang disk-nya ephemeral, atau file terhapus). Hanya diisi jika ukuran
+	// ≤ maxBackupContentBytes agar tidak melampaui max_allowed_packet MySQL.
+	Content []byte `gorm:"type:longblob;column:file_content" json:"-"`
 }
 
 func (BackupLog) TableName() string { return "backup_logs" }
