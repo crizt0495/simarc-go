@@ -250,6 +250,30 @@
 }
 .expired-card-meta i { color: var(--ink-4); font-size: 0.7rem; }
 
+/* ── Queue sections (antrean arsip kategori musnah) ── */
+.queue-section .card-header {
+    border-left: 4px solid var(--nb-primary) !important;
+}
+.queue-section.queue-warn .card-header {
+    border-left-color: var(--nb-warning) !important;
+}
+.queue-section .card-header h5 i { color: var(--nb-primary); }
+.queue-section.queue-warn .card-header h5 i { color: var(--nb-warning); }
+/* Container scroll agar 100+ kartu tidak menggulung seluruh halaman */
+.queue-scroll {
+    max-height: 540px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--nb-border) transparent;
+}
+.queue-scroll::-webkit-scrollbar { width: 6px; }
+.queue-scroll::-webkit-scrollbar-thumb { background: var(--nb-border); border-radius: 6px; }
+.queue-scroll::-webkit-scrollbar-track { background: transparent; }
+/* Aksen kiri kartu mengikuti warna section */
+.queue-section .expired-card::before { background: var(--nb-primary); }
+.queue-section.queue-warn .expired-card::before { background: var(--nb-warning); }
+
 /* ── View containers ── */
 .view-container { display: none; }
 .view-container.active { display: block; }
@@ -277,7 +301,7 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h1 class="hero-title"><i class="bi bi-trash3 me-2"></i>Pemusnahan Arsip</h1>
-                <div class="hero-sub">Kelola pengajuan pemusnahan arsip yang telah melewati masa retensi</div>
+                <div class="hero-sub">Kelola pengajuan pemusnahan arsip. Semua arsip berkategori musnah otomatis tampil di antrean — siap dimusnahkan maupun yang masih berjalan</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 {{if .HasExpired}}
@@ -359,8 +383,8 @@
     </div>
 
     {{if .HasExpired}}
-    <div class="card border-0 shadow-sm mb-3 fade-up-d1" style="border:1px solid var(--neu-bg) !important;border-radius:var(--r-lg);overflow:hidden;">
-        <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg));border-bottom:1px solid var(--neu-bg);padding:0.85rem 1.25rem;">
+    <div class="card border-0 shadow-sm mb-3 fade-up-d1 queue-section queue-warn" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--surface);border-bottom:1px solid var(--border);padding:0.85rem 1.25rem;">
             <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:var(--ink-2);"><i class="bi bi-exclamation-triangle-fill me-2"></i>Arsip Siap Dimusnahkan ({{.TotalExpired}})</h5>
             <form action="/pemusnahan/auto-create" method="POST" class="d-inline">
                 <input type="hidden" name="_token" value="{{.CSRFToken}}">
@@ -370,58 +394,65 @@
             </form>
         </div>
         <div style="padding:0.75rem;">
-            <div class="pemusnahan-card-grid">
-                {{range .ExpiredArsip}}
-                <div class="expired-card">
-                    <div class="pemusnahan-card-field">
-                        <span class="pemusnahan-card-field-label">Nomor</span>
-                        <span class="pemusnahan-card-field-value font-monospace">{{.NomorArsip}}</span>
+            <div class="queue-scroll">
+                <div class="pemusnahan-card-grid">
+                    {{range .ExpiredArsip}}
+                    <div class="expired-card">
+                        <div class="pemusnahan-card-field">
+                            <span class="pemusnahan-card-field-label">Nomor</span>
+                            <span class="pemusnahan-card-field-value font-monospace">{{.NomorArsip}}</span>
+                        </div>
+                        <a href="/arsip/{{.ID}}" class="expired-card-title">{{.NamaArsip}}</a>
+                        <div class="expired-card-meta">
+                            {{if .KodeKlasifikasi}}
+                            <span><i class="bi bi-tag-fill "></i> <strong style="color:var(--ink-2);">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
+                            <span><i class="bi bi-info-circle"></i> {{.KodeKlasifikasi.NamaKlasifikasi}}</span>
+                            {{end}}
+                        </div>
+                        <div class="expired-card-meta">
+                            <span><i class="bi bi-calendar-x "></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
+                            <span><span class="status-badge status-{{.StatusArsip}}">{{.StatusArsip}}</span></span>
+                        </div>
                     </div>
-                    <a href="/arsip/{{.ID}}" class="expired-card-title">{{.NamaArsip}}</a>
-                    <div class="expired-card-meta">
-                        {{if .KodeKlasifikasi}}
-                        <span><i class="bi bi-tag-fill "></i> <strong style="color:var(--ink-2);">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
-                        <span><i class="bi bi-info-circle"></i> {{.KodeKlasifikasi.NamaKlasifikasi}}</span>
-                        {{end}}
-                    </div>
-                    <div class="expired-card-meta">
-                        <span><i class="bi bi-calendar-x "></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
-                        <span><span class="status-badge status-{{.StatusArsip}}">{{.StatusArsip}}</span></span>
-                    </div>
+                    {{end}}
                 </div>
-                {{end}}
             </div>
+            {{if gt .TotalExpired 100}}
+            <div class="text-center text-muted small fw-600 mt-3 py-1">Menampilkan 100 dari {{.TotalExpired}} arsip siap dimusnahkan. Gulir daftar untuk melihat lebih banyak.</div>
+            {{end}}
         </div>
     </div>
     {{end}}
 
     {{if .HasBerjalan}}
-    <div class="card border-0 shadow-sm mb-3 fade-up-d1" style="border:1px solid var(--neu-bg) !important;border-radius:var(--r-lg);overflow:hidden;">
-        <div class="card-header d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,var(--neu-bg),var(--neu-bg));border-bottom:1px solid var(--neu-bg);padding:0.85rem 1.25rem;">
+    <div class="card border-0 shadow-sm mb-3 fade-up-d1 queue-section" style="border:1px solid var(--border) !important;border-radius:var(--r-lg);overflow:hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--surface);border-bottom:1px solid var(--border);padding:0.85rem 1.25rem;">
             <h5 class="fw-800 mb-0" style="font-size:0.85rem;color:var(--ink-2);"><i class="bi bi-hourglass-split me-2"></i>Arsip Kategori Musnah — Retensi Masih Berjalan ({{.TotalBerjalan}})</h5>
             <span class="badge rounded-pill fw-700 px-3" style="background:var(--surface-3);color:var(--ink-3);font-size:0.65rem;">Kode klasifikasi penyusutan = musnah</span>
         </div>
         <div style="padding:0.75rem;">
-            <div class="pemusnahan-card-grid">
-                {{range .BerjalanArsip}}
-                <div class="expired-card">
-                    <div class="pemusnahan-card-field">
-                        <span class="pemusnahan-card-field-label">Nomor</span>
-                        <span class="pemusnahan-card-field-value font-monospace">{{.NomorArsip}}</span>
+            <div class="queue-scroll">
+                <div class="pemusnahan-card-grid">
+                    {{range .BerjalanArsip}}
+                    <div class="expired-card">
+                        <div class="pemusnahan-card-field">
+                            <span class="pemusnahan-card-field-label">Nomor</span>
+                            <span class="pemusnahan-card-field-value font-monospace">{{.NomorArsip}}</span>
+                        </div>
+                        <a href="/arsip/{{.ID}}" class="expired-card-title">{{.NamaArsip}}</a>
+                        <div class="expired-card-meta">
+                            {{if .KodeKlasifikasi}}
+                            <span><i class="bi bi-tag-fill "></i> <strong style="color:var(--ink-2);">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
+                            <span><i class="bi bi-info-circle"></i> {{.KodeKlasifikasi.NamaKlasifikasi}}</span>
+                            {{end}}
+                        </div>
+                        <div class="expired-card-meta">
+                            <span><i class="bi bi-calendar-check "></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
+                            <span><span class="status-badge status-{{.StatusArsip}}">{{.StatusArsip}}</span></span>
+                        </div>
                     </div>
-                    <a href="/arsip/{{.ID}}" class="expired-card-title">{{.NamaArsip}}</a>
-                    <div class="expired-card-meta">
-                        {{if .KodeKlasifikasi}}
-                        <span><i class="bi bi-tag-fill "></i> <strong style="color:var(--ink-2);">{{.KodeKlasifikasi.KodeKlasifikasi}}</strong></span>
-                        <span><i class="bi bi-info-circle"></i> {{.KodeKlasifikasi.NamaKlasifikasi}}</span>
-                        {{end}}
-                    </div>
-                    <div class="expired-card-meta">
-                        <span><i class="bi bi-calendar-check "></i> <strong>Retensi Berakhir: {{.TanggalRetensiBerakhir}}</strong></span>
-                        <span><span class="status-badge status-{{.StatusArsip}}">{{.StatusArsip}}</span></span>
-                    </div>
+                    {{end}}
                 </div>
-                {{end}}
             </div>
             {{if gt .TotalBerjalan 100}}
             <div class="text-center text-muted small fw-600 mt-3 py-1">Menampilkan 100 dari {{.TotalBerjalan}} arsip berkategori musnah. Gunakan menu Arsip → Pencarian untuk daftar lengkap.</div>

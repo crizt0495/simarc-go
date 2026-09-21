@@ -2,25 +2,26 @@
 {{define "content"}}
 <style>
 .p-masthead {
-    background: var(--surface-2);
+    background: linear-gradient(120deg, var(--nb-primary-deep) 0%, var(--nb-primary) 60%, #3B82F6 100%);
     border-radius: var(--r-xl);
     padding: 1.5rem 2rem;
-    color: var(--ink);
+    color: #fff;
     position: relative;
     overflow: hidden;
     margin-bottom: 1.5rem;
+    box-shadow: var(--sh-sm);
 }
 .p-masthead::after {
     content: '';
     position: absolute;
     top: -50%; right: -5%;
     width: 260px; height: 260px;
-    background: none;
+    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 60%);
     border-radius: 50%;
     pointer-events: none;
 }
-.p-masthead .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.15rem; position: relative; z-index: 1; }
-.p-masthead .sub { font-size: 0.78rem; opacity: 0.75; font-weight: 500; position: relative; z-index: 1; }
+.p-masthead .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.15rem; position: relative; z-index: 1; color: #fff; }
+.p-masthead .sub { font-size: 0.78rem; opacity: 0.85; font-weight: 500; position: relative; z-index: 1; color: rgba(255,255,255,0.85); }
 
 .p-card {
     background: var(--surface);
@@ -61,7 +62,7 @@
 
 .submit-box {
     background: var(--surface);
-    border: 1px solid var(--ink-2);
+    border: 1px solid var(--nb-primary);
     border-radius: var(--r-lg);
     padding: 1.25rem 1.5rem;
     margin-top: 1.25rem;
@@ -148,7 +149,7 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="premium-table datatable">
+                    <table class="premium-table datatable" data-pagination="server">
                         <thead>
                             <tr>
                                 <th width="36">#</th>
