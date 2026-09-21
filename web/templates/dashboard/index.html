@@ -62,12 +62,12 @@
     <div class="stat-card-label">Arsip Inaktif</div>
     <div class="stat-card-progress"><div class="progress-track"><div class="progress-fill progress-fill-purple" style="width:{{percent (int .Stats.Inaktif) (int .Stats.Total)}}%"></div></div></div>
   </div>
-  <div class="stat-card dash-stat cursor-pointer stat-accent-amber" onclick="location.href='/arsip?status=siap_penyusutan'">
+  <div class="stat-card dash-stat cursor-pointer stat-accent-amber" onclick="location.href='/pemusnahan'">
     <div class="stat-card-top">
       <div class="stat-card-icon icon-amber"><i class="bi bi-exclamation-triangle"></i></div>
-      {{if ne .Stats.SiapPenyusutan 0}}<span class="stat-card-chip stat-chip-danger">Perlu Review</span>{{else}}<span class="stat-card-chip stat-chip-success">Aman</span>{{end}}
+      {{if ne .SiapMusnah 0}}<span class="stat-card-chip stat-chip-danger">Perlu Review</span>{{else}}<span class="stat-card-chip stat-chip-success">Aman</span>{{end}}
     </div>
-    <div class="stat-card-value" data-stat="siap_penyusutan">{{.Stats.SiapPenyusutan}}</div>
+    <div class="stat-card-value" data-stat="siap_musnah">{{.SiapMusnah}}</div>
     <div class="stat-card-label">Siap Musnah</div>
     <div class="stat-card-foot"><i class="bi bi-trash"></i> Menunggu penyusutan</div>
   </div>
@@ -271,7 +271,7 @@ async function pollDashboardStats() {
     updateStat('total_items', d.stats.total_items);
     updateStat('aktif', d.stats.aktif);
     updateStat('inaktif', d.stats.inaktif);
-    updateStat('siap_penyusutan', d.stats.siap_penyusutan);
+    updateStat('siap_musnah', d.stats.siap_musnah);
     updateStat('spj', d.stats.spj);
     updateStat('non_spj', d.stats.non_spj);
     updateStat('with_file', d.stats.with_file);
@@ -303,8 +303,8 @@ async function pollDashboardStats() {
     }
 
     // Update Siap Musnah chip
-    const siapStat = d.stats.siap_penyusutan;
-    const siapCard = document.querySelector('[data-stat="siap_penyusutan"]')?.closest('.stat-card');
+    const siapStat = d.stats.siap_musnah;
+    const siapCard = document.querySelector('[data-stat="siap_musnah"]')?.closest('.stat-card');
     if (siapCard) {
       const chip = siapCard.querySelector('.stat-card-chip');
       if (chip) {

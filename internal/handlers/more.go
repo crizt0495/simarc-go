@@ -373,23 +373,14 @@ func (h *RoleHandler) UpdatePermissions(c *gin.Context) {
 
 type PemusnahanHandler struct{}
 
-// getExpiredArsipForPemusnahan returns archives whose retention has expired,
-// computed on-the-fly from kode_klasifikasi.RetensiAktif + RetensiInaktif years
-// matched with penyusutan_arsip = 'musnah' (case-insensitive), and not already
-// in any active (diajukan/disetujui) pemusnahan.
-//
-// LOGIC (computed via relasi, TIDAK bergantung pada arsip.tanggal_retensi_berakhir):
-//   1. Arsip dengan status_arsip bukan 'musnah' atau 'permanen'
-//   2. Kode klasifikasi terkait aktif (is_active=1) dan memiliki penyusutan_arsip = 'musnah'
-//   3. Klasifikasi memiliki total retensi > 0 (RetensiAktif + RetensiInaktif > 0)
-//   4. Tanggal retensi yang dihitung (arsip.tanggal_dibuat + total_retensi tahun) < today
-//   5. Belum ada di pengajuan pemusnahan yang aktif
-//
-// NOTE: arsip dengan status 'siap_penyusutan' SERTA 'aktif'/'inaktif' diikutsertakan,
-// agar halaman pemusnahan dan dashboard konsisten dalam menampilkan jumlah "Arsip Siap Musnah".
-func getExpiredArsipForPemusnahan() []models.Arsip {
-	var expiredArsip []models.Arsip
-	database.DB.
+// pemusnahanExpiredQuery base query untuk arsip yang masa retensinya habis
+// (penyusutan = 'musnah') dan belum masuk pengajuan pemusnahan aktif.
+// Logika dihitung langsung dari kode_klasifikasi (retensi_aktif + retensi_inaktif),
+// TIDAK bergantung pada arsip.tanggal_retensi_berakhir, sehingga hasilnya selalu
+// konsisten antara dashboard dan halaman pemusnahan.
+func pemusnahanExpiredQuery() *gorm.DB {
+	return database.DB.
+		Model(&models.Arsip{}).
 		Preload("KodeKlasifikasi").
 		Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
@@ -403,12 +394,35 @@ func getExpiredArsipForPemusnahan() []models.Arsip {
 		Where("arsip.id NOT IN (SELECT pi.arsip_id FROM pemusnahan_arsip_items pi INNER JOIN pemusnahan_arsip pa ON pa.id = pi.pemusnahan_id WHERE pa.status IN ('diajukan','disetujui') AND pa.deleted_at IS NULL)").
 		// Exclude arsip already in pemusnahan_arsip.arsip_id (legacy Laravel structure)
 		Where("arsip.id NOT IN (SELECT pa2.arsip_id FROM pemusnahan_arsip pa2 WHERE pa2.arsip_id IS NOT NULL AND pa2.arsip_id != '' AND pa2.status IN ('diajukan','disetujui') AND pa2.deleted_at IS NULL)").
-		Where("arsip.deleted_at IS NULL").
-		Order("arsip.tanggal_dibuat ASC").
-		Limit(100).
-		Find(&expiredArsip)
+		Where("arsip.deleted_at IS NULL")
+}
 
+// getExpiredArsipForPemusnahanOpt mengambil daftar arsip siap dimusnahkan.
+// limit=0 berarti ambil semua (untuk proses otomatis); limit>0 membatasi hasil
+// (untuk preview daftar agar halaman tetap ringan).
+func getExpiredArsipForPemusnahanOpt(limit int) []models.Arsip {
+	var expiredArsip []models.Arsip
+	q := pemusnahanExpiredQuery().Order("arsip.tanggal_dibuat ASC")
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+	q.Find(&expiredArsip)
 	return expiredArsip
+}
+
+// getExpiredArsipForPemusnahan returns the preview list (max 100 rows).
+func getExpiredArsipForPemusnahan() []models.Arsip {
+	return getExpiredArsipForPemusnahanOpt(100)
+}
+
+// SiapDimusnahkanCount mengembalikan JUMLAH PASTI arsip siap dimusnahkan
+// (retensi habis + penyusutan musnah + belum di pengajuan aktif), tanpa batas
+// limit. Dipakai pada dashboard DAN halaman pemusnahan agar kedua halaman
+// selalu menampilkan angka yang sama persis.
+func SiapDimusnahkanCount() int64 {
+	var count int64
+	pemusnahanExpiredQuery().Count(&count)
+	return count
 }
 
 func (h *PemusnahanHandler) Index(c *gin.Context) {
@@ -454,8 +468,11 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 	var totalArsipMusnah int64
 	database.DB.Model(&models.Arsip{}).Where("status_arsip = ? AND deleted_at IS NULL", "musnah").Count(&totalArsipMusnah)
 
-	// Auto-detect: arsip yang masa retensinya habis dan siap dimusnahkan
+	// Auto-detect: arsip yang masa retensinya habis dan siap dimusnahkan.
+	// TotalExpired memakai penghitungan pasti (tanpa limit) supaya angka yang
+	// tampil di sini IDENTIK dengan kartu "Siap Musnah" di dashboard.
 	expiredArsip := getExpiredArsipForPemusnahan()
+	siapDimusnahkan := SiapDimusnahkanCount()
 
 	Render(c, 200, "pemusnahan/index.html", gin.H{
 		"title": "Pemusnahan Arsip - SIMARC", "pageTitle": "Pemusnahan Arsip",
@@ -465,8 +482,8 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 		"HasPages":     totalPages > 1,
 		"HasFilters":   false,
 		"ExpiredArsip": expiredArsip,
-		"TotalExpired": len(expiredArsip),
-		"HasExpired":   len(expiredArsip) > 0,
+		"TotalExpired": siapDimusnahkan,
+		"HasExpired":   siapDimusnahkan > 0,
 		"TotalArsipMusnah": totalArsipMusnah,
 	})
 }
@@ -549,7 +566,9 @@ err := database.DB.Transaction(func(tx *gorm.DB) error {
 // whose kode klasifikasi has penyusutan_arsip = 'musnah'.
 func (h *PemusnahanHandler) AutoCreate(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
-	expiredArsip := getExpiredArsipForPemusnahan()
+	// Proses SEMUA arsip siap dimusnahkan (tanpa batas 100), sesuai jumlah
+	// yang ditampilkan di header "Arsip Siap Dimusnahkan (N)".
+	expiredArsip := getExpiredArsipForPemusnahanOpt(0)
 	if len(expiredArsip) == 0 {
 		middleware.SetFlash(c, "info", "Tidak ada arsip yang masa retensinya habis.")
 		c.Redirect(http.StatusFound, "/pemusnahan")

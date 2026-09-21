@@ -51,6 +51,11 @@ func Dashboard(c *gin.Context) {
 		  
 	`).Scan(&stats)
 
+	// Jumlah arsip siap dimusnahkan — penghitungan sama dengan halaman
+	// pemusnahan (retensi habis + penyusutan musnah + belum di pengajuan aktif),
+	// supaya kartu "Siap Musnah" di dashboard IDENTIK dengan halaman pemusnahan.
+	siapMusnah := SiapDimusnahkanCount()
+
 	// Arsip per unit kerja
 	type UnitStat struct {
 		NamaUnit string `gorm:"column:nama_unit"`
@@ -215,6 +220,7 @@ func Dashboard(c *gin.Context) {
 		"title":               "Dashboard - SIMARC",
 		"pageTitle":           "Dashboard",
 		"Stats":               stats,
+		"SiapMusnah":          siapMusnah,
 		"ArsipPerUnit":        arsipPerUnit,
 		"PemberkasanCount":    pemberkasanCount,
 		"LokasiStats":         lokasiStats,
@@ -355,6 +361,7 @@ func DashboardAPI(c *gin.Context) {
 
 	data := gin.H{
 		"stats":            stats,
+		"siap_musnah":      SiapDimusnahkanCount(),
 		"arsipPerUnit":     arsipPerUnit,
 		"pemberkasanCount": pemberkasanCount,
 		"blockchainCount":  blockchainCount,
