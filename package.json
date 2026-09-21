@@ -11,6 +11,7 @@
     "test:a11y": "node scripts/wcag-audit.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "jsdom": "^25.0.0",
     "vitest": "^2.1.0"
   }

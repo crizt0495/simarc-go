@@ -15,9 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Robust Toggle Function
     window.toggleSidebar = function() {
-        // On mobile, sidebar is hidden - use bottom nav instead
-        if (isMobile()) return;
-        
         if (!sidebar) return;
         
         sidebar.classList.toggle('active');
@@ -28,6 +25,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prevent body scroll when sidebar is active
         if (!isModalOpen()) {
             document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+        
+        // Update aria-expanded
+        if (sidebarToggle) {
+            sidebarToggle.setAttribute('aria-expanded', sidebar.classList.contains('active'));
         }
     };
 

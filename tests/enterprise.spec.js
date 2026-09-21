@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * SIMARC neo-brutalism visual regression suite.
+ * SIMARC enterprise design-system visual/spec suite.
  *
  * Verifies the design system holds its shape across key pages:
  *  - layout chrome (sidebar, navbar, mobile bottom nav)
- *  - theme swap (light ↔ dark) keeps the brutalist contract
+ *  - theme swap (light ↔ dark) keeps the enterprise contract
  *  - contrast fixtures on stat cards, buttons, badges, tables
  *  - mobile breakpoint shows bottom nav, hides desktop sidebar
  *
@@ -21,14 +21,21 @@ async function login(page) {
   await Promise.all([page.waitForURL('**/dashboard'), page.click('button[type="submit"]')]);
 }
 
-test.describe('neo-brutalism layout contract', () => {
-  test('dashboard renders brutalist chrome', async ({ page }) => {
+test.describe('enterprise layout contract', () => {
+  test('dashboard renders modern chrome', async ({ page }) => {
     await login(page);
     await expect(page.locator('.sidebar')).toBeVisible();
     await expect(page.locator('.top-navbar')).toBeVisible();
-    // Hard borders + offset shadows are the signature
+    // Enterprise contract: crisp 1px hairline under the topbar
     const bar = await page.locator('.top-navbar').evaluate(el => getComputedStyle(el).borderBottomWidth);
-    expect(bar).not.toBe('0px');
+    expect(bar).toBe('1px');
+  });
+
+  test('sidebar links are rounded and theme-aware', async ({ page }) => {
+    await login(page);
+    const link = page.locator('.sidebar-link').first();
+    const radius = await link.evaluate(el => getComputedStyle(el).borderRadius);
+    expect(parseFloat(radius)).toBeGreaterThan(0);
   });
 
   test('theme toggle flips html[data-theme] and keeps layout', async ({ page }) => {
@@ -49,34 +56,34 @@ test.describe('neo-brutalism layout contract', () => {
 });
 
 test.describe('component contrast fixtures', () => {
-  test('primary button keeps bold ink border + shadow', async ({ page }) => {
+  test('primary button uses soft shadow, not offset hard shadow', async ({ page }) => {
     await login(page);
-    // inventory page: primary CTA
     await page.goto('/arsip');
     const btn = page.locator('.btn-primary').first();
     await btn.waitFor({ state: 'visible' });
     const shadow = await btn.evaluate(el => getComputedStyle(el).boxShadow);
-    expect(shadow).toContain(','); // offset shadow (two stops) not a soft blur
+    // Enterprise: blurred ambient shadow (rgb(…, a) fade), not a solid offset pair
+    expect(shadow).not.toContain(', 2px 2px 0');
   });
 
-  test('status badge renders with border', async ({ page }) => {
+  test('status badge renders pill-rounded', async ({ page }) => {
     await login(page);
     await page.goto('/arsip');
     const badge = page.locator('.status-badge, .badge').first();
     await badge.waitFor({ state: 'visible' });
-    const bw = await badge.evaluate(el => getComputedStyle(el).borderTopWidth);
-    expect(parseInt(bw, 10)).toBeGreaterThan(0);
+    const radius = await badge.evaluate(el => getComputedStyle(el).borderRadius);
+    expect(parseFloat(radius)).toBeGreaterThan(8);
   });
 });
 
 test.describe('auth page', () => {
-  test('login card is hard-edged and usable', async ({ page }) => {
+  test('login card is rounded, elevated and usable', async ({ page }) => {
     await page.goto('/login');
     const card = page.locator('.auth-card');
     await expect(card).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
     const radius = await card.evaluate(el => getComputedStyle(el).borderRadius);
-    expect(parseFloat(radius)).toBe(0); // brutalist: no rounding
+    expect(parseFloat(radius)).toBeGreaterThan(0); // modern: soft rounding
   });
 
   test('auth theme toggle transitions+persists', async ({ page }) => {
