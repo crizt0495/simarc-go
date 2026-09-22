@@ -2831,7 +2831,7 @@ func (h *JadwalRetensiAdvancedHandler) SearchArsip(c *gin.Context) {
 	var results []models.Arsip
 	if q != "" {
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-			Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).Limit(20).Find(&results)
+			Where(services.FullTextClause(q, "nama_arsip", "nomor_arsip")).Limit(20).Find(&results)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": results})
 }
@@ -3283,7 +3283,7 @@ func (h *MobileAPIHandler) SearchAPI(c *gin.Context) {
 	var results []models.Arsip
 	if q != "" {
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-			Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).Limit(20).Find(&results)
+			Where(services.FullTextClause(q, "nama_arsip", "nomor_arsip")).Limit(20).Find(&results)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": results, "count": len(results)})
 }
@@ -3501,7 +3501,7 @@ func (h *SearchAdvancedHandler) Suggestions(c *gin.Context) {
 	}
 	database.DB.Model(&models.Arsip{}).
 		Select("id, nama_arsip as text, nomor_arsip").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).
+		Where(services.FullTextClause(q, "nama_arsip", "nomor_arsip")).
 		Limit(10).Find(&results)
 	c.JSON(http.StatusOK, results)
 }

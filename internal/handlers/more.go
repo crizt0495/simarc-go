@@ -12,6 +12,7 @@ import (
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
 	"arsippro/internal/models"
+	"arsippro/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -1011,8 +1012,8 @@ func (h *SearchHandler) Results(c *gin.Context) {
 	totalPages := 1
 	offset := 0
 	if q != "" {
-		tsQuery := "(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))"
-		db := database.DB.Model(&models.Arsip{}).Where(tsQuery, q)
+		tsQuery, tsArgs := services.FullTextClause(q, "nama_arsip", "nomor_arsip", "uraian", "ocr_text", "tags")
+		db := database.DB.Model(&models.Arsip{}).Where(tsQuery, tsArgs...)
 		db.Count(&total)
 		totalPages = (int(total) + perPage - 1) / perPage
 		if totalPages == 0 {
@@ -1023,7 +1024,7 @@ func (h *SearchHandler) Results(c *gin.Context) {
 		}
 		offset = (page - 1) * perPage
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip").
-			Where(tsQuery, q).
+			Where(tsQuery, tsArgs...).
 			Limit(perPage).Offset(offset).Find(&results)
 	}
 	Render(c, 200, "search/results.html", gin.H{

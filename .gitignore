@@ -39,3 +39,10 @@ SIMARC.app
 # ── Screenshots / captures (local artifacts) ──
 Screenshot_*.png
 screen*.png
+
+# Playwright artifacts
+playwright-report/
+test-results/
+
+# Playwright auth state (cookie sesi — jangan pernah commit)
+.auth/

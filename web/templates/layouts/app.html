@@ -146,8 +146,8 @@ html, body { overflow-x: hidden; }
 {{template "components/sidebar.html" .}}
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- Mobile Search Bar (hidden on mobile - using bottom nav search instead) -->
-<div class="mobile-search-bar" id="mobileSearchBar">
+<!-- Mobile Search Bar (hidden by default - open via bottom-nav search action only) -->
+<div class="mobile-search-bar d-none" id="mobileSearchBar">
   <form action="/search" method="GET" style="display:contents;flex:1">
     <div class="mobile-search-inner">
       <i class="bi bi-search"></i>

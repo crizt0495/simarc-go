@@ -871,7 +871,7 @@ func (s *DataScienceService) SemanticSearch(query string) []models.Arsip {
 		return list
 	}
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))", query).
+		Where(FullTextClause(query, "nama_arsip", "nomor_arsip", "uraian", "ocr_text", "tags")).
 		Limit(20).Find(&list)
 	return list
 }

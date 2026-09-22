@@ -1849,7 +1849,7 @@ func (h *ArsipHandler) Suggestions(c *gin.Context) {
 	}
 	database.DB.Model(&models.Arsip{}).
 		Select("id, nomor_arsip, nama_arsip").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).
+		Where(services.FullTextClause(q, "nama_arsip", "nomor_arsip")).
 		Limit(10).Find(&results)
 	c.JSON(http.StatusOK, gin.H{"data": results})
 }
@@ -1864,7 +1864,7 @@ func (h *ArsipHandler) ExportSearch(c *gin.Context) {
 	var arsipList []models.Arsip
 	query := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip")
 	if q != "" {
-		query = query.Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q)
+		query = query.Where(services.FullTextClause(q, "nama_arsip", "nomor_arsip"))
 	}
 	query.Order("created_at DESC").Limit(5000).Find(&arsipList)
 
@@ -1937,7 +1937,7 @@ func (h *ArsipHandler) SemanticSearchAI(c *gin.Context) {
 	}
 	var results []models.Arsip
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))", q).
+		Where(services.FullTextClause(q, "nama_arsip", "nomor_arsip", "uraian", "ocr_text", "tags")).
 		Limit(20).Find(&results)
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": results, "count": len(results)})
 }

@@ -8,7 +8,10 @@
     "test:watch": "vitest",
     "css:minify": "node scripts/minify-css.js",
     "css:watch": "node scripts/minify-css.js --watch",
-    "test:a11y": "node scripts/wcag-audit.js"
+    "test:a11y": "node scripts/wcag-audit.js",
+    "test:ui": "playwright test",
+    "test:ui:update": "playwright test --update-snapshots",
+    "test:all": "npm run test && npm run test:a11y && npm run test:ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

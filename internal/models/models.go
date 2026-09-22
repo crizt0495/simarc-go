@@ -387,7 +387,7 @@ func (l *LoginLog) BeforeCreate(tx *gorm.DB) error {
 // ── ACTIVITY LOG ──────────────────────────────────────────────────────────────
 
 type ActivityLog struct {
-	ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID          string    `gorm:"type:char(36);primaryKey" json:"id"`
 	UserID      *string   `gorm:"type:char(36)" json:"user_id"`
 	Action      string    `gorm:"size:255" json:"action"`
 	Description string    `gorm:"type:text" json:"description"`
@@ -397,14 +397,16 @@ type ActivityLog struct {
 	User        *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 
-func (ActivityLog) TableName() string { return "activity_logs" }
-
-func (a *ActivityLog) BeforeCreate(tx *gorm.DB) error {
-	if a.ID == 0 {
-		// let DB auto-increment; this hook ensures it's called
+// BeforeCreate menjamin id terisi (UUID) — skema existing memakai
+// varchar(36) tanpa auto-increment, jadi id harus diisi sebelum INSERT.
+func (l *ActivityLog) BeforeCreate(tx *gorm.DB) error {
+	if l.ID == "" {
+		l.ID = uuid.New().String()
 	}
 	return nil
 }
+
+func (ActivityLog) TableName() string { return "activity_logs" }
 
 // ── AUDIT LOG ────────────────────────────────────────────────────────────────
 
