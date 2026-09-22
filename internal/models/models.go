@@ -138,7 +138,7 @@ func (LokasiArsip) TableName() string { return "lokasi_arsips" }
 
 type JenisArsip struct {
 	ID         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	KodeJenis  string    `gorm:"size:50" json:"kode_jenis"`
+	KodeJenis  string    `gorm:"size:50;uniqueIndex:idx_jenis_arsip_kode" json:"kode_jenis"`
 	NamaJenis  string    `gorm:"size:255;not null" json:"nama_jenis"`
 	Keterangan string    `gorm:"type:text" json:"keterangan"`
 	CreatedAt  time.Time `json:"created_at"`

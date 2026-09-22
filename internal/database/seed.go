@@ -14,6 +14,7 @@ func Seed() {
 	seedRoles()
 	seedAdmin()
 	seedLokasiRakA()
+	seedJenisArsip()
 }
 
 // SeedIfNeeded seeds default data only when the database is fresh (no users
@@ -25,11 +26,13 @@ func SeedIfNeeded() {
 	if userCount > 0 {
 		// Database already in use — only ensure the default location exists
 		seedLokasiRakA()
+		seedJenisArsip()
 		return
 	}
 	seedRoles()
 	seedAdmin()
 	seedLokasiRakA()
+	seedJenisArsip()
 }
 
 func seedRoles() {
@@ -90,6 +93,38 @@ func seedAdmin() {
 		// Overwriting it on every boot used to reset production logins
 		// back to "admin" silently (security + availability issue).
 		log.Println("Admin user already exists, skipping password seed")
+	}
+}
+
+// seedJenisArsip menambahkan kategori arsip standar ke tabel aktif (jenis_arsip)
+// bila belum ada. Idempotent + aman-konkuren:
+//   - dedupe baris kode_jenis ganda (pertahanan DB lama)
+//   - index unik idx_jenis_arsip_kode membuat insert ganda gagal di level DB
+func seedJenisArsip() {
+	DB.Exec(`DELETE d1 FROM jenis_arsip d1 JOIN jenis_arsip d2
+	         ON d1.kode_jenis = d2.kode_jenis AND d1.id > d2.id`)
+
+	defs := []struct{ Kode, Nama, Ket string }{
+		{"SPJ", "Surat Pertanggungjawaban (SPJ)", "Dokumen pertanggungjawaban keuangan/kegiatan"},
+		{"NON_SPJ", "Non SPJ", "Dokumen di luar kategori pertanggungjawaban"},
+		{"SK", "Surat Keputusan", "Surat keputusan pejabat berwenang"},
+		{"Laporan", "Laporan", "Laporan kegiatan, keuangan, atau kinerja"},
+		{"Surat", "Surat Umum", "Surat dinas umum / korespondensi"},
+		{"Nota Dinas", "Nota Dinas", "Nota dinas internal"},
+		{"Kontrak", "Kontrak / Perjanjian", "Kontrak, perjanjian, dan amandemennya"},
+		{"Undangan", "Undangan", "Undangan rapat atau kegiatan"},
+		{"Berita Acara", "Berita Acara", "Berita acara serah terima / kejadian"},
+		{"Permohonan", "Permohonan", "Surat permohonan"},
+	}
+	for _, d := range defs {
+		var existing models.JenisArsip
+		err := DB.Where("kode_jenis = ?", d.Kode).First(&existing).Error
+		if err != nil {
+			created := DB.Create(&models.JenisArsip{KodeJenis: d.Kode, NamaJenis: d.Nama, Keterangan: d.Ket})
+			if created.Error == nil {
+				log.Printf("[SEED] Jenis arsip \"%s\" (%s) dibuat", d.Kode, d.Nama)
+			}
+		}
 	}
 }
 
