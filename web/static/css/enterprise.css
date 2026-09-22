@@ -1880,7 +1880,7 @@ input[type="date"], input[type="datetime-local"], input[type="tel"], textarea {
 .form-check .form-check-input { flex-shrink: 0; }
 
 /* auth form (shared with platinum-auth) */
-.auth-field { margin-bottom: 1.1rem; }
+.auth-field { margin-bottom: 1.1rem; position: relative; }
 .auth-field > label {
   display: block;
   margin-bottom: 0.4rem;
@@ -1903,7 +1903,9 @@ input[type="date"], input[type="datetime-local"], input[type="tel"], textarea {
   transform-origin: left center;
   z-index: 1;
 }
-.auth-form .auth-field.floating.has-value > label {
+.auth-form .auth-field.floating.has-value > label,
+.auth-form .auth-field.floating:has(.auth-input-wrap:focus-within) > label,
+.auth-form .auth-field.floating:focus-within > label {
   top: -8px; left: 1rem;
   font-size: 11px;
   font-weight: 600;
@@ -1913,9 +1915,8 @@ input[type="date"], input[type="datetime-local"], input[type="tel"], textarea {
   border-radius: 4px;
 }
 
-/* Override Bootstrap's .form-floating > label when inside .auth-form */
-.auth-form.form-floating > label,
-.auth-form .auth-input-wrap:focus-within ~ label {
+/* Over-riding Bootstrap .form-floating>label when sliding label appears over input */
+.auth-form.form-floating > label {
   top: -8px !important; left: 1rem !important;
   font-size: 11px !important;
   font-weight: 600 !important;
@@ -1927,7 +1928,7 @@ input[type="date"], input[type="datetime-local"], input[type="tel"], textarea {
   opacity: 1 !important;
 }
 
-/* Focus state is handled by .auth-form .auth-input-wrap:focus-within ~ label selector above */
+/* Focus float handled by .auth-field.floating:focus-within above */
 
 .auth-input-wrap {
   position: relative;
@@ -3676,9 +3677,9 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
 .page-title-box { flex-wrap: wrap; gap: 0.5rem 1rem; }
 .page-title-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; }
 
-/* Stat-card turunan dashboard (dash-stat) */
-.stat-card.dash-stat { cursor: pointer; }
-.stat-card.dash-stat:hover { transform: translateY(-2px); box-shadow: var(--nb-shadow); border-color: var(--nb-border-strong); }
+/* Stat-card turunan dashboard (dash-stat): pointer hanya untuk kartu yang
+   benar-benar bisa diklik (memiliki onclick) — hindari kursor menyesatkan */
+.stat-card:has([onclick]) { cursor: pointer; }
 
 .box-stat-data { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 .box-stat-digital .box-stat-icon { background: var(--nb-success-light); color: var(--nb-success); }
