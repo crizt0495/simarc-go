@@ -420,11 +420,12 @@ func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
 		CompletedAt: &[]time.Time{time.Now()}[0],
 	}
 
-	// Simpan lokal
+	// Simpan lokal — mode 0600/0700: file dump berisi seluruh data, jangan
+	// bisa dibaca user/process lain di mesin yang sama
 	dir := config.BackupDir()
-	os.MkdirAll(dir, 0755)
+	os.MkdirAll(dir, 0700)
 	path := filepath.Join(dir, filename)
-	if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(path, buf.Bytes(), 0600); err != nil {
 		return nil, err
 	}
 	log.FilePath = path

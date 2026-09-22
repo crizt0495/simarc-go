@@ -16,6 +16,7 @@ node_modules/
 # ── Runtime storage (regenerated) ──
 storage/app/backups/*
 storage/qr-codes/*
+storage/logs/*
 public/storage/qr-codes/*
 !storage/app/backups/.gitkeep
 !storage/app/.gitkeep
