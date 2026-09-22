@@ -17,6 +17,9 @@
     <i class="bi bi-exclamation-triangle"></i> Gagal membaca sheet: {{.Err}}
     <hr>
     <small>Pastikan spreadsheet masih dibagikan ke service account sebagai Editor dan ID spreadsheet valid.</small>
+    <div class="mt-2">
+        <a href="/advanced/integrations/{{.Integration.ID}}/edit" class="btn btn-sm btn-outline-danger"><i class="bi bi-pencil"></i> Perbaiki Konfigurasi</a>
+    </div>
 </div>
 {{else if not .Sheet}}
 <div class="alert alert-warning">Tidak ada data untuk ditampilkan.</div>

@@ -688,6 +688,7 @@ type Integration struct {
 	IsActive   bool           `gorm:"default:false" json:"is_active"`
 	LastSyncAt *time.Time     `json:"last_sync_at"`
 	LastStatus string         `gorm:"size:50" json:"last_status"`
+	LastError  string         `gorm:"type:text" json:"last_error"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`

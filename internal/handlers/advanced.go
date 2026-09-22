@@ -439,14 +439,20 @@ func (h *IntegrationHandler) Create(c *gin.Context) {
 }
 
 func (h *IntegrationHandler) Store(c *gin.Context) {
+	rawBaseURL := c.PostForm("base_url")
+	if msg := validateIntegrationForm(c.PostForm("name"), c.PostForm("type"), rawBaseURL); msg != "" {
+		middleware.SetFlash(c, "error", msg)
+		c.Redirect(http.StatusFound, "/advanced/integrations/create")
+		return
+	}
 	m := models.Integration{
 		ID: uuid.New().String(), Name: c.PostForm("name"), Type: c.PostForm("type"),
-		BaseURL: c.PostForm("base_url"), ApiKey: c.PostForm("api_key"),
+		BaseURL: rawBaseURL, ApiKey: c.PostForm("api_key"),
 		IsActive: c.PostForm("is_active") == "on",
 	}
 	if m.Type == "google_sheets" {
-		m.BaseURL = services.ExtractSheetID(m.BaseURL)
-		gid := services.ExtractGid(c.PostForm("base_url"))
+		m.BaseURL = services.ExtractSheetID(rawBaseURL)
+		gid := services.ExtractGid(rawBaseURL)
 		if cfg, err := json.Marshal(map[string]int64{"gid": gid}); err == nil {
 			m.Config = string(cfg)
 		}
@@ -459,6 +465,22 @@ func (h *IntegrationHandler) Store(c *gin.Context) {
 	}
 	middleware.SetFlash(c, "success", "Integrasi berhasil ditambahkan.")
 	c.Redirect(http.StatusFound, "/advanced/integrations")
+}
+
+// validateIntegrationForm returns an empty string when the submitted integration
+// form is usable, or a user-facing error message explaining what is missing.
+func validateIntegrationForm(name, typ, rawBaseURL string) string {
+	if strings.TrimSpace(name) == "" {
+		return "Nama integrasi wajib diisi."
+	}
+	if typ == "google_sheets" {
+		if services.ExtractSheetID(rawBaseURL) == "" {
+			return "Untuk Google Sheets, tempel link sheet lengkap (harus berisi ID spreadsheet)."
+		}
+	} else if typ != "other" && strings.TrimSpace(rawBaseURL) == "" {
+		return "Base URL / Endpoint wajib diisi."
+	}
+	return ""
 }
 
 func (h *IntegrationHandler) Show(c *gin.Context) {
@@ -485,13 +507,19 @@ func (h *IntegrationHandler) Update(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/advanced/integrations")
 		return
 	}
+	rawBaseURL := c.PostForm("base_url")
+	if msg := validateIntegrationForm(c.PostForm("name"), c.PostForm("type"), rawBaseURL); msg != "" {
+		middleware.SetFlash(c, "error", msg)
+		c.Redirect(http.StatusFound, "/advanced/integrations/"+m.ID+"/edit")
+		return
+	}
 	m.Name = c.PostForm("name")
 	m.Type = c.PostForm("type")
-	m.BaseURL = c.PostForm("base_url")
+	m.BaseURL = rawBaseURL
 	m.ApiKey = c.PostForm("api_key")
 	m.IsActive = c.PostForm("is_active") == "on"
 	if m.Type == "google_sheets" {
-		gid := services.ExtractGid(c.PostForm("base_url"))
+		gid := services.ExtractGid(rawBaseURL)
 		if old := services.ExtractGid(m.Config); gid == 0 && old != 0 {
 			gid = old
 		}
@@ -588,7 +616,7 @@ func (h *IntegrationHandler) Sync(c *gin.Context) {
 			}
 			database.DB.Create(&logEntry)
 			database.DB.Model(&m).Updates(map[string]interface{}{
-				"last_sync_at": now, "last_status": "error",
+				"last_sync_at": now, "last_status": "error", "last_error": truncateString(detail, 500),
 			})
 			middleware.SetFlash(c, "error", "Sinkronisasi gagal: "+detail)
 			c.Redirect(http.StatusFound, "/advanced/integrations")
@@ -606,7 +634,7 @@ func (h *IntegrationHandler) Sync(c *gin.Context) {
 		DurationMs: int(time.Since(start).Milliseconds()), ResponseBody: truncateString(detail, 500),
 	}
 	database.DB.Create(&logEntry)
-	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "synced"})
+	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "synced", "last_error": ""})
 	c.Redirect(http.StatusFound, "/advanced/integrations")
 }
 
@@ -635,13 +663,13 @@ func (h *IntegrationHandler) PushToSheet(c *gin.Context) {
 		statusCode = http.StatusBadGateway
 		detail = err.Error()
 		h.logIntegration(m.ID, "push", "error", statusCode, start, detail)
-		database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "push_error"})
+		database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "push_error", "last_error": truncateString(detail, 500)})
 		c.JSON(statusCode, gin.H{"success": false, "error": detail})
 		return
 	}
 	detail = fmt.Sprintf("%d arsip dikirim ke tab \"%s\" (%s)", res.Rows, res.SheetTitle, res.SpreadsheetID)
 	h.logIntegration(m.ID, "push", "success", statusCode, start, detail)
-	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "pushed"})
+	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "pushed", "last_error": ""})
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Database berhasil dikirim ke Google Sheet. " + detail,

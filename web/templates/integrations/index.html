@@ -26,12 +26,12 @@
             <form method="POST" action="/advanced/integrations/store">
                 <input type="hidden" name="_token" value="{{.CSRFToken}}">
                 <div class="mb-3">
-                    <label class="form-label">Nama Integrasi <span class="text-danger">*</span></label>
-                    <input type="text" name="name" class="form-control" required placeholder="mis. Google Sheets Rekap">
+                    <label class="form-label" for="intName">Nama Integrasi <span class="text-danger">*</span></label>
+                    <input type="text" name="name" id="intName" class="form-control" required placeholder="mis. Google Sheets Rekap">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Tipe</label>
-                    <select name="type" class="form-select">
+                    <label class="form-label" for="intType">Tipe</label>
+                    <select name="type" id="intType" class="form-select">
                         <option value="google_sheets">Google Sheets</option>
                         <option value="rest_api">REST API</option>
                         <option value="webhook">Webhook</option>
@@ -39,13 +39,13 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Base URL / Endpoint</label>
-                    <input type="text" name="base_url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                    <label class="form-label" for="intBaseUrl">Base URL / Endpoint <span class="text-danger">*</span></label>
+                    <input type="text" name="base_url" id="intBaseUrl" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
                     <div class="form-text">Google Sheets: tempel link sheet lengkap (sheet harus dibagikan "Siapa saja yang memiliki link — Viewer"). Baris diimpor ke Daftar Arsip saat Sync.</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">API Key / Token</label>
-                    <input type="text" name="api_key" class="form-control" placeholder="opsional">
+                    <label class="form-label" for="intApiKey">API Key / Token</label>
+                    <input type="text" name="api_key" id="intApiKey" class="form-control" placeholder="opsional">
                 </div>
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" name="is_active" id="isActive" checked>
@@ -67,12 +67,12 @@
             <form method="POST" action="/advanced/integrations/{{.m.ID}}">
                 <input type="hidden" name="_token" value="{{.CSRFToken}}">
                 <div class="mb-3">
-                    <label class="form-label">Nama Integrasi <span class="text-danger">*</span></label>
-                    <input type="text" name="name" class="form-control" value="{{.m.Name}}" required>
+                    <label class="form-label" for="intEditName">Nama Integrasi <span class="text-danger">*</span></label>
+                    <input type="text" name="name" id="intEditName" class="form-control" value="{{.m.Name}}" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Tipe</label>
-                    <select name="type" class="form-select">
+                    <label class="form-label" for="intEditType">Tipe</label>
+                    <select name="type" id="intEditType" class="form-select">
                         <option value="google_sheets" {{if eq .m.Type "google_sheets"}}selected{{end}}>Google Sheets</option>
                         <option value="rest_api" {{if eq .m.Type "rest_api"}}selected{{end}}>REST API</option>
                         <option value="webhook" {{if eq .m.Type "webhook"}}selected{{end}}>Webhook</option>
@@ -80,13 +80,13 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Base URL / Endpoint</label>
-                    <input type="text" name="base_url" class="form-control" value="{{.m.BaseURL}}" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-                    <div class="form-text">Google Sheets: tempel link sheet lengkap (sheet harus dibagikan "Siapa saja yang memiliki link — Viewer").</div>
+                    <label class="form-label" for="intEditBaseUrl">Base URL / Endpoint <span class="text-danger">*</span></label>
+                    <input type="text" name="base_url" id="intEditBaseUrl" class="form-control" value="{{.m.BaseURL}}" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                    <div class="form-text">{{if eq .m.Type "google_sheets"}}Terisi ID spreadsheet (hasil ekstraksi saat disimpan) — ganti dengan URL penuh bila ingin mengubah sheet. Sheet harus dibagikan "Siapa saja yang memiliki link — Viewer".{{else}}URL endpoint integrasi yang dipanggil saat Test/Sync.{{end}}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">API Key / Token</label>
-                    <input type="text" name="api_key" class="form-control" value="{{.m.ApiKey}}" placeholder="opsional">
+                    <label class="form-label" for="intEditApiKey">API Key / Token</label>
+                    <input type="text" name="api_key" id="intEditApiKey" class="form-control" value="{{.m.ApiKey}}" placeholder="opsional">
                 </div>
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" name="is_active" id="isActiveEdit" {{if .m.IsActive}}checked{{end}}>
@@ -167,7 +167,10 @@
             <div class="mb-3">
                 {{if .IsActive}}<span class="status-indicator status-active"></span> <strong>Aktif</strong>
                 {{else}}<span class="status-indicator status-inactive"></span> <strong>Nonaktif</strong>{{end}}
-                {{if .LastStatus}}<br><small class="text-muted">Status terakhir: {{.LastStatus}}</small>{{end}}
+                {{if or (eq .LastStatus "error") (eq .LastStatus "push_error")}}
+                <span class="badge text-bg-danger ms-1">Error</span>
+                {{else if .LastStatus}}<br><small class="text-muted">Status terakhir: {{.LastStatus}}</small>{{end}}
+                {{if .LastError}}<br><small class="text-danger"><i class="bi bi-exclamation-triangle"></i> {{.LastError}}</small>{{end}}
                 {{if .LastSyncAt}}<br><small class="text-muted">Sinkron terakhir: {{.LastSyncAt.Format "02-01-2006 15:04"}}</small>{{end}}
             </div>
             <div class="d-flex gap-2 flex-wrap">
@@ -217,18 +220,41 @@
 </div>
 
 <script>
+function pageNotice(msg, isError) {
+    var old = document.getElementById('intNotice');
+    if (old) old.remove();
+    var d = document.createElement('div');
+    d.id = 'intNotice';
+    d.className = 'alert ' + (isError ? 'alert-danger' : 'alert-success') + ' alert-dismissible fade show';
+    d.setAttribute('role', 'alert');
+    d.style.cssText = 'position:fixed;top:72px;right:1rem;z-index:1060;max-width:420px;box-shadow:0 .5rem 1rem rgba(0,0,0,.15)';
+    d.innerHTML = (isError ? '<i class="bi bi-x-octagon me-1"></i>' : '<i class="bi bi-check-circle me-1"></i>') +
+        msg +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>';
+    document.body.appendChild(d);
+    setTimeout(function () {
+        if (document.getElementById('intNotice')) {
+            d.classList.remove('show');
+            setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 350);
+        }
+    }, 6000);
+}
 document.querySelectorAll('.js-integration-test').forEach(function (f) {
     f.addEventListener('submit', function (e) {
         e.preventDefault();
         var btn = f.querySelector('button');
         btn.disabled = true;
+        var label = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menguji...';
         fetch(f.action, {
             method: 'POST',
             headers: { 'X-CSRF-Token': f.querySelector('[name=_token]').value }
         }).then(function (r) { return r.json(); }).then(function (d) {
             btn.disabled = false;
-            alert(d.success ? 'Koneksi OK (HTTP ' + d.status_code + ')' : 'Test gagal (HTTP ' + d.status_code + ')');
-        }).catch(function () { btn.disabled = false; alert('Test gagal: kesalahan jaringan'); });
+            btn.innerHTML = label;
+            if (d.success) pageNotice('Koneksi OK' + (d.detail ? ' — ' + d.detail : ''), false);
+            else pageNotice('Test gagal: ' + (d.detail || ('HTTP ' + d.status_code)), true);
+        }).catch(function () { btn.disabled = false; btn.innerHTML = label; pageNotice('Test gagal: kesalahan jaringan', true); });
     });
 });
 document.querySelectorAll('.js-integration-push').forEach(function (f) {
@@ -245,8 +271,9 @@ document.querySelectorAll('.js-integration-push').forEach(function (f) {
         }).then(function (r) { return r.json(); }).then(function (d) {
             btn.disabled = false;
             btn.innerHTML = label;
-            alert(d.success ? 'Berhasil: ' + d.message : 'Gagal: ' + d.error);
-        }).catch(function () { btn.disabled = false; btn.innerHTML = label; alert('Push gagal: kesalahan jaringan'); });
+            if (d.success) pageNotice('Berhasil: ' + d.message, false);
+            else pageNotice('Gagal: ' + (d.error || 'kesalahan tak diketahui'), true);
+        }).catch(function () { btn.disabled = false; btn.innerHTML = label; pageNotice('Push gagal: kesalahan jaringan', true); });
     });
 });
 document.querySelectorAll('.js-integration-delete').forEach(function (f) {
