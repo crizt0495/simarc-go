@@ -46,3 +46,6 @@ test-results/
 
 # Playwright auth state (cookie sesi — jangan pernah commit)
 .auth/
+
+# Backup dump SQL lokal (~143 MB) — jangan pernah di-commit/push
+simarc-*.sql
