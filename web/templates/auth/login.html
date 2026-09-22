@@ -24,10 +24,10 @@
 </div>
 {{end}}
 
-<form method="POST" action="/login" id="loginForm">
+<form method="POST" action="/login" id="loginForm" class="auth-form">
   <input type="hidden" name="_token" value="{{.CSRFToken}}">
 
-  <div class="auth-field">
+  <div class="auth-field floating">
     <label for="username">Username</label>
     <div class="auth-input-wrap">
       <i class="bi bi-person auth-field-icon"></i>
@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <div class="auth-field">
+  <div class="auth-field floating">
     <label for="password">Password</label>
     <div class="auth-input-wrap">
       <i class="bi bi-key auth-field-icon"></i>
@@ -84,6 +84,18 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  /* Floating label support - add/remove has-value class */
+  document.querySelectorAll('.auth-field.floating .auth-input').forEach(function(input) {
+    var field = input.closest('.auth-field');
+    function checkValue() {
+      if (input.value.length > 0) field.classList.add('has-value');
+      else field.classList.remove('has-value');
+    }
+    input.addEventListener('input', checkValue);
+    input.addEventListener('blur', checkValue);
+    checkValue(); // initial check
+  });
 
   var loginForm = document.getElementById('loginForm');
   var loginBtn = document.getElementById('loginBtn');

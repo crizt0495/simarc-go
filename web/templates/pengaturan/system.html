@@ -22,7 +22,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <div class="table-responsive"><table class="table table-borderless">
                             <tr>
                                 <th width="40%">Go Version</th>
                                 <td>: <code>{{.Info.go_version}}</code></td>
@@ -35,10 +35,10 @@
                                 <th>Server</th>
                                 <td>: Gin (Go Framework)</td>
                             </tr>
-                        </table>
+                        </table></div>
                     </div>
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <div class="table-responsive"><table class="table table-borderless">
                             <tr>
                                 <th width="40%">Database</th>
                                 <td>: {{.Info.db_driver}} ({{.Info.db_version}})</td>
@@ -53,7 +53,7 @@
                                     {{end}}
                                 </td>
                             </tr>
-                        </table>
+                        </table></div>
                     </div>
                 </div>
             </div>
@@ -66,7 +66,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <div class="table-responsive"><table class="table table-borderless">
                             <tr>
                                 <th width="40%">Nama Aplikasi</th>
                                 <td>: <strong>{{.Info.app_name}}</strong></td>
@@ -79,10 +79,10 @@
                                 <th>Zona Waktu</th>
                                 <td>: {{.Info.timezone}}</td>
                             </tr>
-                        </table>
+                        </table></div>
                     </div>
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <div class="table-responsive"><table class="table table-borderless">
                             <tr>
                                 <th width="40%">Locale</th>
                                 <td>: id_ID (Indonesia)</td>
@@ -95,7 +95,7 @@
                                 <th>Goroutines</th>
                                 <td>: {{.Info.goroutines}} aktif</td>
                             </tr>
-                        </table>
+                        </table></div>
                     </div>
                 </div>
             </div>

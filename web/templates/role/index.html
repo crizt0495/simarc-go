@@ -337,7 +337,7 @@
                             {{if or (eq $role.Name "Admin") (eq $role.Name "Pimpinan") (eq $role.Name "Petugas") (eq $role.Name "Viewer")}}
                                 <button type="button" class="btn-crud btn-crud-del" disabled title="Role sistem tidak dapat dihapus" data-bs-toggle="tooltip"><i class="bi bi-lock"></i></button>
                             {{else if ne $role.UsersCount 0}}
-                                <button type="button" class="btn-crud btn-crud-del" disabled title="Masih digunakan {{$role.UsersCount}} user" data-bs-toggle="tooltip"><i class="bi bi-person-shield"></i></button>
+                                <button type="button" class="btn-crud btn-crud-del" disabled title="Masih digunakan {{$role.UsersCount}} user" data-bs-toggle="tooltip"><i class="bi bi-people"></i></button>
                             {{else}}
                                 <button type="button" class="btn-crud btn-crud-del" title="Hapus Role" onclick="confirmDelete('{{$role.ID}}', '{{$role.NamaRole}}')" data-bs-toggle="tooltip"><i class="bi bi-trash3"></i></button>
                             {{end}}

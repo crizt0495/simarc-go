@@ -53,7 +53,7 @@
                 <h5 class="mb-0"><i class="bi bi-person-badge"></i> Informasi Pengguna</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless">
+                <div class="table-responsive"><table class="table table-borderless">
                     <tr>
                         <th width="30%">Username</th>
                         <td>: <strong>{{.AuthUser.Username}}</strong></td>
@@ -94,7 +94,7 @@
                         <th>Bergabung</th>
                         <td>: {{.AuthUser.CreatedAt}}</td>
                     </tr>
-                </table>
+                </table></div>
             </div>
         </div>
 

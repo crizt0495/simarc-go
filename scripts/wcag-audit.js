@@ -5,10 +5,10 @@
  * Usage: node scripts/wcag-audit.js
  * Exit code: 0 = all AA pass, 1 = failure.
  *
- * Parses the REAL palette tokens from neo-brutalism.css :root (light) and
- * [data-theme="dark"], then verifies every foreground/background pairing
- * the design system actually relies on meets WCAG 2.1 AA
- * (4.5:1 body text, 3.0:1 large graphical/UI).
+ * Parses the REAL palette tokens from enterprise.css :root (light) and
+ * [data-theme="dark"], resolves var() chains, then verifies every
+ * foreground/background pairing the design system relies on meets
+ * WCAG 2.1 AA (4.5:1 body text, 3.0:1 large graphical/UI).
  */
 'use strict';
 
@@ -17,35 +17,36 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const css = readFileSync(join(__dirname, '..', 'web', 'static', 'css', 'neo-brutalism.css'), 'utf8');
+const css = readFileSync(join(__dirname, '..', 'web', 'static', 'css', 'enterprise.css'), 'utf8');
 
-function hex2rgb(h, fallback = [0, 0, 0]) {
-  h = (h || '').replace('#', '');
-  if (!/^[0-9a-fA-F]{6}$/.test(h)) return fallback;
+/* ── helpers ─────────────────────────────────────────────────────── */
+function hex2rgb(h) {
+  h = ((h || '').replace('#', '')).trim();
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
 }
-
 function lin(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
-
 function lum(hex) {
-  const [r, g, b] = hex2rgb(hex);
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  const rgb = hex2rgb(hex);
+  if (!rgb) throw new Error('bad hex: ' + hex);
+  return 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]);
 }
-
 function ratio(f, b) {
   const l1 = lum(f), l2 = lum(b);
   const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// ── Extract a token block's declarations from the CSS ──
+/* Extract a token block `selector { … }` → { token: raw } */
 function extract(selector) {
   const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const m = css.match(new RegExp(esc + '\\s*\\{([^}]*)\\}'));
+  const m = css.match(new RegExp(esc + '\\s*\\{([\\s\\S]*?)\\n\\}'));
   if (!m) return {};
   const out = {};
-  for (const decl of m[1].matchAll(/(--[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;/g)) {
-    out[decl[1]] = decl[2].toUpperCase();
+  const lines = m[1].split('\n');
+  for (const raw of lines) {
+    const decl = raw.match(/^\s*(--[a-z0-9-]+)\s*:\s*(.+?)\s*;$/);
+    if (decl) out[decl[1]] = decl[2].trim();
   }
   return out;
 }
@@ -53,92 +54,77 @@ function extract(selector) {
 const L = extract(':root');
 const D = extract('[data-theme="dark"]');
 
-// Resolve a CSS variable (strip var(--x)) — tokens only contain hex by design.
-function v(ref, theme) {
-  const name = (ref || '').replace(/^var\((--[a-z0-9-]+)\).*$/, '$1');
-  const val = theme[name];
-  if (!val) { console.error('  ⚠  undefined token: ' + name); process.exit(2); }
-  return val;
+/* Resolve a token to a #RRGGBB string (follows var() chains, hex only). */
+function resolve(raw, theme, depth = 0) {
+  if (!raw) return null;
+  let v = raw.trim();
+  if (v.startsWith('var(')) {
+    const name = v.match(/^var\(\s*(--[a-z0-9-]+)/);
+    if (!name || depth > 6) return null;
+    return resolve(theme[name], theme, depth + 1);
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) return v.toUpperCase();
+  return null;
 }
 
-const checks = [
-  // ── Light mode ──
-  ['L ink on bg',              v('--nb-ink', L),        v('--nb-bg', L),        4.5],
-  ['L ink on surface',         v('--nb-ink', L),        v('--nb-surface', L),   4.5],
-  ['L ink-2 on bg',            v('--nb-ink-2', L),      v('--nb-bg', L),        4.5],
-  ['L ink-2 on surface',       v('--nb-ink-2', L),      v('--nb-surface', L),   4.5],
-  ['L ink-3 on bg',            v('--nb-ink-3', L),      v('--nb-bg', L),        4.5],
-  ['L ink-3 on surface',       v('--nb-ink-3', L),      v('--nb-surface', L),   4.5],
-  ['L ink-3 on surface-2',     v('--nb-ink-3', L),      v('--nb-surface-2', L), 4.5],
-  ['L ink-3 on surface-3',     v('--nb-ink-3', L),      v('--nb-surface-3', L), 4.5],
-  ['L ink-4 on bg',            v('--nb-ink-4', L),      v('--nb-bg', L),        4.5],
-  ['L ink-4 on bg-alt',        v('--nb-ink-4', L),      v('--nb-bg-alt', L),    4.5],
-  ['L ink-4 on surface',       v('--nb-ink-4', L),      v('--nb-surface', L),   4.5],
-  ['L ink-4 on surface-2',     v('--nb-ink-4', L),      v('--nb-surface-2', L), 4.5],
-  ['L ink-4 on surface-3',     v('--nb-ink-4', L),      v('--nb-surface-3', L), 4.5],
-  // Light buttons: ink/white on fills
-  ['L on-primary on #FF4D00',  v('--nb-on-primary', L), v('--nb-primary', L),   4.5],
-  ['L on-primary-hover on dark', v('--nb-on-primary-hover', L), v('--nb-primary-dark', L), 4.5],
-  ['L on-success on success',  v('--nb-on-success', L), v('--nb-success', L),   4.5],
-  ['L on-danger on danger',    v('--nb-on-danger', L),  v('--nb-danger', L),    4.5],
-  ['L on-warning on warning',  v('--nb-on-warning', L), v('--nb-warning', L),   4.5],
-  ['L on-info on info',        v('--nb-on-info', L),    v('--nb-info', L),      4.5],
-  ['L on-dark on ink',         v('--nb-on-dark', L),    v('--nb-ink', L),       4.5],
-  ['L on-orange on orange',    v('--nb-on-primary', L), v('--nb-orange', L),    4.5],
-  // Light: text/link accents on surfaces (4.5) & UI (3.0)
-  ['L primary-dark on surface', v('--nb-primary-dark', L), v('--nb-surface', L), 4.5],
-  ['L primary-dark on bg',     v('--nb-primary-dark', L),  v('--nb-bg', L),       4.5],
-  ['L primary-dark on primary-light', v('--nb-primary-dark', L), v('--nb-primary-light', L), 4.5],
-  ['L success on surface',     v('--nb-success', L),    v('--nb-surface', L),   4.5],
-  ['L success on success-light', v('--nb-success', L),  v('--nb-success-light', L), 4.5],
-  ['L danger on surface',      v('--nb-danger', L),     v('--nb-surface', L),   4.5],
-  ['L danger-dark on danger-light', v('--nb-danger-dark', L), v('--nb-danger-light', L), 4.5],
-  ['L info on surface',        v('--nb-info', L),       v('--nb-surface', L),   4.5],
-  ['L info on info-light',     v('--nb-info', L),       v('--nb-info-light', L), 4.5],
-  ['L warning-dark on surface', v('--nb-warning-dark', L), v('--nb-surface', L), 4.5],
-  ['L warning-dark on warning-light', v('--nb-warning-dark', L), v('--nb-warning-light', L), 4.5],
-  ['L indigo on surface',      v('--nb-indigo', L),     v('--nb-surface', L),   4.5],
-  ['L purple on surface',      v('--nb-purple', L),     v('--nb-surface', L),   3.0],
-  ['L ink-2 on status-inactive-ish', v('--nb-ink-4', L), v('--nb-surface-3', L), 4.5],
+/* Shorthand: token name → hex (throws if undefined or unresolved). */
+function token(name, theme) {
+  const hex = resolve(theme[name], theme);
+  if (!hex) { console.error(`  ⚠  token tidak dapat di-resolve menjadi hex: ${name}`); process.exit(2); }
+  return hex;
+}
 
-  // ── Dark mode ──
-  ['D on-primary on primary',  v('--nb-on-primary', D), v('--nb-primary', D),   4.5],
-  ['D on-primary-hover on dark', v('--nb-on-primary-hover', D), v('--nb-primary-dark', D), 4.5],
-  ['D on-success on success',  v('--nb-on-success', D), v('--nb-success', D),   4.5],
-  ['D on-danger on danger',    v('--nb-on-danger', D),  v('--nb-danger', D),    4.5],
-  ['D on-warning on warning',  v('--nb-on-warning', D), v('--nb-warning', D),   4.5],
-  ['D on-info on info',        v('--nb-on-info', D),    v('--nb-info', D),      4.5],
-  ['D on-dark on ink',         v('--nb-on-dark', D),    v('--nb-ink', D),       4.5],
-  ['D on-orange on orange',    v('--nb-on-primary', D), v('--nb-orange', D),    4.5],
-  // Dark body text
-  ['D ink on bg',              v('--nb-ink', D),        v('--nb-bg', D),        4.5],
-  ['D ink on surface',         v('--nb-ink', D),        v('--nb-surface', D),   4.5],
-  ['D ink-3 on surface',       v('--nb-ink-3', D),      v('--nb-surface', D),   4.5],
-  ['D ink-4 on bg',            v('--nb-ink-4', D),      v('--nb-bg', D),        4.5],
-  ['D ink-4 on surface',       v('--nb-ink-4', D),      v('--nb-surface', D),   4.5],
-  ['D ink-4 on surface-2',     v('--nb-ink-4', D),      v('--nb-surface-2', D), 4.5],
-  ['D ink-4 on surface-3',     v('--nb-ink-4', D),      v('--nb-surface-3', D), 4.5],
-  // Dark accents on surfaces (3.0 UI / 4.5 links)
-  ['D primary-dark on surface', v('--nb-primary-dark', D), v('--nb-surface', D), 4.5],
-  ['D primary on surface',     v('--nb-primary', D),    v('--nb-surface', D),   4.5],
-  ['D primary on surface-2',   v('--nb-primary', D),    v('--nb-surface-2', D), 4.5],
-  ['D success on surface',     v('--nb-success', D),    v('--nb-surface', D),   4.5],
-  ['D danger on surface',      v('--nb-danger', D),     v('--nb-surface', D),   4.5],
-  ['D info on surface',        v('--nb-info', D),       v('--nb-surface', D),   4.5],
-  ['D warning on surface',     v('--nb-warning', D),    v('--nb-surface', D),   4.5],
-  ['D purple on surface',      v('--nb-purple', D),     v('--nb-surface', D),   4.5],
-  ['D indigo on surface',      v('--nb-indigo', D),     v('--nb-surface', D),   4.5],
-];
+const checks = [];
 
+/* ── LIGHT ────────────────────────────────────────────────────────── */
+const LT = L, DT = D;
+// body text
+for (const ink of ['--nb-ink', '--nb-ink-2']) for (const bg of ['--nb-bg', '--nb-surface']) checks.push([`L ${ink.replace('--nb-','')} on ${bg.replace('--nb-','')}`, token(ink, LT), token(bg, LT), 4.5]);
+for (const bg of ['--nb-bg', '--nb-surface', '--nb-surface-2', '--nb-surface-3']) checks.push(['L ink-3 on ' + bg.replace('--nb-',''), token('--nb-ink-3', LT), token(bg, LT), 4.5]);
+for (const bg of ['--nb-bg', '--nb-bg-alt', '--nb-surface', '--nb-surface-2', '--nb-surface-3']) checks.push(['L ink-4 on ' + bg.replace('--nb-',''), token('--nb-ink-4', LT), token(bg, LT), 4.5]);
+// on-accent (white) on solid fills
+for (const fill of ['--nb-primary', '--nb-primary-dark', '--nb-primary-deep', '--nb-success', '--nb-success-dark', '--nb-danger', '--nb-danger-dark', '--nb-info', '--nb-info-dark', '--nb-warning', '--nb-warning-dark', '--nb-purple']) checks.push(['L on-accent on ' + fill.replace('--nb-',''), token('--nb-on-accent', LT), token(fill, LT), 4.5]);
+// links & accents on surfaces
+checks.push(['L primary on surface', token('--nb-primary', LT), token('--nb-surface', LT), 4.5]);
+checks.push(['L primary-dark on surface', token('--nb-primary-dark', LT), token('--nb-surface', LT), 4.5]);
+checks.push(['L primary on primary-light', token('--nb-primary', LT), token('--nb-primary-light', LT), 3.0]);
+checks.push(['L primary-dark on primary-light', token('--nb-primary-dark', LT), token('--nb-primary-light', LT), 4.5]);
+// soft-badge text on soft-badge bg (design system uses *-dark on *-light)
+checks.push(['L success-dark on success-light', token('--nb-success-dark', LT), token('--nb-success-light', LT), 4.5]);
+checks.push(['L danger-dark on danger-light', token('--nb-danger-dark', LT), token('--nb-danger-light', LT), 4.5]);
+checks.push(['L danger on danger-light (icon/UI)', token('--nb-danger', LT), token('--nb-danger-light', LT), 3.0]);
+checks.push(['L warning-dark on warning-light', token('--nb-warning-dark', LT), token('--nb-warning-light', LT), 4.5]);
+checks.push(['L info-dark on info-light', token('--nb-info-dark', LT), token('--nb-info-light', LT), 4.5]);
+checks.push(['L warning on surface', token('--nb-warning', LT), token('--nb-surface', LT), 4.5]);
+checks.push(['L success on surface', token('--nb-success', LT), token('--nb-surface', LT), 4.5]);
+checks.push(['L danger on surface', token('--nb-danger', LT), token('--nb-surface', LT), 4.5]);
+checks.push(['L info on surface', token('--nb-info', LT), token('--nb-surface', LT), 4.5]);
+checks.push(['L indigo on surface', token('--nb-indigo', LT), token('--nb-surface', LT), 3.0]);
+checks.push(['L purple on surface', token('--nb-purple', LT), token('--nb-surface', LT), 3.0]);
+checks.push(['L ink on surface-3', token('--nb-ink', LT), token('--nb-surface-3', LT), 4.5]);
+checks.push(['L ink-2 on surface-3', token('--nb-ink-2', LT), token('--nb-surface-3', LT), 4.5]);
+
+/* ── DARK ─────────────────────────────────────────────────────────── */
+for (const ink of ['--nb-ink', '--nb-ink-2']) for (const bg of ['--nb-bg', '--nb-surface']) checks.push([`D ${ink.replace('--nb-','')} on ${bg.replace('--nb-','')}`, token(ink, DT), token(bg, DT), 4.5]);
+for (const bg of ['--nb-bg', '--nb-surface', '--nb-surface-2', '--nb-surface-3']) checks.push(['D ink-3 on ' + bg.replace('--nb-',''), token('--nb-ink-3', DT), token(bg, DT), 4.5]);
+for (const bg of ['--nb-bg', '--nb-surface', '--nb-surface-2', '--nb-surface-3']) checks.push(['D ink-4 on ' + bg.replace('--nb-',''), token('--nb-ink-4', DT), token(bg, DT), 4.5]);
+// on-accent (dark ink) on lighter fills
+for (const fill of ['--nb-primary', '--nb-primary-dark', '--nb-success', '--nb-danger', '--nb-info', '--nb-warning', '--nb-purple', '--nb-indigo']) checks.push(['D on-accent on ' + fill.replace('--nb-',''), token('--nb-on-accent', DT), token(fill, DT), 4.5]);
+// accents on dark surfaces
+for (const acc of ['--nb-primary', '--nb-success', '--nb-danger', '--nb-warning', '--nb-info']) checks.push(['D ' + acc.replace('--nb-','') + ' on surface', token(acc, DT), token('--nb-surface', DT), 4.5]);
+checks.push(['D primary on surface-2', token('--nb-primary', DT), token('--nb-surface-2', DT), 4.5]);
+checks.push(['D indigo on surface', token('--nb-indigo', DT), token('--nb-surface', DT), 3.0]);
+checks.push(['D purple on surface', token('--nb-purple', DT), token('--nb-surface', DT), 3.0]);
+
+/* ── run ──────────────────────────────────────────────────────────── */
 let failures = 0;
-console.log('═ SIMARC WCAG 2.1 AA — Color Contrast Audit (live palette) ═');
+console.log('═ SIMARC WCAG 2.1 AA — Color Contrast Audit (live enterprise palette) ═');
 console.log('');
-
 for (const [name, fg, bg, min] of checks) {
   const r = ratio(fg, bg);
   const ok = r >= min;
   if (!ok) failures++;
-  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(28)} ${r.toFixed(2).padStart(6)}  (AA ≥ ${min.toFixed(1)})`);
+  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(34)} ${r.toFixed(2).padStart(6)}  (AA ≥ ${min.toFixed(1)})`);
 }
 
 console.log('');

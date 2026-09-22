@@ -970,7 +970,7 @@ mark {
       <input type="hidden" id="moveArsipIds" name="ids">
       <div class="alert alert-info d-flex align-items-start gap-2 py-2" style="border-radius:var(--r);font-size:0.85rem;"><i class="bi bi-info-circle"></i><div><strong>Total:</strong> <span id="moveArsipCount">0</span> arsip</div></div>
       <div class="mb-3"><label class="form-label small fw-700"><i class="bi bi-list-check me-1"></i>Arsip</label><div id="selectedArchivesList" class="border rounded p-3" style="max-height:180px;overflow-y:auto;background:var(--surface-2);font-size:0.85rem;"></div></div>
-      <div class="mb-3"><label class="form-label small fw-700" for="newLocationSelect"><i class="bi bi-map-marker me-1"></i>Lokasi Tujuan</label><select class="form-select" id="newLocationSelect" name="lokasi_arsip_id" required><option value="">-- Pilih --</option></select><div id="locationInfo" class="mt-1 small text-muted"></div></div>
+      <div class="mb-3"><label class="form-label small fw-700" for="newLocationSelect"><i class="bi bi-geo-alt-fill me-1"></i>Lokasi Tujuan</label><select class="form-select" id="newLocationSelect" name="lokasi_arsip_id" required><option value="">-- Pilih --</option></select><div id="locationInfo" class="mt-1 small text-muted"></div></div>
       <div class="mb-3"><label class="form-label small fw-700" for="moveCatatan"><i class="bi bi-journal-text me-1"></i>Catatan</label><textarea class="form-control" id="moveCatatan" name="catatan" rows="2" placeholder="Catatan..."></textarea></div>
     </div>
   </div>
@@ -996,7 +996,7 @@ mark {
     <div id="historyContent" class="d-none">
       <div class="p-4 border-bottom"><div class="row"><div class="col-md-8"><h6 class="fw-800 mb-2"><span id="historyArsipNomor"></span></h6><p class="text-muted small mb-2" id="historyArsipNama"></p><div class="d-flex gap-2 flex-wrap" id="historyArsipBadges"></div></div><div class="col-md-4 text-end"><a href="#" id="exportPdfBtn" class="btn btn-sm btn-outline-danger rounded-pill fw-700"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a></div></div></div>
       <div class="p-4 border-bottom"><div class="row g-2" id="historyStats"></div></div>
-      <div class="p-4"><h6 class="fw-800 mb-3 small" style="text-transform:uppercase;letter-spacing:0.06em;"><i class="bi bi-timeline text-primary me-1"></i>Timeline Aktivitas</h6><div id="timelineContainer"></div></div>
+      <div class="p-4"><h6 class="fw-800 mb-3 small" style="text-transform:uppercase;letter-spacing:0.06em;"><i class="bi bi-clock-history text-primary me-1"></i>Timeline Aktivitas</h6><div id="timelineContainer"></div></div>
       <div class="p-4 border-top"><h6 class="fw-800 mb-3 small" style="text-transform:uppercase;letter-spacing:0.06em;"><i class="bi bi-layers text-primary me-1"></i>Versi File</h6><div class="table-responsive"><table class="table table-sm table-hover datatable"><thead><tr><th width="60">Versi</th><th>File</th><th>Diubah Oleh</th><th>Catatan</th><th width="140">Tanggal</th><th width="80">Aksi</th></tr></thead><tbody id="versionsTableBody"></tbody></table></div></div>
     </div>
   </div>
@@ -1361,7 +1361,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const list = document.getElementById('selectedArchivesList');
                 list.innerHTML = '';
                 data.data.archives.forEach(function(a, i) {
-                    list.innerHTML += '<div class="d-flex justify-content-between align-items-center py-1 border-bottom' + (i === data.data.archives.length-1 ? ' border-bottom-0' : '') + '"><div><strong>' + a.nomor_arsip + '</strong> - ' + a.nama_arsip + '<div class="text-muted" style="font-size:0.7rem;"><i class="bi bi-map-marker"></i> ' + a.current_location + '</div></div></div>';
+                    list.innerHTML += '<div class="d-flex justify-content-between align-items-center py-1 border-bottom' + (i === data.data.archives.length-1 ? ' border-bottom-0' : '') + '"><div><strong>' + a.nomor_arsip + '</strong> - ' + a.nama_arsip + '<div class="text-muted" style="font-size:0.7rem;"><i class="bi bi-geo-alt-fill"></i> ' + a.current_location + '</div></div></div>';
                 });
                 const sel = document.getElementById('newLocationSelect');
                 sel.innerHTML = '<option value="">-- Pilih lokasi --</option>';

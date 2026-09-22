@@ -89,8 +89,8 @@
                     <input type="text" name="api_key" class="form-control" value="{{.m.ApiKey}}" placeholder="opsional">
                 </div>
                 <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {{if .m.IsActive}}checked{{end}}>
-                    <label class="form-check-label" for="isActive">Aktifkan integrasi</label>
+                    <input class="form-check-input" type="checkbox" name="is_active" id="isActiveEdit" {{if .m.IsActive}}checked{{end}}>
+                    <label class="form-check-label" for="isActiveEdit">Aktifkan integrasi</label>
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Perbarui</button>
             </form>

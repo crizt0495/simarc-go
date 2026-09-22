@@ -41,7 +41,7 @@ body{background:var(--surface);font-family:'Inter',sans-serif;color:var(--ink-2)
 <div class="row justify-content-center">
 <div class="col-lg-8">
 <div class="doc-card">
-<div class="read-only-notice"><i class="bi bi-shield-halved me-1"></i> VERIFIED DIGITAL RECORD | READ-ONLY ACCESS</div>
+<div class="read-only-notice"><i class="bi bi-shield me-1"></i> VERIFIED DIGITAL RECORD | READ-ONLY ACCESS</div>
 <div class="doc-header">
 <div class="doc-status-badge {{if .arsip.StatusArsip}}status-aktif{{end}}"><i class="bi bi-check-circle-fill me-2"></i>STATUS: {{.arsip.StatusArsip}}</div>
 <h1 class="doc-title">{{.arsip.NamaArsip}}</h1>
@@ -54,7 +54,7 @@ body{background:var(--surface);font-family:'Inter',sans-serif;color:var(--ink-2)
 <div class="info-item"><span class="info-label">Tanggal Dibuat</span><div class="info-value">{{formatDateLong .arsip.TanggalDibuat}}</div></div>
 </div>
 <div class="location-box">
-<div class="location-icon"><i class="bi bi-map-location-dot"></i></div>
+<div class="location-icon"><i class="bi bi-geo-alt-fill"></i></div>
 <div><span class="info-label">Lokasi Penyimpanan</span><div class="info-value text-primary">{{if .arsip.LokasiArsip}}{{.arsip.LokasiArsip.NamaLokasi}}{{else}}Belum Ditentukan{{end}}</div></div>
 </div>
 {{if .arsip.Uraian}}

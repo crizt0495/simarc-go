@@ -928,7 +928,7 @@ kbd {
 }
 
 .stat-chip-pct   { color: var(--nb-primary); background: var(--nb-primary-light); }
-.stat-chip-danger { color: var(--nb-danger); background: var(--nb-danger-light); }
+.stat-chip-danger { color: var(--nb-danger-dark); background: var(--nb-danger-light); }
 .stat-chip-success { color: var(--nb-success); background: var(--nb-success-light); }
 .stat-chip-warning { color: var(--nb-warning); background: var(--nb-warning-light); }
 
@@ -1330,7 +1330,7 @@ kbd {
 .btn-soft-primary:hover { background: var(--nb-primary); color: var(--nb-on-accent); }
 .btn-soft-success { background: var(--nb-success-light); color: var(--nb-success); border-color: transparent; }
 .btn-soft-success:hover { background: var(--nb-success); color: var(--nb-on-accent); }
-.btn-soft-danger { background: var(--nb-danger-light); color: var(--nb-danger); border-color: transparent; }
+.btn-soft-danger { background: var(--nb-danger-light); color: var(--nb-danger-dark); border-color: transparent; }
 .btn-soft-danger:hover { background: var(--nb-danger); color: var(--nb-on-accent); }
 .btn-soft-warning { background: var(--nb-warning-light); color: var(--nb-warning); border-color: transparent; }
 .btn-soft-warning:hover { background: var(--nb-warning); color: var(--nb-on-accent); }
@@ -1460,7 +1460,7 @@ kbd {
 
 .badge-primary { background: var(--nb-primary-light); color: var(--nb-primary); }
 .badge-success { background: var(--nb-success-light); color: var(--nb-success); }
-.badge-danger  { background: var(--nb-danger-light); color: var(--nb-danger); }
+.badge-danger  { background: var(--nb-danger-light); color: var(--nb-danger-dark); }
 .badge-warning { background: var(--nb-warning-light); color: var(--nb-warning); }
 .badge-info    { background: var(--nb-info-light); color: var(--nb-info); }
 .badge-neutral { background: var(--nb-surface-3); color: var(--nb-ink-3); }
@@ -1483,7 +1483,7 @@ kbd {
 }
 .badge-soft, .badge-soft-primary { background: var(--nb-primary-light); color: var(--nb-primary); }
 .badge-soft-success { background: var(--nb-success-light); color: var(--nb-success); }
-.badge-soft-danger  { background: var(--nb-danger-light); color: var(--nb-danger); }
+.badge-soft-danger  { background: var(--nb-danger-light); color: var(--nb-danger-dark); }
 .badge-soft-warning { background: var(--nb-warning-light); color: var(--nb-warning); }
 .badge-soft-info    { background: var(--nb-info-light); color: var(--nb-info); }
 
@@ -1520,9 +1520,9 @@ kbd {
 .status-aktif, .status-active, .status-approved, .status-approve, .status-disetujui,
 .status-selesai, .status-permanen { background: var(--nb-success-light); color: var(--nb-success); }
 .status-inaktif, .status-inactive, .status-reject, .status-ditolak, .status-cancelled,
-.status-dibatalkan { background: var(--nb-danger-light); color: var(--nb-danger); }
+.status-dibatalkan { background: var(--nb-danger-light); color: var(--nb-danger-dark); }
 .status-pending, .status-menunggu, .status-diajukan { background: var(--nb-warning-light); color: var(--nb-warning); }
-.status-musnah, .status-siap_penyusutan { background: var(--nb-danger-light); color: var(--nb-danger); }
+.status-musnah, .status-siap_penyusutan { background: var(--nb-danger-light); color: var(--nb-danger-dark); }
 .status-indicator { width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: currentColor; }
 
 /* tag pills */
@@ -1887,7 +1887,48 @@ input[type="date"], input[type="datetime-local"], input[type="tel"], textarea {
   font-size: 0.74rem;
   font-weight: 600;
   color: var(--nb-ink-3);
+  transition: color 0.15s ease;
 }
+.auth-field:focus-within > label { color: var(--nb-primary); }
+
+/* Floating label effect */
+.auth-form .auth-field.floating > label {
+  position: absolute;
+  top: 16px; left: 3.2rem;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--nb-ink-5);
+  pointer-events: none;
+  transition: all 0.2s ease;
+  transform-origin: left center;
+  z-index: 1;
+}
+.auth-form .auth-field.floating.has-value > label {
+  top: -8px; left: 1rem;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--nb-primary);
+  background: var(--nb-surface);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* Override Bootstrap's .form-floating > label when inside .auth-form */
+.auth-form.form-floating > label,
+.auth-form .auth-input-wrap:focus-within ~ label {
+  top: -8px !important; left: 1rem !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--nb-primary) !important;
+  background: var(--nb-surface) !important;
+  padding: 0 4px !important;
+  border-radius: 4px !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* Focus state is handled by .auth-form .auth-input-wrap:focus-within ~ label selector above */
+
 .auth-input-wrap {
   position: relative;
   display: flex;
@@ -1987,7 +2028,7 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
 .dropdown-item.active { background: var(--nb-primary); color: var(--nb-on-accent); }
 .dropdown-item.active i { color: var(--nb-on-accent); }
 .dropdown-item.danger { color: var(--nb-danger); }
-.dropdown-item.danger:hover { background: var(--nb-danger-light); color: var(--nb-danger); }
+.dropdown-item.danger:hover { background: var(--nb-danger-light); color: var(--nb-danger-dark); }
 .dropdown-item.danger:hover i { color: var(--nb-danger); }
 .dropdown-divider { height: 1px; margin: 0.35rem 0.4rem; background: var(--nb-border); }
 .dropdown-toggle::after { display: none; }
@@ -2663,6 +2704,10 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
   .navbar-brand-mobile { display: inline-flex; }
   .table-responsive { border: none; border-radius: 0; }
   table.dataTable, table.table-premium { min-width: 640px; }
+  /* Cegah auto-zoom iOS saat input difokus (font < 16px) */
+  input[type="text"], input[type="number"], input[type="email"], input[type="password"],
+  input[type="search"], input[type="date"], input[type="datetime-local"], input[type="tel"],
+  input[type="url"], select, textarea, .form-control, .form-select { font-size: 16px !important; }
   .dataTables_length, .dataTables_filter { float: none !important; width: 100% !important; display: block !important; }
   .dataTables_filter input { min-width: 100%; width: 100% !important; margin-left: 0; }
   .dataTables_length select { min-width: 60px; }
@@ -3280,7 +3325,7 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
 }
 .animate-shake { animation: authShake 0.4s ease; }
 .auth-alert-success { background: var(--nb-success-light); color: var(--nb-success); }
-.auth-alert-danger { background: var(--nb-danger-light); color: var(--nb-danger); }
+.auth-alert-danger { background: var(--nb-danger-light); color: var(--nb-danger-dark); }
 
 .auth-btn {
   position: relative;
@@ -3493,4 +3538,348 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
   table.dataTable thead th, table.table-premium thead th { background: #fff !important; color: #000 !important; border-color: #ddd !important; }
   table.dataTable tbody tr:nth-child(even) td { background: #fafafa !important; }
   .d-print-block { display: block !important; }
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   23. ENTERPRISE COMPLETION LAYER
+   — Konsolidasi global untuk kelas yang sebelumnya hanya terdefinisi di
+     CSS mati (neo-brutalism/premium) atau hilang sama sekali. Ditulis ulang
+     dengan bahasa desain enterprise (token --nb-*). Menjamin tidak ada
+     kelas yang dirender halaman namun tak terdefinisi.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 23.1 Font & text utilities ─────────────────────────────────────── */
+.fw-500 { font-weight: 500; }
+.fw-600 { font-weight: 600; }
+.fw-700 { font-weight: 700; }
+.fw-800 { font-weight: 800; }
+.fw-900 { font-weight: 900; }
+
+.font-size-20 { font-size: 20px; font-size: 1.25rem; line-height: 1.1; }
+
+.text-slate-500 { color: var(--nb-ink-4); }
+.text-slate-600 { color: var(--nb-ink-3); }
+.text-slate-700 { color: var(--nb-ink-2); }
+.text-slate-800 { color: var(--nb-ink); }
+
+.italic { font-style: italic; }
+.uppercase { text-transform: uppercase; }
+.smaller { font-size: 0.82em; }
+.extra-small { font-size: 0.72rem; }
+
+.ts-format { font-variant-numeric: tabular-nums; }
+
+.min-w-0 { min-width: 0; }
+
+.opacity-10 { opacity: 0.1; }
+.opacity-60 { opacity: 0.6; }
+
+.border-opacity-20 { --bs-border-opacity: 0.2; }
+
+.bg-slate-50 { background-color: #F8FAFC; }
+[data-theme="dark"] .bg-slate-50 { background-color: var(--nb-surface-2); }
+.bg-purple { background-color: var(--nb-purple); color: var(--nb-on-accent); }
+
+.hover-primary { transition: color 0.15s ease, background-color 0.15s ease; }
+.hover-primary:hover { color: var(--nb-primary) !important; }
+
+/* ── 23.2 Form components ───────────────────────────────────────────── */
+.req {
+  color: var(--nb-danger);
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.date-input-field .form-control,
+.date-input-field .form-select {
+  padding-left: 2.35rem;
+}
+.date-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: var(--nb-ink-4);
+  pointer-events: none;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.date-presets { gap: 0.35rem !important; }
+
+.date-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--nb-ink-3);
+  background: var(--nb-surface-2);
+  border: 1px solid var(--nb-border);
+  border-radius: var(--nb-radius-pill);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.date-preset-btn:hover { background: var(--nb-surface-3); border-color: var(--nb-border-strong); color: var(--nb-ink); }
+.date-preset-btn.active { background: var(--nb-primary-light); border-color: var(--nb-primary); color: var(--nb-primary); font-weight: 700; }
+
+.preset-btn {
+  border-radius: var(--nb-radius-pill) !important;
+  font-weight: 600;
+}
+.preset-btn.active { box-shadow: 0 0 0 3px var(--nb-primary-light); }
+
+/* select2-input asli tetap proporsional sebelum di-initialize */
+.select2-search {
+  width: 100%;
+}
+.no-select2 { /* native select: pertahankan gaya form-control standar */ }
+
+/* ── 23.3 Buttons & actions ─────────────────────────────────────────── */
+.sm-btn-primary,
+.sm-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sm-btn-primary { color: var(--nb-on-accent); background: var(--nb-primary); border-color: var(--nb-primary); }
+.sm-btn-primary:hover { background: var(--nb-primary-deep); border-color: var(--nb-primary-deep); transform: translateY(-1px); }
+.sm-btn-danger { color: var(--nb-on-accent); background: var(--nb-danger); border-color: var(--nb-danger); }
+.sm-btn-danger:hover { background: var(--nb-danger-dark); border-color: var(--nb-danger-dark); transform: translateY(-1px); }
+
+.btn-soft-refresh {
+  background: var(--nb-surface-2);
+  border-color: var(--nb-border);
+  color: var(--nb-ink-3);
+}
+.btn-soft-refresh:hover {
+  background: var(--nb-primary-light);
+  border-color: var(--nb-primary);
+  color: var(--nb-primary);
+}
+.btn-soft-refresh i { transition: transform 0.4s var(--ease-out, ease); }
+.btn-soft-refresh:hover i { transform: rotate(150deg); }
+
+.btn-action-delete { color: var(--nb-ink-4); }
+.btn-action-delete:hover { background: var(--nb-danger-light); color: var(--nb-danger); }
+
+.confirm-submit { cursor: pointer; }
+
+/* ── 23.4 Cards, surfaces & page scaffolding ────────────────────────── */
+.page-title-box { flex-wrap: wrap; gap: 0.5rem 1rem; }
+.page-title-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; }
+
+/* Stat-card turunan dashboard (dash-stat) */
+.stat-card.dash-stat { cursor: pointer; }
+.stat-card.dash-stat:hover { transform: translateY(-2px); box-shadow: var(--nb-shadow); border-color: var(--nb-border-strong); }
+
+.box-stat-data { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.box-stat-digital .box-stat-icon { background: var(--nb-success-light); color: var(--nb-success); }
+
+.activity-user-info { flex: 1; min-width: 0; }
+
+/* Detail-card header/body (berita acara) */
+.dc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.15rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--nb-ink);
+  border-bottom: 1px solid var(--nb-border-light);
+  background: var(--nb-surface-2);
+  border-radius: var(--nb-radius) var(--nb-radius) 0 0;
+}
+.dc-header i { font-size: 1rem; }
+.dc-body { padding: 1.15rem; }
+
+.empty-icon {
+  font-size: 2.4rem;
+  color: var(--nb-ink-3);
+  opacity: 0.45;
+}
+
+.badge-soft-brand { background: var(--nb-primary-light); color: var(--nb-primary); }
+
+.version-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--nb-primary);
+  background: var(--nb-primary-light);
+  border-radius: var(--nb-radius-pill);
+}
+
+.sidebar-version {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--nb-ink-4);
+  border-top: 1px solid var(--nb-border-light);
+  letter-spacing: 0.02em;
+}
+.version-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nb-success);
+  box-shadow: 0 0 0 3px var(--nb-success-light);
+  flex-shrink: 0;
+}
+
+.auth-appname {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--nb-ink);
+}
+.auth-appname i { color: var(--nb-primary); }
+
+.signature-space { background: repeating-linear-gradient(to bottom, transparent 0 54px, var(--nb-border-light) 54px 55px); }
+
+.st-badge.overdue,
+.overdue { background: var(--nb-danger-light); color: var(--nb-danger); }
+
+/* Gradient header (OCR & page mastheads) */
+.gradient-header {
+  position: relative;
+  overflow: hidden;
+  padding: 1.4rem 1.6rem;
+  border-radius: var(--nb-radius-lg);
+  background: linear-gradient(135deg, var(--nb-primary-deep) 0%, var(--nb-primary) 55%, var(--nb-indigo) 100%);
+  color: #fff;
+  box-shadow: var(--nb-shadow-sm);
+}
+.gradient-header .title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.gradient-header .subtitle {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0.25rem 0 0;
+}
+
+/* ── 23.5 Page heroes (konsisten dengan .arsip-hero dkk) ────────────── */
+.ba-detail-hero,
+.history-hero,
+.versions-hero,
+.permission-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--nb-radius);
+  background: linear-gradient(135deg, var(--nb-primary-deep) 0%, var(--nb-primary) 100%);
+  color: #fff;
+  margin-bottom: 1.25rem;
+}
+.ba-detail-hero::before,
+.history-hero::before,
+.versions-hero::before,
+.permission-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px 120px at 85% -30%, rgba(255, 255, 255, 0.22), transparent 60%);
+  pointer-events: none;
+}
+
+/* ── 23.6 Tables ────────────────────────────────────────────────────── */
+.premium-table { font-size: 0.8rem; }
+.premium-table thead th {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--nb-ink-3);
+  border-bottom: 2px solid var(--nb-border) !important;
+  white-space: nowrap;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--nb-border);
+  border-radius: var(--nb-radius);
+  background: var(--nb-surface);
+}
+
+/* ── 23.7 Blockchain explorer ───────────────────────────────────────── */
+.explorer-main { min-width: 0; flex: 1; }
+.explorer-side { width: min(340px, 100%); flex-shrink: 0; }
+.hash-preview {
+  font-family: var(--nb-font-mono);
+  font-size: 0.72rem;
+  color: var(--nb-ink-3);
+  background: var(--nb-surface-2);
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid var(--nb-border-light);
+}
+
+/* ── 23.8 JS hooks (tanpa styling visual) ───────────────────────────── */
+.js-integration-test,
+.js-integration-push,
+.js-integration-delete { /* JS selector hooks */ }
+
+/* ── 23.9 Fade-up animation (konsolidasi global) ────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.35s ease both; }
+.fade-up-d1 { animation: fadeUp 0.35s ease 0.08s both; }
+.fade-up-d2 { animation: fadeUp 0.35s ease 0.14s both; }
+.fade-up-d3 { animation: fadeUp 0.35s ease 0.2s both; }
+.fade-up-d4 { animation: fadeUp 0.35s ease 0.26s both; }
+@media (prefers-reduced-motion: reduce) {
+  .fade-up, .fade-up-d1, .fade-up-d2, .fade-up-d3, .fade-up-d4 { animation: none; }
+}
+/* ── 23.10 Temuan audit residual ─────────────────────────────────────── */
+.datatable { width: 100% !important; }
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.25rem;
+}
+.shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--nb-ink-2);
+  background: var(--nb-surface-2);
+  border: 1px solid var(--nb-border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  font-family: var(--nb-font-mono);
 }

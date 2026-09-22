@@ -19,26 +19,29 @@ Aplikasi manajemen arsip berbasis web dengan fitur pemindahan, pemusnahan, pemin
 
 | Komponen | Minimal |
 |----------|---------|
-| Go | 1.21+ |
+| Go | 1.25+ |
 | MySQL / MariaDB | 8.0+ / 10.5+ (Aiven direkomendasikan untuk production) |
 | RAM | 512 MB |
 | Storage | 100 MB (aplikasi) + data arsip |
 
+> **Struktur tabel dibuat otomatis saat pertama kali server dijalankan** (AutoMigrate +
+> seed admin). Tidak perlu mengimpor dump SQL. Kredensial database diatur lewat `.env`
+> atau menu **Pengaturan → Database** di aplikasi.
+
 ## ⚡ Cara Instalasi (1 menit)
 
-### 1. Setup Otomatis
+### 1. Setup & Jalankan (Linux / macOS / WSL)
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+cp .env.example .env      # isi DB_HOST / DB_USERNAME / DB_PASSWORD
+chmod +x run.sh
+./run.sh                  # cek prasyarat, build, dan jalankan server
 ```
 
-Script akan:
-- Memeriksa Go dan MySQL/MariaDB
-- Membuat database jika belum ada
-- Mengunduh dependensi Go
-- Membangun binary
-- Menawarkan untuk menjalankan server
+`run.sh` mengecek Go & MySQL/MariaDB, membuat database jika perlu, mengunduh dependensi,
+membangun binary, dan menjalankan server dengan hot-reload (Air).
+
+Windows: gunakan `run.bat` (CMD) atau `run.ps1` (PowerShell).
 
 ### 2. Manual
 
@@ -47,6 +50,7 @@ Script akan:
 cd simarc
 
 # Edit konfigurasi database
+cp .env.example .env
 nano .env
 
 # Unduh dependensi
