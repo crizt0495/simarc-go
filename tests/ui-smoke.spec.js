@@ -41,7 +41,7 @@ const MAIN_ROUTES = [
   '/unit-kerja', '/users', '/roles', '/peminjaman', '/pemberkasan',
   '/pemusnahan', '/disposal', '/jadwal-retensi', '/pengaturan',
   '/pengaturan/system', '/profil', '/advanced/integrations', '/blockchain',
-  '/settings', '/laporan', '/laporan/arsip', '/laporan/statistik',
+  '/settings', '/laporan', '/laporan/arsip',
   '/advanced/import-export', '/backup', '/monitoring/retensi', '/ocr', '/search',
 ];
 

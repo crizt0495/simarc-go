@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   function isKnown(p) {
-    var known = ['/dashboard','/advanced/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/advanced/integrations','/blockchain','/qrcode','/ocr','/profil','/retention'];
+    var known = ['/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/advanced/integrations','/blockchain','/qrcode','/ocr','/profil','/retention'];
     return known.indexOf(p) !== -1;
   }
   bc.innerHTML = html;
@@ -697,9 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
         <a href="/peminjaman/create" class="mobile-more-item">
           <i class="bi bi-file-earmark-arrow-up"></i><span>Permohonan</span>
         </a>
-        <a href="/advanced/dashboard" class="mobile-more-item">
-          <i class="bi bi-cpu"></i><span>Analitik</span>
-        </a>
       </div>
     </div>
 
@@ -756,9 +753,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </a>
         <a href="/laporan/aktivitas" class="mobile-more-item">
           <i class="bi bi-clock-history"></i><span>Log Aktivitas</span>
-        </a>
-        <a href="/laporan/statistik" class="mobile-more-item">
-          <i class="bi bi-pie-chart"></i><span>Statistik</span>
         </a>
         <a href="/monitoring/retensi" class="mobile-more-item">
           <i class="bi bi-clock"></i><span>Monitoring Retensi</span>

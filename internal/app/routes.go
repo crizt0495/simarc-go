@@ -38,7 +38,6 @@ func registerRoutes(r *gin.Engine) {
 
 	// New handlers
 	disposalH := &handlers.DisposalHandler{}
-	advDashH := &handlers.AdvancedDashboardHandler{}
 	integrationH := &handlers.IntegrationHandler{}
 	importExportH := &handlers.ImportExportHandler{}
 	laporanExpH := &handlers.LaporanExportHandler{}
@@ -331,9 +330,6 @@ func registerRoutes(r *gin.Engine) {
 			database.DB.Preload("User").Order("created_at DESC").Limit(100).Find(&list)
 			handlers.Render(c, 200, "laporan/aktivitas.html", gin.H{"title": "Laporan Aktivitas", "pageTitle": "Laporan Aktivitas", "list": list})
 		})
-		auth.GET("/laporan/statistik", laporanExpH.Statistik)
-		auth.GET("/laporan/statistik/export-pdf", laporanExpH.StatistikPDF)
-		auth.GET("/laporan/statistik/export-excel", laporanExpH.StatistikExcel)
 		auth.GET("/laporan/klasifikasi", laporanExpH.KlasifikasiDetail)
 
 		// Laporan per Lokasi
@@ -458,11 +454,6 @@ func registerRoutes(r *gin.Engine) {
 	advanced := r.Group("/advanced")
 	advanced.Use(middleware.Auth())
 	{
-		// Advanced Dashboard
-		advanced.GET("/dashboard", advDashH.Index)
-		advanced.GET("/dashboard/widget/:widgetKey", advDashH.GetWidgetData)
-		advanced.POST("/dashboard/widgets", advDashH.SaveWidgetConfig)
-
 		// Integration Hub
 		advanced.GET("/integrations", integrationH.Index)
 		advanced.GET("/integrations/create", integrationH.Create)
@@ -606,7 +597,6 @@ func registerRoutes(r *gin.Engine) {
 	apiv1.Use(middleware.Auth())
 	{
 		apiv1.POST("/search", premiumAPIH.SmartSearch)
-		apiv1.GET("/analytics", premiumAPIH.Analytics)
 		apiv1.GET("/blockchain/verify", premiumAPIH.VerifyBlockchain)
 		apiv1.GET("/blockchain/audit/:entityType/:entityId", premiumAPIH.AuditTrail)
 	}

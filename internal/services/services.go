@@ -529,7 +529,6 @@ func GetMenuItems() []MenuSection {
 	return []MenuSection{
 		{Title: "Dashboard", Icon: "bi-speedometer2", Items: []MenuItem{
 			{Label: "Dashboard", Route: "/dashboard", Icon: "bi-speedometer2"},
-			{Label: "Analitik Lanjutan", Route: "/advanced/dashboard", Icon: "bi-cpu"},
 		}},
 		{Title: "Manajemen Arsip", Icon: "bi-archive", Items: []MenuItem{
 			{Label: "Arsip", Route: "/arsip", Icon: "bi-file-earmark-text"},
@@ -558,7 +557,6 @@ func GetMenuItems() []MenuSection {
 			{Label: "Laporan Retensi", Route: "/laporan/retensi", Icon: "bi-hourglass-split"},
 			{Label: "Laporan Pemusnahan", Route: "/laporan/pemusnahan", Icon: "bi-trash"},
 			{Label: "Log Aktivitas", Route: "/laporan/aktivitas", Icon: "bi-clock-history"},
-			{Label: "Statistik", Route: "/laporan/statistik", Icon: "bi-pie-chart"},
 		}},
 		{Title: "Monitoring & Jadwal Retensi", Icon: "bi-graph-up", Items: []MenuItem{
 			{Label: "Monitoring Retensi", Route: "/monitoring/retensi", Icon: "bi-clock"},
