@@ -42,7 +42,7 @@ const MAIN_ROUTES = [
   '/pemusnahan', '/disposal', '/jadwal-retensi', '/pengaturan',
   '/pengaturan/system', '/profil', '/advanced/integrations', '/blockchain',
   '/settings', '/laporan', '/laporan/arsip',
-  '/advanced/import-export', '/backup', '/monitoring/retensi', '/ocr', '/search',
+  '/backup', '/monitoring/retensi', '/ocr', '/search',
 ];
 
 test.setTimeout(360000);

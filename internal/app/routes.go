@@ -39,7 +39,6 @@ func registerRoutes(r *gin.Engine) {
 	// New handlers
 	disposalH := &handlers.DisposalHandler{}
 	integrationH := &handlers.IntegrationHandler{}
-	importExportH := &handlers.ImportExportHandler{}
 	laporanExpH := &handlers.LaporanExportHandler{}
 	backupAdvH := &handlers.BackupAdvancedHandler{}
 
@@ -470,30 +469,6 @@ func registerRoutes(r *gin.Engine) {
 		advanced.POST("/integrations/:id/push", integrationH.PushToSheet)
 		advanced.GET("/integrations/log/:logId", integrationH.ShowLog)
 		advanced.GET("/integrations/:id/status", integrationH.Status)
-
-		// Import/Export
-		advanced.GET("/import-export", importExportH.Index)
-		advanced.GET("/import-export/import", importExportH.ShowImportForm)
-		advanced.POST("/import-export/import", importExportH.ProcessImport)
-		advanced.GET("/import-export/export", importExportH.ShowExportForm)
-		advanced.POST("/import-export/export", importExportH.ProcessExport)
-		advanced.GET("/import-export/template/:type", importExportH.DownloadTemplate)
-		advanced.GET("/import-export/job/:jobId", importExportH.ShowJob)
-		advanced.GET("/import-export/job/:jobId/download", importExportH.DownloadResult)
-		advanced.GET("/import-export/job/:jobId/progress", importExportH.Progress)
-		advanced.POST("/import-export/job/:jobId/retry", importExportH.Retry)
-
-		// QR Code (advanced)
-		advanced.GET("/qrcode", qrH.Index)
-		advanced.GET("/qrcode/:qrCodeId", qrH.Show)
-		advanced.GET("/qrcode/:qrCodeId/download", qrH.Download)
-		advanced.POST("/qrcode/bulk-generate", qrH.BulkGenerate)
-		advanced.POST("/qrcode/scan", qrH.ScanAPI)
-		advanced.POST("/qrcode/:qrCodeId/deactivate", qrH.Deactivate)
-		advanced.GET("/qrcode/arsip/:arsipId/location", qrH.CheckLocation)
-		advanced.GET("/qrcode/location", qrH.GetByLocation)
-		advanced.GET("/qrcode/scanner", qrH.Scanner)
-		advanced.POST("/qrcode/generate/:arsipId", qrH.Generate)
 
 		// Retention (advanced)
 		advanced.GET("/retention", jadwalH.Index)

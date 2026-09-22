@@ -424,10 +424,8 @@ document.addEventListener('DOMContentLoaded', function() {
     'backup': 'Backup & Restore',
     'integrations': 'Integrasi Google Sheet',
     'blockchain': 'Blockchain Audit',
-    'qrcode': 'QR Code',
     'ocr': 'OCR',
     'profil': 'Profil Saya',
-    'import-export': 'Impor & Ekspor',
     'disposal': 'Pemusnahan'
   };
   var named = {
@@ -480,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   function isKnown(p) {
-    var known = ['/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/advanced/integrations','/blockchain','/qrcode','/ocr','/profil','/retention'];
+    var known = ['/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/advanced/integrations','/blockchain','/ocr','/profil','/retention'];
     return known.indexOf(p) !== -1;
   }
   bc.innerHTML = html;

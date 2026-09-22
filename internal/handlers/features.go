@@ -447,39 +447,6 @@ func (h *LaporanHandler) Pemusnahan(c *gin.Context) {
 
 type QrCodeHandler struct{}
 
-func (h *QrCodeHandler) Index(c *gin.Context) {
-	var total, active, totalScans, totalBoxes, totalArchives int64
-	database.DB.Model(&models.QrCode{}).Count(&total)
-	database.DB.Model(&models.QrCode{}).Where("is_active = 1").Count(&active)
-	database.DB.Model(&models.QrScanLog{}).Count(&totalScans)
-	database.DB.Model(&models.QrCode{}).Where("qr_type = 'box'").Count(&totalBoxes)
-	database.DB.Model(&models.QrCode{}).Where("qr_type = 'arsip'").Count(&totalArchives)
-
-	var recentScans []models.QrScanLog
-	database.DB.Order("scanned_at DESC").Limit(10).Find(&recentScans)
-
-	var qrCodes []models.QrCode
-	database.DB.Preload("Arsip").Order("created_at DESC").Limit(50).Find(&qrCodes)
-
-	Render(c, 200, "qrcode/index.html", gin.H{
-		"title": "QR Code - SIMARC", "pageTitle": "Manajemen QR Code",
-		"recentScans": recentScans, "qrCodes": qrCodes,
-		"Stats": gin.H{
-			"TotalQr":    total,
-			"Active":     active,
-			"TotalScans": totalScans,
-			"Boxes":      totalBoxes,
-			"Archives":   totalArchives,
-		},
-	})
-}
-
-func (h *QrCodeHandler) Scanner(c *gin.Context) {
-	Render(c, 200, "qrcode/scanner.html", gin.H{
-		"title": "QR Scanner", "pageTitle": "QR Code Scanner",
-	})
-}
-
 func (h *QrCodeHandler) Generate(c *gin.Context) {
 	arsipID := c.Param("arsipId")
 	if arsipID == "" {
@@ -514,22 +481,6 @@ func (h *QrCodeHandler) Generate(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/arsip/"+arsipID)
 }
 
-func (h *QrCodeHandler) Download(c *gin.Context) {
-	id := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.First(&qr, "id = ?", id).Error; err != nil || qr.QrCodePath == "" {
-		c.String(http.StatusNotFound, "QR Code tidak ditemukan")
-		return
-	}
-	if _, err := os.Stat(qr.QrCodePath); os.IsNotExist(err) {
-		c.String(http.StatusNotFound, "File QR Code tidak ditemukan di server")
-		return
-	}
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=qr_%s.png", qr.ID))
-	c.Header("Content-Type", "image/png")
-	c.File(qr.QrCodePath)
-}
-
 func (h *QrCodeHandler) DownloadByArsip(c *gin.Context) {
 	arsipID := c.Param("id")
 	var qr models.QrCode
@@ -544,188 +495,6 @@ func (h *QrCodeHandler) DownloadByArsip(c *gin.Context) {
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=qr_%s.png", arsipID))
 	c.Header("Content-Type", "image/png")
 	c.File(qr.QrCodePath)
-}
-
-func (h *QrCodeHandler) Show(c *gin.Context) {
-	id := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.Preload("Arsip").First(&qr, "id = ?", id).Error; err != nil {
-		c.Redirect(http.StatusFound, "/qrcode")
-		return
-	}
-	var scanLogs []models.QrScanLog
-	database.DB.Where("qr_code_id = ?", qr.ID).Order("scanned_at DESC").Limit(20).Find(&scanLogs)
-	Render(c, 200, "qrcode/show.html", gin.H{
-		"title": "Detail QR Code", "pageTitle": "Detail QR Code",
-		"qr": qr, "scanLogs": scanLogs,
-	})
-}
-
-func (h *QrCodeHandler) Scan(c *gin.Context) {
-	// Log scan
-	qrID := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.Preload("Arsip").First(&qr, "id = ?", qrID).Error; err != nil {
-		Render404(c)
-		return
-	}
-
-	user := middleware.GetCurrentUser(c)
-	userID := ""
-	if user != nil {
-		userID = user.ID
-	}
-
-	now := time.Now()
-	log := models.QrScanLog{
-		QrCodeID:  qr.ID,
-		UserID:    &userID,
-		IPAddress: c.ClientIP(),
-		UserAgent: c.Request.UserAgent(),
-		ScannedAt: now,
-		CreatedAt: now,
-	}
-	if c.Query("action") != "" {
-		log.Action = c.Query("action")
-	}
-	database.DB.Create(&log)
-
-	// Update scan count
-	database.DB.Model(&qr).Updates(map[string]interface{}{
-		"scan_count":      qr.ScanCount + 1,
-		"last_scanned_at": now,
-		"last_scanned_by": &userID,
-	})
-
-	if qr.ArsipID != nil {
-		c.Redirect(http.StatusFound, "/arsip/"+*qr.ArsipID)
-	} else {
-		c.Redirect(http.StatusFound, "/dashboard")
-	}
-}
-
-func (h *QrCodeHandler) ScanAPI(c *gin.Context) {
-	action := c.PostForm("action")
-	qrData := c.PostForm("qr_data")
-
-	if qrData == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "QR data kosong"})
-		return
-	}
-
-	var qr models.QrCode
-	if err := database.DB.Preload("Arsip").Where("qr_data = ?", qrData).First(&qr).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "QR Code tidak ditemukan"})
-		return
-	}
-
-	user := middleware.GetCurrentUser(c)
-	userID := ""
-	if user != nil {
-		userID = user.ID
-	}
-
-	now := time.Now()
-	log := models.QrScanLog{
-		QrCodeID:  qr.ID,
-		UserID:    &userID,
-		Action:    action,
-		IPAddress: c.ClientIP(),
-		UserAgent: c.Request.UserAgent(),
-		ScannedAt: now,
-		CreatedAt: now,
-	}
-	database.DB.Create(&log)
-
-	database.DB.Model(&qr).Updates(map[string]interface{}{
-		"scan_count":      qr.ScanCount + 1,
-		"last_scanned_at": now,
-		"last_scanned_by": &userID,
-	})
-
-	result := gin.H{"success": true, "qr": qr}
-	if qr.Arsip != nil {
-		result["arsip"] = qr.Arsip
-	}
-	c.JSON(http.StatusOK, result)
-}
-
-func (h *QrCodeHandler) BulkGenerate(c *gin.Context) {
-	arsipIDs := c.PostFormArray("arsip_ids[]")
-	if len(arsipIDs) == 0 {
-		middleware.SetFlash(c, "error", "Pilih minimal satu arsip.")
-		c.Redirect(http.StatusFound, "/qrcode")
-		return
-	}
-
-	qrDir := config.QRCodeDir()
-	os.MkdirAll(qrDir, 0755)
-
-	count := 0
-	for _, arsipID := range arsipIDs {
-		var arsip models.Arsip
-		if database.DB.First(&arsip, "id = ?", arsipID).Error != nil {
-			continue
-		}
-
-		filename := fmt.Sprintf("qr_%s.png", arsip.ID)
-		path := filepath.Join(qrDir, filename)
-		qrData := fmt.Sprintf("/arsip/%s", arsip.ID)
-
-		if err := qrcode.WriteFile(qrData, qrcode.Medium, 256, path); err != nil {
-			continue
-		}
-
-		database.DB.Where("arsip_id = ?", arsipID).Delete(&models.QrCode{})
-		qr := models.QrCode{
-			ID: uuid.New().String(), ArsipID: &arsipID,
-			QrType: "arsip", QrCodePath: path, QrData: qrData, IsActive: true,
-		}
-		database.DB.Create(&qr)
-		count++
-	}
-
-	middleware.SetFlash(c, "success", fmt.Sprintf("%d QR Code berhasil dibuat.", count))
-	c.Redirect(http.StatusFound, "/qrcode")
-}
-
-func (h *QrCodeHandler) Deactivate(c *gin.Context) {
-	id := c.Param("id")
-	database.DB.Model(&models.QrCode{}).Where("id = ?", id).Update("is_active", false)
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-func (h *QrCodeHandler) CheckLocation(c *gin.Context) {
-	arsipID := c.Param("arsipId")
-	var qr models.QrCode
-	if err := database.DB.Where("arsip_id = ?", arsipID).First(&qr).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "QR Code tidak ditemukan"})
-		return
-	}
-	location := map[string]interface{}{
-		"box_number":    qr.BoxNumber,
-		"shelf":         qr.ShelfLocation,
-		"room":          qr.RoomLocation,
-		"location_data": qr.LocationData,
-		"scan_count":    qr.ScanCount,
-		"last_scanned":  qr.LastScannedAt,
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "location": location})
-}
-
-func (h *QrCodeHandler) GetByLocation(c *gin.Context) {
-	boxNumber := c.Query("box")
-	shelf := c.Query("shelf")
-	db := database.DB.Model(&models.QrCode{}).Preload("Arsip")
-	if boxNumber != "" {
-		db = db.Where("box_number = ?", boxNumber)
-	}
-	if shelf != "" {
-		db = db.Where("shelf_location = ?", shelf)
-	}
-	var list []models.QrCode
-	db.Find(&list)
-	c.JSON(http.StatusOK, gin.H{"data": list})
 }
 
 // ── OCR ───────────────────────────────────────────────────────────────────────
@@ -1549,7 +1318,6 @@ func HealthCheck(c *gin.Context) {
 }
 
 
-
 // ── BACKUP HELPERS ────────────────────────────────────────────────────────────
 
 func respondProgress(c *gin.Context, isJSON bool, msg string) error {
@@ -1584,3 +1352,4 @@ func removePageParam(rawQuery string) string {
 	}
 	return strings.Join(filtered, "&")
 }
+
