@@ -71,7 +71,7 @@
             <form class="row g-2 mb-3" method="GET" action="/lokasi-arsip">
                 <div class="col-md-6">
                     <div class="input-group">
-                        <input type="text" class="form-control" name="search" placeholder="Cari nama lokasi atau deskripsi..." value="{{.Search}}" style="font-size:0.85rem;">
+                        <input type="text" class="form-control" name="search" placeholder="Cari nama lokasi atau deskripsi..." aria-label="Pencarian lokasi" value="{{.Search}}" style="font-size:0.85rem;">
                         <button class="btn btn-primary" type="submit" style="font-size:0.85rem;" aria-label="Cari">
                             <i class="bi bi-search"></i>
                         </button>
@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" class="form-control" name="filter_deskripsi" placeholder="Filter deskripsi..." value="{{.FilterDeskripsi}}" style="font-size:0.85rem;">
+                    <input type="text" class="form-control" name="filter_deskripsi" placeholder="Filter deskripsi..." aria-label="Filter deskripsi" value="{{.FilterDeskripsi}}" style="font-size:0.85rem;">
                 </div>
             </form>
             <div class="table-responsive">

@@ -567,13 +567,13 @@ mark {
                     <div class="col-12">
                         <label class="form-label">Pencarian</label>
                         <div class="search-wrap">
-                            <input type="text" class="form-control" name="search" placeholder="Cari: No. Arsip, Nama, Uraian, Klasifikasi, Unit Kerja..." value="{{.searchKeyword}}" autocomplete="off" style="font-size:0.85rem;">
+                            <input type="text" class="form-control" name="search" placeholder="Cari: No. Arsip, Nama, Uraian, Klasifikasi, Unit Kerja..." aria-label="Pencarian arsip" value="{{.searchKeyword}}" autocomplete="off" style="font-size:0.85rem;">
                             <i class="bi bi-search"></i>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Unit Kerja</label>
-                        <select class="form-select form-select-sm select2-search" name="unit_kerja_id">
+                        <select class="form-select form-select-sm select2-search" name="unit_kerja_id" aria-label="Unit Kerja">
                             <option value="">Semua Unit</option>
                             {{if .CanSeeAllUnits}}
                             {{range .unitKerjaOptions}}<option value="{{.ID}}" {{if eq $.FilterUnitKerjaID .ID}}selected{{end}}>{{.NamaUnit}}</option>{{end}}
@@ -584,7 +584,7 @@ mark {
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Status</label>
-                        <select class="form-select form-select-sm select2-search" name="status">
+                        <select class="form-select form-select-sm select2-search" name="status" aria-label="Status">
                             <option value="">Semua</option>
                             <option value="aktif" {{if eq .FilterStatus "aktif"}}selected{{end}}>Aktif</option>
                             <option value="inaktif" {{if eq .FilterStatus "inaktif"}}selected{{end}}>Inaktif</option>
@@ -595,36 +595,36 @@ mark {
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Klasifikasi</label>
-                        <select class="form-select form-select-sm select2-search" name="kode_klasifikasi_id">
+                        <select class="form-select form-select-sm select2-search" name="kode_klasifikasi_id" aria-label="Klasifikasi">
                             <option value="">Semua</option>
                             {{range .kodeKlasifikasiOptions}}<option value="{{.ID}}" {{if eq $.FilterKlasifikasiID .ID}}selected{{end}}>{{.KodeKlasifikasi}} - {{truncate .NamaKlasifikasi 25}}</option>{{end}}
                         </select>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Lokasi</label>
-                        <select class="form-select form-select-sm select2-search" name="lokasi_arsip_id">
+                        <select class="form-select form-select-sm select2-search" name="lokasi_arsip_id" aria-label="Lokasi">
                             <option value="">Semua</option>
                             {{range .lokasiArsipOptions}}<option value="{{.ID}}" {{if eq $.FilterLokasiID .ID}}selected{{end}}>{{.NamaLokasi}}</option>{{end}}
                         </select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Kategori Arsip</label>
-                        <select class="form-select form-select-sm select2-search" name="jenis_arsip_id">
+                        <select class="form-select form-select-sm select2-search" name="jenis_arsip_id" aria-label="Kategori Arsip">
                             <option value="">Semua</option>
                             {{range .jenisArsipOptions}}<option value="{{.ID}}" {{if eq (printf "%v" $.FilterJenisArsipID) (printf "%v" .ID)}}selected{{end}}>{{.NamaJenis}}</option>{{end}}
                         </select>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Tgl Mulai</label>
-                        <input type="date" class="form-control form-control-sm" name="start_date" value="{{.FilterStartDate}}" style="font-size:0.85rem;">
+                        <input type="date" class="form-control form-control-sm" name="start_date" value="{{.FilterStartDate}}" aria-label="Tanggal Mulai" style="font-size:0.85rem;">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Tgl Akhir</label>
-                        <input type="date" class="form-control form-control-sm" name="end_date" value="{{.FilterEndDate}}" style="font-size:0.85rem;">
+                        <input type="date" class="form-control form-control-sm" name="end_date" value="{{.FilterEndDate}}" aria-label="Tanggal Akhir" style="font-size:0.85rem;">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Berkas Digital</label>
-                        <select class="form-select form-select-sm" name="status_berkas_digital">
+                        <select class="form-select form-select-sm" name="status_berkas_digital" aria-label="Berkas Digital">
                             <option value="">Semua</option>
                             <option value="sudah_ada" {{if eq .FilterBerkasDigital "sudah_ada"}}selected{{end}}>Ada Berkas</option>
                             <option value="belum_ada" {{if eq .FilterBerkasDigital "belum_ada"}}selected{{end}}>Belum Ada</option>
@@ -632,22 +632,22 @@ mark {
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Pemberkasan</label>
-                        <select class="form-select form-select-sm" name="pemberkasan_id">
+                        <select class="form-select form-select-sm" name="pemberkasan_id" aria-label="Pemberkasan">
                             <option value="">Semua</option>
                             {{range .pemberkasanOptions}}<option value="{{.ID}}" {{if eq $.FilterPemberkasanID .ID}}selected{{end}}>{{.NamaPemberkasan}}</option>{{end}}
                         </select>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Nilai Min</label>
-                        <input type="number" step="0.01" class="form-control form-control-sm" name="nilai_min" value="{{.FilterNilaiMin}}" placeholder="0" style="font-size:0.85rem;">
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="nilai_min" value="{{.FilterNilaiMin}}" placeholder="0" aria-label="Nilai Minimum" style="font-size:0.85rem;">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Nilai Max</label>
-                        <input type="number" step="0.01" class="form-control form-control-sm" name="nilai_max" value="{{.FilterNilaiMax}}" placeholder="1000000" style="font-size:0.85rem;">
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="nilai_max" value="{{.FilterNilaiMax}}" placeholder="1000000" aria-label="Nilai Maksimum" style="font-size:0.85rem;">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Urutkan</label>
-                        <select class="form-select form-select-sm" name="sort_by">
+                        <select class="form-select form-select-sm" name="sort_by" aria-label="Urutkan">
                             <option value="" {{if eq .FilterSortBy ""}}selected{{end}}>Default</option>
                             <option value="nomor_arsip" {{if eq .FilterSortBy "nomor_arsip"}}selected{{end}}>No. Arsip</option>
                             <option value="nama_arsip" {{if eq .FilterSortBy "nama_arsip"}}selected{{end}}>Nama</option>
@@ -658,14 +658,14 @@ mark {
                     </div>
                     <div class="col-md-1">
                         <label class="form-label">Arah</label>
-                        <select class="form-select form-select-sm" name="sort_order">
+                        <select class="form-select form-select-sm" name="sort_order" aria-label="Arah pengurutan">
                             <option value="ASC" {{if eq .FilterSortOrder "ASC"}}selected{{end}}>↑</option>
                             <option value="DESC" {{if eq .FilterSortOrder "DESC"}}selected{{end}}>↓</option>
                         </select>
                     </div>
                     <div class="col-md-1">
                         <label class="form-label">Tampil</label>
-                        <select class="form-select form-select-sm" name="per_page">
+                        <select class="form-select form-select-sm" name="per_page" aria-label="Jumlah per halaman">
                             <option value="10" {{if eq $.PerPage 10}}selected{{end}}>10</option>
                             <option value="25" {{if eq $.PerPage 25}}selected{{end}}>25</option>
                             <option value="50" {{if eq $.PerPage 50}}selected{{end}}>50</option>
@@ -725,7 +725,7 @@ mark {
         </div>
         <div>
             <form id="exportSearchForm" method="POST" action="/arsip/export-search" class="d-flex gap-2">
-                <select name="export_format" class="form-select form-select-sm" style="width:auto;font-size:0.75rem">
+                <select name="export_format" class="form-select form-select-sm" aria-label="Format ekspor" style="width:auto;font-size:0.75rem">
                     <option value="excel">Excel</option>
                     <option value="csv">CSV</option>
                     <option value="pdf">PDF</option>

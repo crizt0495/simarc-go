@@ -113,7 +113,7 @@
             <form method="GET" action="/monitoring/retensi" class="row g-2 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Status Retensi</label>
-                    <select class="form-select" name="status_filter" style="font-size:0.85rem;">
+                    <select class="form-select" name="status_filter" aria-label="Filter status" style="font-size:0.85rem;">
                         <option value="">Semua Status</option>
                         <option value="sudah_berakhir" {{if eq .FilterStatus "sudah_berakhir"}}selected{{end}}>⚠️ Sudah Berakhir</option>
                         <option value="akan_berakhir" {{if eq .FilterStatus "akan_berakhir"}}selected{{end}}>⏰ Akan Berakhir</option>
@@ -131,7 +131,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Cari Arsip</label>
-                    <input type="text" class="form-control" name="search" placeholder="Ketik nama/nomor arsip..." value="{{.FilterSearch}}" style="font-size:0.85rem;">
+                    <input type="text" class="form-control" name="search" placeholder="Ketik nama/nomor arsip..." aria-label="Pencarian retensi" value="{{.FilterSearch}}" style="font-size:0.85rem;">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100" style="font-size:0.85rem;"><i class="bi bi-search me-1"></i>Filter</button>

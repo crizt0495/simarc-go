@@ -268,7 +268,7 @@
     <div class="bk-list-toolbar">
         <h5><span class="ic"><i class="bi bi-archive"></i></span> Backup Files</h5>
         <div class="bk-tools">
-            <select class="form-select form-select-sm no-select2 bk-filter" id="filterBackup" onchange="filterBackups()">
+            <select class="form-select form-select-sm no-select2 bk-filter" id="filterBackup" onchange="filterBackups()" aria-label="Filter backup">
                 <option value="all">All Backups</option>
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
@@ -330,7 +330,7 @@
             <div class="col-md-6">
                 <label class="form-label small fw-bold">File Backup</label>
                 <div class="bk-file-input">
-                    <input type="file" name="backup_file" accept=".sql,.sql.gz,.enc" required>
+                    <input type="file" name="backup_file" accept=".sql,.sql.gz,.enc" required aria-label="File backup">
                     <div class="bk-file-drop">
                         <i class="bi bi-cloud-arrow-up"></i>
                         <div>
@@ -342,7 +342,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label small fw-bold">Mode Restore</label>
-                <select class="form-select" name="restore_mode">
+                <select class="form-select" name="restore_mode" aria-label="Mode restore">
                     <option value="overwrite">Overwrite Existing</option>
                     <option value="merge">Merge (Skip Duplicates)</option>
                 </select>
@@ -379,11 +379,11 @@
         <div class="row g-3">
             <div class="col-md-6">
                 <label class="form-label small fw-bold">OAuth Client ID</label>
-                <input type="text" class="form-control" id="gdriveClientId" placeholder="1234567890-xxxxxxxx.apps.googleusercontent.com" value="{{.GDriveClientID}}">
+                <input type="text" class="form-control" id="gdriveClientId" placeholder="1234567890-xxxxxxxx.apps.googleusercontent.com" aria-label="Google Drive Client ID" value="{{.GDriveClientID}}">
             </div>
             <div class="col-md-4">
                 <label class="form-label small fw-bold">Folder ID (opsional)</label>
-                <input type="text" class="form-control" id="gdriveFolderId" placeholder="Kosongkan untuk root Drive" value="{{.GDriveFolderID}}">
+                <input type="text" class="form-control" id="gdriveFolderId" placeholder="Kosongkan untuk root Drive" aria-label="Google Drive Folder ID" value="{{.GDriveFolderID}}">
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <button class="btn btn-primary w-100" onclick="gdriveSaveSettings()" style="border-radius:10px;font-weight:600;"><i class="bi bi-save"></i> Simpan</button>

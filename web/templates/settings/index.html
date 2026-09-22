@@ -24,11 +24,11 @@
                         </label>
                         <div class="d-flex gap-2">
                             <input type="color" class="form-control form-control-color" 
-                                   id="primary_color" name="primary_color" 
+                                   id="primary_color" name="primary_color" aria-label="Warna primer" 
                                    value="{{.ThemeSettings.primary_color}}"
                                    style="width: 60px; height: 45px;">
                             <input type="text" class="form-control" 
-                                   id="primary_color_text" 
+                                   id="primary_color_text" aria-label="Kode warna primer" 
                                    value="{{.ThemeSettings.primary_color}}"
                                    placeholder="var(--ink-2)">
                         </div>
@@ -41,11 +41,11 @@
                         </label>
                         <div class="d-flex gap-2">
                             <input type="color" class="form-control form-control-color" 
-                                   id="secondary_color" name="secondary_color" 
+                                   id="secondary_color" name="secondary_color" aria-label="Warna sekunder" 
                                    value="{{.ThemeSettings.secondary_color}}"
                                    style="width: 60px; height: 45px;">
                             <input type="text" class="form-control" 
-                                   id="secondary_color_text" 
+                                   id="secondary_color_text" aria-label="Kode warna sekunder" 
                                    value="{{.ThemeSettings.secondary_color}}"
                                    placeholder="var(--ink-3)">
                         </div>
@@ -58,11 +58,11 @@
                         </label>
                         <div class="d-flex gap-2">
                             <input type="color" class="form-control form-control-color" 
-                                   id="accent_color" name="accent_color" 
+                                   id="accent_color" name="accent_color" aria-label="Warna aksen" 
                                    value="{{.ThemeSettings.accent_color}}"
                                    style="width: 60px; height: 45px;">
                             <input type="text" class="form-control" 
-                                   id="accent_color_text" 
+                                   id="accent_color_text" aria-label="Kode warna aksen" 
                                    value="{{.ThemeSettings.accent_color}}"
                                    placeholder="var(--ink-3)">
                         </div>
@@ -75,7 +75,7 @@
                         <label class="form-label fw-semibold">
                             <i class="bi bi-layout-sidebar me-2"></i>Tema Sidebar
                         </label>
-                        <select class="form-select" name="sidebar_theme" id="sidebar_theme">
+                        <select class="form-select" name="sidebar_theme" id="sidebar_theme" aria-label="Tema sidebar">
                             <option value="light" {{if eq .ThemeSettings.sidebar_theme "light"}}selected{{end}}>
                                 🔆 Light - Terang
                             </option>
@@ -92,7 +92,7 @@
                         <label class="form-label fw-semibold">
                             <i class="bi bi-window me-2"></i>Tema Header
                         </label>
-                        <select class="form-select" name="header_theme" id="header_theme">
+                        <select class="form-select" name="header_theme" id="header_theme" aria-label="Tema header">
                             <option value="light" {{if eq .ThemeSettings.header_theme "light"}}selected{{end}}>
                                 🔆 Light - Terang
                             </option>
@@ -110,7 +110,7 @@
                             <i class="bi bi-square me-2"></i>Border Radius
                         </label>
                         <input type="range" class="form-range" 
-                               id="border_radius" name="border_radius" 
+                               id="border_radius" name="border_radius" aria-label="Radius sudut" 
                                min="0" max="30" 
                                value="{{.ThemeSettings.border_radius}}">
                         <div class="d-flex justify-content-between text-muted small">

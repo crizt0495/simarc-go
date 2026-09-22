@@ -203,7 +203,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-field">
-                            <label>Kategori Arsip</label>
+                            <label for="jenis_arsip_edit">Kategori Arsip</label>
                             <select name="jenis_arsip_id" id="jenis_arsip_edit" class="form-select select2-search">
                                 <option value="">-- Pilih Kategori --</option>
                                 {{range .jenisArsipOptions}}
@@ -216,8 +216,8 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <div class="form-field">
-                            <label>Kondisi Dokumen</label>
-                            <select name="tingkat_perkembangan" class="form-select select2-search">
+                            <label for="tingkat_perkembangan">Kondisi Dokumen</label>
+                            <select name="tingkat_perkembangan" id="tingkat_perkembangan" class="form-select select2-search">
                                 <option value="Asli" {{if eq .arsip.TingkatPerkembangan "Asli"}}selected{{end}}>Asli (Original)</option>
                                 <option value="Copy" {{if eq .arsip.TingkatPerkembangan "Copy"}}selected{{end}}>Fotokopi / Salinan</option>
                                 <option value="Salinan Resmi" {{if eq .arsip.TingkatPerkembangan "Salinan Resmi"}}selected{{end}}>Salinan Resmi</option>
@@ -237,7 +237,7 @@
                             </div>
                             <div class="col-6">
                                 <div class="form-field">
-                                    <label>Satuan <span class="required">*</span></label>
+                                    <label for="satuan_select_edit">Satuan <span class="required">*</span></label>
                                     <select name="satuan" class="form-select select2-search" id="satuan_select_edit" required>
                                         <option value="Berkas" {{if eq .arsip.Satuan "Berkas"}}selected{{end}}>Berkas</option>
                                         <option value="Lembar" {{if eq .arsip.Satuan "Lembar"}}selected{{end}}>Lembar</option>
@@ -260,8 +260,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-field">
-                            <label>Status Arsip</label>
-                            <select name="status_arsip" class="form-select select2-search">
+                            <label for="status_arsip">Status Arsip</label>
+                            <select name="status_arsip" id="status_arsip" class="form-select select2-search">
                                 <option value="aktif" {{if eq .arsip.StatusArsip "aktif"}}selected{{end}}>✔ Aktif</option>
                                 <option value="inaktif" {{if eq .arsip.StatusArsip "inaktif"}}selected{{end}}>◌ Inaktif</option>
                                 <option value="permanen" {{if eq .arsip.StatusArsip "permanen"}}selected{{end}}>★ Permanen</option>
@@ -274,7 +274,7 @@
                 <div id="nominal_container_edit" class="row g-3" style="{{if .arsip.NilaiAnggaran}}display:flex;{{else}}display:none;{{end}}">
                     <div class="col-md-6">
                         <div class="form-field">
-                            <label>Nilai Anggaran (Rp) <span class="required">*</span></label>
+                            <label for="nilai_anggaran_mask_edit">Nilai Anggaran (Rp) <span class="required">*</span></label>
                             <input type="text" id="nilai_anggaran_mask_edit" class="form-control" placeholder="Contoh: 1.500.000">
                             <input type="hidden" name="nilai_anggaran" id="nilai_anggaran_edit" value="{{if .arsip.NilaiAnggaran}}{{.arsip.NilaiAnggaran}}{{end}}">
                         </div>
@@ -283,7 +283,7 @@
                 <div id="nomor_spm_container_edit" class="row g-3" style="{{if .arsip.NomorSPM}}display:flex;{{else}}display:none;{{end}}">
                     <div class="col-md-6">
                         <div class="form-field">
-                            <label>Nomor SPM <span class="required">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
+                            <label for="nomor_spm_edit">Nomor SPM <span class="required">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
                             <input type="text" name="nomor_spm" id="nomor_spm_edit" class="form-control" placeholder="Contoh: SPM-2024-001" value="{{.arsip.NomorSPM}}">
                         </div>
                     </div>
@@ -307,8 +307,8 @@
                     </div>
                     <div class="card-body-custom">
                         <div class="form-field">
-                            <label>Kode Klasifikasi <span class="required">*</span></label>
-                            <select name="kode_klasifikasi_id" class="form-select select2-search" required>
+                            <label for="kode_klasifikasi_id">Kode Klasifikasi <span class="required">*</span></label>
+                            <select name="kode_klasifikasi_id" id="kode_klasifikasi_id" class="form-select select2-search" required>
                                 <option value="">-- Pilih Kode Klasifikasi --</option>
                                 {{range .kodeKlasifikasiOptions}}
                                 <option value="{{.ID}}" data-retensi-aktif="{{.RetensiAktif}}" data-retensi-inaktif="{{.RetensiInaktif}}" {{if eq $.arsip.KodeKlasifikasiID .ID}}selected{{end}}>{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>
@@ -316,8 +316,8 @@
                             </select>
                         </div>
                         <div class="form-field">
-                            <label>Unit Kerja Pemilik <span class="required">*</span></label>
-                            <select name="unit_kerja_id" class="form-select select2-search" required>
+                            <label for="unit_kerja_id">Unit Kerja Pemilik <span class="required">*</span></label>
+                            <select name="unit_kerja_id" id="unit_kerja_id" class="form-select select2-search" required>
                                 <option value="">-- Pilih Unit Kerja --</option>
                                 {{range .unitKerjaOptions}}
                                 <option value="{{.ID}}" {{if eq $.arsip.UnitKerjaID .ID}}selected{{end}}>{{.NamaUnit}}</option>
@@ -325,8 +325,8 @@
                             </select>
                         </div>
                         <div class="form-field">
-                            <label>Lokasi Fisik (Rak/Box) <span class="required">*</span></label>
-                            <select name="lokasi_arsip_id" class="form-select select2-search" required>
+                            <label for="lokasi_arsip_id">Lokasi Fisik (Rak/Box) <span class="required">*</span></label>
+                            <select name="lokasi_arsip_id" id="lokasi_arsip_id" class="form-select select2-search" required>
                                 <option value="">-- Pilih Lokasi --</option>
                                 {{range .lokasiArsipOptions}}
                                 <option value="{{.ID}}" {{if eq (deref $.arsip.LokasiArsipID) .ID}}selected{{end}}>{{.NamaLokasi}}</option>
@@ -354,7 +354,7 @@
                         </div>
                         {{end}}
                         <div class="file-drop" onclick="document.getElementById('file_edit').click()">
-                            <input type="file" name="file" id="file_edit" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
+                            <input type="file" name="file" id="file_edit" class="d-none" accept=".pdf,.jpg,.jpeg,.png" aria-label="Berkas digital">
                             <i class="bi bi-cloud-upload text-primary"></i>
                             <div class="title">Klik / Seret Berkas Di Sini</div>
                             <div class="desc">PDF, JPG, PNG (Max 32MB)</div>
@@ -434,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         satuanLainnya.name = 'satuan_lainnya';
         satuanLainnya.className = 'form-control mt-1';
         satuanLainnya.placeholder = 'Sebutkan satuan lain...';
+        satuanLainnya.setAttribute('aria-label', 'Satuan lainnya');
         satuanLainnya.style.display = 'none';
         satuanSelect.parentNode.appendChild(satuanLainnya);
     }

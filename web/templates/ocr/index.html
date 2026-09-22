@@ -50,7 +50,7 @@
             <button type="button" class="btn btn-primary mt-3" onclick="document.getElementById('fileInput').click()">
                 <i class="bi bi-folder2-open me-2"></i>Choose File
             </button>
-            <input type="file" id="fileInput" class="d-none" accept=".jpg,.jpeg,.png,.bmp,.tiff,.gif,.pdf">
+            <input type="file" id="fileInput" class="d-none" accept=".jpg,.jpeg,.png,.bmp,.tiff,.gif,.pdf" aria-label="Pilih file OCR">
         </div>
         <div class="file-preview" id="filePreview">
             <div class="d-flex align-items-center justify-content-between">
@@ -129,7 +129,7 @@
                 </div>
             </div>
             <div class="row g-3 mb-4" id="resultStats"></div>
-            <textarea class="form-control" id="resultText" rows="15" style="font-family: 'Courier New', monospace; resize: vertical;" placeholder="Extracted text will appear here..."></textarea>
+            <textarea class="form-control" id="resultText" rows="15" style="font-family: 'Courier New', monospace; resize: vertical;" placeholder="Extracted text will appear here..." aria-label="Hasil teks OCR"></textarea>
         </div>
     </div>
 </div>

@@ -71,7 +71,7 @@
             <form method="GET" action="/jenis-arsip" class="row g-2 mb-3">
                 <div class="col-md-5">
                     <div class="input-group">
-                        <input type="text" class="form-control" name="search" placeholder="Cari: Kode, Nama, Keterangan..." value="{{.Search}}" style="font-size:0.85rem;">
+                        <input type="text" class="form-control" name="search" placeholder="Cari: Kode, Nama, Keterangan..." aria-label="Pencarian jenis arsip" value="{{.Search}}" style="font-size:0.85rem;">
                         <button type="submit" class="btn btn-primary" style="font-size:0.85rem;" aria-label="Cari"><i class="bi bi-search"></i></button>
                         {{if .Search}}<a href="/jenis-arsip" class="btn btn-outline-secondary" style="font-size:0.85rem;"><i class="bi bi-x-lg"></i></a>{{end}}
                     </div>

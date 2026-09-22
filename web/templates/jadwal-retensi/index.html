@@ -122,11 +122,11 @@
             <form method="GET" action="/jadwal-retensi" class="row g-2 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Cari</label>
-                    <input type="text" name="search" class="form-control" style="font-size:0.85rem;" value="{{.Search}}" placeholder="Nama jadwal...">
+                    <input type="text" name="search" class="form-control" style="font-size:0.85rem;" value="{{.Search}}" placeholder="Nama jadwal..." aria-label="Pencarian jadwal retensi">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Status</label>
-                    <select name="status" class="form-select" style="font-size:0.85rem;">
+                    <select name="status" class="form-select" style="font-size:0.85rem;" aria-label="Status jadwal">
                         <option value="">Semua</option>
                         <option value="draft" {{if eq .FilterStatus "draft"}}selected{{end}}>Draft</option>
                         <option value="scheduled" {{if eq .FilterStatus "scheduled"}}selected{{end}}>Scheduled</option>
@@ -137,7 +137,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small fw-700" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-4);">Jenis</label>
-                    <select name="jenis_jadwal" class="form-select" style="font-size:0.85rem;">
+                    <select name="jenis_jadwal" class="form-select" style="font-size:0.85rem;" aria-label="Jenis jadwal">
                         <option value="">Semua Jenis</option>
                         <option value="pemusnahan" {{if eq .FilterJenisJadwal "pemusnahan"}}selected{{end}}>Pemusnahan</option>
                         <option value="penyusutan" {{if eq .FilterJenisJadwal "penyusutan"}}selected{{end}}>Penyusutan</option>

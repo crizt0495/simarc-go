@@ -21,7 +21,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-search me-1"></i>Pencarian</label>
-                            <input type="text" name="search" class="form-control" 
+                            <input type="text" name="search" class="form-control" aria-label="Pencarian klasifikasi" 
                                    placeholder="Cari kode, nama klasifikasi, atau keamanan..." 
                                    value="{{.Search}}">
                         </div>
@@ -73,10 +73,10 @@
                         <div class="col-md-3">
                             <label class="form-label fw-bold"><i class="bi bi-clock me-1"></i>Total Retensi (Tahun)</label>
                             <div class="input-group">
-                                <input type="number" name="retensi_min" class="form-control" placeholder="Min" 
+                                <input type="number" name="retensi_min" class="form-control" aria-label="Retensi minimum" placeholder="Min" 
                                        value="{{.RetensiMin}}" min="0">
                                 <span class="input-group-text">-</span>
-                                <input type="number" name="retensi_max" class="form-control" placeholder="Max" 
+                                <input type="number" name="retensi_max" class="form-control" aria-label="Retensi maksimum" placeholder="Max" 
                                        value="{{.RetensiMax}}" min="0">
                             </div>
                         </div>

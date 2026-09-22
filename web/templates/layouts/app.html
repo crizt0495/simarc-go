@@ -52,6 +52,13 @@
   .floating-bar { bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important; }
   .position-fixed.bottom-0.end-0 { bottom: calc(0px + env(safe-area-inset-bottom)) !important; }
   .toast-container { bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
+  /* Mobile: bottom nav (56px+) harus tidak menutupi konten, FAB, floating bar, atau toast */
+  @media (max-width: 991.98px) {
+    .main-content { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }
+    .floating-bar { bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important; }
+    .position-fixed.bottom-0.end-0 { bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important; }
+    .toast-container { bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }
+  }
 }
 @supports (padding: constant(safe-area-inset-bottom)) {
   .main-content { padding-bottom: calc(1.5rem + constant(safe-area-inset-bottom)) !important; }
@@ -172,7 +179,7 @@ html, body { overflow-x: hidden; }
 
     <form action="/search" method="GET" class="nav-search d-none d-lg-flex">
       <i class="bi bi-search" style="color:var(--ink-4);font-size:14px;flex-shrink:0"></i>
-      <input type="search" name="q" placeholder="Cari arsip...">
+      <input type="search" name="q" placeholder="Cari arsip..." aria-label="Cari arsip">
       <kbd style="font-size:11px;color:var(--ink-4);background:var(--surface-3);border:1px solid var(--border);border-radius:4px;padding:2px 6px;flex-shrink:0">/</kbd>
     </form>
   </div>
@@ -449,6 +456,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (labels[seg]) return labels[seg];
     if (seg.indexOf('-') === 0 && named[seg.replace(/^-/, '')]) return named[seg.replace(/^-/, '')];
     if (named[seg]) return named[seg];
+    // Segmen UUID (id resource) → label ramah, bukan deretan hex mentah
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg)) return 'Detail';
     var pretty = seg.replace(/[-_]/g, ' ');
     return pretty.charAt(0).toUpperCase() + pretty.slice(1);
   };

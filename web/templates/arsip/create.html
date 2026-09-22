@@ -134,14 +134,14 @@
                 <div class="row g-3">
                     <div class="col-lg-8">
                         <div class="form-field">
-                            <label>Nama Lengkap Dokumen <span class="req">*</span></label>
+                            <label for="nama_arsip">Nama Lengkap Dokumen <span class="req">*</span></label>
                             <input type="text" name="nama_arsip" id="nama_arsip" class="form-control" placeholder="Contoh: Laporan Pertanggungjawaban Kegiatan 2024" value="{{.PrefilledName}}" required>
                         </div>
                     </div>
                     <div class="col-lg-4">
                         <div class="form-field">
-                            <label>Nomor Registrasi <span class="req">*</span></label>
-                            <input type="text" name="nomor_arsip" class="form-control" placeholder="000/SPJ/2024" required>
+                            <label for="nomor_arsip">Nomor Registrasi <span class="req">*</span></label>
+                            <input type="text" name="nomor_arsip" id="nomor_arsip" class="form-control" placeholder="000/SPJ/2024" required>
                         </div>
                     </div>
                 </div>
@@ -165,7 +165,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-field">
-                            <label>Kategori Arsip</label>
+                            <label for="jenis_arsip">Kategori Arsip</label>
                             <select name="jenis_arsip_id" id="jenis_arsip" class="form-select select2-search">
                                 <option value="">-- Pilih Kategori --</option>
                                 {{range .jenisArsipOptions}}
@@ -178,11 +178,14 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <div class="form-field">
-                            <label>Kondisi Dokumen</label>
-                            <select name="tingkat_perkembangan" class="form-select select2-search">
+                            <label for="tingkat_perkembangan">Kondisi Dokumen</label>
+                            <select name="tingkat_perkembangan" id="tingkat_perkembangan" class="form-select select2-search">
                                 <option value="Asli" selected>Asli (Original)</option>
                                 <option value="Copy">Fotokopi / Salinan</option>
                                 <option value="Salinan Resmi">Salinan Resmi</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Legalisir">Legalisir</option>
+                                <option value="Lainnya">Lainnya</option>
                             </select>
                         </div>
                     </div>
@@ -196,7 +199,7 @@
                             </div>
                             <div class="col-6">
                                 <div class="form-field">
-                                    <label>Satuan <span class="req">*</span></label>
+                                    <label for="satuan_select">Satuan <span class="req">*</span></label>
                                     <select name="satuan" class="form-select select2-search" id="satuan_select" required>
                                         <option value="Berkas" selected>Berkas</option>
                                         <option value="Lembar">Lembar</option>
@@ -219,8 +222,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-field">
-                            <label>Status Arsip</label>
-                            <select name="status_arsip" class="form-select select2-search">
+                            <label for="status_arsip">Status Arsip</label>
+                            <select name="status_arsip" id="status_arsip" class="form-select select2-search">
                                 <option value="aktif" selected>✔ Aktif</option>
                                 <option value="inaktif">◌ Inaktif</option>
                                 <option value="permanen">★ Permanen</option>
@@ -232,21 +235,21 @@
                 <!-- SPJ Fields -->
                 <div id="nominal_container" style="display:none;">
                     <div class="form-field">
-                        <label>Nilai Anggaran (Rp) <span class="req">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
+                        <label for="nilai_anggaran_mask">Nilai Anggaran (Rp) <span class="req">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
                         <input type="text" id="nilai_anggaran_mask" class="form-control" placeholder="Contoh: 1.500.000">
                         <input type="hidden" name="nilai_anggaran" id="nilai_anggaran">
                     </div>
                 </div>
                 <div id="nomor_spm_container" style="display:none;">
                     <div class="form-field">
-                        <label>Nomor SPM <span class="req">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
+                        <label for="nomor_spm">Nomor SPM <span class="req">*</span> <small class="text-muted fw-normal" style="font-size:0.7rem;">— wajib untuk arsip SPJ</small></label>
                         <input type="text" name="nomor_spm" id="nomor_spm" class="form-control" placeholder="Contoh: SPM-2024-001">
                     </div>
                 </div>
 
                 <div class="form-field">
-                    <label>Ringkasan Singkat (Uraian)</label>
-                    <textarea name="uraian" class="form-control" placeholder="Tuliskan uraian singkat isi dokumen...">{{.PrefilledUraian}}</textarea>
+                    <label for="uraian">Ringkasan Singkat (Uraian)</label>
+                    <textarea name="uraian" id="uraian" class="form-control" placeholder="Tuliskan uraian singkat isi dokumen...">{{.PrefilledUraian}}</textarea>
                 </div>
             </div>
         </div>
@@ -258,8 +261,8 @@
                     <div class="card-head"><span class="step-badge">2</span><span class="step-label">Klasifikasi &amp; Lokasi</span></div>
                     <div class="card-body-custom">
                         <div class="form-field">
-                            <label>Kode Klasifikasi <span class="req">*</span></label>
-                            <select name="kode_klasifikasi_id" class="form-select select2-search" required>
+                            <label for="kode_klasifikasi_id">Kode Klasifikasi <span class="req">*</span></label>
+                            <select name="kode_klasifikasi_id" id="kode_klasifikasi_id" class="form-select select2-search" required>
                                 <option value="">Cari berdasarkan kode...</option>
                                 {{range .kodeKlasifikasiOptions}}
                                 <option value="{{.ID}}" data-retensi-aktif="{{.RetensiAktif}}" data-retensi-inaktif="{{.RetensiInaktif}}">{{.KodeKlasifikasi}} - {{.NamaKlasifikasi}}</option>
@@ -267,15 +270,15 @@
                             </select>
                         </div>
                         <div class="form-field">
-                            <label>Unit Kerja Pemilik <span class="req">*</span></label>
-                            <select name="unit_kerja_id" class="form-select select2-search" required>
+                            <label for="unit_kerja_id">Unit Kerja Pemilik <span class="req">*</span></label>
+                            <select name="unit_kerja_id" id="unit_kerja_id" class="form-select select2-search" required>
                                 {{range .unitKerjaOptions}}
                                 <option value="{{.ID}}" {{if eq .ID $.AuthUser.UnitKerjaID}}selected{{end}}>{{.NamaUnit}}</option>
                                 {{end}}
                             </select>
                         </div>
                         <div class="form-field">
-                            <label>Lokasi Fisik (Rak/Box) <span class="req">*</span></label>
+                            <label for="lokasi_arsip_id">Lokasi Fisik (Rak/Box) <span class="req">*</span></label>
                             {{if .FromLocation}}
                             <div class="d-flex align-items-center gap-2 p-2" style="background:var(--brand-lt);border-radius:var(--r);border:1.5px solid var(--ink-2);">
                                 <i class="bi bi-check-circle-fill text-success"></i>
@@ -287,7 +290,7 @@
                                 </a>
                             </div>
                             {{else}}
-                            <select name="lokasi_arsip_id" class="form-select select2-search" required>
+                            <select name="lokasi_arsip_id" id="lokasi_arsip_id" class="form-select select2-search" required>
                                 {{range .lokasiArsipOptions}}
                                 <option value="{{.ID}}">{{.NamaLokasi}}</option>
                                 {{end}}
@@ -302,7 +305,7 @@
                     <div class="card-head"><span class="step-badge">3</span><span class="step-label">Berkas Digital</span></div>
                     <div class="card-body-custom">
                         <div class="file-drop" onclick="document.getElementById('file').click()">
-                            <input type="file" name="file" id="file" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
+                            <input type="file" name="file" id="file" class="d-none" accept=".pdf,.jpg,.jpeg,.png" aria-label="Berkas digital">
                             <i class="bi bi-cloud-upload text-primary"></i>
                             <div class="title">Klik / Seret Berkas Di Sini</div>
                             <div class="desc">Mendukung format PDF, JPG, PNG (Max 32MB)</div>
@@ -345,6 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
         satuanLainnya.name = 'satuan_lainnya';
         satuanLainnya.className = 'form-control mt-1';
         satuanLainnya.placeholder = 'Sebutkan satuan lain...';
+        satuanLainnya.setAttribute('aria-label', 'Satuan lainnya');
         satuanLainnya.style.display = 'none';
         satuanSelect.parentNode.appendChild(satuanLainnya);
     }
