@@ -111,5 +111,55 @@ if [[ -n "$BACKUP_MIRROR" ]]; then
   fi
 fi
 
+# ── AIVEN: impor dump ke MySQL Aiven (backup offsite / DR target) ──────────────
+# Aktif otomatis bila AIVEN_HOST & AIVEN_PASSWORD terisi di .env.
+# Strategi: DROP + CREATE + import penuh → salinan selalu utuh & idempoten.
+# Koneksi memakai --ssl (TLS terenkripsi). Catat ke backup.log; gagal → exit 1
+# (agar cron/monitoring terlihat), backup lokal sudah aman tersimpan.
+AIVEN_HOST="${AIVEN_HOST:-$(get_env AIVEN_HOST)}"
+AIVEN_PORT="${AIVEN_PORT:-$(get_env AIVEN_PORT)}"
+AIVEN_USERNAME="${AIVEN_USERNAME:-$(get_env AIVEN_USERNAME)}"
+AIVEN_PASSWORD="${AIVEN_PASSWORD:-$(get_env AIVEN_PASSWORD)}"
+AIVEN_DATABASE="${AIVEN_DATABASE:-$(get_env AIVEN_DATABASE)}"
+AIVEN_DATABASE="${AIVEN_DATABASE:-simarc_db}"
+
+decompress() { case "$1" in *.gz) gzip -dc "$1" ;; *) cat "$1" ;; esac; }
+# MySQL 8.4 menolak `DEFAULT uuid()` tanpa kurung (dump MariaDB) → normalisasi.
+normalize_mysql8() { sed -e 's/DEFAULT uuid()/DEFAULT (uuid())/g'; }
+
+if [[ -n "$AIVEN_HOST" && -n "$AIVEN_PASSWORD" ]]; then
+  log "Aiven push dimulai: host=$AIVEN_HOST:$AIVEN_PORT db=$AIVEN_DATABASE"
+  MYSQLOPTS=("--ssl" "--host=$AIVEN_HOST" "--port=$AIVEN_PORT" "--user=$AIVEN_USERNAME" "--max-allowed-packet=512M")
+  # Pra-cek: lewati bila layanan Aiven read-only (mode standby DR) —
+  # hindari banjir log ERROR 1290; beri pesan jelas ke backup.log & stdout.
+  AIVEN_RO="$(MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" -N -e "SELECT @@read_only" 2>>"$LOG_FILE" || echo '?')"
+  if [[ "$AIVEN_RO" == "1" ]]; then
+    log "Aiven DILEWATI: layanan read-only (@@read_only=1). Matikan read-only di konsol Aiven agar impor aktif."
+    echo "Aiven dilewati (read-only; matikan di konsol Aiven untuk mengaktifkan impor)"
+  else
+    if ! MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" \
+         -e "DROP DATABASE IF EXISTS \`$AIVEN_DATABASE\`; CREATE DATABASE \`$AIVEN_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" >>"$LOG_FILE" 2>&1; then
+      log "Aiven GAGAL: drop/create database $AIVEN_DATABASE"
+      fail "Aiven: gagal drop/create database $AIVEN_DATABASE"
+    fi
+    if ! decompress "$FPATH" | normalize_mysql8 | MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" "$AIVEN_DATABASE" >>"$LOG_FILE" 2>&1; then
+      log "Aiven GAGAL: impor dump ($FNAME)"
+      fail "Aiven: impor dump gagal"
+    fi
+    # verifikasi: jumlah baris tabel arsip lokal vs salinan di Aiven
+    LOCAL_CNT="$(MYSQL_PWD="$DB_PASSWORD" mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USERNAME" -N -e "SELECT COUNT(*) FROM \`$DB_DATABASE\`.arsip" 2>/dev/null || echo '?')"
+    AIVEN_CNT="$(MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" -N -e "SELECT COUNT(*) FROM \`$AIVEN_DATABASE\`.arsip" 2>/dev/null || echo '?')"
+    if [[ "$LOCAL_CNT" == "$AIVEN_CNT" && "$LOCAL_CNT" != "?" ]]; then
+      log "Aiven OK: impor berhasil (arsip=$AIVEN_CNT, cocok lokal)"
+      echo "Aiven OK: arsip=$AIVEN_CNT baris (cocok lokal)"
+    else
+      log "Aiven PERINGATAN: arsip lokal=$LOCAL_CNT vs aiven=$AIVEN_CNT"
+      echo "Aiven PERINGATAN: arsip lokal=$LOCAL_CNT vs aiven=$AIVEN_CNT"
+    fi
+  fi
+else
+  log "Aiven dilewati (AIVEN_HOST / AIVEN_PASSWORD belum diisi)"
+fi
+
 echo "OK: $FNAME (${SIZE} byte)"
 exit 0
