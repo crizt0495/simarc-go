@@ -271,7 +271,7 @@ async function pollDashboardStats() {
     updateStat('total_items', d.stats.total_items);
     updateStat('aktif', d.stats.aktif);
     updateStat('inaktif', d.stats.inaktif);
-    updateStat('siap_musnah', d.stats.siap_musnah);
+    updateStat('siap_musnah', d.siap_musnah);
     updateStat('spj', d.stats.spj);
     updateStat('non_spj', d.stats.non_spj);
     updateStat('with_file', d.stats.with_file);
@@ -303,7 +303,7 @@ async function pollDashboardStats() {
     }
 
     // Update Siap Musnah chip
-    const siapStat = d.stats.siap_musnah;
+    const siapStat = d.siap_musnah;
     const siapCard = document.querySelector('[data-stat="siap_musnah"]')?.closest('.stat-card');
     if (siapCard) {
       const chip = siapCard.querySelector('.stat-card-chip');
