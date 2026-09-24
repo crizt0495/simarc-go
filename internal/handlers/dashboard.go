@@ -139,8 +139,11 @@ func Dashboard(c *gin.Context) {
 	}
 
 	forecastRaw := (&services.DataScienceService{}).ForecastGrowth(6)
+	// GetGrowthTrend mengembalikan bulan terbaru lebih dulu (ORDER DESC).
+	// Balik urutannya agar sumbu-X grafik membaca kiri→kanan (tertua → terbaru).
 	var forecastList []gin.H
-	for _, f := range forecastRaw {
+	for i := len(forecastRaw) - 1; i >= 0; i-- {
+		f := forecastRaw[i]
 		month, _ := f["month"].(string)
 		total, _ := f["total"].(int64)
 		forecastList = append(forecastList, gin.H{

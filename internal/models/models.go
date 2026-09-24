@@ -44,15 +44,22 @@ type Role struct {
 }
 
 // ── PERMISSION ────────────────────────────────────────────────────────────────
-
+//
+// Kolom `label`, `description`, `menu_identifier` berasal dari skema legacy
+// Laravel dan tetap dipertahankan: GORM melakukan upsert role→permission
+// (DO-NOTHING) saat menyimpan relasi many2many, dan kolom NOT NULL yang tidak
+// dikenal akan membuat INSERT gagal (Error 1364).
 type Permission struct {
-	ID        string         `gorm:"type:char(36);primaryKey" json:"id"`
-	Name      string         `gorm:"size:100;not null;unique" json:"name"`
-	Module    string         `gorm:"size:100" json:"module"`
-	IsActive  bool           `gorm:"default:true" json:"is_active"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	ID             string         `gorm:"type:char(36);primaryKey" json:"id"`
+	Name           string         `gorm:"size:100;not null;unique" json:"name"`
+	Label          string         `gorm:"size:255;not null" json:"label"`
+	Module         string         `gorm:"size:100" json:"module"`
+	Description    string         `gorm:"size:255" json:"description"`
+	MenuIdentifier string         `gorm:"size:255" json:"menu_identifier"`
+	IsActive       bool           `gorm:"default:true" json:"is_active"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 }
 
 // ── UNIT KERJA ────────────────────────────────────────────────────────────────

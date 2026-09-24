@@ -360,7 +360,29 @@ func (h *RoleHandler) UpdatePermissions(c *gin.Context) {
 		database.DB.Where("id IN ?", permIDs).Find(&permissions)
 	}
 
-	if err := database.DB.Model(&role).Association("Permissions").Replace(&permissions); err != nil {
+	// Tulis ulang tabel join secara eksplisit. Relasi many2many GORM tidak
+	// dipakai di sini: tabel join legacy `permission_role` memakai kolom
+	// `id` char(36) NOT NULL TANPA default (skema Laravel), sehingga upsert
+	// many2many GORM gagal dengan Error 1364 ("Field 'id' doesn't have a
+	// default value"). Baris baru memakai UUID + timestamp, konsisten dengan
+	// data legacy yang sudah ada.
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("DELETE FROM permission_role WHERE role_id = ?", role.ID).Error; err != nil {
+			return err
+		}
+		if len(permissions) == 0 {
+			return nil
+		}
+		now := time.Now()
+		rows := make([]string, 0, len(permissions))
+		args := make([]interface{}, 0, len(permissions)*5)
+		for _, p := range permissions {
+			rows = append(rows, "(?, ?, ?, ?, ?)")
+			args = append(args, uuid.New().String(), p.ID, role.ID, now, now)
+		}
+		return tx.Exec("INSERT INTO permission_role (id, permission_id, role_id, created_at, updated_at) VALUES "+strings.Join(rows, ","), args...).Error
+	})
+	if err != nil {
 		middleware.SetFlash(c, "error", "Gagal memperbarui hak akses: "+err.Error())
 	} else {
 		// Log the security configuration change

@@ -490,11 +490,11 @@
                 <div class="row g-2">
                     {{range $i, $p := $perms}}
                     <div class="col-md-4 perm-col" data-search="{{lower .Name}}" data-module="{{$module}}">
-                        <div class="perm-item {{if inArray $.RolePermissions .ID}}selected{{end}}">
+                        <div class="perm-item {{if inArray .ID $.RolePermissions}}selected{{end}}">
                             <div class="form-check d-flex align-items-start gap-2 mb-0">
                                 <input class="form-check-input" type="checkbox" name="permissions[]" 
                                        value="{{.ID}}" id="perm_{{.ID}}"
-                                       {{if inArray $.RolePermissions .ID}}checked{{end}}
+                                       {{if inArray .ID $.RolePermissions}}checked{{end}}
                                        {{if $isAdmin}}disabled{{end}}
                                        data-module="{{$module}}">
                                 <label class="perm-label flex-grow-1" for="perm_{{.ID}}">

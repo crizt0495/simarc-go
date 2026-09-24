@@ -51,11 +51,12 @@ test('dashboard — grid KPI, header, grafik', async ({ page }) => {
   await login(page);
   await settle(page, 1400); // tunggu chart + animasi selesai
   const chart = page.locator('.dash-chart-card canvas').first();
+  const feed = page.locator('.dash-activity-card'); // feed aktivitas = data live → di-mask
   await expect(page.locator('.kpi-grid .stat-card').first()).toBeVisible();
   await expect(page.locator('.page-title')).toContainText('Dashboard');
   await expect(page.locator('.page-actions')).toBeVisible();
   await expect(page.locator('.main-content')).toHaveScreenshot('dashboard.png', {
-    mask: [chart], // area canvas chart.js dinamis — di-mask agar stabil
+    mask: [chart, feed], // chart.js + feed live di-mask agar snapshot stabil
     ...SHOT_OPTS,
   });
 });
@@ -66,8 +67,9 @@ test('dashboard — mode gelap tetap rapi', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await settle(page, 1200);
   const chart = page.locator('.dash-chart-card canvas').first();
+  const feed = page.locator('.dash-activity-card'); // feed aktivitas = data live → di-mask
   await expect(page.locator('.main-content')).toHaveScreenshot('dashboard-dark.png', {
-    mask: [chart],
+    mask: [chart, feed],
     ...SHOT_OPTS,
   });
 });

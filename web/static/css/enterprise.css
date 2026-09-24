@@ -855,18 +855,16 @@ kbd {
   gap: 1rem;
 }
 
-.kpi-grid-5 { grid-template-columns: repeat(5, 1fr); }
 .kpi-grid-4 { grid-template-columns: repeat(4, 1fr); }
 
 @media (max-width: 1399.98px) {
-  .kpi-grid-5 { grid-template-columns: repeat(3, 1fr); }
   .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 767.98px) {
-  .kpi-grid-5, .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
 }
 @media (max-width: 479.98px) {
-  .kpi-grid-5, .kpi-grid-4 { grid-template-columns: 1fr; }
+  .kpi-grid-4 { grid-template-columns: 1fr; }
 }
 
 /* Stat card — the workhorse of the dashboard */
@@ -1110,6 +1108,7 @@ kbd {
   font-size: 0.72rem;
   color: var(--nb-ink-4);
 }
+.box-stats-body { padding: 1rem 1.15rem; }
 
 /* Chart */
 .chart-wrap { position: relative; width: 100%; height: 300px; }
@@ -1785,6 +1784,11 @@ table.dataTable tbody .btn-sm { padding: 0.25rem 0.55rem; font-size: 0.72rem; }
 .activity-username { font-size: 0.8rem; }
 .activity-time { font-size: 0.74rem; }
 .activity-empty { text-align: center; }
+
+/* Recent activity di dashboard: deskripsi panjang di-clamp 1 baris (ellipsis)
+   agar tinggi kartu deterministik dan feed tidak mengguncang layout. */
+#activityTable td:nth-child(2) { max-width: 280px; }
+#activityTable td:nth-child(2) span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* file indicator (arsip list) */
 .file-indicator {
@@ -2880,9 +2884,6 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
 /* ── Layout patches ── */
 .archives { }
 .disposal-container, .ocr-container, .blockchain-container, .klasifikasi-page, .errors-container { }
-.dashboard-container { }
-.dashboard-lower-grid { }
-.box-stats-body { padding: 1rem 1.15rem; }
 .fts-900 { font-weight: 900; }
 .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--nb-primary-light); color: var(--nb-primary); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; }
 .avatar-sm { width: 30px; height: 30px; font-size: 0.7rem; }

@@ -24,8 +24,8 @@
   </div>
 </div>
 
-<!-- KPI Stats Row 1 (5 cards) -->
-<div class="kpi-grid kpi-grid-5 mb-4">
+<!-- KPI Stats (8 kartu — satu grid rapi) -->
+<div class="kpi-grid kpi-grid-4 mb-4">
   <div class="stat-card dash-stat cursor-pointer stat-accent-blue" onclick="location.href='/arsip'">
     <div class="stat-card-top">
       <div class="stat-card-icon icon-blue"><i class="bi bi-archive"></i></div>
@@ -34,15 +34,6 @@
     <div class="stat-card-value" data-stat="total">{{.Stats.Total}}</div>
     <div class="stat-card-label">Total Arsip</div>
     <div class="stat-card-foot"><i class="bi bi-box"></i> Seluruh arsip</div>
-  </div>
-  <div class="stat-card dash-stat cursor-pointer stat-accent-indigo" onclick="location.href='/arsip'">
-    <div class="stat-card-top">
-      <div class="stat-card-icon icon-indigo"><i class="bi bi-box-seam"></i></div>
-      <span class="stat-card-chip">Item Fisik</span>
-    </div>
-    <div class="stat-card-value" data-stat="total_items">{{.Stats.TotalItems}}</div>
-    <div class="stat-card-label">Total Item Fisik</div>
-    <div class="stat-card-foot"><i class="bi bi-collection"></i> {{.Stats.Total}} arsip</div>
   </div>
   <div class="stat-card dash-stat cursor-pointer stat-accent-green" onclick="location.href='/arsip?status=aktif'">
     <div class="stat-card-top">
@@ -71,10 +62,6 @@
     <div class="stat-card-label">Siap Musnah</div>
     <div class="stat-card-foot"><i class="bi bi-trash"></i> Menunggu penyusutan</div>
   </div>
-</div>
-
-<!-- KPI Stats Row 2 (4 cards) -->
-<div class="kpi-grid kpi-grid-4 mb-4">
   <div class="stat-card dash-stat stat-accent-blue">
     <div class="stat-card-top">
       <div class="stat-card-icon icon-blue"><i class="bi bi-file-text"></i></div>
@@ -118,8 +105,8 @@
   <div class="col-xl-8">
     <div class="card h-100 dash-chart-card">
       <div class="card-header">
-        <span class="card-title"><i class="bi bi-graph-up-arrow text-brand me-2"></i>Prediksi Pertumbuhan Arsip (6 Bulan)</span>
-        <span class="badge badge-primary">Linear Regression</span>
+        <span class="card-title"><i class="bi bi-graph-up-arrow text-brand me-2"></i>Pertumbuhan Arsip (6 Bulan Terakhir)</span>
+        <span class="badge badge-primary">Tren Bulanan</span>
       </div>
       <div class="card-body chart-card-body">
         <div class="chart-wrap">
@@ -168,34 +155,99 @@
         <div class="box-stats-footer">
           <span class="text-muted"><i class="bi bi-info-circle me-1"></i>Klik angka untuk lihat daftar box</span>
         </div>
-<!-- SIMARC V4 Box Modals -->
-<template data-modal="modalTotalBox">
-  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Daftar Box RC</h5><p class="sm-subtitle">Semua box yang terdaftar</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalTotalBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
-  <div class="sm-body">{{if .BoxStats.ListAll}}<div class="list-group list-group-flush">{{range .BoxStats.ListAll}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box text-muted small"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
-  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalTotalBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
-</template>
-
-<template data-modal="modalSpjBox">
-  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Khusus SPJ</h5><p class="sm-subtitle">Box dengan arsip SPJ murni</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
-  <div class="sm-body">{{if .BoxStats.ListMurniSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--ink-2);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
-  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
-</template>
-
-<template data-modal="modalNonSpjBox">
-  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Non-SPJ</h5><p class="sm-subtitle">Box dengan arsip Non-SPJ murni</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalNonSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
-  <div class="sm-body">{{if .BoxStats.ListMurniNonSpj}}<div class="list-group list-group-flush">{{range .BoxStats.ListMurniNonSpj}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--ink-2);font-size:0.85rem"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
-  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalNonSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
-</template>
-
-<template data-modal="modalCampuranBox">
-  <div class="sm-header"><div class="sm-title-group"><h5 class="sm-title">Box Campuran</h5><p class="sm-subtitle">Box dengan arsip campuran</p></div><button type="button" class="sm-close" onclick="SimarcModal.hide('modalCampuranBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button></div>
-  <div class="sm-body">{{if .BoxStats.ListCampuran}}<div class="list-group list-group-flush">{{range .BoxStats.ListCampuran}}<div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box text-muted small"></i><span class="small">{{.}}</span></div>{{end}}</div>{{else}}<p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>{{end}}</div>
-  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalCampuranBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
-</template>
       </div>
     </div>
   </div>
 </div>
+
+<!-- SIMARC V4 Box Modals (template laten — dirender oleh modal-manager) -->
+<template data-modal="modalTotalBox">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Daftar Box RC</h5>
+      <p class="sm-subtitle">Semua box yang terdaftar</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('modalTotalBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sm-body">
+    {{if .BoxStats.ListAll}}
+    <div class="list-group list-group-flush">
+      {{range .BoxStats.ListAll}}
+      <div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box text-muted small"></i><span class="small">{{.}}</span></div>
+      {{end}}
+    </div>
+    {{else}}
+    <p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>
+    {{end}}
+  </div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalTotalBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
+
+<template data-modal="modalSpjBox">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Box Khusus SPJ</h5>
+      <p class="sm-subtitle">Box dengan arsip SPJ murni</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('modalSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sm-body">
+    {{if .BoxStats.ListMurniSpj}}
+    <div class="list-group list-group-flush">
+      {{range .BoxStats.ListMurniSpj}}
+      <div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--ink-2);font-size:0.85rem"></i><span class="small">{{.}}</span></div>
+      {{end}}
+    </div>
+    {{else}}
+    <p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>
+    {{end}}
+  </div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
+
+<template data-modal="modalNonSpjBox">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Box Non-SPJ</h5>
+      <p class="sm-subtitle">Box dengan arsip Non-SPJ murni</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('modalNonSpjBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sm-body">
+    {{if .BoxStats.ListMurniNonSpj}}
+    <div class="list-group list-group-flush">
+      {{range .BoxStats.ListMurniNonSpj}}
+      <div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box" style="color:var(--ink-2);font-size:0.85rem"></i><span class="small">{{.}}</span></div>
+      {{end}}
+    </div>
+    {{else}}
+    <p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>
+    {{end}}
+  </div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalNonSpjBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
+
+<template data-modal="modalCampuranBox">
+  <div class="sm-header">
+    <div class="sm-title-group">
+      <h5 class="sm-title">Box Campuran</h5>
+      <p class="sm-subtitle">Box dengan arsip campuran</p>
+    </div>
+    <button type="button" class="sm-close" onclick="SimarcModal.hide('modalCampuranBox')" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sm-body">
+    {{if .BoxStats.ListCampuran}}
+    <div class="list-group list-group-flush">
+      {{range .BoxStats.ListCampuran}}
+      <div class="list-group-item px-0 d-flex align-items-center gap-2"><i class="bi bi-box text-muted small"></i><span class="small">{{.}}</span></div>
+      {{end}}
+    </div>
+    {{else}}
+    <p class="text-muted text-center py-3 mb-0"><i class="bi bi-inbox me-2"></i>Tidak ada box</p>
+    {{end}}
+  </div>
+  <div class="sm-footer"><button type="button" class="sm-btn sm-btn-cancel" onclick="SimarcModal.hide('modalCampuranBox')"><i class="bi bi-x-lg me-1"></i>Tutup</button></div>
+</template>
 
 <!-- Recent Activities -->
 <div class="card dash-activity-card">
@@ -268,7 +320,6 @@ async function pollDashboardStats() {
       if (el) el.textContent = value;
     };
     updateStat('total', d.stats.total);
-    updateStat('total_items', d.stats.total_items);
     updateStat('aktif', d.stats.aktif);
     updateStat('inaktif', d.stats.inaktif);
     updateStat('siap_musnah', d.siap_musnah);
@@ -341,7 +392,7 @@ setTimeout(pollDashboardStats, 2000);
       data: {
         labels: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}"{{$m.Month}}"{{end}}],
         datasets: [{
-          label: 'Prediksi',
+          label: 'Arsip Baru per Bulan',
           data: [{{range $i,$m := .Intelligence.Forecast}}{{if $i}},{{end}}{{$m.PredictedCount}}{{end}}],
           borderColor: brand, borderWidth: 2, fill: true, tension: 0.4,
           backgroundColor: brandLt,
