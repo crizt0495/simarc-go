@@ -823,6 +823,26 @@ kbd {
   pointer-events: none;
 }
 
+/* Dropdown di dalam hero (overflow:hidden, mis. tombol Download pemusnahan)
+   tidak boleh terpotong batas hero → tampil sebagai popup fixed dekat tombol
+   (posisi diatur hero-dropdown.js; spesifisitas dinaikkan untuk menimpa
+   bootstrap .dropdown-menu[data-bs-popper]{top:100%;left:0}). */
+.hero-dropdown-menu.hero-dropdown-menu,
+.hero-dropdown-menu[data-bs-popper] {
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  z-index: 1080;
+}
+.hero-dropdown-menu.show { animation: hero-dropdown-in 0.14s ease-out; }
+@keyframes hero-dropdown-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
 .hero-title {
   font-size: 1.2rem;
   font-weight: 700;
