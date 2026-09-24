@@ -137,21 +137,34 @@ if [[ -n "$AIVEN_HOST" && -n "$AIVEN_PASSWORD" ]]; then
     log "Aiven DILEWATI: layanan read-only (@@read_only=1). Matikan read-only di konsol Aiven agar impor aktif."
     echo "Aiven dilewati (read-only; matikan di konsol Aiven untuk mengaktifkan impor)"
   else
+    # DROP/CREATE diberi lock_wait_timeout pendek agar TIDAK pernah menggantung
+    # selamanya menunggu metadata-lock dari sesi impor/query lain yang macet
+    # (fenomena teramati: impor lama yg terkubur memegang lock tabel berjam-jam
+    # dan memblokir run berikutnya; dengan timeout ini run GAGAL cepat lalu
+    # bisa dicoba ulang/besihkan sesi stale, bukan diam membisu).
     if ! MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" \
+         --connect-timeout=60 \
+         --init-command="SET SESSION lock_wait_timeout=60;" \
          -e "DROP DATABASE IF EXISTS \`$AIVEN_DATABASE\`; CREATE DATABASE \`$AIVEN_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" >>"$LOG_FILE" 2>&1; then
-      log "Aiven GAGAL: drop/create database $AIVEN_DATABASE"
+      log "Aiven GAGAL: drop/create database $AIVEN_DATABASE (mungkin terkunci sesi lain)"
       fail "Aiven: gagal drop/create database $AIVEN_DATABASE"
     fi
-    # Dump Aiven dibuat TERPISAH & RAMPPING dari DB lokal (bukan pakai $FPATH):
-    #   • --skip-extended-insert → tiap baris jadi INSERT kecil (~KB), bukan satu
-    #     paket multi-MB → koneksi TLS Aiven tidak pernah diterpa paket raksasa
-    #     (penyebab ERROR 2026 "unexpected eof while reading" di line 40436).
-    #   • --ignore-table=telescope_* → buang log debug internal Laravel (bukan
-    #     data arsip; justru sumber INSERT ~10 MB yg memutus TLS).
-    #   • set timeouts volume besar di awal sesi impor (Aiven menutup koneksi
-    #     TLS bila impor lama; lihat backup.log utk konfirmasi).
+    # Dump Aiven dibuat TERPISAH dari $FPATH:
+    #   • --skip-extended-insert → dump lokal ANDAL (bukan penyebab lambat).
+    #   • --ignore-table=telescope_* → buang log debug internal Laravel.
+    #   • Setelah dump: baris INSERT per-baris DIGABUNG menjadi multi-row
+    #     (merge_mysql_inserts.py, cap ~800KB/statement). Tanpa penggabungan,
+    #     impor TLS Aiven terikat RTT ~150ms/statement → ±100rb statement =
+    #     BERJAM-JAM (teramati: 2 jam baru 40%). Dengan gabungan hanya puluhan
+    #     statement → seluruh DB (<36MB) selesai < 2 menit. Satu baris raksasa
+    #     (>10MB, mis. notes backup_logs) tetap aman karena pipeline lama sudah
+    #     terbukti mengangkutnya.
+    #   • timeouts & max_allowed_packet besar pada sesi impor (Aiven menutup
+    #     koneksi TLS bila impor lama); lock_wait_timeout=60 utk gagal-cepat.
     # Data arsip (arsip, pemberkasan, klasifikasi, dll) tetap 100% ikut.
     AIVEN_TMP="$(mktemp "$BUP_DIR/aiven_push_XXXXXX.sql")"
+    # bersihkan aiven_push_* basi (sisa proses yang di-kill; ~36MB/keping)
+    find "$BUP_DIR" -maxdepth 1 -name 'aiven_push_*.sql' -mtime +1 -delete 2>/dev/null || true
     # Snapshot arsip lokal TEPAT sebelum dump dibuat (basis verifikasi pasca-impor;
     # bukan count live yg bergerak selama impor berlangsung).
     SNAP_ARSIP="$(MYSQL_PWD="$DB_PASSWORD" mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USERNAME" -N -e "SELECT COUNT(*) FROM \`$DB_DATABASE\`.arsip" 2>/dev/null || echo '?')"
@@ -166,15 +179,28 @@ if [[ -n "$AIVEN_HOST" && -n "$AIVEN_PASSWORD" ]]; then
       log "Aiven GAGAL: pembuatan dump ramping Aiven"
       fail "Aiven: gagal membuat dump ramping"
     fi
+    if ! command -v python3 >/dev/null 2>&1; then
+      rm -f "$AIVEN_TMP"
+      log "Aiven GAGAL: python3 tidak tersedia (dibutuhkan utk merge INSERT)"
+      fail "Aiven: python3 tidak tersedia"
+    fi
+    if ! python3 "$SCRIPT_DIR/merge_mysql_inserts.py" "$AIVEN_TMP" "$AIVEN_TMP.merged"; then
+      rm -f "$AIVEN_TMP" "$AIVEN_TMP.merged"
+      log "Aiven GAGAL: penggabungan INSERT dump ramping"
+      fail "Aiven: gagal menggabungkan dump ramping"
+    fi
+    PUSH_START="$(date +%s)"
     if ! MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" \
          --connect-timeout=60 \
-         --init-command="SET SESSION net_read_timeout=3600; SET SESSION net_write_timeout=3600; SET SESSION max_allowed_packet=1073741824;" \
-         "$AIVEN_DATABASE" <"$AIVEN_TMP" >>"$LOG_FILE" 2>&1; then
-      rm -f "$AIVEN_TMP"
+         --init-command="SET SESSION net_read_timeout=3600; SET SESSION net_write_timeout=3600; SET SESSION max_allowed_packet=1073741824; SET SESSION lock_wait_timeout=60;" \
+         "$AIVEN_DATABASE" <"$AIVEN_TMP.merged" >>"$LOG_FILE" 2>&1; then
+      rm -f "$AIVEN_TMP" "$AIVEN_TMP.merged"
       log "Aiven GAGAL: impor dump ($FNAME)"
       fail "Aiven: impor dump gagal"
     fi
-    rm -f "$AIVEN_TMP"
+    PUSH_SECS="$(( $(date +%s) - PUSH_START ))"
+    rm -f "$AIVEN_TMP" "$AIVEN_TMP.merged"
+    log "Aiven push selesai dalam ${PUSH_SECS} detik"
     # verifikasi: jumlah arsip di salinan Aiven vs SNAPSHOT lokal saat dump dibuat.
     # (TIDAK membandingkan dgn count live — app bisa menambah arsip selama impor,
     #  sehingga "selisih" lama = data baru yg sah, bukan kegagalan impor.)
