@@ -2658,7 +2658,34 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
 }
 .mobile-bottom-nav-item:hover { color: var(--nb-ink); text-decoration: none; }
 
-.mobile-more-menu { min-width: 260px; }
+/* "Lainnya" = bottom sheet ala Android: terbuka ke ATAS di atas bottom-nav
+   (default Bootstrap dengan data-bs-display=static drop ke bawah nav & keluar
+   viewport → tombol terasa tidak bisa diklik). Spesifisitas dinaikkan untuk
+   mengalahkan bootstrap .dropdown-menu[data-bs-popper]{top:100%;left:0}. */
+.mobile-more-menu.mobile-more-menu,
+.mobile-more-menu[data-bs-popper] {
+  position: fixed;
+  top: auto;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(64px + 0.5rem + env(safe-area-inset-bottom));
+  max-height: calc(100vh - 8rem);
+  max-height: calc(100dvh - 8rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+  margin: 0;
+  padding: 0.4rem;
+  border: 1px solid var(--nb-border);
+  border-radius: 1rem;
+  box-shadow: var(--nb-shadow-xl);
+}
+.mobile-more-menu.show { animation: mobile-more-in 0.16s ease-out; }
+@keyframes mobile-more-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
 .mobile-more-section { padding: 0.6rem; }
 .mobile-more-section + .mobile-more-section { border-top: 1px solid var(--nb-border-light); }
 .mobile-more-section-title {
