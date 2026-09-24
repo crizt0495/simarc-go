@@ -23,7 +23,13 @@ Alur tiap malam (02:15):
 4. **Push ke Aiven** (bila AIVEN_HOST & AIVEN_PASSWORD terisi):
    - Pra-cek `@@read_only` → lewati bila standby (hindari ERROR 1290 spam)
    - `DROP DATABASE` + `CREATE DATABASE` + impor dump → salinan selalu utuh & idempoten
-   - Verifikasi jumlah baris `arsip` lokal vs Aiven, catat di `backup.log`
+     - Dump yang di-push **mengecualikan tabel debug internal Laravel** —
+       `telescope_*` (`telescope_entries`, `telescope_entries_tags`, `telescope_monitoring`).
+       Tabel itu berisi log debugging (bukan data arsip) & berukuran ±10 MB; mengecualikannya
+       mencegah terminasi koneksi TLS Aiven saat impor (ERROR 2026 "unexpected eof").
+   - Verifikasi jumlah baris `arsip` Aiven vs *snapshot lokal saat dump dibuat*
+     (bukan count live — app boleh saja bertambah selama impor; selisih positif
+     = arsip baru setelah dump, wajar, bukan kegagalan), catat di `backup.log`
 
 Kredensial di `.env` (gitignored). Template: `.env.example` blok `AIVEN_*`.
 

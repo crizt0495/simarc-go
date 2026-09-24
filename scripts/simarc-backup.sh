@@ -142,19 +142,50 @@ if [[ -n "$AIVEN_HOST" && -n "$AIVEN_PASSWORD" ]]; then
       log "Aiven GAGAL: drop/create database $AIVEN_DATABASE"
       fail "Aiven: gagal drop/create database $AIVEN_DATABASE"
     fi
-    if ! decompress "$FPATH" | normalize_mysql8 | MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" "$AIVEN_DATABASE" >>"$LOG_FILE" 2>&1; then
+    # Dump Aiven dibuat TERPISAH & RAMPPING dari DB lokal (bukan pakai $FPATH):
+    #   • --skip-extended-insert → tiap baris jadi INSERT kecil (~KB), bukan satu
+    #     paket multi-MB → koneksi TLS Aiven tidak pernah diterpa paket raksasa
+    #     (penyebab ERROR 2026 "unexpected eof while reading" di line 40436).
+    #   • --ignore-table=telescope_* → buang log debug internal Laravel (bukan
+    #     data arsip; justru sumber INSERT ~10 MB yg memutus TLS).
+    #   • set timeouts volume besar di awal sesi impor (Aiven menutup koneksi
+    #     TLS bila impor lama; lihat backup.log utk konfirmasi).
+    # Data arsip (arsip, pemberkasan, klasifikasi, dll) tetap 100% ikut.
+    AIVEN_TMP="$(mktemp "$BUP_DIR/aiven_push_XXXXXX.sql")"
+    # Snapshot arsip lokal TEPAT sebelum dump dibuat (basis verifikasi pasca-impor;
+    # bukan count live yg bergerak selama impor berlangsung).
+    SNAP_ARSIP="$(MYSQL_PWD="$DB_PASSWORD" mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USERNAME" -N -e "SELECT COUNT(*) FROM \`$DB_DATABASE\`.arsip" 2>/dev/null || echo '?')"
+    if ! mysqldump \
+        --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USERNAME" \
+        --no-tablespaces --single-transaction --skip-extended-insert \
+        --ignore-table="$DB_DATABASE.telescope_entries" \
+        --ignore-table="$DB_DATABASE.telescope_entries_tags" \
+        --ignore-table="$DB_DATABASE.telescope_monitoring" \
+        "$DB_DATABASE" 2>>"$LOG_FILE" | normalize_mysql8 >"$AIVEN_TMP"; then
+      rm -f "$AIVEN_TMP"
+      log "Aiven GAGAL: pembuatan dump ramping Aiven"
+      fail "Aiven: gagal membuat dump ramping"
+    fi
+    if ! MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" \
+         --connect-timeout=60 \
+         --init-command="SET SESSION net_read_timeout=3600; SET SESSION net_write_timeout=3600; SET SESSION max_allowed_packet=1073741824;" \
+         "$AIVEN_DATABASE" <"$AIVEN_TMP" >>"$LOG_FILE" 2>&1; then
+      rm -f "$AIVEN_TMP"
       log "Aiven GAGAL: impor dump ($FNAME)"
       fail "Aiven: impor dump gagal"
     fi
-    # verifikasi: jumlah baris tabel arsip lokal vs salinan di Aiven
-    LOCAL_CNT="$(MYSQL_PWD="$DB_PASSWORD" mysql --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USERNAME" -N -e "SELECT COUNT(*) FROM \`$DB_DATABASE\`.arsip" 2>/dev/null || echo '?')"
+    rm -f "$AIVEN_TMP"
+    # verifikasi: jumlah arsip di salinan Aiven vs SNAPSHOT lokal saat dump dibuat.
+    # (TIDAK membandingkan dgn count live — app bisa menambah arsip selama impor,
+    #  sehingga "selisih" lama = data baru yg sah, bukan kegagalan impor.)
     AIVEN_CNT="$(MYSQL_PWD="$AIVEN_PASSWORD" mysql "${MYSQLOPTS[@]}" -N -e "SELECT COUNT(*) FROM \`$AIVEN_DATABASE\`.arsip" 2>/dev/null || echo '?')"
-    if [[ "$LOCAL_CNT" == "$AIVEN_CNT" && "$LOCAL_CNT" != "?" ]]; then
-      log "Aiven OK: impor berhasil (arsip=$AIVEN_CNT, cocok lokal)"
-      echo "Aiven OK: arsip=$AIVEN_CNT baris (cocok lokal)"
+    if [[ "$SNAP_ARSIP" == "$AIVEN_CNT" && "$AIVEN_CNT" != "?" ]]; then
+      log "Aiven OK: impor berhasil (arsip=$AIVEN_CNT, cocok snapshot dump local)"
+      echo "Aiven OK: arsip=$AIVEN_CNT baris (cocok snapshot dump local)"
     else
-      log "Aiven PERINGATAN: arsip lokal=$LOCAL_CNT vs aiven=$AIVEN_CNT"
-      echo "Aiven PERINGATAN: arsip lokal=$LOCAL_CNT vs aiven=$AIVEN_CNT"
+      SELISIH="$([[ "$SNAP_ARSIP" != "?" && "$AIVEN_CNT" != "?" ]] && echo "$((SNAP_ARSIP - AIVEN_CNT))" || echo '?')"
+      log "Aiven PERINGATAN: arsip snapshot=$SNAP_ARSIP vs aiven=$AIVEN_CNT (selisih=$SELISIH; bila positif = arsip baru setelah dump, wajar)"
+      echo "Aiven PERINGATAN: arsip snapshot=$SNAP_ARSIP vs aiven=$AIVEN_CNT"
     fi
   fi
 else
