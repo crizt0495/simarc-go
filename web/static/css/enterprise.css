@@ -567,10 +567,9 @@ kbd {
   .sidebar-overlay { display: none; }
 }
 
-/* ── Mobile / tablet: sidebar slides in ── */
+/* ── Mobile / tablet: tanpa sidebar — navigasi via bottom-nav (Android-style) ── */
 @media (max-width: 991.98px) {
-  .sidebar { transform: translateX(-100%); box-shadow: 12px 0 40px -12px rgba(11,18,32,0.5); }
-  .sidebar.active { transform: translateX(0); }
+  .sidebar, .sidebar-overlay { display: none !important; }
   .top-navbar { left: 0; }
   .main-content { margin-left: 0; }
 }

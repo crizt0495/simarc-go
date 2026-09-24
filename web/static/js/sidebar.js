@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Robust Toggle Function
     window.toggleSidebar = function() {
         if (!sidebar) return;
-        
+        if (isMobile()) return; // Android-style: tanpa sidebar — navigasi via bottom-nav
+
         sidebar.classList.toggle('active');
         if (sidebarOverlay) {
             sidebarOverlay.classList.toggle('active');

@@ -14,6 +14,18 @@ import { test, expect } from '@playwright/test';
 
 const THEME_TOGGLE = '#themeToggle';
 
+/** Proyek mobile (`390×844`) = Android-style: tanpa sidebar, menu di bottom-nav. */
+const isMobileProject = (testInfo) => testInfo.project.name === 'mobile';
+
+async function expectSidebarState(page, testInfo) {
+  const sidebar = page.locator('.sidebar');
+  if (isMobileProject(testInfo)) {
+    await expect(sidebar).not.toBeVisible();
+  } else {
+    await expect(sidebar).toBeVisible();
+  }
+}
+
 async function login(page) {
   // Cek sesi dulu: GET /login tidak me-redirect user yang sudah login,
   // jadi tidak bisa dipakai sebagai penanda autentikasi.
@@ -28,9 +40,9 @@ async function login(page) {
 }
 
 test.describe('enterprise layout contract', () => {
-  test('dashboard renders modern chrome', async ({ page }) => {
+  test('dashboard renders modern chrome', async ({ page }, testInfo) => {
     await login(page);
-    await expect(page.locator('.sidebar')).toBeVisible();
+    await expectSidebarState(page, testInfo);
     await expect(page.locator('.top-navbar')).toBeVisible();
     // Enterprise contract: crisp 1px hairline under the topbar
     const bar = await page.locator('.top-navbar').evaluate(el => getComputedStyle(el).borderBottomWidth);
@@ -44,11 +56,11 @@ test.describe('enterprise layout contract', () => {
     expect(parseFloat(radius)).toBeGreaterThan(0);
   });
 
-  test('theme toggle flips html[data-theme] and keeps layout', async ({ page }) => {
+  test('theme toggle flips html[data-theme] and keeps layout', async ({ page }, testInfo) => {
     await login(page);
     await page.click(THEME_TOGGLE);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await expect(page.locator('.sidebar')).toBeVisible();
+    await expectSidebarState(page, testInfo);
     await expect(page.locator('.top-navbar')).toBeVisible();
     await page.click(THEME_TOGGLE);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
