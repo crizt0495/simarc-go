@@ -447,6 +447,19 @@ func (h *LaporanHandler) Pemusnahan(c *gin.Context) {
 
 type QrCodeHandler struct{}
 
+// findQRCodeByArsipID memuat QR sebagai data opsional. Find tidak mengembalikan
+// gorm.ErrRecordNotFound saat arsip belum memiliki QR, sehingga kondisi normal
+// tersebut tidak perlu dicatat sebagai error oleh GORM.
+func findQRCodeByArsipID(arsipID string) (models.QrCode, error) {
+	var qr models.QrCode
+	err := database.DB.
+		Where("arsip_id = ?", arsipID).
+		Order("id ASC").
+		Limit(1).
+		Find(&qr).Error
+	return qr, err
+}
+
 func (h *QrCodeHandler) Generate(c *gin.Context) {
 	arsipID := c.Param("arsipId")
 	if arsipID == "" {
@@ -483,8 +496,12 @@ func (h *QrCodeHandler) Generate(c *gin.Context) {
 
 func (h *QrCodeHandler) DownloadByArsip(c *gin.Context) {
 	arsipID := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.First(&qr, "arsip_id = ?", arsipID).Error; err != nil || qr.QrCodePath == "" {
+	qr, err := findQRCodeByArsipID(arsipID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Gagal memuat QR Code")
+		return
+	}
+	if qr.QrCodePath == "" {
 		c.String(http.StatusNotFound, "QR Code tidak ditemukan")
 		return
 	}

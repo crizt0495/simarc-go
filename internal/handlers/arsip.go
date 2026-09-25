@@ -578,9 +578,11 @@ func (h *ArsipHandler) Show(c *gin.Context) {
 	var versions []models.ArsipVersion
 	database.DB.Where("arsip_id = ?", id).Order("nomor_versi DESC").Find(&versions)
 
-	// QR Code
-	var qrCode models.QrCode
-	database.DB.Where("arsip_id = ?", id).First(&qrCode)
+	// QR Code (opsional: arsip belum tentu memiliki QR).
+	qrCode, err := findQRCodeByArsipID(id)
+	if err != nil {
+		log.Printf("[WARN] Gagal memuat QR Code untuk arsip %s: %v", id, err)
+	}
 
 	// File info
 	fileExists := arsip.FilePath != ""

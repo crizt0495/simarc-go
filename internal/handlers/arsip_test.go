@@ -8,7 +8,21 @@ import (
 
 	"arsippro/internal/database"
 	"arsippro/internal/models"
+
+	"github.com/google/uuid"
 )
+
+// ── QR Code lookup tests ───────────────────────────────────────────────────────
+
+func TestFindQRCodeByArsipID_WhenMissing_ReturnsEmptyWithoutError(t *testing.T) {
+	qr, err := findQRCodeByArsipID(uuid.New().String())
+	if err != nil {
+		t.Fatalf("QR yang belum tersedia seharusnya bukan error: %v", err)
+	}
+	if qr.ID != "" {
+		t.Errorf("QR yang belum tersedia seharusnya kosong, got ID %q", qr.ID)
+	}
+}
 
 // ── CREATE handler tests ──────────────────────────────────────────────────────
 
