@@ -126,6 +126,13 @@ func Init() (*gin.Engine, error) {
 
 	config.Load()
 
+	// Navigation shell override. Defaults to the left sidebar so the web build
+	// is unaffected; set SIMARC_LAYOUT=topbar to preview the desktop shell in a
+	// browser (the desktop binary sets the same mode programmatically).
+	if os.Getenv("SIMARC_LAYOUT") == handlers.LayoutModeTopbar {
+		handlers.SetLayoutMode(handlers.LayoutModeTopbar)
+	}
+
 	isVercel := os.Getenv("VERCEL") == "1"
 
 	rootDir := getProjectRoot()

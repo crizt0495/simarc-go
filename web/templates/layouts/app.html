@@ -148,10 +148,12 @@ html, body { overflow-x: hidden; }
   </style>
   {{if .ThemeCSS}}<style>{{.ThemeCSS}}</style>{{end}}
 </head>
-<body>
+<body class="{{if eq .LayoutMode "topbar"}}layout-topbar{{end}}">
 
+{{if ne .LayoutMode "topbar"}}
 {{template "components/sidebar.html" .}}
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+{{end}}
 
 <!-- Mobile Search Bar (hidden by default - open via bottom-nav search action only) -->
 <div class="mobile-search-bar d-none" id="mobileSearchBar">
@@ -176,6 +178,11 @@ html, body { overflow-x: hidden; }
       <i class="bi bi-archive-fill"></i>
       <span>SIMARC</span>
     </a>
+
+    {{if eq .LayoutMode "topbar"}}
+    <span class="topnav-divider" aria-hidden="true"></span>
+    {{template "components/topnav.html" .}}
+    {{end}}
 
     <form action="/search" method="GET" class="nav-search d-none d-lg-flex">
       <i class="bi bi-search" style="color:var(--ink-4);font-size:14px;flex-shrink:0"></i>

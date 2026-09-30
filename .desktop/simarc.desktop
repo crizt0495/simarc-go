@@ -1,8 +1,18 @@
 [Desktop Entry]
-Name=SIMARC
-Comment=Sistem Informasi Manajemen Arsip
-Exec=bash -c "cd %k && ./run.sh"
-Terminal=true
 Type=Application
-Icon=web/static/images/logo-icon.svg
-Categories=Office;
+Version=1.0
+Name=SIMARC
+GenericName=Manajemen Arsip
+Comment=Sistem Informasi Manajemen Arsip Record Center
+# Menjalankan binary desktop (Wails), bukan server di terminal. Binary memakai
+# webview sistem, jadi tidak ada Terminal=true — aplikasi berjalan sebagai
+# jendela biasa.
+Exec=SIMARC %u
+Icon=simarc
+Terminal=false
+Categories=Office;Archiving;Database;
+Keywords=arsip;arsip record center;kearsipan;retensi;berkas;
+StartupNotify=true
+StartupWMClass=SIMARC
+SingleMainWindow=true
+X-GNOME-UsesNotifications=true

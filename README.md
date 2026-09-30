@@ -176,12 +176,45 @@ Setelah server berjalan, buka browser:
 | http://localhost:8080/arsip/pemindahan | Pemindahan arsip |
 | http://localhost:8080/backup | Backup & Restore (lokal) |
 
+## 🖥️ Versi Desktop (top navigation)
+
+SIMARC juga tersedia sebagai aplikasi desktop native (Wails — Go + webview
+sistem), dengan **navigasi top bar** di atas menggantikan sidebar kiri. Entire
+isi aplikasinya sama persis dengan versi web; hanya kerangka navigasinya yang
+berbeda.
+
+```bash
+# Prasyarat: Wails CLI + header webview
+sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev build-essential pkg-config
+
+make desktop-tools   # pasang Wails CLI
+make desktop         # build untuk OS ini
+make desktop-install # pasang untuk user saat ini
+```
+
+| OS | Prasyarat | Installer |
+|---|---|---|
+| Linux | WebKitGTK 4.1 dev headers | `.deb`, AppImage, `.tar.gz` |
+| macOS | Xcode Command Line Tools | `.app`, `.dmg` |
+| Windows | WebView2 Runtime (bawaan Win10/11) | `.exe` (NSIS) |
+
+Binary desktop hanya bisa dibangun di OS tempat ia akan berjalan (Wails
+memakai cgo + webview platform). Untuk Ketiganya sekaligus, push tag
+`v1.0.0` dan `.github/workflows/desktop-release.yml` akan membangun serta
+mempublikasikannya.
+
+Aplikasi terpasang memakai template yang tertanam di dalam binary, dan
+membaca `.env` dari direktori data per pengguna
+(`~/.local/share/simarc` di Linux). Rinciannya ada di
+[`desktop/README.md`](desktop/README.md).
+
 ## 📁 Struktur Direktori
 
 ```
 simarc/
 ├── cmd/
 │   ├── server/main.go       # Entry point server
+├── desktop/                 # Shell desktop Wails (top navigation)
 ├── internal/
 │   ├── handlers/            # HTTP handlers
 │   ├── models/              # Database models

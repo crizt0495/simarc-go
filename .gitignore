@@ -7,6 +7,15 @@ tmp/
 *.test
 *.test.exe
 
+# ── Desktop (Wails) build output ──
+# The packaging assets under desktop/build/ (appicon.png, darwin/, linux/,
+# windows/) ARE tracked — they are what produces the per-OS installers. Only
+# the compiled binaries and the generated JS bindings are ignored.
+desktop/build/bin/
+desktop/build/dist/
+desktop/frontend/wailsjs/
+build/bin/
+
 # ── Node / frontend tooling ──
 node_modules/
 

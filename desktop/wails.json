@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "SIMARC",
+  "outputfilename": "SIMARC",
+  "frontend:install": "",
+  "frontend:build": "",
+  "frontend:dev:watcher": "",
+  "frontend:dev:serverUrl": "",
+  "author": {
+    "name": "SIMARC"
+  },
+  "info": {
+    "companyName": "SIMARC",
+    "productName": "SIMARC",
+    "productVersion": "1.0.0",
+    "copyright": "Sistem Informasi Manajemen Arsip Record Center",
+    "comments": "Arsip management system — desktop shell with top navigation"
+  }
+}

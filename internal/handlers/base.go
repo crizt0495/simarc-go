@@ -65,6 +65,33 @@ func computeAssetVersion() string {
 	return hex.EncodeToString(h.Sum(nil))[:12]
 }
 
+// Layout modes for the app shell. The browser build keeps the left sidebar;
+// the desktop build (desktop/) switches to the horizontal top bar, the way
+// modern POS apps present their modules.
+const (
+	LayoutModeSidebar = "sidebar"
+	LayoutModeTopbar  = "topbar"
+)
+
+// layoutMode is the shell rendered by layouts/app.html. It defaults to the
+// sidebar so every existing entrypoint (cmd/server, the Vercel handler, tests)
+// is unaffected, and only the desktop binary opts into the top bar.
+var layoutMode = LayoutModeSidebar
+
+// SetLayoutMode selects the app shell for subsequent renders. Call it before
+// the first request is served; values other than LayoutModeTopbar fall back to
+// the sidebar so a bad value can never render a broken shell.
+func SetLayoutMode(mode string) {
+	if mode == LayoutModeTopbar {
+		layoutMode = LayoutModeTopbar
+		return
+	}
+	layoutMode = LayoutModeSidebar
+}
+
+// LayoutMode reports the active app shell.
+func LayoutMode() string { return layoutMode }
+
 // requestBaseURL returns the scheme://host that the client actually used to
 // reach this server (e.g. "http://192.168.1.11:8080" when a LAN client opens
 // the app). Templates use this for generated links/URLs so they keep working
@@ -115,6 +142,7 @@ func Render(c *gin.Context, status int, tmpl string, data gin.H) {
 	data["Year"] = time.Now().Year()
 	data["CurrentPath"] = c.Request.URL.Path
 	data["AssetVersion"] = assetVersion
+	data["LayoutMode"] = layoutMode
 
 	// Use page-specific template set (isolated {{define "content"}})
 	if ts, ok := TemplateSets[tmpl]; ok {

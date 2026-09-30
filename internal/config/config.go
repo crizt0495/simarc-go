@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -42,9 +43,7 @@ type Config struct {
 var App Config
 
 func Load() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using environment variables")
-	}
+	loadEnvFile()
 
 	// MySQL defaults — Aiven MySQL is the primary database.
 	dbHost := getEnv("DB_HOST", "127.0.0.1")
@@ -110,6 +109,49 @@ func Load() {
 		GoogleDriveClientID: getEnv("GOOGLE_DRIVE_CLIENT_ID", ""),
 		GoogleDriveFolderID: getEnv("GOOGLE_DRIVE_FOLDER_ID", ""),
 	}
+}
+
+// loadEnvFile locates the .env file.
+//
+// Development and the Vercel build keep the original behaviour: .env in the
+// working directory. An installed desktop app is launched from the
+// application menu with no control over its working directory, so it also
+// looks next to the binary and in the per-user data directory. Real
+// environment variables always win, because godotenv never overwrites them.
+func loadEnvFile() {
+	if err := godotenv.Load(); err == nil {
+		return
+	}
+
+	for _, dir := range envSearchDirs() {
+		if dir == "" {
+			continue
+		}
+		candidate := filepath.Join(dir, ".env")
+		info, err := os.Stat(candidate)
+		if err != nil || info.IsDir() {
+			continue
+		}
+		if err := godotenv.Load(candidate); err == nil {
+			log.Printf("Loaded .env from %s", candidate)
+			return
+		}
+	}
+
+	log.Println("No .env file found, using environment variables")
+}
+
+// envSearchDirs lists the places an installed app may keep its .env, in
+// priority order after the working directory.
+func envSearchDirs() []string {
+	dirs := make([]string, 0, 3)
+
+	if exe, err := os.Executable(); err == nil {
+		dirs = append(dirs, filepath.Dir(exe))
+	}
+	dirs = append(dirs, DataDir())
+
+	return dirs
 }
 
 func getEnv(key, fallback string) string {

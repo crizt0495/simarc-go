@@ -3931,3 +3931,206 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
   border-radius: 6px;
   font-family: var(--nb-font-mono);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   14. TOP NAVIGATION MODE (desktop shell)
+   ═══════════════════════════════════════════════════════════════════════
+   Activated by <body class="layout-topbar">, which layouts/app.html sets
+   when the server runs in desktop mode (cmd/desktop). The left sidebar is
+   not rendered at all in that mode; navigation moves into the top bar,
+   the way recent POS apps present their modules.
+
+   Every rule is scoped to body.layout-topbar so the browser build (which
+   renders the sidebar) is byte-for-byte unaffected.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Shell geometry: reclaim the sidebar's 264px, keep one 64px header ── */
+body.layout-topbar .main-content {
+  margin-left: 0;
+  padding-top: calc(var(--topbar-h) + 1.25rem);
+}
+
+body.layout-topbar .top-navbar {
+  left: 0;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* The mobile bottom-nav and its floating bar belong to the sidebar layout.
+   A desktop window can be narrow enough to trigger them, so opt them out. */
+body.layout-topbar .mobile-bottom-nav,
+body.layout-topbar .floating-bar {
+  display: none !important;
+}
+
+/* Kill the sidebar-collapse offsets — there is no sidebar to collapse. */
+body.layout-topbar.sidebar-collapsed .top-navbar,
+body.layout-topbar.sidebar-collapsed .main-content {
+  margin-left: 0;
+}
+
+/* ── Brand + vertical rule between brand and modules ── */
+body.layout-topbar .navbar-brand-mobile {
+  display: inline-flex;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+body.layout-topbar .navbar-brand-mobile i {
+  font-size: 1.2rem;
+}
+
+/* The search box is the flexible element in this row: it takes the leftover
+   space and yields it all back as the window narrows. */
+body.layout-topbar .nav-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 420px;
+}
+
+.topnav-divider {
+  width: 1px;
+  height: 22px;
+  flex-shrink: 0;
+  background: var(--nb-border);
+}
+
+/* ── The bar itself ── */
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* In the topbar layout the module bar IS the primary navigation, so it keeps
+   its intrinsic width and is never clipped; the search box beside it absorbs
+   the squeeze instead. Without this the last group ("Lainnya") slid out of the
+   visible area on a 1440px window, because both were flex items shrinking in
+   proportion to their base size. */
+body.layout-topbar .topnav {
+  flex: 0 0 auto;
+}
+
+.topnav::-webkit-scrollbar {
+  display: none;
+}
+
+.topnav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--nb-ink-2);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.topnav-item i { font-size: 0.95rem; color: var(--nb-ink-4); transition: color 0.15s ease; }
+
+.topnav-item:hover {
+  background: var(--nb-surface-2);
+  color: var(--nb-ink);
+}
+
+.topnav-item:hover i { color: var(--nb-ink-2); }
+
+.topnav-item.active {
+  background: var(--nb-primary-light);
+  color: var(--nb-primary-deep);
+}
+
+.topnav-item.active i { color: var(--nb-primary); }
+
+/* Caret only on the dropdown triggers; rotates when Bootstrap opens them. */
+.topnav-caret {
+  font-size: 0.6rem !important;
+  opacity: 0.5;
+}
+
+.topnav-item[aria-expanded="true"] .topnav-caret {
+  transform: rotate(180deg);
+}
+
+/* Keyboard focus must stay visible on the whole bar. */
+.topnav-item:focus-visible {
+  outline: 2px solid var(--nb-primary);
+  outline-offset: 1px;
+}
+
+/* ── Dropdown panels ── */
+.topnav-menu {
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--nb-border);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px -8px rgba(15, 23, 42, 0.22);
+}
+
+.topnav-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.topnav-menu .dropdown-item i {
+  width: 18px;
+  text-align: center;
+  color: var(--nb-ink-4);
+  font-size: 0.9rem;
+}
+
+.topnav-menu .dropdown-item:hover,
+.topnav-menu .dropdown-item:focus {
+  background: var(--nb-surface-2);
+  color: var(--nb-ink);
+}
+
+.topnav-menu .dropdown-item:hover i { color: var(--nb-primary); }
+
+.topnav-menu .dropdown-header {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--nb-ink-5);
+  padding: 0.4rem 0.6rem 0.2rem;
+}
+
+.topnav-menu-wide { min-width: 232px; }
+
+/* ── Narrow desktop windows ──
+   Three bands, so the bar degrades in the right order instead of clipping:
+   full labels + search need ~1330px, labels alone ~1170px, and below that the
+   icons plus the caret still identify every group while the tooltip (title)
+   carries the full name. The bar scrolls rather than wrapping so the header
+   never grows to two rows. */
+@media (max-width: 1339.98px) {
+  /* The search box yields first: the module bar is more important. */
+  body.layout-topbar .nav-search { display: none !important; }
+}
+
+@media (max-width: 1169.98px) {
+  body.layout-topbar .topnav-item span { display: none; }
+  body.layout-topbar .topnav-item { padding: 0.45rem 0.5rem; }
+}
+
+@media (max-width: 767.98px) {
+  body.layout-topbar .topnav { gap: 0; }
+  body.layout-topbar .topnav-divider { display: none; }
+}

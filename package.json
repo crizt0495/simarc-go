@@ -8,6 +8,8 @@
     "test:watch": "vitest",
     "css:minify": "node scripts/minify-css.js",
     "css:watch": "node scripts/minify-css.js --watch",
+    "css:check": "node scripts/minify-css.js --check",
+    "test:desktop-topbar": "playwright test -c playwright.topbar.config.js",
     "test:a11y": "node scripts/wcag-audit.js",
     "test:ui": "playwright test",
     "test:ui:update": "playwright test --update-snapshots",

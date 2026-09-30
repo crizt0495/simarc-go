@@ -2,7 +2,11 @@
 /**
  * SIMARC CSS Minifier — zero-dependency production minifier.
  *
- * Usage: node scripts/minify-css.js [--watch]
+ * Usage: node scripts/minify-css.js [--watch] [--check]
+ *
+ *   (no flag)  rewrite every .min.css from its source
+ *   --watch    rebuild on change
+ *   --check    verify the committed .min.css matches its source; exit 1 if not
  *
  * Minifies web/static/css/*.css → same `.min.css` files, stripping
  * comments/whitespace while SAFELY preserving semantics:
@@ -184,20 +188,55 @@ function minify(css) {
 }
 
 let changed = false;
+const CHECK_ONLY = process.argv.includes('--check');
 
+/**
+ * Minifies every source file in CSS_DIR.
+ *
+ * In --check mode nothing is written: the freshly minified text is compared
+ * against the committed `.min.css` so a stale artifact fails the build. The
+ * pages load the minified file, not the source, so an out-of-date `.min.css`
+ * silently ships the previous styles -- which is exactly how a topbar fix once
+ * appeared to "do nothing".
+ */
 function build() {
+  let stale = 0;
+
   for (const file of INPUTS) {
     const src = join(CSS_DIR, file);
     const dest = join(CSS_DIR, file.replace(/\.css$/, '.min.css'));
     const raw = readFileSync(src, 'utf8');
     const { css: protectedCss, chunks } = extractProtected(raw);
     const min = restoreProtected(minify(protectedCss), chunks);
-    writeFileSync(dest, min);
-
     const kb = (raw.length / 1024).toFixed(1);
     const mkb = (min.length / 1024).toFixed(1);
     const pct = Math.max(0, Math.round((1 - min.length / raw.length) * 100));
-    console.log(`✓ ${file}: ${kb}KB → ${mkb}KB  (-${pct}%)  → ${basename(dest)}`);
+    const name = basename(dest);
+
+    if (CHECK_ONLY) {
+      let current = null;
+      try {
+        current = readFileSync(dest, 'utf8');
+      } catch {
+        /* missing entirely */
+      }
+      if (current === min) {
+        console.log(`✓ ${name} is up to date (${mkb}KB)`);
+      } else {
+        stale++;
+        const why = current === null ? 'missing' : 'out of date';
+        console.error(`✗ ${name} is ${why} — run: npm run css:minify`);
+      }
+      continue;
+    }
+
+    writeFileSync(dest, min);
+    console.log(`✓ ${file}: ${kb}KB → ${mkb}KB  (-${pct}%)  → ${name}`);
+  }
+
+  if (CHECK_ONLY && stale > 0) {
+    console.error(`\n${stale} minified CSS file(s) out of sync with their source.`);
+    process.exit(1);
   }
   changed = true;
 }
