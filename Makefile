@@ -58,6 +58,21 @@ assets-check: ## Fail if a .min.css is out of sync with its source
 test-desktop: ## Test the desktop shell contract (needs MySQL from .env)
 	cd desktop && $(GO) test -tags "$(GO_TAGS)" ./...
 
+.PHONY: desktop-db-check
+desktop-db-check: ## Check that both databases answer: local MySQL and Aiven (read-only)
+	@set -a; \
+	if [ -f "$(HOME)/.local/share/simarc/.env" ]; then \
+		. "$(HOME)/.local/share/simarc/.env"; \
+	elif [ -f "$(HOME)/Library/Application Support/SIMARC/.env" ]; then \
+		. "$(HOME)/Library/Application Support/SIMARC/.env"; \
+	elif [ -f .env ]; then \
+		. .env; \
+	else \
+		echo "Tidak ada .env yang bisa dibaca — set DB_* dan AIVEN_* dulu."; exit 1; \
+	fi; \
+	set +a; \
+	SIMARC_TEST_DB=local,aiven $(GO) test -v -run Reachable ./internal/database/
+
 .PHONY: vet
 vet: ## Vet the web code
 	$(GO) vet ./...

@@ -108,6 +108,22 @@ func main() {
 	// environment set this is the bare engine, so a normal session pays nothing.
 	handler := instrument(r)
 
+	// Opt-in hit-test probe (SIMARC_DESKTOP_PROBE). It answers questions that
+	// only the real WebKitGTK engine can answer — such as what is actually
+	// painted over the top navigation — from inside the window itself.
+	handler = withProbe(handler)
+
+	// Serve the app on a real loopback origin. Wails' own origin is the custom
+	// scheme wails://wails/ on Linux and macOS, and WebKit keeps no cookies for
+	// a custom scheme — so the session never survived the login POST. See
+	// loopback.go for the full story.
+	lb, err := serveOnLoopback(handler)
+	if err != nil {
+		log.Fatalf("Gagal menyiapkan server lokal: %v", err)
+	}
+	defer lb.close()
+	log.Printf("[desktop] aplikasi dilayani di %s", lb.url)
+
 	if err := wails.Run(&options.App{
 		Title:     config.App.AppName,
 		Width:     1440,
@@ -115,11 +131,12 @@ func main() {
 		MinWidth:  1024,
 		MinHeight: 640,
 
-		// Hand every request from the window to the existing gin engine, so the
-		// app is served over the same handlers, routes and cookies as the web
-		// build. There is no separate frontend bundle to keep in sync.
+		// The asset server only hands the window a bootstrap page whose sole job
+		// is to navigate to the loopback origin; every real request is served by
+		// the gin engine over plain HTTP from there on. There is no separate
+		// frontend bundle to keep in sync.
 		AssetServer: &assetserver.Options{
-			Handler: handler,
+			Handler: bootstrapPage(lb.url),
 		},
 
 		OnStartup: func(ctx context.Context) {

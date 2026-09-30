@@ -97,6 +97,52 @@ SESSION_KEY=<acak-panjang>
 
 Tanpa ini, halaman akan menampilkan 503 karena tidak bisa konek database.
 
+### Dua database: MySQL lokal + Aiven
+
+SIMARC berjalan di dua database: **MySQL lokal** (primer, tempat aplikasi
+menulis) dan **MySQL Aiven** (salinan DR offsite). Desktop app memakai kode
+yang persis sama dengan build web, jadi failover-nya juga sama: arahkan `DB_*`
+ke host lain lalu restart aplikasi.
+
+Bedanya hanya pada **file mana** dan **bagaimana me-restart-nya** — untuk aplikasi
+terpasang keduanya berbeda dari build web.
+
+**1. Edit `.env` di direktori data** (bukan `.env` di repo):
+
+| OS | File yang diedit |
+|---|---|
+| Linux | `~/.local/share/simarc/.env` |
+| macOS | `~/Library/Application Support/SIMARC/.env` |
+| Windows | `%APPDATA%\SIMARC\.env` |
+
+```bash
+ENV=~/.local/share/simarc/.env
+cp "$ENV" "$ENV.lokal.bak"
+sed -i \
+  -e "s/^DB_HOST=.*/DB_HOST=$AIVEN_HOST/" \
+  -e "s/^DB_PORT=.*/DB_PORT=$AIVEN_PORT/" \
+  -e "s/^DB_USERNAME=.*/DB_USERNAME=$AIVEN_USERNAME/" \
+  -e "s/^DB_PASSWORD=.*/DB_PASSWORD=$AIVEN_PASSWORD/" \
+  -e "s/^DB_DATABASE=.*/DB_DATABASE=$AIVEN_DATABASE/" \
+  "$ENV"
+```
+
+**2. Restart** — tutup jendela, lalu jalankan lagi dari menu aplikasi (atau
+`~/.local/bin/SIMARC`). Hentikan dulu dengan `pkill -x SIMARC` supaya port
+loopback lamanya benar-benar lepas.
+
+**3. Verifikasi** kedua-duanya terjangkau lewat jalur kode yang sama dengan
+saat failover, tanpa menulis ke database mana pun:
+
+```bash
+make desktop-db-check
+```
+
+> Detail arsitektur, jadwal push nightly, dan prosedur rollback ada di
+> [`docs/prosedur-dr-aiven.md`](../docs/prosedur-dr-aiven.md). Bedanya di sana
+> build web memakai `simarc-server`; di sini yang direstart adalah aplikasi
+> desktop dan `.env`-nya ada di direktori data.
+
 ## Build
 
 Wails memakai cgo dan webview platform, jadi **binary hanya bisa dibangun di

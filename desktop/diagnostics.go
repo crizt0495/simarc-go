@@ -64,12 +64,50 @@ func instrument(next http.Handler) http.Handler {
 			log.Printf("[desktop] %s %s -> %d %s",
 				req.Method, req.URL.Path, rec.status,
 				time.Since(start).Round(time.Millisecond))
+			logRequestDetails(req, rec)
 		}
 
 		if capture != nil {
 			writeDump(dump, rec, capture.body)
 		}
 	})
+}
+
+// logRequestDetails explains the two things that silently break a webview app:
+// the origin the window actually uses, and whether the session cookie survives
+// the round trip. Without this a rejected form is just a bare "403" line.
+func logRequestDetails(req *http.Request, rec *statusRecorder) {
+	scheme := "http"
+	if req.URL.Scheme != "" {
+		scheme = req.URL.Scheme
+	}
+	// The origin matters: Wails serves the window from a bare host with no
+	// registrable domain, and cookie handling is not the same there as on a
+	// real site. Logged on the first document load and on any rejected POST,
+	// which is where a broken cookie policy becomes visible.
+	interesting := isDocumentRequest(req) || rec.status == http.StatusForbidden
+	if interesting {
+		log.Printf("[desktop]   origin: %s://%s  proto=%s", scheme, req.Host, req.Proto)
+	}
+
+	sent := "none"
+	if ck := req.Header.Get("Cookie"); ck != "" {
+		sent = ck
+		if i := strings.IndexByte(ck, '='); i > 0 {
+			sent = ck[:i] + "=…"
+		}
+	}
+
+	set := rec.header.Values("Set-Cookie")
+	if len(set) == 0 {
+		set = []string{"(none)"}
+	}
+	for _, v := range set {
+		if i := strings.IndexByte(v, ';'); i > 0 {
+			v = v[:i]
+		}
+		log.Printf("[desktop]   cookie in=[%s] out=[%s]", sent, v)
+	}
 }
 
 // isDocumentRequest reports whether this request is for a page (not a

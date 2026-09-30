@@ -4001,8 +4001,14 @@ body.layout-topbar .nav-search {
   align-items: center;
   gap: 0.1rem;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
+  /* The bar must not scroll, and above all must not clip: each dropdown menu is
+     a child of this element, so any overflow here cuts the menus off. Setting
+     overflow-x alone is not enough — CSS forces the other axis to auto as soon
+     as one of them is not visible, which is what made the menus "open" while
+     staying invisible. Nothing in the bar overflows at any supported width: the
+     responsive rules below drop the labels, then the search box, before the bar
+     could ever grow past its container. */
+  overflow: visible;
 }
 
 /* In the topbar layout the module bar IS the primary navigation, so it keeps
@@ -4012,10 +4018,6 @@ body.layout-topbar .nav-search {
    proportion to their base size. */
 body.layout-topbar .topnav {
   flex: 0 0 auto;
-}
-
-.topnav::-webkit-scrollbar {
-  display: none;
 }
 
 .topnav-item {

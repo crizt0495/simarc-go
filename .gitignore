@@ -46,6 +46,10 @@ SIMARC.app
 .vercel
 .env*
 
+# ── Compiled desktop binaries (make desktop writes them here too) ──
+/SIMARC
+/SIMARC.exe
+
 # ── Screenshots / captures (local artifacts) ──
 Screenshot_*.png
 screen*.png

@@ -11,7 +11,7 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
-  testMatch: /desktop-topbar\.spec\.js/,
+  testMatch: /(desktop-topbar|topbar-dropdown)\.spec\.js/,
   fullyParallel: false,
   workers: 1,
   retries: 0,
