@@ -45,13 +45,13 @@ var App Config
 func Load() {
 	loadEnvFile()
 
-	// MySQL defaults — Aiven MySQL is the primary database.
+	// MySQL defaults — prefer local MySQL for desktop; can be overridden.
 	dbHost := getEnv("DB_HOST", "127.0.0.1")
 	dbPort := getEnv("DB_PORT", "3306")
-	dbName := getEnv("DB_DATABASE", "defaultdb")
-	dbUser := getEnv("DB_USERNAME", "avnadmin")
+	dbName := getEnv("DB_DATABASE", "simarc")
+	dbUser := getEnv("DB_USERNAME", "root")
 	dbPass := getEnv("DB_PASSWORD", "")
-	dbTLS := getEnv("DB_TLS", "")
+	dbTLS := getEnv("DB_TLS", "false")
 
 	// Support DATABASE_URL for cloud convenience (mysql://user:pass@host:port/db).
 	if dbURL := getEnv("DATABASE_URL", ""); dbURL != "" {
@@ -161,9 +161,20 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-// EnvFilePath returns the path to the .env file (relative to project root,
-// matching where godotenv.Load() looks for it).
+// EnvFilePath returns the path to the writable .env file.
+// Prefers the per-user data directory (desktop installed app), falling back
+// to the working directory. This ensures the installed desktop app can save
+// Google Drive settings without permission errors.
 func EnvFilePath() string {
+	// Try data dir first (writable, same place the app keeps other state)
+	if dd := DataDir(); dd != "" {
+		candidate := filepath.Join(dd, ".env")
+		// Ensure directory exists
+		if err := os.MkdirAll(dd, 0700); err == nil {
+			return candidate
+		}
+	}
+	// Fallback to repo/workdir
 	return ".env"
 }
 
