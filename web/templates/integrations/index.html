@@ -32,7 +32,6 @@
                 <div class="mb-3">
                     <label class="form-label" for="intType">Tipe</label>
                     <select name="type" id="intType" class="form-select">
-                        <option value="google_sheets">Google Sheets</option>
                         <option value="rest_api">REST API</option>
                         <option value="webhook">Webhook</option>
                         <option value="other">Lainnya</option>
@@ -41,7 +40,7 @@
                 <div class="mb-3">
                     <label class="form-label" for="intBaseUrl">Base URL / Endpoint <span class="text-danger">*</span></label>
                     <input type="text" name="base_url" id="intBaseUrl" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-                    <div class="form-text">Google Sheets: tempel link sheet lengkap (sheet harus dibagikan "Siapa saja yang memiliki link — Viewer"). Baris diimpor ke Daftar Arsip saat Sync.</div>
+                    <div class="form-text">REST API/Webhook: masukkan endpoint atau konfigurasi sesuai kebutuhan integrasi.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="intApiKey">API Key / Token</label>
@@ -73,7 +72,6 @@
                 <div class="mb-3">
                     <label class="form-label" for="intEditType">Tipe</label>
                     <select name="type" id="intEditType" class="form-select">
-                        <option value="google_sheets" {{if eq .m.Type "google_sheets"}}selected{{end}}>Google Sheets</option>
                         <option value="rest_api" {{if eq .m.Type "rest_api"}}selected{{end}}>REST API</option>
                         <option value="webhook" {{if eq .m.Type "webhook"}}selected{{end}}>Webhook</option>
                         <option value="other" {{if eq .m.Type "other"}}selected{{end}}>Lainnya</option>
@@ -104,38 +102,7 @@
         <a href="/advanced/integrations/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tambah Integrasi</a>
     </div>
 
-    <!-- Panel Google Sheets -->
-    <div class="card mb-4 border-0 shadow-sm" style="border-left:4px solid var(--ink-2) !important">
-        <div class="card-body">
-            <div class="d-flex align-items-start gap-3">
-                <div class="integration-icon google"><i class="bi bi-file-earmark-spreadsheet"></i></div>
-                <div class="flex-grow-1">
-                    <h5 class="mb-1">Integrasi Google Sheets</h5>
-                    <p class="text-muted mb-2">Aiven MySQL adalah sumber data utama. Tarik data ke Google Sheets lewat
-                        Apps Script menggunakan endpoint read-only berikut (tanpa API key, JSON):</p>
-                    <div>
-                        <span class="gs-endpoint">GET /api/apps-script/summary</span>
-                        <span class="gs-endpoint">GET /api/apps-script/classifications</span>
-                        <span class="gs-endpoint">GET /api/apps-script/classifications/list</span>
-                        <span class="gs-endpoint">GET /api/apps-script/classifications/{kode}/archives</span>
-                        <span class="gs-endpoint">GET /api/apps-script/statistics/top</span>
-                        <span class="gs-endpoint">GET /api/apps-script/search?q=kata</span>
-                    </div>
-                    <details class="mt-2">
-                        <summary class="text-primary" style="cursor:pointer">Contoh script untuk Google Sheets</summary>
-                        <pre class="bg-light p-3 mt-2 rounded" style="font-size:.78rem;background:var(--surface-3)!important">function tarikData() {
-  const url = '{{.AppURL}}/api/apps-script/summary';
-  const res = UrlFetchApp.fetch(url);
-  const data = JSON.parse(res.getContentText());
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-  sheet.getRange(1, 1).setValue('Total Arsip');
-  sheet.getRange(1, 2).setValue(data.total);
-}</pre>
-                    </details>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <div class="row mb-4">
         <div class="col-md-3">
