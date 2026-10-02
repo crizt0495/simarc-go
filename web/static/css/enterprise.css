@@ -3965,10 +3965,10 @@ body.layout-topbar .top-navbar {
   padding-right: 1rem;
 }
 
-/* The mobile bottom-nav and its floating bar belong to the sidebar layout.
-   A desktop window can be narrow enough to trigger them, so opt them out. */
-body.layout-topbar .mobile-bottom-nav,
-body.layout-topbar .floating-bar {
+/* The mobile bottom-nav belongs to the sidebar layout (mobile UI). In desktop
+   topbar mode we hide the bottom nav, but keep floating action bars (used on
+   forms like tambah/edit arsip) visible and usable. */
+body.layout-topbar .mobile-bottom-nav {
   display: none !important;
 }
 
