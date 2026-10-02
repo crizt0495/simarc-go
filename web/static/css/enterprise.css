@@ -3948,6 +3948,15 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
 body.layout-topbar .main-content {
   margin-left: 0;
   padding-top: calc(var(--topbar-h) + 1.25rem);
+  /* Ensure the desktop window scrolls vertically and the mouse wheel actually
+     reaches the page body. Without a scroll container here, some WebKitGTK
+     builds treat the whole window as fixed and scrolling feels sluggish or
+     ignores mouse wheel entirely. */
+  height: calc(100vh - var(--topbar-h) - 1.25rem);
+  height: calc(100dvh - var(--topbar-h) - 1.25rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.layout-topbar .top-navbar {

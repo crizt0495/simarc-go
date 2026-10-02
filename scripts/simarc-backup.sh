@@ -20,8 +20,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$ROOT" || exit 1
 
+# Log disiapkan lebih dulu, sebelum validasi apa pun. Kalau tidak, kegagalan
+# paling awal (mis. .env hilang) keluar tanpa jejak sama sekali — dan karena
+# cron tidak menyimpan stdout, job-nya terlihat "berhasil" padahal backup
+# tidak pernah jalan. Persis begitu sinkronisasi DR berhenti diam-diam.
 ENV_FILE="$ROOT/.env"
+LOG_DIR="$ROOT/storage/logs"
+LOG_FILE="$LOG_DIR/backup.log"
+TS="$(date '+%Y-%m-%d %H:%M:%S')"
+mkdir -p "$LOG_DIR" 2>/dev/null
+log() { echo "[$TS] $*" >>"$LOG_FILE" 2>/dev/null; }
+
 if [[ ! -f "$ENV_FILE" ]]; then
+  log "GAGAL: $ENV_FILE tidak ditemukan — dump dan push Aiven dilewati"
   echo "[ERROR] $ENV_FILE tidak ditemukan" >&2
   exit 1
 fi
@@ -38,17 +49,12 @@ BACKUP_KEEP="${BACKUP_KEEP:-$(get_env BACKUP_KEEP)}"; BACKUP_KEEP="${BACKUP_KEEP
 BACKUP_MIRROR="${BACKUP_MIRROR:-$(get_env BACKUP_MIRROR)}"
 
 BUP_DIR="$ROOT/storage/app/backups/database"
-LOG_DIR="$ROOT/storage/logs"
-LOG_FILE="$LOG_DIR/backup.log"
-TS="$(date '+%Y-%m-%d %H:%M:%S')"
 FNAME="backup_$(date '+%Y-%m-%d_%H%M%S').sql"
 FPATH="$BUP_DIR/$FNAME"
 
-mkdir -p "$BUP_DIR" "$LOG_DIR"
+mkdir -p "$BUP_DIR"
 chmod 700 "$BUP_DIR"
-touch "$LOG_FILE"
 
-log() { echo "[$TS] $*" >>"$LOG_FILE"; }
 fail() { log "GAGAL: $*"; echo "[ERROR] $*" >&2; exit 1; }
 
 # ── pastikan klien db tersedia ─────────────────────────────────────────────────
