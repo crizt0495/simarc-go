@@ -305,12 +305,12 @@ func registerStaticRoutes(r *gin.Engine) {
 	})
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.Header("Cache-Control", "public, max-age=604800")
-		if f, err := arsippro.Embedded.Open("web/static/images/logo-icon.svg"); err == nil {
+		if f, err := arsippro.Embedded.Open("web/static/images/favicon.ico"); err == nil {
 			f.Close()
-			c.FileFromFS("/web/static/images/logo-icon.svg", http.FS(arsippro.Embedded))
+			c.FileFromFS("/web/static/images/favicon.ico", http.FS(arsippro.Embedded))
 			return
 		}
-		c.File("web/static/images/logo-icon.svg")
+		c.File("web/static/images/favicon.ico")
 	})
 }
 

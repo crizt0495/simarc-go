@@ -1,8 +1,13 @@
 [Desktop Entry]
-Name=SIMARC
-Comment=Sistem Informasi Manajemen Arsip
-Exec=bash -c "cd %k && ./run-desktop.sh"
-Terminal=false
 Type=Application
-Icon=web/static/images/logo-icon.svg
-Categories=Office;
+Version=1.0
+Name=SIMARC
+GenericName=Arsip Record Center
+Comment=Sistem Informasi Manajemen Arsip (web & desktop)
+Exec=bash -c "cd \"$(dirname %k)\" && ./run-desktop.sh"
+Icon=simarc
+Terminal=false
+Categories=Office;Database;
+Keywords=arsip;archive;simarc;record;center;
+StartupNotify=true
+StartupWMClass=SIMARC

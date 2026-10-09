@@ -1,96 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="SIMARC — Arsip">
   <defs>
-    <!-- Premium Gold Gradient -->
-    <linearGradient id="iconGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#D4AF37;stop-opacity:1" />
-      <stop offset="35%" style="stop-color:#F5E6A8;stop-opacity:1" />
-      <stop offset="70%" style="stop-color:#C9A961;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
+    <!-- Brand blue background -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="45%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1E40AF"/>
     </linearGradient>
-    
-    <!-- Metallic Gold Gradient -->
-    <linearGradient id="iconMetallicGold" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#9A7B0A;stop-opacity:1" />
-      <stop offset="25%" style="stop-color:#D4AF37;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#F5E6A8;stop-opacity:1" />
-      <stop offset="75%" style="stop-color:#D4AF37;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#9A7B0A;stop-opacity:1" />
+
+    <!-- Glass highlight -->
+    <linearGradient id="glass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.14"/>
+      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
-    
-    <!-- Deep Navy Background -->
-    <linearGradient id="iconNavyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0B1C2D;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#061018;stop-opacity:1" />
+
+    <!-- Sheet of paper -->
+    <linearGradient id="paper" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#DCE8FF"/>
     </linearGradient>
-    
-    <!-- Premium Shadow -->
-    <filter id="iconShadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-      <feOffset dx="0" dy="4" result="offsetblur"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.5"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    
-    <!-- Inner Glow -->
-    <filter id="innerGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0" result="glow"/>
-      <feMerge>
-        <feMergeNode in="glow"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+
+    <!-- Archive box body -->
+    <linearGradient id="box" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E7EEFF"/>
+    </linearGradient>
+
+    <filter id="ds" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#0A1E46" flood-opacity="0.35"/>
     </filter>
   </defs>
-  
-  <!-- Background Rounded Square -->
-  <rect x="10" y="10" width="180" height="180" rx="36" fill="url(#iconNavyGradient)" filter="url(#iconShadow)"/>
-  
-  <!-- Premium Border -->
-  <rect x="12" y="12" width="176" height="176" rx="34" fill="none" stroke="url(#iconMetallicGold)" stroke-width="2.5" opacity="0.9"/>
-  
-  <!-- Inner Border -->
-  <rect x="18" y="18" width="164" height="164" rx="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-  
-  <!-- Stylized Letter A (Premium) -->
-  <path d="M 100 45 L 65 135 L 77 135 L 85 115 L 115 115 L 123 135 L 135 135 Z" 
-        fill="url(#iconMetallicGold)" 
-        filter="url(#iconShadow)"/>
-  
-  <!-- Horizontal Bar of A -->
-  <line x1="88" y1="102" x2="112" y2="102" 
-        stroke="#0B1C2D" 
-        stroke-width="5" 
-        stroke-linecap="round"
-        opacity="0.9"/>
-  
-  <!-- Top Accent Star -->
-  <path d="M 100 28 L 102 34 L 108 34 L 103 38 L 105 44 L 100 40 L 95 44 L 97 38 L 92 34 L 98 34 Z" 
-        fill="url(#iconMetallicGold)" 
-        opacity="0.85"/>
-  
-  <!-- Side Decorative Dots -->
-  <circle cx="55" cy="100" r="3" fill="url(#iconMetallicGold)" opacity="0.7"/>
-  <circle cx="145" cy="100" r="3" fill="url(#iconMetallicGold)" opacity="0.7"/>
-  
-  <!-- Bottom Arc -->
-  <path d="M 70 155 Q 100 165 130 155" 
-        fill="none" 
-        stroke="url(#iconMetallicGold)" 
-        stroke-width="2.5" 
-        stroke-linecap="round"
-        opacity="0.7"/>
-  
-  <!-- Corner Embellishments -->
-  <circle cx="30" cy="30" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
-  <circle cx="170" cy="30" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
-  <circle cx="30" cy="170" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
-  <circle cx="170" cy="170" r="2.5" fill="url(#iconMetallicGold)" opacity="0.7"/>
-  
-  <!-- Glossy Overlay -->
-  <ellipse cx="100" cy="100" rx="70" ry="70" fill="url(#iconGoldGradient)" opacity="0.08" style="mix-blend-mode: overlay;"/>
+
+  <!-- Rounded squircle background -->
+  <rect x="10" y="10" width="180" height="180" rx="40" fill="url(#bg)"/>
+  <rect x="10" y="10" width="180" height="180" rx="40" fill="url(#glass)"/>
+  <rect x="11.5" y="11.5" width="177" height="177" rx="38.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1.5"/>
+
+  <!-- Documents peeking out of the box -->
+  <g filter="url(#ds)">
+    <rect x="70" y="42" width="60" height="46" rx="6" fill="#B9CFFB" transform="rotate(-6 100 65)"/>
+    <rect x="66" y="48" width="68" height="44" rx="6" fill="url(#paper)" stroke="#C2D5FA" stroke-width="1.5" transform="rotate(5 100 70)"/>
+  </g>
+  <g stroke="#A9C3F7" stroke-width="3" stroke-linecap="round" opacity="0.95" transform="rotate(5 100 70)">
+    <line x1="76" y1="60" x2="124" y2="60"/>
+    <line x1="76" y1="69" x2="126" y2="69"/>
+  </g>
+
+  <!-- Archive box -->
+  <g filter="url(#ds)">
+    <rect x="36" y="72" width="128" height="24" rx="9" fill="url(#box)"/>
+    <rect x="46" y="100" width="108" height="56" rx="12" fill="url(#box)"/>
+  </g>
+  <line x1="44" y1="98" x2="156" y2="98" stroke="#1E40AF" stroke-opacity="0.16" stroke-width="2"/>
+
+  <!-- Handle slot -->
+  <rect x="80" y="114" width="40" height="14" rx="7" fill="#1E40AF"/>
+  <rect x="80" y="114" width="40" height="14" rx="7" fill="none" stroke="#93B4F7" stroke-width="1.2" opacity="0.5"/>
 </svg>

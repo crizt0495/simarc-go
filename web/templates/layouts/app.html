@@ -10,10 +10,12 @@
   <meta name="csrf-token" content="{{.CSRFToken}}">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/images/logo-icon.svg">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png?v={{.AssetVersion}}">
   <title>{{.title}} — {{.AppName}}</title>
 
   <link rel="icon" type="image/svg+xml" href="/images/logo-icon.svg?v={{.AssetVersion}}">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-32.png?v={{.AssetVersion}}">
+  <link rel="alternate icon" href="/images/favicon.ico?v={{.AssetVersion}}">
 
   <!-- ═══════════════════════════════════════════
        RESOURCE HINTS — Parallel DNS & Connection
