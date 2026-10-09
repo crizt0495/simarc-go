@@ -59,6 +59,29 @@ go build -o simarc-server ./cmd/server/main.go
 ./simarc-server
 ```
 
+## 🖥️ Aplikasi Desktop
+
+Selain dibuka lewat browser, SIMARC dapat dijalankan sebagai **aplikasi desktop**
+(jendela sendiri, tanpa tab / address bar).
+
+| Platform | Cara menjalankan |
+|----------|------------------|
+| Linux | `./run-desktop.sh` |
+| Windows | klik dua kali `run.bat` |
+| macOS | klik dua kali `Start SIMARC.command` |
+
+**Pasang ke menu aplikasi (Linux):**
+
+```bash
+./install-desktop.sh
+```
+
+Perintah di atas membuat entri menu **SIMARC**, shortcut di Desktop, dan perintah
+`simarc` di terminal. Menutup jendela aplikasi otomatis mematikan server.
+
+> Membutuhkan browser berbasis Chromium (Google Chrome / Chromium / Brave / Edge).
+> Bila tidak tersedia, aplikasi otomatis memakai browser default.
+
 ## 🔧 File .env — SATU file untuk semua konfigurasi
 
 Semua pengaturan (database **dan** aplikasi) disimpan dalam satu file `.env`:

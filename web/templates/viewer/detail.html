@@ -1,0 +1,242 @@
+{{define "viewer/detail.html"}}
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="csrf-token" content="{{.CSRFToken}}">
+<title>{{.title}}</title>
+<link rel="icon" type="image/svg+xml" href="/images/logo-icon.svg?v={{.AssetVersion}}">
+<link href="/vendor/inter/inter.css?v={{.AssetVersion}}" rel="stylesheet">
+<link href="/vendor/bootstrap/bootstrap.min.css?v={{.AssetVersion}}" rel="stylesheet">
+<link href="/vendor/bootstrap-icons/bootstrap-icons.min.css?v={{.AssetVersion}}" rel="stylesheet">
+<link href="/css/enterprise.min.css?v={{.AssetVersion}}" rel="stylesheet">
+<style>
+  html, body { background: var(--nb-bg); }
+  body { font-family: var(--nb-font); color: var(--ink-2); padding-bottom: 40px; -webkit-font-smoothing: antialiased; }
+  .viewer-masthead {
+    position: sticky; top: 0; z-index: 1030;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  [data-theme="dark"] .viewer-masthead { background: rgba(17,27,47,0.88); }
+  .viewer-masthead-inner {
+    max-width: 1240px; margin: 0 auto; padding: 0.65rem 1rem;
+    display: flex; align-items: center; gap: 0.85rem;
+  }
+  .viewer-brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; flex-shrink: 0; }
+  .viewer-brand-logo {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: linear-gradient(135deg, var(--nb-primary), var(--nb-primary-deep));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; box-shadow: var(--nb-shadow-primary);
+  }
+  .viewer-brand-name { font-weight: 800; font-size: 0.95rem; color: var(--ink); }
+  .viewer-brand-sub { font-size: 0.62rem; font-weight: 600; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.08em; }
+  .viewer-masthead-actions { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
+  .viewer-masthead-actions .btn { font-size: 0.78rem; font-weight: 700; border-radius: 999px; }
+  .vw-theme-toggle {
+    width: 38px; height: 38px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--ink-3); display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .15s ease;
+  }
+  .vw-theme-toggle:hover { color: var(--nb-primary); border-color: var(--nb-primary); }
+  @media (max-width: 575.98px) { .viewer-brand-text { display: none; } }
+
+  .vw-container { max-width: 900px; margin: 0 auto; padding: 1.15rem 1rem 0; }
+
+  .vw-detail-card { border: 1px solid var(--border); border-radius: var(--nb-radius-lg); background: var(--surface); overflow: hidden; box-shadow: var(--nb-shadow); }
+  .vw-detail-head {
+    background: linear-gradient(135deg, var(--nb-primary), var(--nb-primary-deep));
+    color: #fff; padding: 1.4rem 1.5rem;
+  }
+  .vw-detail-head .vw-kicker { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
+  .vw-detail-head h1 { font-size: 1.3rem; font-weight: 800; margin: 0.35rem 0 0.25rem; line-height: 1.3; }
+  .vw-detail-head .vw-nomor { font-family: var(--nb-font-mono); font-weight: 700; font-size: 0.9rem; opacity: 0.95; }
+  .vw-readonly-pill {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    background: rgba(255,255,255,0.16); border-radius: 999px;
+    padding: 0.25rem 0.7rem; font-size: 0.66rem; font-weight: 700; margin-top: 0.6rem;
+  }
+  .vw-info-grid { padding: 1.25rem 1.5rem; display: grid; grid-template-columns: 1fr; gap: 0.65rem; }
+  @media (min-width: 768px) { .vw-info-grid { grid-template-columns: 1fr 1fr; } }
+  .vw-info-item { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--nb-radius); padding: 0.7rem 0.9rem; }
+  .vw-info-label { display: block; font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-4); margin-bottom: 0.2rem; }
+  .vw-info-value { font-size: 0.9rem; font-weight: 700; color: var(--ink); word-break: break-word; }
+  .vw-section { padding: 0 1.5rem 1.25rem; }
+  .vw-section .vw-info-label { margin-bottom: 0.35rem; }
+  .vw-uraian { background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--nb-radius); padding: 0.9rem 1rem; font-size: 0.88rem; line-height: 1.65; color: var(--ink-3); white-space: pre-line; }
+  .vw-chip {
+    display: inline-block; padding: 0.2rem 0.6rem; margin: 0 0.25rem 0.25rem 0;
+    background: var(--nb-primary-light); color: var(--nb-primary-dark);
+    border-radius: 999px; font-size: 0.68rem; font-weight: 700;
+  }
+  .vw-badge {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.22rem 0.6rem; border-radius: 999px;
+    font-size: 0.68rem; font-weight: 700; text-transform: capitalize;
+    background: var(--surface-3); color: var(--ink-3);
+  }
+  .vw-badge.status-aktif { background: var(--nb-success-light); color: var(--nb-success-dark); }
+  .vw-badge.status-inaktif { background: var(--nb-warning-light); color: var(--nb-warning-dark); }
+  .vw-badge.status-musnah { background: var(--nb-danger-light); color: var(--nb-danger-dark); }
+  .vw-badge.status-permanen { background: var(--nb-info-light); color: var(--nb-info-dark); }
+  .vw-badge.status-siap_penyusutan { background: var(--nb-warning-light); color: var(--nb-warning-dark); }
+  .vw-notice {
+    margin: 0 1.5rem 1.25rem; padding: 0.7rem 0.9rem;
+    background: var(--nb-primary-light); color: var(--nb-primary-dark);
+    border-radius: var(--nb-radius); font-size: 0.78rem; font-weight: 600;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .viewer-footer { text-align: center; color: var(--ink-4); font-size: 0.75rem; padding: 2rem 1rem 1rem; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<header class="viewer-masthead">
+  <div class="viewer-masthead-inner">
+    <a href="/viewer" class="viewer-brand">
+      <span class="viewer-brand-logo"><i class="bi bi-archive-fill"></i></span>
+      <span class="viewer-brand-text">
+        <span class="viewer-brand-name d-block">SIMARC</span>
+        <span class="viewer-brand-sub">Direktori Arsip</span>
+      </span>
+    </a>
+    <div class="viewer-masthead-actions">
+      <a href="/viewer" class="btn btn-outline-primary px-3"><i class="bi bi-arrow-left"></i><span class="d-none d-sm-inline ms-1">Direktori</span></a>
+      <button type="button" class="vw-theme-toggle" id="vwThemeToggle" title="Ganti tema" aria-label="Ganti tema">
+        <i class="bi bi-moon-stars" id="vwThemeIcon"></i>
+      </button>
+      {{if .AuthUser}}
+      <a href="/dashboard" class="btn btn-primary px-3"><i class="bi bi-speedometer2"></i><span class="d-none d-sm-inline ms-1">Dasbor</span></a>
+      {{else}}
+      <a href="/login" class="btn btn-primary px-3"><i class="bi bi-box-arrow-in-right"></i><span class="d-none d-sm-inline ms-1">Masuk</span></a>
+      {{end}}
+    </div>
+  </div>
+</header>
+
+<div class="vw-container">
+  <div class="vw-detail-card">
+    <div class="vw-detail-head">
+      <div class="vw-kicker">Detail Arsip</div>
+      <h1>{{.arsip.NamaArsip}}</h1>
+      <div class="vw-nomor"><i class="bi bi-hash"></i>{{.arsip.NomorArsip}}</div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="vw-badge status-{{.arsip.StatusArsip}}" style="margin-top:0.6rem;">{{replaceUnderscore .arsip.StatusArsip}}</span>
+        <span class="vw-readonly-pill"><i class="bi bi-eye"></i> Read-only</span>
+      </div>
+    </div>
+
+    <div class="vw-info-grid">
+      <div class="vw-info-item">
+        <span class="vw-info-label">Klasifikasi</span>
+        <div class="vw-info-value">{{if .arsip.KodeKlasifikasi}}{{.arsip.KodeKlasifikasi.KodeKlasifikasi}} — {{.arsip.KodeKlasifikasi.NamaKlasifikasi}}{{else}}-{{end}}</div>
+      </div>
+      <div class="vw-info-item">
+        <span class="vw-info-label">Unit Kerja</span>
+        <div class="vw-info-value">{{if .arsip.UnitKerja}}{{.arsip.UnitKerja.NamaUnit}}{{else}}-{{end}}</div>
+      </div>
+      <div class="vw-info-item">
+        <span class="vw-info-label">Kategori Arsip</span>
+        <div class="vw-info-value">{{if .arsip.JenisArsipRel}}{{.arsip.JenisArsipRel.NamaJenis}}{{else if .arsip.JenisArsip}}{{.arsip.JenisArsip}}{{else}}-{{end}}</div>
+      </div>
+      <div class="vw-info-item">
+        <span class="vw-info-label">Tanggal Arsip</span>
+        <div class="vw-info-value">{{formatDateLong .arsip.TanggalDibuat}}</div>
+      </div>
+      <div class="vw-info-item">
+        <span class="vw-info-label">Lokasi Penyimpanan</span>
+        <div class="vw-info-value">{{if .arsip.LokasiArsip}}{{.arsip.LokasiArsip.NamaLokasi}}{{else}}Belum ditentukan{{end}}</div>
+      </div>
+      <div class="vw-info-item">
+        <span class="vw-info-label">Pemberkasan</span>
+        <div class="vw-info-value">{{if .arsip.Pemberkasan}}{{.arsip.Pemberkasan.NamaPemberkasan}}{{else}}-{{end}}</div>
+      </div>
+      <div class="vw-info-item">
+        <span class="vw-info-label">Jumlah / Satuan</span>
+        <div class="vw-info-value">{{.arsip.Jumlah}} {{.arsip.Satuan}}</div>
+      </div>
+      <div class="vw-info-item">
+        <span class="vw-info-label">Retensi Berakhir</span>
+        <div class="vw-info-value">{{formatDate .arsip.TanggalRetensiAkhir}}</div>
+      </div>
+      {{if .arsip.NilaiAnggaran}}
+      <div class="vw-info-item">
+        <span class="vw-info-label">Nilai Anggaran</span>
+        <div class="vw-info-value">Rp {{formatNumber .arsip.NilaiAnggaran}}</div>
+      </div>
+      {{end}}
+      {{if .arsip.TingkatPerkembangan}}
+      <div class="vw-info-item">
+        <span class="vw-info-label">Tingkat Perkembangan</span>
+        <div class="vw-info-value">{{.arsip.TingkatPerkembangan}}</div>
+      </div>
+      {{end}}
+      {{if .arsip.NomorSPM}}
+      <div class="vw-info-item">
+        <span class="vw-info-label">Nomor SPM</span>
+        <div class="vw-info-value">{{.arsip.NomorSPM}}</div>
+      </div>
+      {{end}}
+      <div class="vw-info-item">
+        <span class="vw-info-label">Terakhir Diperbarui</span>
+        <div class="vw-info-value">{{formatDateTime .arsip.UpdatedAt}}</div>
+      </div>
+    </div>
+
+    {{if .arsip.Uraian}}
+    <div class="vw-section">
+      <span class="vw-info-label">Uraian / Ringkasan Isi</span>
+      <div class="vw-uraian">{{.arsip.Uraian}}</div>
+    </div>
+    {{end}}
+
+    {{if .arsip.Tags}}
+    <div class="vw-section">
+      <span class="vw-info-label">Tag</span>
+      <div>{{range splitTags .arsip.Tags}}<span class="vw-chip"><i class="bi bi-tag"></i> {{.}}</span>{{end}}</div>
+    </div>
+    {{end}}
+
+    <div class="vw-notice">
+      <i class="bi bi-info-circle-fill"></i>
+      <span>Data ini diambil langsung dari basis data kearsipan pusat <strong>{{.AppName}}</strong>. Berkas digital tidak ditampilkan pada mode viewer.</span>
+    </div>
+  </div>
+</div>
+
+<footer class="viewer-footer">
+  <div>&copy; {{.Year}} {{.AppName}} — Sistem Informasi Manajemen Arsip Record Center</div>
+</footer>
+
+<script src="/vendor/bootstrap/bootstrap.bundle.min.js?v={{.AssetVersion}}"></script>
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById('vwThemeToggle');
+  var icon = document.getElementById('vwThemeIcon');
+  function apply(theme) {
+    root.setAttribute('data-theme', theme);
+    if (icon) icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+  }
+  var saved = null;
+  try { saved = localStorage.getItem('theme'); } catch (e) {}
+  if (!saved) {
+    saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  apply(saved);
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      apply(next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+    });
+  }
+})();
+</script>
+</body>
+</html>
+{{end}}

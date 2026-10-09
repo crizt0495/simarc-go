@@ -55,8 +55,11 @@ func registerRoutes(r *gin.Engine) {
 	ocrAdvH := &handlers.OcrAdvancedHandler{}
 	supervisionH := &handlers.ArchivalSupervisionHandler{}
 
-	// Root redirect
-	r.GET("/", middleware.CSRF(), handlers.ShowLogin)
+	// Root: land on the public archive directory. This is the first page shown
+	// to both web and desktop clients; the login form lives at /login.
+	r.GET("/", middleware.CSRF(), func(c *gin.Context) {
+		c.Redirect(http.StatusFound, "/viewer")
+	})
 
 	// Health check
 	r.GET("/health", handlers.HealthCheck)
@@ -73,6 +76,17 @@ func registerRoutes(r *gin.Engine) {
 
 	// Public arsip view (no auth)
 	r.GET("/arsip/public/:id", arsipH.PublicView)
+
+	// Public archive directory / viewer landing page (no auth).
+	// Serves the same handler for both the web and desktop builds, which share
+	// this Go server. Read-only: search + list, plus a read-only detail page.
+	viewer := r.Group("/viewer")
+	viewer.Use(middleware.CSRF())
+	viewer.Use(middleware.InjectUser())
+	{
+		viewer.GET("", arsipH.ViewerIndex)
+		viewer.GET("/:id", arsipH.ViewerDetail)
+	}
 
 	// Auth routes
 	auth := r.Group("/")

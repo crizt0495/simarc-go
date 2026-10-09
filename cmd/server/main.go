@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -145,6 +146,17 @@ func printBanner(port, lanIP string) {
 }
 
 func openBrowser(url string) {
+	// When running under the desktop launcher, the app window is opened by
+	// the launcher itself (standalone Chromium window). Skip the browser.
+	if os.Getenv("SIMARC_NO_BROWSER") != "" {
+		return
+	}
+	// Desktop app mode: open as a standalone app window (no tabs / URL bar).
+	if isTruthy(os.Getenv("SIMARC_APP_WINDOW")) {
+		if openAppWindow(url) {
+			return
+		}
+	}
 	switch runtime.GOOS {
 	case "windows":
 		exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
@@ -157,6 +169,91 @@ func openBrowser(url string) {
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Start()
 	}
+}
+
+// isTruthy reports whether an environment value should be treated as enabled.
+func isTruthy(v string) bool {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "1", "true", "yes", "on":
+		return true
+	}
+	return false
+}
+
+// openAppWindow launches the URL in a standalone Chromium app window
+// (no tabs / address bar). Returns false when no Chromium browser is found
+// so the caller can fall back to the default browser.
+func openAppWindow(url string) bool {
+	bin := findChromiumBrowser()
+	if bin == "" {
+		return false
+	}
+	profile := filepath.Join(userCacheDir(), "simarc", "app-profile")
+	_ = os.MkdirAll(profile, 0o755)
+	cmd := exec.Command(bin,
+		"--app="+url,
+		"--user-data-dir="+profile,
+		"--no-first-run",
+		"--no-default-browser-check",
+		"--disable-translate",
+		"--class=SIMARC",
+		"--name=SIMARC",
+	)
+	if err := cmd.Start(); err != nil {
+		return false
+	}
+	return true
+}
+
+// findChromiumBrowser returns the path of an installed Chromium-based browser,
+// or an empty string when none is available.
+func findChromiumBrowser() string {
+	for _, name := range []string{
+		"google-chrome", "google-chrome-stable", "chromium", "chromium-browser",
+		"brave-browser", "microsoft-edge", "chrome", "msedge",
+	} {
+		if p, err := exec.LookPath(name); err == nil {
+			return p
+		}
+	}
+	var candidates []string
+	switch runtime.GOOS {
+	case "windows":
+		for _, env := range []string{"ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"} {
+			base := os.Getenv(env)
+			if base == "" {
+				continue
+			}
+			candidates = append(candidates,
+				filepath.Join(base, "Google", "Chrome", "Application", "chrome.exe"),
+				filepath.Join(base, "Microsoft", "Edge", "Application", "msedge.exe"),
+			)
+		}
+	case "darwin":
+		candidates = append(candidates,
+			"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+			"/Applications/Chromium.app/Contents/MacOS/Chromium",
+			"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+			"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+		)
+	}
+	for _, c := range candidates {
+		if fi, err := os.Stat(c); err == nil && !fi.IsDir() {
+			return c
+		}
+	}
+	return ""
+}
+
+// userCacheDir returns a per-user cache directory with portable fallbacks.
+func userCacheDir() string {
+	if d, err := os.UserCacheDir(); err == nil && d != "" {
+		return d
+	}
+	if d, err := os.UserHomeDir(); err == nil && d != "" {
+		return filepath.Join(d, ".cache")
+	}
+	return os.TempDir()
 }
 
 func main() {

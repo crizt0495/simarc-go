@@ -71,6 +71,6 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 echo [OK]    Build selesai. Menjalankan server...
-set APP_DEBUG=true
+set SIMARC_APP_WINDOW=1
 ".\tmp\simarc-server.exe"
 pause

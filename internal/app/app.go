@@ -229,6 +229,7 @@ func buildTemplates(r *gin.Engine) {
 		"laporan", "laporan/lokasi", "qrcode", "ocr", "blockchain",
 		"backup", "monitoring", "disposal", "import-export",
 		"integrations", "retention", "settings", "mobile", "supervision",
+		"viewer",
 	}
 
 	pagesParsed := 0
