@@ -39,7 +39,6 @@ func ShowLogin(c *gin.Context) {
 		"AppName":   config.App.AppName,
 		"Year":      time.Now().Year(),
 		"CSRFToken": middleware.GetCSRFToken(c),
-		"LANIP":    GetLANIP(),
 	}
 
 	// get old username from session
