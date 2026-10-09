@@ -22,6 +22,15 @@ fi
 PORT="${APP_PORT:-8080}"
 URL="http://127.0.0.1:${PORT}/"
 
+# Mode jendela aplikasi: normal (default) | maximized | fullscreen | kiosk
+WINDOW_MODE="$(printf '%s' "${SIMARC_WINDOW:-normal}" | tr '[:upper:]' '[:lower:]')"
+WINDOW_ARGS=()
+case "$WINDOW_MODE" in
+    maximized)  WINDOW_ARGS+=(--start-maximized) ;;
+    fullscreen) WINDOW_ARGS+=(--start-fullscreen) ;;
+    kiosk)      WINDOW_ARGS+=(--kiosk) ;;
+esac
+
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/simarc"
 PROFILE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/simarc/app-profile"
 mkdir -p "$STATE_DIR" "$PROFILE_DIR"
@@ -92,6 +101,7 @@ if [[ -n "$CHROME_BIN" ]]; then
         --disable-translate \
         --class=SIMARC \
         --name=SIMARC \
+        ${WINDOW_ARGS[@]+"${WINDOW_ARGS[@]}"} \
         >>"$CHROME_LOG" 2>&1 &
     APP_PID=$!
 

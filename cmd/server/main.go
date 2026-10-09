@@ -190,15 +190,25 @@ func openAppWindow(url string) bool {
 	}
 	profile := filepath.Join(userCacheDir(), "simarc", "app-profile")
 	_ = os.MkdirAll(profile, 0o755)
-	cmd := exec.Command(bin,
-		"--app="+url,
-		"--user-data-dir="+profile,
+	args := []string{
+		"--app=" + url,
+		"--user-data-dir=" + profile,
 		"--no-first-run",
 		"--no-default-browser-check",
 		"--disable-translate",
 		"--class=SIMARC",
 		"--name=SIMARC",
-	)
+	}
+	// Mode jendela: normal (default) | maximized | fullscreen | kiosk
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("SIMARC_WINDOW"))) {
+	case "maximized":
+		args = append(args, "--start-maximized")
+	case "fullscreen":
+		args = append(args, "--start-fullscreen")
+	case "kiosk":
+		args = append(args, "--kiosk")
+	}
+	cmd := exec.Command(bin, args...)
 	if err := cmd.Start(); err != nil {
 		return false
 	}

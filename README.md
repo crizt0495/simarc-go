@@ -82,6 +82,22 @@ Perintah di atas membuat entri menu **SIMARC**, shortcut di Desktop, dan perinta
 > Membutuhkan browser berbasis Chromium (Google Chrome / Chromium / Brave / Edge).
 > Bila tidak tersedia, aplikasi otomatis memakai browser default.
 
+### Ukuran jendela (auto layar penuh)
+
+Atur lewat `SIMARC_WINDOW` di `.env`:
+
+| Nilai | Efek |
+|-------|------|
+| `normal` | Jendela ukuran biasa (default) |
+| `maximized` | Terbuka otomatis memenuhi layar (tombol minimize/close tetap ada) |
+| `fullscreen` | Layar penuh tanpa bingkai (keluar: `F11` atau `Alt+F4`) |
+| `kiosk` | Mode kiosk terkunci penuh (untuk terminal / perangkat khusus) |
+
+```bash
+# contoh: buka otomatis memenuhi layar
+SIMARC_WINDOW=maximized
+```
+
 ## 🔧 File .env — SATU file untuk semua konfigurasi
 
 Semua pengaturan (database **dan** aplikasi) disimpan dalam satu file `.env`:
