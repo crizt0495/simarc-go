@@ -59,7 +59,6 @@ detect_lan_ip() {
 LAN_IP=$(detect_lan_ip)
 
 # ── 1. Check Prerequisites ──────────────────────────────────────────────────
-OK=true
 
 # Go
 GO_CMD=""
@@ -74,7 +73,6 @@ if [[ -n "$GO_CMD" ]]; then
 else
     fail "Go belum terinstall."
     echo "  Install: https://go.dev/dl/"
-    OK=false
 fi
 
 # Air (hot reload)
@@ -117,7 +115,10 @@ EOF
         ok ".env default dibuat"
     fi
 fi
-set -a; source "$ENV_FILE"; set +a
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
 
 # ── MODE KLIEN (server pusat): tanpa server/database lokal ──────────────────
 # Bila SIMARC_SERVER_URL diisi, aplikasi hanya membuka jendela ke server pusat.
@@ -167,13 +168,20 @@ for cmd in mysql mariadb; do
 done
 
 if [[ -n "$MYSQL_CLI" ]]; then
-    CONN="$MYSQL_CLI -u $DB_USER -h $DB_HOST -P $DB_PORT"
-    [[ -n "$DB_PASS" ]] && CONN="$CONN -p$DB_PASS"
-    if echo "SELECT 1" | timeout 5 $CONN &>/dev/null 2>&1; then
+    CONN=("$MYSQL_CLI" -u "$DB_USER" -h "$DB_HOST" -P "$DB_PORT")
+    if [[ -n "$DB_PASS" ]]; then
+        CONN+=("-p$DB_PASS")
+    fi
+    # `timeout` tidak tersedia secara bawaan di macOS; pakai bila ada saja.
+    MYSQL_RUN=("${CONN[@]}")
+    if command -v timeout &>/dev/null; then
+        MYSQL_RUN=(timeout 5 "${CONN[@]}")
+    fi
+    if echo "SELECT 1" | "${MYSQL_RUN[@]}" &>/dev/null 2>&1; then
         ok "Database terhubung ($DB_HOST:$DB_PORT)"
-        if ! echo "USE \`$DB_NAME\`" | $CONN 2>/dev/null; then
+        if ! echo "USE \`$DB_NAME\`" | "${CONN[@]}" 2>/dev/null; then
             warn "Database '$DB_NAME' belum ada, membuat..."
-            echo "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" | $CONN
+            echo "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" | "${CONN[@]}"
             ok "Database '$DB_NAME' dibuat"
         fi
     else

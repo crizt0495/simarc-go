@@ -1,0 +1,15 @@
+# ===========================================================================
+#  Aturan akhir baris (line endings) — menjaga skrip tetap jalan di semua OS
+#  - Windows batch wajib CRLF
+#  - Skrip shell (Linux/macOS/WSL) wajib LF
+# ===========================================================================
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+*.sh        text eol=lf
+*.command   text eol=lf
+
+# Biner hasil build tidak pernah dibandingkan/diubah
+dist/       binary
+*.exe       binary

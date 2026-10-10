@@ -77,12 +77,16 @@ else
             mkdir -p "$APP_DIR/tmp"
             cp -f "$rel" "$BIN"
             chmod +x "$BIN"
-            [[ $EUID -eq 0 ]] && chown "$RUN_USER:$RUN_GROUP" "$BIN" || true
+            if [[ $EUID -eq 0 ]]; then
+                chown "$RUN_USER:$RUN_GROUP" "$BIN"
+            fi
         elif command -v go >/dev/null 2>&1; then
             echo "Build binary server..."
             ( cd "$APP_DIR" && mkdir -p tmp && \
               CGO_ENABLED=0 go build -buildvcs=false -ldflags="-s -w" -o "$BIN" ./cmd/server )
-            [[ $EUID -eq 0 ]] && chown "$RUN_USER:$RUN_GROUP" "$BIN" || true
+            if [[ $EUID -eq 0 ]]; then
+                chown "$RUN_USER:$RUN_GROUP" "$BIN"
+            fi
         else
             echo "Binary belum ada dan Go tidak terinstall."
             echo "Jalankan ./scripts/build-release.sh di mesin lain, lalu salin folder dist/."

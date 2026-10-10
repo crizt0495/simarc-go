@@ -115,9 +115,12 @@ resolve_bin() {
 server_ready() { curl -sf "http://127.0.0.1:${PORT}/ping" >/dev/null 2>&1; }
 
 wait_server() {
-    local i
-    for i in $(seq 1 120); do
+    for _ in $(seq 1 120); do
         server_ready && return 0
+        # Server yang kita jalankan mati (mis. port sudah dipakai) -> gagal cepat.
+        if [[ -n "${SERVER_PID:-}" ]] && ! kill -0 "$SERVER_PID" 2>/dev/null; then
+            return 1
+        fi
         sleep 0.5
     done
     return 1

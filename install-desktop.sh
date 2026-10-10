@@ -70,7 +70,10 @@ if [[ ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
 fi
 
 # Shortcut Desktop (bila ada folder Desktop)
-DESKTOP_DIR="$(command -v xdg-user-dir >/dev/null 2>&1 && xdg-user-dir DESKTOP || true)"
+DESKTOP_DIR=""
+if command -v xdg-user-dir >/dev/null 2>&1; then
+    DESKTOP_DIR="$(xdg-user-dir DESKTOP || true)"
+fi
 if [[ -n "$DESKTOP_DIR" && -d "$DESKTOP_DIR" ]]; then
     cp "$ENTRY" "$DESKTOP_DIR/simarc.desktop"
     chmod +x "$DESKTOP_DIR/simarc.desktop"
