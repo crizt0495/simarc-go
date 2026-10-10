@@ -124,13 +124,28 @@ set -a; source "$ENV_FILE"; set +a
 if [[ -n "${SIMARC_SERVER_URL:-}" ]]; then
     ok "Mode klien - server pusat: ${SIMARC_SERVER_URL}"
     mkdir -p tmp
-    if [[ ! -x ./tmp/simarc-server ]] || [[ -n "$(find cmd internal -type f -newer ./tmp/simarc-server 2>/dev/null | head -n1)" ]]; then
+    ARCH="$(uname -m)"
+    case "$ARCH" in
+        x86_64|amd64) ARCH=amd64 ;;
+        aarch64|arm64) ARCH=arm64 ;;
+    esac
+    case "$(uname -s)" in
+        Darwin) OSNAME=darwin ;;
+        *)      OSNAME=linux ;;
+    esac
+    if [[ -x ./tmp/simarc-server ]] && [[ -z "$(find cmd internal -type f -newer ./tmp/simarc-server 2>/dev/null | head -n1)" ]]; then
+        : # pakai binary yang sudah ada
+    elif [[ -f "dist/simarc-server-${OSNAME}-${ARCH}" ]]; then
+        cp -f "dist/simarc-server-${OSNAME}-${ARCH}" ./tmp/simarc-server
+        chmod +x ./tmp/simarc-server
+        ok "Memakai binary rilis (tanpa Go)."
+    else
         if [[ -z "$GO_CMD" ]]; then
-            fail "Go belum terinstall (diperlukan sekali untuk build klien)."
+            fail "Binary rilis tidak ada dan Go belum terinstall."
             exit 1
         fi
         info "Build aplikasi (sekali)..."
-        CGO_ENABLED=0 $GO_CMD build -buildvcs=false -ldflags="-s -w" -o ./tmp/simarc-server ./cmd/server/main.go
+        CGO_ENABLED=0 $GO_CMD build -buildvcs=false -ldflags="-s -w" -o ./tmp/simarc-server ./cmd/server
     fi
     exec env SIMARC_APP_WINDOW=1 ./tmp/simarc-server
 fi
@@ -194,7 +209,7 @@ else
     info "Build aplikasi..."
     $GO_CMD mod tidy 2>/dev/null
     mkdir -p tmp
-    CGO_ENABLED=0 $GO_CMD build -buildvcs=false -ldflags="-s -w" -o ./tmp/simarc-server ./cmd/server/main.go
+    CGO_ENABLED=0 $GO_CMD build -buildvcs=false -ldflags="-s -w" -o ./tmp/simarc-server ./cmd/server
     ok "Build selesai. Menjalankan server..."
     APP_DEBUG="${APP_DEBUG:-false}" exec ./tmp/simarc-server
 fi

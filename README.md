@@ -53,7 +53,7 @@ nano .env
 go mod tidy
 
 # Bangun aplikasi
-go build -o simarc-server ./cmd/server/main.go
+go build -o simarc-server ./cmd/server
 
 # Jalankan
 ./simarc-server
@@ -81,6 +81,27 @@ Perintah di atas membuat entri menu **SIMARC**, shortcut di Desktop, dan perinta
 
 > Membutuhkan browser berbasis Chromium (Google Chrome / Chromium / Brave / Edge).
 > Bila tidak tersedia, aplikasi otomatis memakai browser default.
+
+### Pasang di banyak komputer (tanpa install Go)
+
+Secara bawaan, launcher akan membangun aplikasi dari sumber saat pertama kali
+dijalankan — ini memerlukan **Go**. Untuk komputer klien, cukup sediakan
+**binary siap-pakai** agar tidak perlu Go sama sekali:
+
+```bash
+# di satu komputer (butuh Go) — hasilkan binary untuk semua OS
+./scripts/build-release.sh
+```
+
+Perintah tersebut membuat folder `dist/` berisi binary Linux / Windows / macOS.
+Salin folder SIMARC (termasuk `dist/`) ke komputer lain; launcher akan otomatis
+memakai binary di `dist/` **tanpa** meng-install Go.
+
+> Urutan pencarian binary oleh launcher: `tmp/` (hasil build terbaru) →
+> `dist/` (binary rilis) → build dari sumber (butuh Go).
+
+Menu yang sama juga berlaku untuk mode klien: cukup tambahkan
+`SIMARC_SERVER_URL` di `.env`, dan komputer klien tidak menjalankan server lokal.
 
 ### Ukuran jendela (auto layar penuh)
 
@@ -278,7 +299,7 @@ simarc/
 
 ```bash
 # Build ulang
-go build -o simarc-server ./cmd/server/main.go
+go build -o simarc-server ./cmd/server
 
 # Jalankan di port lain
 APP_PORT=9090 ./simarc-server

@@ -145,19 +145,23 @@ func printBanner(port, lanIP string) {
 	fmt.Println()
 }
 
-func openBrowser(url string) {
+// openBrowser opens the application URL. In desktop app mode it returns the
+// started app-window process so the caller can stop the server when the window
+// is closed; otherwise it returns nil.
+func openBrowser(url string) *exec.Cmd {
 	// When running under the desktop launcher, the app window is opened by
 	// the launcher itself (standalone Chromium window). Skip the browser.
 	if os.Getenv("SIMARC_NO_BROWSER") != "" {
-		return
+		return nil
 	}
 	// Desktop app mode: open as a standalone app window (no tabs / URL bar).
 	if isTruthy(os.Getenv("SIMARC_APP_WINDOW")) {
-		if openAppWindow(url) {
-			return
+		if cmd, ok := openAppWindow(url); ok {
+			return cmd
 		}
 	}
 	openDefaultBrowser(url)
+	return nil
 }
 
 // openDefaultBrowser opens url in the operating system's default browser.
@@ -167,11 +171,11 @@ func openDefaultBrowser(url string) {
 		exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
 		cmd := exec.Command("open", url)
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+		cmd.SysProcAttr = browserProcAttr()
 		cmd.Start()
 	case "linux":
 		cmd := exec.Command("xdg-open", url)
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+		cmd.SysProcAttr = browserProcAttr()
 		cmd.Start()
 	}
 }
@@ -186,12 +190,13 @@ func isTruthy(v string) bool {
 }
 
 // openAppWindow launches the URL in a standalone Chromium app window
-// (no tabs / address bar). Returns false when no Chromium browser is found
-// so the caller can fall back to the default browser.
-func openAppWindow(url string) bool {
+// (no tabs / address bar). It returns the started process (and true) so the
+// caller can stop the server when the window closes; it returns false when no
+// Chromium browser is found so the caller can fall back to the default browser.
+func openAppWindow(url string) (*exec.Cmd, bool) {
 	bin := findChromiumBrowser()
 	if bin == "" {
-		return false
+		return nil, false
 	}
 	profile := filepath.Join(userCacheDir(), "simarc", "app-profile")
 	_ = os.MkdirAll(profile, 0o755)
@@ -215,9 +220,9 @@ func openAppWindow(url string) bool {
 	}
 	cmd := exec.Command(bin, args...)
 	if err := cmd.Start(); err != nil {
-		return false
+		return nil, false
 	}
-	return true
+	return cmd, true
 }
 
 // findChromiumBrowser returns the path of an installed Chromium-based browser,
@@ -284,7 +289,7 @@ func main() {
 	if serverURL := strings.TrimSpace(os.Getenv("SIMARC_SERVER_URL")); serverURL != "" {
 		serverURL = strings.TrimRight(serverURL, "/")
 		log.Printf("Mode klien: membuka %s", serverURL)
-		if !openAppWindow(serverURL) {
+		if _, ok := openAppWindow(serverURL); !ok {
 			openDefaultBrowser(serverURL)
 		}
 		return
@@ -302,11 +307,14 @@ func main() {
 	addr := ":" + port
 	lanIP := getLANIP()
 
+	var appCmd *exec.Cmd
 	if config.IsVercel() {
 		log.Printf("Vercel deployment detected, listening on :%s", port)
 	} else {
 		printBanner(port, lanIP)
-		openBrowser(fmt.Sprintf("http://%s:%s", lanIP, port))
+		// Open the local app window on the loopback address (most reliable);
+		// client machines still use the LAN URL shown in the banner.
+		appCmd = openBrowser(fmt.Sprintf("http://127.0.0.1:%s", port))
 	}
 
 	srv := &http.Server{
@@ -323,6 +331,17 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	// Desktop app: when the app window is closed, stop the server automatically
+	// (gives Windows/macOS the same behaviour the Linux launcher already has).
+	if appCmd != nil {
+		go func() {
+			_ = appCmd.Wait()
+			log.Println("Jendela aplikasi ditutup, menghentikan server...")
+			quit <- syscall.SIGTERM
+		}()
+	}
+
 	<-quit
 
 	log.Println("Shutting down server...")

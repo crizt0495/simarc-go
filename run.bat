@@ -1,108 +1,96 @@
 @echo off
+setlocal enableextensions
 REM ===========================================================================
-REM  SIMARC — Run Script for Windows (Double-click to run)
-REM  Build & run web server, auto-detect LAN IP
+REM  SIMARC - Run Script for Windows (Desktop App)
+REM
+REM  - Mode SERVER LOKAL (default): menjalankan server Go dengan jendela
+REM    aplikasi mandiri. Menutup jendela otomatis mematikan server.
+REM  - Mode KLIEN: bila SIMARC_SERVER_URL diisi di .env, hanya membuka jendela
+REM    ke server pusat (tanpa server/database lokal, tanpa perlu Go).
 REM ===========================================================================
 cd /d "%~dp0"
 
-REM ── 0. MODE KLIEN (server pusat): tanpa server/database lokal ──
+REM -- Baca konfigurasi dari .env --
 set "SIMARC_SERVER_URL="
-if exist .env (
-    for /f "usebackq tokens=1,* delims==" %%A in (`findstr /b /i "SIMARC_SERVER_URL=" .env`) do set "SIMARC_SERVER_URL=%%B"
-)
+set "SIMARC_WINDOW="
+if exist .env for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do call :readenv "%%A" "%%B"
 set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL:"=%"
-if not "%SIMARC_SERVER_URL%"=="" goto :client
+set "SIMARC_WINDOW=%SIMARC_WINDOW:"=%"
+set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL: =%"
 
 echo.
 echo   ============================================
-echo     S I M A R C  —  Arsip Record Center
+echo     S I M A R C  -  Arsip Record Center
 echo   ============================================
 echo.
 
-REM ── 1. Check Go ──
+if not "%SIMARC_SERVER_URL%"=="" goto client
+
+REM ============ MODE SERVER LOKAL ============
+set "EXE=tmp\simarc-server.exe"
+
+REM Pilih binary rilis sesuai arsitektur (bila tersedia).
+set "DISTEXE=dist\simarc-server-windows-amd64.exe"
+if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "DISTEXE=dist\simarc-server-windows-arm64.exe"
+
+if exist "%EXE%" goto runserver
+if exist "%DISTEXE%" (
+    if not exist tmp mkdir tmp
+    copy /y "%DISTEXE%" "%EXE%" >nul
+    echo [OK]    Memakai binary rilis.
+    goto runserver
+)
+
 where go >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo [FAIL] Go belum terinstall.
-    echo   Download: https://go.dev/dl/
+if errorlevel 1 (
+    echo [FAIL] Binary belum tersedia dan Go tidak terinstall.
+    echo         Sediakan %DISTEXE% lalu jalankan lagi.
     pause
     exit /b 1
 )
-for /f "delims=" %%v in ('go version') do echo [OK]    %%v
-
-REM ── 2. Environment ──
-if not exist .env (
-    if exist .env.example (
-        copy .env.example .env >nul
-        echo [OK]    .env dibuat dari .env.example
-    ) else (
-        echo [WARN] Membuat .env default...
-        (
-          echo APP_NAME="SIMARC-Arsip Record Center"
-          echo APP_URL=http://localhost:8080
-          echo APP_PORT=8080
-          echo APP_DEBUG=true
-          echo DB_HOST=127.0.0.1
-          echo DB_PORT=3306
-          echo DB_DATABASE=simarc_db
-          echo DB_USERNAME=root
-          echo DB_PASSWORD=
-          echo SESSION_KEY=simarc-default-key
-          echo # Backup disimpan di storage/app/backups/database/
-        ) > .env
-        echo [OK]    .env default dibuat
-    )
-)
-
-REM ── 3. LAN IP ──
-set PORT=8080
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4"') do set LAN_IP=%%a
-set LAN_IP=%LAN_IP: =%
-if "%LAN_IP%"=="" set LAN_IP=127.0.0.1
-
-REM ── 4. Display ──
-echo.
-echo   SIMARC SIAP DIGUNAKAN!
-echo.
-echo   Lokal    http://localhost:%PORT%
-echo.
-echo   Tekan Ctrl+C untuk berhenti
-echo.
-
-REM ── 5. Run ──
-echo [INFO]  Build aplikasi...
-call go mod tidy >nul 2>&1
+echo [INFO]  Build aplikasi (sekali)...
 set CGO_ENABLED=0
-go build -buildvcs=false -ldflags="-s -w" -o "tmp\simarc-server.exe" ".\cmd\server\main.go"
-if %ERRORLEVEL% neq 0 (
-    echo [FAIL] Build gagal!
+if not exist tmp mkdir tmp
+go build -buildvcs=false -ldflags="-s -w" -o "%EXE%" ".\cmd\server"
+if errorlevel 1 (
+    echo [FAIL] Build gagal.
     pause
     exit /b 1
 )
-echo [OK]    Build selesai. Menjalankan server...
+
+:runserver
+echo [OK]    Menjalankan server. Tutup jendela aplikasi untuk berhenti.
 set SIMARC_APP_WINDOW=1
-".\tmp\simarc-server.exe"
-pause
+"%EXE%"
 exit /b 0
 
-REM ===========================================================================
-REM  MODE KLIEN — buka jendela aplikasi ke server pusat (tanpa Go / database)
-REM ===========================================================================
+REM ============ MODE KLIEN (server pusat) ============
 :client
-echo.
-echo   Mode KLIEN - server pusat: %SIMARC_SERVER_URL%
-echo.
-set "SIMARC_CHROME="
-for %%P in (
-  "%ProgramFiles%\Google\Chrome\Application\chrome.exe"
-  "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
-  "%LocalAppData%\Google\Chrome\Application\chrome.exe"
-  "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
-  "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
-  "%LocalAppData%\Microsoft\Edge\Application\msedge.exe"
-) do if exist %%P if not defined SIMARC_CHROME set "SIMARC_CHROME=%%~P"
-if defined SIMARC_CHROME (
-    start "" "%SIMARC_CHROME%" --app="%SIMARC_SERVER_URL%" --start-maximized
+echo [INFO]  Mode KLIEN - server pusat: %SIMARC_SERVER_URL%
+
+set "WINFLAG=--start-maximized"
+if /i "%SIMARC_WINDOW%"=="normal"     set "WINFLAG="
+if /i "%SIMARC_WINDOW%"=="fullscreen" set "WINFLAG=--start-fullscreen"
+if /i "%SIMARC_WINDOW%"=="kiosk"      set "WINFLAG=--kiosk"
+
+REM Cari browser berbasis Chromium (Chrome, lalu Edge).
+set "CB="
+if not defined CB if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe"        set "CB=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+if not defined CB if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set "CB=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
+if not defined CB if exist "%LocalAppData%\Google\Chrome\Application\chrome.exe"      set "CB=%LocalAppData%\Google\Chrome\Application\chrome.exe"
+if not defined CB if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"     set "CB=%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
+if not defined CB if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" set "CB=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+if not defined CB if exist "%LocalAppData%\Microsoft\Edge\Application\msedge.exe"     set "CB=%LocalAppData%\Microsoft\Edge\Application\msedge.exe"
+
+if defined CB (
+    start "" "%CB%" --app="%SIMARC_SERVER_URL%" %WINFLAG%
 ) else (
     start "" "%SIMARC_SERVER_URL%"
 )
+exit /b 0
+
+REM ============ subrutin ============
+:readenv
+if /i "%~1"=="SIMARC_SERVER_URL" set "SIMARC_SERVER_URL=%~2"
+if /i "%~1"=="SIMARC_WINDOW"     set "SIMARC_WINDOW=%~2"
 exit /b 0
