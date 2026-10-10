@@ -154,6 +154,31 @@ berkas yang sama, tanpa perlu menyalin data.
 > atau VPN. Bila `SIMARC_SERVER_URL` dibiarkan kosong, aplikasi kembali ke
 > mode server lokal seperti biasa.
 
+### Server pusat otomatis menyala (systemd)
+
+Agar server pusat **langsung jalan saat komputer dinyalakan** dan otomatis
+dijalankan ulang bila berhenti, pasang sebagai layanan systemd:
+
+```bash
+sudo ./scripts/install-systemd.sh            # pasang & aktifkan
+sudo ./scripts/install-systemd.sh --user namauser
+./scripts/install-systemd.sh --dry-run       # lihat konfigurasi dulu (tanpa memasang)
+```
+
+Perintah lain:
+
+```bash
+journalctl -u simarc -f        # pantau log server
+sudo systemctl restart simarc  # mulai ulang
+sudo systemctl stop simarc     # hentikan sementara
+./scripts/uninstall-systemd.sh # lepas layanan
+```
+
+Layanan berjalan sebagai **pemilik folder aplikasi** (bisa diubah dengan
+`--user`), memakai `.env` yang sama, dan **tidak** membuka jendela browser di
+mesin server. Bila binary belum ada, installer memakai `dist/` atau mem-build
+dari sumber (butuh Go).
+
 ## 🔧 File .env — SATU file untuk semua konfigurasi
 
 Semua pengaturan (database **dan** aplikasi) disimpan dalam satu file `.env`:
@@ -283,8 +308,13 @@ simarc/
 ├── web/templates/           # HTML templates
 ├── storage/                 # File uploads & backups
 ├── run.sh                   # Run dengan auto-reload
+├── run-desktop.sh           # Launcher desktop (Linux)
+├── run.bat                  # Launcher desktop (Windows)
 ├── setup.sh                 # Setup otomatis
 ├── simarc-control.sh        # Control panel
+├── scripts/build-release.sh   # Build binary rilis (cross-compile)
+├── scripts/install-systemd.sh # Pasang server pusat sebagai layanan
+├── deploy/simarc.service      # Template unit systemd
 ```
 
 ## 🔒 Login Default

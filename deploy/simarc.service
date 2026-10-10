@@ -1,0 +1,35 @@
+; ===========================================================================
+;  SIMARC — systemd unit (server pusat)
+;
+;  Template ini diisi otomatis oleh scripts/install-systemd.sh
+;  (placeholder untuk folder aplikasi, user, group, dan binary server).
+;
+;  Server berjalan headless (tanpa jendela browser) dan otomatis:
+;   - menyala saat komputer dinyalakan (WantedBy=multi-user.target)
+;   - dijalankan ulang bila crash (Restart=always)
+; ===========================================================================
+[Unit]
+Description=SIMARC - Sistem Informasi Manajemen Arsip Record Center
+Documentation=https://github.com/crizt0495/simarc-go
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__APP_DIR__
+# Server pusat: jangan buka jendela/browser di mesin server.
+Environment=SIMARC_NO_BROWSER=1
+ExecStart=__BIN__
+Restart=always
+RestartSec=5
+# Beri kesempatan server menutup koneksi database dengan rapi.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+# Pengerasan dasar (tidak menghalangi akses ke folder aplikasi & data).
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
