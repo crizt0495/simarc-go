@@ -98,6 +98,41 @@ Atur lewat `SIMARC_WINDOW` di `.env`:
 SIMARC_WINDOW=maximized
 ```
 
+### Satu database untuk banyak komputer (server pusat)
+
+SIMARC menyimpan **berkas arsip di disk server** (database hanya mencatat
+lokasinya). Karena itu, jika setiap komputer menjalankan server sendiri —
+walaupun database-nya sama — berkas yang diunggah di satu komputer **tidak**
+akan muncul di komputer lain.
+
+Solusinya: jalankan **satu server pusat**, lalu komputer lain dijadikan **klien**.
+
+**1) Server pusat** (satu komputer / VPS — pemegang database & semua berkas):
+
+```bash
+# di komputer server (tanpa membuka browser di server)
+SIMARC_NO_BROWSER=1 ./tmp/simarc-server
+```
+
+Catat alamat jaringan yang tampil di banner (mis. `http://192.168.1.10:8080`)
+dan pastikan port tersebut **dibuka di firewall** LAN.
+
+**2) Komputer klien** — cukup satu baris di `.env`:
+
+```bash
+SIMARC_SERVER_URL=http://192.168.1.10:8080
+```
+
+Lalu jalankan seperti biasa (`./run-desktop.sh`, `run.bat`, atau ikon **SIMARC**).
+Klien **tidak** menjalankan server/database lokal — hanya membuka jendela
+aplikasi ke server pusat. Hasilnya: semua komputer memakai database **dan**
+berkas yang sama, tanpa perlu menyalin data.
+
+> Untuk beberapa komputer, "server pusat" dapat berupa salah satu komputer
+> kantor; untuk akses dari luar kantor gunakan domain + reverse proxy (HTTPS)
+> atau VPN. Bila `SIMARC_SERVER_URL` dibiarkan kosong, aplikasi kembali ke
+> mode server lokal seperti biasa.
+
 ## 🔧 File .env — SATU file untuk semua konfigurasi
 
 Semua pengaturan (database **dan** aplikasi) disimpan dalam satu file `.env`:

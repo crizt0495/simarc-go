@@ -157,6 +157,11 @@ func openBrowser(url string) {
 			return
 		}
 	}
+	openDefaultBrowser(url)
+}
+
+// openDefaultBrowser opens url in the operating system's default browser.
+func openDefaultBrowser(url string) {
 	switch runtime.GOOS {
 	case "windows":
 		exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
@@ -267,6 +272,24 @@ func userCacheDir() string {
 }
 
 func main() {
+	// Load configuration first (this also loads .env) so SIMARC_SERVER_URL is
+	// available before we decide whether to run as a server or as a client.
+	config.Load()
+
+	// ── Client mode ──────────────────────────────────────────────────────────
+	// When SIMARC_SERVER_URL is set, this installation acts as a thin client:
+	// it does NOT start a local HTTP server and does NOT connect to a database.
+	// It only opens the desktop app window pointing to a central SIMARC server,
+	// so many computers can share one database and one file storage.
+	if serverURL := strings.TrimSpace(os.Getenv("SIMARC_SERVER_URL")); serverURL != "" {
+		serverURL = strings.TrimRight(serverURL, "/")
+		log.Printf("Mode klien: membuka %s", serverURL)
+		if !openAppWindow(serverURL) {
+			openDefaultBrowser(serverURL)
+		}
+		return
+	}
+
 	r, err := app.Init()
 	if err != nil {
 		log.Fatalf("Gagal menginisialisasi aplikasi: %v", err)

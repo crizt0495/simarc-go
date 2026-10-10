@@ -5,6 +5,9 @@
 #  aplikasi mandiri memakai Chromium/Chrome mode "--app" (tanpa tab & URL bar).
 #  Saat jendela aplikasi ditutup, server otomatis dimatikan.
 #
+#  MODE KLIEN: bila SIMARC_SERVER_URL diisi (via .env / lingkungan), server
+#  lokal TIDAK dijalankan — jendela langsung diarahkan ke server pusat.
+#
 #  Pemakaian: ./run-desktop.sh
 # ===========================================================================
 set -euo pipefail
@@ -31,6 +34,15 @@ case "$WINDOW_MODE" in
     kiosk)      WINDOW_ARGS+=(--kiosk) ;;
 esac
 
+# ── Multi-komputer: mode KLIEN (server pusat) ───────────────────────────────
+# Bila SIMARC_SERVER_URL diisi, jangan jalankan server/database lokal — semua
+# komputer memakai satu database + satu penyimpanan berkas di server pusat.
+CLIENT_URL="${SIMARC_SERVER_URL:-}"
+CLIENT_URL="${CLIENT_URL%/}"
+if [[ -n "$CLIENT_URL" ]]; then
+    URL="${CLIENT_URL}/"
+fi
+
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/simarc"
 PROFILE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/simarc/app-profile"
 mkdir -p "$STATE_DIR" "$PROFILE_DIR"
@@ -44,42 +56,44 @@ notify() {
     fi
 }
 
-# ── Build bila perlu ────────────────────────────────────────────────────────
-need_build=0
-if [[ ! -x "$BIN" ]]; then
-    need_build=1
-elif [[ -n "$(find cmd internal -type f -newer "$BIN" 2>/dev/null | head -n 1)" ]]; then
-    need_build=1
-fi
-if (( need_build )); then
-    notify "Menyiapkan aplikasi (build pertama)..."
-    if ! go build -buildvcs=false -ldflags="-s -w" -o "$BIN" ./cmd/server/main.go >>"$LOG" 2>&1; then
-        notify "Gagal build. Lihat: $LOG"
+# ── Build & jalankan server lokal (dilewati saat MODE KLIEN) ────────────────
+SERVER_PID=""
+if [[ -z "$CLIENT_URL" ]]; then
+    need_build=0
+    if [[ ! -x "$BIN" ]]; then
+        need_build=1
+    elif [[ -n "$(find cmd internal -type f -newer "$BIN" 2>/dev/null | head -n 1)" ]]; then
+        need_build=1
+    fi
+    if (( need_build )); then
+        notify "Menyiapkan aplikasi (build pertama)..."
+        if ! go build -buildvcs=false -ldflags="-s -w" -o "$BIN" ./cmd/server/main.go >>"$LOG" 2>&1; then
+            notify "Gagal build. Lihat: $LOG"
+            exit 1
+        fi
+    fi
+
+    # Jalankan server (SIMARC_NO_BROWSER mencegah browser default terbuka)
+    if curl -sf "http://127.0.0.1:${PORT}/ping" >/dev/null 2>&1; then
+        : # sudah ada server yang jalan, pakai itu
+    else
+        SIMARC_NO_BROWSER=1 "$BIN" >>"$LOG" 2>&1 &
+        SERVER_PID=$!
+    fi
+
+    ready=0
+    for _ in $(seq 1 120); do
+        if curl -sf "http://127.0.0.1:${PORT}/ping" >/dev/null 2>&1; then
+            ready=1
+            break
+        fi
+        sleep 0.5
+    done
+    if (( ! ready )); then
+        notify "Server gagal dijalankan. Lihat: $LOG"
+        if [[ -n "${SERVER_PID:-}" ]]; then kill -TERM "$SERVER_PID" 2>/dev/null || true; fi
         exit 1
     fi
-fi
-
-# ── Jalankan server (SIMARC_NO_BROWSER mencegah browser default terbuka) ────
-SERVER_PID=""
-if curl -sf "http://127.0.0.1:${PORT}/ping" >/dev/null 2>&1; then
-    : # sudah ada server yang jalan, pakai itu
-else
-    SIMARC_NO_BROWSER=1 "$BIN" >>"$LOG" 2>&1 &
-    SERVER_PID=$!
-fi
-
-ready=0
-for _ in $(seq 1 120); do
-    if curl -sf "http://127.0.0.1:${PORT}/ping" >/dev/null 2>&1; then
-        ready=1
-        break
-    fi
-    sleep 0.5
-done
-if (( ! ready )); then
-    notify "Server gagal dijalankan. Lihat: $LOG"
-    if [[ -n "${SERVER_PID:-}" ]]; then kill -TERM "$SERVER_PID" 2>/dev/null || true; fi
-    exit 1
 fi
 
 # ── Cari browser berbasis Chromium ──────────────────────────────────────────

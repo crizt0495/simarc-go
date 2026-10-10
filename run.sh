@@ -119,6 +119,22 @@ EOF
 fi
 set -a; source "$ENV_FILE"; set +a
 
+# ── MODE KLIEN (server pusat): tanpa server/database lokal ──────────────────
+# Bila SIMARC_SERVER_URL diisi, aplikasi hanya membuka jendela ke server pusat.
+if [[ -n "${SIMARC_SERVER_URL:-}" ]]; then
+    ok "Mode klien - server pusat: ${SIMARC_SERVER_URL}"
+    mkdir -p tmp
+    if [[ ! -x ./tmp/simarc-server ]] || [[ -n "$(find cmd internal -type f -newer ./tmp/simarc-server 2>/dev/null | head -n1)" ]]; then
+        if [[ -z "$GO_CMD" ]]; then
+            fail "Go belum terinstall (diperlukan sekali untuk build klien)."
+            exit 1
+        fi
+        info "Build aplikasi (sekali)..."
+        CGO_ENABLED=0 $GO_CMD build -buildvcs=false -ldflags="-s -w" -o ./tmp/simarc-server ./cmd/server/main.go
+    fi
+    exec env SIMARC_APP_WINDOW=1 ./tmp/simarc-server
+fi
+
 # ── 3. Database ─────────────────────────────────────────────────────────────
 DB_USER="${DB_USERNAME:-root}"
 DB_PASS="${DB_PASSWORD:-}"

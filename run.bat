@@ -5,6 +5,14 @@ REM  Build & run web server, auto-detect LAN IP
 REM ===========================================================================
 cd /d "%~dp0"
 
+REM ── 0. MODE KLIEN (server pusat): tanpa server/database lokal ──
+set "SIMARC_SERVER_URL="
+if exist .env (
+    for /f "usebackq tokens=1,* delims==" %%A in (`findstr /b /i "SIMARC_SERVER_URL=" .env`) do set "SIMARC_SERVER_URL=%%B"
+)
+set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL:"=%"
+if not "%SIMARC_SERVER_URL%"=="" goto :client
+
 echo.
 echo   ============================================
 echo     S I M A R C  —  Arsip Record Center
@@ -74,3 +82,27 @@ echo [OK]    Build selesai. Menjalankan server...
 set SIMARC_APP_WINDOW=1
 ".\tmp\simarc-server.exe"
 pause
+exit /b 0
+
+REM ===========================================================================
+REM  MODE KLIEN — buka jendela aplikasi ke server pusat (tanpa Go / database)
+REM ===========================================================================
+:client
+echo.
+echo   Mode KLIEN - server pusat: %SIMARC_SERVER_URL%
+echo.
+set "SIMARC_CHROME="
+for %%P in (
+  "%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+  "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
+  "%LocalAppData%\Google\Chrome\Application\chrome.exe"
+  "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
+  "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+  "%LocalAppData%\Microsoft\Edge\Application\msedge.exe"
+) do if exist %%P if not defined SIMARC_CHROME set "SIMARC_CHROME=%%~P"
+if defined SIMARC_CHROME (
+    start "" "%SIMARC_CHROME%" --app="%SIMARC_SERVER_URL%" --start-maximized
+) else (
+    start "" "%SIMARC_SERVER_URL%"
+)
+exit /b 0
