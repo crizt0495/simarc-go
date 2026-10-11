@@ -68,7 +68,7 @@ Selain dibuka lewat browser, SIMARC dapat dijalankan sebagai **aplikasi desktop*
 |----------|------------------|
 | Linux | `./run-desktop.sh` |
 | Windows | klik dua kali `run.bat` |
-| macOS | klik dua kali `Start SIMARC.command` |
+| macOS | jalankan run.sh atau launcher desktop sesuai OS |
 
 **Pasang ke menu aplikasi (Linux):**
 

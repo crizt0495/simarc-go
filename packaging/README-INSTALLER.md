@@ -59,5 +59,5 @@ Sudah tersedia di `dist/`:
 
 ```bash
 cd /home/chris/Documents/Aplikasi/simarc
-bash package-all.sh
+bash packaging/build-all.sh
 ```
