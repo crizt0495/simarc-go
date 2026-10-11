@@ -46,7 +46,7 @@ gtk-update-icon-cache -f -t /usr/share/icons/hicolor >/dev/null 2>&1 || true
 EOF
   chmod 0755 "$TMP/DEBIAN/postinst" "$TMP/DEBIAN/postrm"
 
-  cp "$ROOT/.desktop/simarc.desktop" "$TMP/usr/share/applications/simarc.desktop"
+  cp "$ROOT/desktop/simarc.desktop" "$TMP/usr/share/applications/simarc.desktop"
   cat > "$TMP/usr/bin/simarc" <<'EOF'
 #!/usr/bin/env bash
 exec /opt/simarc/run-desktop.sh "$@"

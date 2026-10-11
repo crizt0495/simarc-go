@@ -2,7 +2,7 @@
 /**
  * SIMARC CSS Minifier — zero-dependency production minifier.
  *
- * Usage: node scripts/minify-css.js [--watch]
+ * Usage: node tooling/minify-css.js [--watch]
  *
  * Minifies web/static/css/*.css → same `.min.css` files, stripping
  * comments/whitespace while SAFELY preserving:

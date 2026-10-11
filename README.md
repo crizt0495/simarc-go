@@ -160,9 +160,9 @@ Agar server pusat **langsung jalan saat komputer dinyalakan** dan otomatis
 dijalankan ulang bila berhenti, pasang sebagai layanan systemd:
 
 ```bash
-sudo ./scripts/install-systemd.sh            # pasang & aktifkan
-sudo ./scripts/install-systemd.sh --user namauser
-./scripts/install-systemd.sh --dry-run       # lihat konfigurasi dulu (tanpa memasang)
+sudo ./systemd/install-systemd.sh            # pasang & aktifkan
+sudo ./systemd/install-systemd.sh --user namauser
+./systemd/install-systemd.sh --dry-run       # lihat konfigurasi dulu (tanpa memasang)
 ```
 
 Perintah lain:
@@ -171,7 +171,7 @@ Perintah lain:
 journalctl -u simarc -f        # pantau log server
 sudo systemctl restart simarc  # mulai ulang
 sudo systemctl stop simarc     # hentikan sementara
-./scripts/uninstall-systemd.sh # lepas layanan
+./systemd/uninstall-systemd.sh # lepas layanan
 ```
 
 Layanan berjalan sebagai **pemilik folder aplikasi** (bisa diubah dengan
@@ -312,9 +312,9 @@ simarc/
 ├── run.bat                  # Launcher desktop (Windows)
 ├── setup.sh                 # Setup otomatis
 ├── simarc-control.sh        # Control panel
-├── scripts/build-release.sh   # Build binary rilis (cross-compile)
-├── scripts/install-systemd.sh # Pasang server pusat sebagai layanan
-├── deploy/simarc.service      # Template unit systemd
+├── packaging/build-all.sh    # Build semua installer ├── scripts/build-release.sh   # Build binary rilis (cross-compile) binary cross-compile
+├── systemd/install-systemd.sh # Pasang server pusat sebagai layanan
+├── systemd/simarc.service     # Template unit systemd
 ```
 
 ## 🔒 Login Default

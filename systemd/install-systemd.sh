@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 UNIT_NAME="simarc"
 UNIT_DST="/etc/systemd/system/${UNIT_NAME}.service"
-TEMPLATE="$APP_DIR/deploy/simarc.service"
+TEMPLATE="$APP_DIR/systemd/simarc.service"
 
 RUN_USER=""
 BIN_OVERRIDE=""

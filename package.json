@@ -6,9 +6,9 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "css:minify": "node scripts/minify-css.js",
-    "css:watch": "node scripts/minify-css.js --watch",
-    "test:a11y": "node scripts/wcag-audit.js"
+    "css:minify": "node tooling/minify-css.js",
+    "css:watch": "node tooling/minify-css.js --watch",
+    "test:a11y": "node tooling/wcag-audit.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
