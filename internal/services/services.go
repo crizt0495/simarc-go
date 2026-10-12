@@ -22,7 +22,6 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/google/uuid"
 	"github.com/ledongthuc/pdf"
-	qrcode "github.com/skip2/go-qrcode"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -125,20 +124,20 @@ func (s *PemusnahanArsipService) AjukanPemusnahan(arsipID, userID, alasan string
 		return fmt.Errorf("arsip tidak ditemukan: %w", err)
 	}
 	if arsip.KodeKlasifikasi == nil || arsip.KodeKlasifikasi.PenyusutanArsip != "musnah" {
-		return fmt.Errorf("arsip dengan kode klasifikasi '%v' tidak dapat dimusnahkan (penyusutan = %v)", 
+		return fmt.Errorf("arsip dengan kode klasifikasi '%v' tidak dapat dimusnahkan (penyusutan = %v)",
 			arsip.KodeKlasifikasi.KodeKlasifikasi, arsip.KodeKlasifikasi.PenyusutanArsip)
 	}
-	
+
 	now := time.Now()
 	p := models.PemusnahanArsip{
-		ID:            uuid.New().String(), 
-		NamaKegiatan:  alasan,
-		TanggalPelaksanaan: &now, 
-		Status:        "diajukan", 
-		CreatedBy:     &userID,
-		UserPengajuID: userID,
+		ID:                 uuid.New().String(),
+		NamaKegiatan:       alasan,
+		TanggalPelaksanaan: &now,
+		Status:             "diajukan",
+		CreatedBy:          &userID,
+		UserPengajuID:      userID,
 	}
-	
+
 	return database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&p).Error; err != nil {
 			return err
@@ -168,49 +167,6 @@ func (s *PemusnahanArsipService) RejectPemusnahan(id, approverID, catatan string
 		Updates(map[string]interface{}{"status": "ditolak", "approved_by": approverID}).Error
 }
 
-// ── QR CODE SERVICE ───────────────────────────────────────────────────────────
-
-type QrCodeService struct{}
-
-func (s *QrCodeService) GenerateForArsip(arsip *models.Arsip) (*models.QrCode, error) {
-	dir := config.QRCodeDir()
-	os.MkdirAll(dir, 0755)
-	filename := fmt.Sprintf("qr_%s.png", arsip.ID)
-	path := filepath.Join(dir, filename)
-	qrData := fmt.Sprintf("/arsip/%s", arsip.ID)
-
-	if err := qrcode.WriteFile(qrData, qrcode.Medium, 256, path); err != nil {
-		return nil, err
-	}
-
-	database.DB.Where("arsip_id = ?", arsip.ID).Delete(&models.QrCode{})
-	qr := &models.QrCode{
-		ID: uuid.New().String(), ArsipID: &arsip.ID,
-		QrCodePath: path, QrData: qrData,
-	}
-	err := database.DB.Create(qr).Error
-	return qr, err
-}
-
-func (s *QrCodeService) GenerateForLokasi(lokasiID string) (*models.QrCode, error) {
-	dir := config.QRCodeDir()
-	os.MkdirAll(dir, 0755)
-	filename := fmt.Sprintf("lokasi-%s.png", lokasiID)
-	path := filepath.Join(dir, filename)
-	qrData := fmt.Sprintf("/lokasi-arsip/%s", lokasiID)
-
-	if err := qrcode.WriteFile(qrData, qrcode.Medium, 256, path); err != nil {
-		return nil, err
-	}
-
-	qr := &models.QrCode{
-		ID: uuid.New().String(), LokasiID: &lokasiID,
-		QrCodePath: path, QrData: qrData,
-	}
-	err := database.DB.Create(qr).Error
-	return qr, err
-}
-
 // ── BLOCKCHAIN AUDIT SERVICE ──────────────────────────────────────────────────
 
 type BlockchainAuditService struct{}
@@ -218,7 +174,7 @@ type BlockchainAuditService struct{}
 func (s *BlockchainAuditService) RecordAudit(entityType, entityID, action string, data interface{}, userID string, ipAddress, userAgent string) error {
 	dataBytes, _ := json.Marshal(data)
 	details := string(dataBytes)
-	
+
 	var prev models.BlockchainAudit
 	database.DB.Order("block_number DESC").First(&prev)
 
@@ -255,7 +211,6 @@ func (s *BlockchainAuditService) RecordAudit(entityType, entityID, action string
 	return database.DB.Create(&audit).Error
 }
 
-
 func (s *BlockchainAuditService) VerifyChain() map[string]interface{} {
 	var records []models.BlockchainAudit
 	database.DB.Order("block_number ASC").Find(&records)
@@ -263,7 +218,7 @@ func (s *BlockchainAuditService) VerifyChain() map[string]interface{} {
 	invalidBlocks := 0
 	invalidBlockNumbers := []uint64{}
 	prevRecalculatedHash := ""
-	
+
 	for i := 0; i < len(records); i++ {
 		// Recalculate what the CurrentHash SHOULD be
 		// Uses recalculated hash from previous block (not stored PreviousHash)
@@ -277,24 +232,24 @@ func (s *BlockchainAuditService) VerifyChain() map[string]interface{} {
 			invalidBlocks++
 			invalidBlockNumbers = append(invalidBlockNumbers, records[i].BlockNumber)
 		}
-		
+
 		// Use this recalculated hash as previous for next block
 		prevRecalculatedHash = expectedHash
 	}
-	
+
 	result := map[string]interface{}{
 		"total_blocks":          len(records),
 		"invalid_blocks":        invalidBlocks,
 		"invalid_block_numbers": invalidBlockNumbers,
 		"is_valid":              invalidBlocks == 0,
 	}
-	
+
 	// Log warning if issues found
 	if invalidBlocks > 0 {
 		log.Printf("[BLOCKCHAIN] PERINGATAN: Ditemukan %d blok tidak valid dari %d total. Blok: %v",
 			invalidBlocks, len(records), invalidBlockNumbers)
 	}
-	
+
 	return result
 }
 func (s *BlockchainAuditService) VerifyEntityChain(entityType, entityID string) map[string]interface{} {
@@ -378,8 +333,14 @@ func (s *BackupService) CreateDatabaseBackup() (*models.BackupLog, error) {
 		"--routines",
 		"--triggers",
 		"--events",
-		dbName,
 	}
+	// Skip tabel warisan/debug (Telescope Laravel ~99MB, cache AI, dan duplikat
+	// skema Laravel) supaya backup tidak membengkak, konsisten dengan jalur
+	// backup lain di features.go.
+	for _, t := range LegacyExcludeTables() {
+		args = append(args, "--ignore-table="+dbName+"."+t)
+	}
+	args = append(args, dbName)
 
 	// Dump database langsung ke memory
 	cmd := exec.Command("mysqldump", args...)
@@ -513,9 +474,9 @@ func (s *ArsipNumberService) Generate(db *gorm.DB) string {
 // ── MENU SERVICE ──────────────────────────────────────────────────────────────
 
 type MenuItem struct {
-	Label  string
-	Route  string
-	Icon   string
+	Label string
+	Route string
+	Icon  string
 }
 
 type MenuSection struct {
@@ -528,7 +489,6 @@ func GetMenuItems() []MenuSection {
 	return []MenuSection{
 		{Title: "Dashboard", Icon: "bi-speedometer2", Items: []MenuItem{
 			{Label: "Dashboard", Route: "/dashboard", Icon: "bi-speedometer2"},
-			{Label: "Analitik Lanjutan", Route: "/advanced/dashboard", Icon: "bi-cpu"},
 		}},
 		{Title: "Manajemen Arsip", Icon: "bi-archive", Items: []MenuItem{
 			{Label: "Arsip", Route: "/arsip", Icon: "bi-file-earmark-text"},
@@ -654,11 +614,11 @@ func (s *ArchivalSupervisionService) CalculateComplianceScore(unitKerjaID string
 		})
 	} else {
 		database.DB.Model(&existing).Updates(map[string]interface{}{
-			"overall_score":            overallScore,
-			"classification_accuracy":  classificationScore,
-			"pemberkasan_compliance":   pemberkasanScore,
-			"retention_efficiency":     efficiencyScore,
-			"updated_at":               time.Now(),
+			"overall_score":           overallScore,
+			"classification_accuracy": classificationScore,
+			"pemberkasan_compliance":  pemberkasanScore,
+			"retention_efficiency":    efficiencyScore,
+			"updated_at":              time.Now(),
 		})
 	}
 
@@ -870,8 +830,9 @@ func (s *DataScienceService) SemanticSearch(query string) []models.Arsip {
 	if query == "" {
 		return list
 	}
+	cond, sargs := arsipSearchLike(query, "nama_arsip", "nomor_arsip", "uraian", "ocr_text", "tags")
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))", query).
+		Where(cond, sargs...).
 		Limit(20).Find(&list)
 	return list
 }
@@ -948,7 +909,7 @@ func (s *AutoDisposalService) CheckAndCreatePemusnahan() int {
 	for _, a := range expiredArsip {
 		arsipIDs = append(arsipIDs, a.ID)
 	}
-	
+
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&pemusnahan).Error; err != nil {
 			return err

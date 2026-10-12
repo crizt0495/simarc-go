@@ -24,8 +24,8 @@ type userCacheEntry struct {
 }
 
 var (
-	userCache   = make(map[string]userCacheEntry)
-	userCacheMu sync.RWMutex
+	userCache    = make(map[string]userCacheEntry)
+	userCacheMu  sync.RWMutex
 	userCacheTTL = 30 * time.Second // short TTL to keep data fresh
 )
 
@@ -89,7 +89,7 @@ func InitSession() {
 	Store = sessions.NewCookieStore([]byte(key))
 	Store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   0,   // session cookie: expired saat browser ditutup
+		MaxAge:   0, // session cookie: expired saat browser ditutup
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 		Secure:   config.IsVercel(), // Vercel always serves over HTTPS

@@ -26,8 +26,8 @@ func exportXLSX(c *gin.Context, filename string, headers []string, rows [][]stri
 	f.DeleteSheet("Sheet1")
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
-		Fill: excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{"#4472C4"}},
+		Font:      &excelize.Font{Bold: true, Color: "#FFFFFF"},
+		Fill:      excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{"#4472C4"}},
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
 		Border: []excelize.Border{
 			{Type: "left", Color: "#000000", Style: 1},
@@ -202,7 +202,9 @@ func ExportKodeKlasifikasi(c *gin.Context) {
 	rows := [][]string{}
 	for _, v := range list {
 		active := "Ya"
-		if !v.IsActive { active = "Tidak" }
+		if !v.IsActive {
+			active = "Tidak"
+		}
 		rows = append(rows, []string{
 			v.KodeKlasifikasi, v.NamaKlasifikasi,
 			strconv.Itoa(v.RetensiAktif), strconv.Itoa(v.RetensiInaktif),
@@ -248,7 +250,7 @@ func ExportLokasiArsip(c *gin.Context) {
 
 func ExportJenisArsip(c *gin.Context) {
 	var list []models.JenisArsip
-	database.DB.Order("nama ASC").Find(&list)
+	database.DB.Order("nama_jenis ASC").Find(&list)
 	headers := []string{"Nama Jenis Arsip", "Deskripsi"}
 	rows := [][]string{}
 	for _, v := range list {
@@ -268,13 +270,21 @@ func ExportUsers(c *gin.Context) {
 	rows := [][]string{}
 	for _, v := range list {
 		active := "Ya"
-		if !v.IsActive { active = "Tidak" }
+		if !v.IsActive {
+			active = "Tidak"
+		}
 		lastLogin := "-"
-		if v.LastLoginAt != nil { lastLogin = v.LastLoginAt.Format("02/01/2006 15:04") }
+		if v.LastLoginAt != nil {
+			lastLogin = v.LastLoginAt.Format("02/01/2006 15:04")
+		}
 		roleName := "-"
-		if v.Role != nil { roleName = v.Role.Name }
+		if v.Role != nil {
+			roleName = v.Role.Name
+		}
 		unitName := "-"
-		if v.UnitKerja != nil { unitName = v.UnitKerja.NamaUnit }
+		if v.UnitKerja != nil {
+			unitName = v.UnitKerja.NamaUnit
+		}
 		rows = append(rows, []string{v.Username, v.Name, v.Username, roleName, unitName, active, lastLogin})
 	}
 	if c.Query("format") == "pdf" {
@@ -306,15 +316,25 @@ func ExportPeminjaman(c *gin.Context) {
 	rows := [][]string{}
 	for _, v := range list {
 		peminjam := "-"
-		if v.User != nil { peminjam = v.User.Name }
+		if v.User != nil {
+			peminjam = v.User.Name
+		}
 		arsipNama := "-"
-		if v.Arsip != nil { arsipNama = v.Arsip.NamaArsip }
+		if v.Arsip != nil {
+			arsipNama = v.Arsip.NamaArsip
+		}
 		tglPinjam := "-"
-		if v.TanggalPinjam != nil { tglPinjam = v.TanggalPinjam.Format("02/01/2006") }
+		if v.TanggalPinjam != nil {
+			tglPinjam = v.TanggalPinjam.Format("02/01/2006")
+		}
 		tglRencana := "-"
-		if v.TanggalKembaliRencana != nil { tglRencana = v.TanggalKembaliRencana.Format("02/01/2006") }
+		if v.TanggalKembaliRencana != nil {
+			tglRencana = v.TanggalKembaliRencana.Format("02/01/2006")
+		}
 		tglKembali := "-"
-		if v.TanggalKembaliAktual != nil { tglKembali = v.TanggalKembaliAktual.Format("02/01/2006") }
+		if v.TanggalKembaliAktual != nil {
+			tglKembali = v.TanggalKembaliAktual.Format("02/01/2006")
+		}
 		rows = append(rows, []string{peminjam, arsipNama, tglPinjam, tglRencana, tglKembali, v.Status})
 	}
 	if c.Query("format") == "pdf" {
@@ -331,11 +351,17 @@ func ExportJadwalRetensi(c *gin.Context) {
 	rows := [][]string{}
 	for _, v := range list {
 		kkName := "-"
-		if v.KodeKlasifikasi != nil { kkName = v.KodeKlasifikasi.KodeKlasifikasi + " - " + v.KodeKlasifikasi.NamaKlasifikasi }
+		if v.KodeKlasifikasi != nil {
+			kkName = v.KodeKlasifikasi.KodeKlasifikasi + " - " + v.KodeKlasifikasi.NamaKlasifikasi
+		}
 		ukName := "-"
-		if v.UnitKerja != nil { ukName = v.UnitKerja.NamaUnit }
+		if v.UnitKerja != nil {
+			ukName = v.UnitKerja.NamaUnit
+		}
 		tglBerakhir := "-"
-		if v.TanggalPelaksanaan != nil { tglBerakhir = v.TanggalPelaksanaan.Format("02/01/2006") }
+		if v.TanggalPelaksanaan != nil {
+			tglBerakhir = v.TanggalPelaksanaan.Format("02/01/2006")
+		}
 		rows = append(rows, []string{kkName, ukName, tglBerakhir, v.Status, v.Keterangan})
 	}
 	if c.Query("format") == "pdf" {
@@ -352,9 +378,13 @@ func ExportPemberkasan(c *gin.Context) {
 	rows := [][]string{}
 	for _, v := range list {
 		ukName := "-"
-		if v.UnitKerja != nil { ukName = v.UnitKerja.NamaUnit }
+		if v.UnitKerja != nil {
+			ukName = v.UnitKerja.NamaUnit
+		}
 		jmlArsip := 0
-		if v.Arsip != nil { jmlArsip = len(v.Arsip) }
+		if v.Arsip != nil {
+			jmlArsip = len(v.Arsip)
+		}
 		rows = append(rows, []string{v.KodeBerkas, v.NamaPemberkasan, ukName, strconv.Itoa(jmlArsip), v.StatusBerkas})
 	}
 	if c.Query("format") == "pdf" {

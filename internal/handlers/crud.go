@@ -331,12 +331,12 @@ func (h *LokasiArsipHandler) Index(c *gin.Context) {
 		"title": "Lokasi Arsip - SIMARC", "pageTitle": "Lokasi Arsip",
 		"List": enrichedList, "Total": total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
-		"FirstItem":  offset + 1,
-		"LastItem":   offset + len(list),
-		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
-		"HasPages":   totalPages > 1,
-		"HasFilters": c.Query("search") != "" || c.Query("filter_deskripsi") != "",
-		"Search":     c.Query("search"),
+		"FirstItem":       offset + 1,
+		"LastItem":        offset + len(list),
+		"Pagination":      BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":        totalPages > 1,
+		"HasFilters":      c.Query("search") != "" || c.Query("filter_deskripsi") != "",
+		"Search":          c.Query("search"),
 		"FilterDeskripsi": c.Query("filter_deskripsi"),
 	})
 }
@@ -351,7 +351,7 @@ func (h *LokasiArsipHandler) Store(c *gin.Context) {
 	m := models.LokasiArsip{
 		ID: uuid.New().String(), NamaLokasi: c.PostForm("nama_lokasi"),
 		Deskripsi: c.PostForm("deskripsi"),
-		IsActive: isActive,
+		IsActive:  isActive,
 	}
 	if kap != "" {
 		m.Kapasitas = &kap
@@ -409,13 +409,13 @@ func (h *LokasiArsipHandler) Show(c *gin.Context) {
 		"title": m.NamaLokasi, "pageTitle": "Detail Lokasi Arsip",
 		"LokasiID": m.ID,
 		"Item": gin.H{
-			"NamaLokasi":           m.NamaLokasi,
-			"Kapasitas":            m.Kapasitas,
-			"IsActive":             m.IsActive,
-			"Deskripsi":            m.Deskripsi,
-			"ArsipCount":           len(arsipList),
-			"ArsipList":            arsipList,
-			"ID":                   m.ID,
+			"NamaLokasi": m.NamaLokasi,
+			"Kapasitas":  m.Kapasitas,
+			"IsActive":   m.IsActive,
+			"Deskripsi":  m.Deskripsi,
+			"ArsipCount": len(arsipList),
+			"ArsipList":  arsipList,
+			"ID":         m.ID,
 		},
 	})
 }

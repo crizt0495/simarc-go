@@ -12,6 +12,7 @@ import (
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
 	"arsippro/internal/models"
+	"arsippro/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -506,16 +507,16 @@ func (h *PemusnahanHandler) Index(c *gin.Context) {
 		"title": "Pemusnahan Arsip - SIMARC", "pageTitle": "Pemusnahan Arsip",
 		"List": list, "Total": total, "Stats": stats, "Page": page,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
-		"FirstItem":    offset + 1,
-		"HasPages":   totalPages > 1,
-		"HasFilters": status != "",
-		"CurrentStatus": status,
-		"ExpiredArsip": expiredArsip,
-		"TotalExpired": siapDimusnahkan,
-		"HasExpired":   siapDimusnahkan > 0,
-		"BerjalanArsip": berjalanArsip,
-		"TotalBerjalan": totalBerjalan,
-		"HasBerjalan":   totalBerjalan > 0,
+		"FirstItem":        offset + 1,
+		"HasPages":         totalPages > 1,
+		"HasFilters":       status != "",
+		"CurrentStatus":    status,
+		"ExpiredArsip":     expiredArsip,
+		"TotalExpired":     siapDimusnahkan,
+		"HasExpired":       siapDimusnahkan > 0,
+		"BerjalanArsip":    berjalanArsip,
+		"TotalBerjalan":    totalBerjalan,
+		"HasBerjalan":      totalBerjalan > 0,
 		"TotalArsipMusnah": totalArsipMusnah,
 	})
 }
@@ -572,7 +573,7 @@ func (h *PemusnahanHandler) Create(c *gin.Context) {
 		"List": arsipList, "Search": search,
 		"KodeKlasifikasiOptions": kodeKlasifikasiOpts,
 		"FilterKodeKlasifikasi":  kodeKlasifikasiID,
-		"Total": total, "Page": page, "TotalPages": totalPages,
+		"Total":                  total, "Page": page, "TotalPages": totalPages,
 		"HasPages": totalPages > 1, "FilterQS": filterQS,
 	})
 }
@@ -623,7 +624,7 @@ func (h *PemusnahanHandler) Store(c *gin.Context) {
 		ID: uuid.New().String(), NamaKegiatan: c.PostForm("alasan_pengajuan"),
 		TanggalPelaksanaan: &now, TanggalPengajuan: &now, Status: "diajukan", CreatedBy: &user.ID,
 		UserPengajuID: user.ID,
-		IsAuto: false,
+		IsAuto:        false,
 	}
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&m).Error; err != nil {
@@ -992,7 +993,44 @@ func (h *PengaturanHandler) Index(c *gin.Context) {
 		"CanManageDatabase": isAdmin,
 		"GDriveClientID":    config.App.GoogleDriveClientID,
 		"GDriveFolderID":    config.App.GoogleDriveFolderID,
+		"Offsite":           offsiteSettingsForTemplate(),
+		"OffsiteStatus":     services.OffsiteStatus(),
+		"OffsiteRunning":    services.OffsiteRunning(),
 	})
+}
+
+// offsiteSettingsForTemplate exposes the offsite backup settings to the
+// settings page without ever including the stored secrets.
+func offsiteSettingsForTemplate() gin.H {
+	off := config.LoadOffsite()
+	return gin.H{
+		"Enabled":     off.Enabled,
+		"Hour":        off.Hour,
+		"Minute":      off.Minute,
+		"BackupDB":    off.BackupDB,
+		"BackupFiles": off.BackupFiles,
+
+		"DBHost":    off.DBHost,
+		"DBPort":    off.DBPort,
+		"DBName":    off.DBName,
+		"DBUser":    off.DBUser,
+		"DBHasPass": off.DBPass != "",
+		"DBTLS":     off.DBTLS,
+		"DBCAFile":  off.DBCAFile,
+
+		"S3Endpoint":  off.S3Endpoint,
+		"S3Region":    off.S3Region,
+		"S3Bucket":    off.S3Bucket,
+		"S3AccessKey": off.S3AccessKey,
+		"S3HasSecret": off.S3SecretKey != "",
+		"S3Prefix":    off.S3Prefix,
+		"S3PathStyle": off.S3PathStyle,
+
+		"FilesMode":    off.FilesMode,
+		"RcloneRemote": off.RcloneRemote,
+		"RclonePath":   off.RclonePath,
+		"FileBackend":  off.FileBackend(),
+	}
 }
 
 // ── SEARCH ────────────────────────────────────────────────────────────────────
@@ -1011,8 +1049,8 @@ func (h *SearchHandler) Results(c *gin.Context) {
 	totalPages := 1
 	offset := 0
 	if q != "" {
-		tsQuery := "(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))"
-		db := database.DB.Model(&models.Arsip{}).Where(tsQuery, q)
+		tsQuery, tsArgs := arsipSearchLike(q, "nama_arsip", "nomor_arsip", "uraian", "ocr_text", "tags")
+		db := database.DB.Model(&models.Arsip{}).Where(tsQuery, tsArgs...)
 		db.Count(&total)
 		totalPages = (int(total) + perPage - 1) / perPage
 		if totalPages == 0 {
@@ -1023,7 +1061,7 @@ func (h *SearchHandler) Results(c *gin.Context) {
 		}
 		offset = (page - 1) * perPage
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip").
-			Where(tsQuery, q).
+			Where(tsQuery, tsArgs...).
 			Limit(perPage).Offset(offset).Find(&results)
 	}
 	Render(c, 200, "search/results.html", gin.H{
@@ -1037,7 +1075,6 @@ func (h *SearchHandler) Results(c *gin.Context) {
 		"HasPages":   totalPages > 1,
 	})
 }
-
 
 // ── PEMINJAMAN ────────────────────────────────────────────────────────────────
 

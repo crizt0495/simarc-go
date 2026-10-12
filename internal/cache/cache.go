@@ -33,7 +33,7 @@ type Stats struct {
 }
 
 // Default cache instance used by the application.
-var Default = New(5 * time.Minute, 5000)
+var Default = New(5*time.Minute, 5000)
 
 // New creates a new cache with the given default TTL and max item count.
 func New(defaultTTL time.Duration, maxItems int) *Cache {

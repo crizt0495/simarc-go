@@ -1,0 +1,287 @@
+{{define "offsite-form"}}
+<div class="alert alert-info d-flex gap-3 mb-4">
+    <i class="bi bi-cloud-arrow-up-fill fs-4"></i>
+    <div>
+        <strong>Backup Cloud (Offsite).</strong>
+        Database lokal tetap menjadi <em>sumber utama</em> dan aplikasi tetap berjalan penuh walau internet mati.
+        Setiap hari SIMARC menyalin (mirror) database ke <strong>database cloud MySQL</strong> gratis
+        (mis. Aiven for MySQL) dan menyalin berkas arsip ke <strong>object storage</strong>
+        S3-compatible (mis. Cloudflare R2 / Backblaze B2). Salinan ini bersifat offsite &mdash; hanya tujuan
+        pemulihan bila server rusak, bukan untuk dibaca aplikasi.
+    </div>
+</div>
+
+{{if .OffsiteRunning}}
+<div class="alert alert-warning d-flex align-items-center gap-2">
+    <span class="spinner-border spinner-border-sm"></span> Backup cloud sedang berjalan&hellip;
+</div>
+{{end}}
+
+<form method="POST" action="/pengaturan/offsite/save" id="offsiteForm">
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-database"></i><span>Database Cloud (MySQL)</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Isi dengan kredensial database MySQL cloud gratis. Untuk Aiven, buka dashboard
+                        layanan &rarr; <em>Connection information</em>.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-8">
+                            <label class="form-label">Host</label>
+                            <input type="text" class="form-control" name="offsite_db_host"
+                                   value="{{.Offsite.DBHost}}" placeholder="mysql-xxxx.aivencloud.com">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Port</label>
+                            <input type="text" class="form-control" name="offsite_db_port"
+                                   value="{{if .Offsite.DBPort}}{{.Offsite.DBPort}}{{else}}3306{{end}}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Nama Database</label>
+                            <input type="text" class="form-control" name="offsite_db_name"
+                                   value="{{.Offsite.DBName}}" placeholder="defaultdb">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" name="offsite_db_user"
+                                   value="{{.Offsite.DBUser}}" placeholder="avnadmin">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="offsite_db_pass"
+                                   autocomplete="new-password"
+                                   placeholder="{{if .Offsite.DBHasPass}}(tersimpan &mdash; kosongkan bila tidak diubah){{else}}password{{end}}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Enkripsi (TLS)</label>
+                            <select class="form-select" name="offsite_db_tls">
+                                <option value="required" {{if eq .Offsite.DBTLS "required"}}selected{{end}}>Wajib (required)</option>
+                                <option value="verify" {{if eq .Offsite.DBTLS "verify"}}selected{{end}}>Verifikasi sertifikat (verify)</option>
+                                <option value="preferred" {{if eq .Offsite.DBTLS "preferred"}}selected{{end}}>Bila tersedia (preferred)</option>
+                                <option value="disabled" {{if eq .Offsite.DBTLS "disabled"}}selected{{end}}>Nonaktif (disabled)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">File CA (opsional)</label>
+                            <input type="text" class="form-control" name="offsite_db_ca_file"
+                                   value="{{.Offsite.DBCAFile}}" placeholder="/path/ca.pem">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-bucket"></i><span>Object Storage (Berkas Arsip)</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Salinan berkas arsip. Bisa ke object storage S3-compatible
+                        (R2: <code>https://&lt;account_id&gt;.r2.cloudflarestorage.com</code>,
+                        B2: <code>https://s3.&lt;region&gt;.backblazeb2.com</code>) atau ke
+                        <strong>rclone remote</strong> yang sudah dikonfigurasi
+                        (mis. Google Drive) &mdash; tanpa perlu akun baru.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label">Metode penyimpanan berkas</label>
+                        <select class="form-select" name="offsite_files_mode" id="offsite_files_mode">
+                            <option value="auto" {{if or (eq .Offsite.FilesMode "auto") (eq .Offsite.FilesMode "")}}selected{{end}}>Otomatis (S3 bila tersedia, jika tidak rclone)</option>
+                            <option value="s3" {{if eq .Offsite.FilesMode "s3"}}selected{{end}}>Object storage S3-compatible (R2 / B2 / MinIO)</option>
+                            <option value="rclone" {{if eq .Offsite.FilesMode "rclone"}}selected{{end}}>rclone remote (mis. Google Drive)</option>
+                        </select>
+                    </div>
+                    <div class="row g-3" id="offsiteS3Fields">
+                        <div class="col-12">
+                            <label class="form-label">Endpoint</label>
+                            <input type="text" class="form-control" name="offsite_s3_endpoint"
+                                   value="{{.Offsite.S3Endpoint}}" placeholder="https://xxxx.r2.cloudflarestorage.com">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Region</label>
+                            <input type="text" class="form-control" name="offsite_s3_region"
+                                   value="{{if .Offsite.S3Region}}{{.Offsite.S3Region}}{{else}}auto{{end}}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Bucket</label>
+                            <input type="text" class="form-control" name="offsite_s3_bucket"
+                                   value="{{.Offsite.S3Bucket}}" placeholder="simarc-backup">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Access Key</label>
+                            <input type="text" class="form-control" name="offsite_s3_access_key"
+                                   value="{{.Offsite.S3AccessKey}}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Secret Key</label>
+                            <input type="password" class="form-control" name="offsite_s3_secret_key"
+                                   autocomplete="new-password"
+                                   placeholder="{{if .Offsite.S3HasSecret}}(tersimpan &mdash; kosongkan bila tidak diubah){{else}}secret key{{end}}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Prefix Folder</label>
+                            <input type="text" class="form-control" name="offsite_s3_prefix"
+                                   value="{{if .Offsite.S3Prefix}}{{.Offsite.S3Prefix}}{{else}}simarc{{end}}">
+                        </div>
+                        <div class="col-6 d-flex align-items-end">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="offsite_s3_path_style" name="offsite_s3_path_style"
+                                       {{if .Offsite.S3PathStyle}}checked{{end}}>
+                                <label class="form-check-label" for="offsite_s3_path_style">Path-style URL</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1" id="offsiteRcloneFields">
+                        <div class="col-12">
+                            <label class="form-label">rclone remote</label>
+                            <input type="text" class="form-control" name="offsite_rclone_remote"
+                                   value="{{.Offsite.RcloneRemote}}" placeholder="gdrive">
+                            <div class="form-text">Nama remote hasil <code>rclone config</code> di server (mis. <code>gdrive</code>).</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Folder tujuan di remote</label>
+                            <input type="text" class="form-control" name="offsite_rclone_path"
+                                   value="{{if .Offsite.RclonePath}}{{.Offsite.RclonePath}}{{else}}simarc-backup{{end}}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-clock-history"></i><span>Jadwal &amp; Cakupan</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="offsite_enabled" name="offsite_enabled" {{if .Offsite.Enabled}}checked{{end}}>
+                        <label class="form-check-label fw-semibold" for="offsite_enabled">Aktifkan backup cloud harian</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Jam</label>
+                    <input type="number" min="0" max="23" class="form-control"
+                           name="offsite_hour" value="{{.Offsite.Hour}}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Menit</label>
+                    <input type="number" min="0" max="59" class="form-control"
+                           name="offsite_minute" value="{{.Offsite.Minute}}">
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="offsite_backup_db"
+                               name="offsite_backup_db" {{if .Offsite.BackupDB}}checked{{end}}>
+                        <label class="form-check-label" for="offsite_backup_db">Database</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="offsite_backup_files"
+                               name="offsite_backup_files" {{if .Offsite.BackupFiles}}checked{{end}}>
+                        <label class="form-check-label" for="offsite_backup_files">Berkas</label>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Simpan Pengaturan
+                </button>
+                <button type="submit" formaction="/pengaturan/offsite/test-db" class="btn btn-outline-secondary">
+                    <i class="bi bi-plug me-1"></i> Uji Database
+                </button>
+                <button type="submit" formaction="/pengaturan/offsite/test-files" class="btn btn-outline-secondary">
+                    <i class="bi bi-plug me-1"></i> Uji Storage
+                </button>
+                <button type="submit" formaction="/pengaturan/offsite/run" class="btn btn-success">
+                    <i class="bi bi-cloud-arrow-up me-1"></i> Backup Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-activity"></i><span>Status Backup Cloud Terakhir</span>
+    </div>
+    <div class="card-body">
+        {{if .OffsiteStatus.FinishedAt.IsZero}}
+        <p class="text-muted mb-0">Belum pernah dijalankan.</p>
+        {{else}}
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted small">Waktu</span>
+                <strong>{{.OffsiteStatus.FinishedAt.Format "02 Jan 2006 15:04:05"}}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted small">Database Cloud</span>
+                {{if .OffsiteStatus.Database.Attempted}}
+                    {{if .OffsiteStatus.Database.OK}}
+                        <span class="badge bg-success">Berhasil &mdash; {{.OffsiteStatus.Database.Detail}}</span>
+                    {{else}}
+                        <span class="badge bg-danger">Gagal &mdash; {{.OffsiteStatus.Database.Detail}}</span>
+                    {{end}}
+                {{else}}
+                    <span class="text-muted">&mdash;</span>
+                {{end}}
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted small">Berkas</span>
+                {{if .OffsiteStatus.Files.Attempted}}
+                    {{if .OffsiteStatus.Files.OK}}
+                        <span class="badge bg-success">Berhasil &mdash; {{.OffsiteStatus.Files.Detail}}</span>
+                    {{else}}
+                        <span class="badge bg-danger">Gagal &mdash; {{.OffsiteStatus.Files.Detail}}</span>
+                    {{end}}
+                {{else}}
+                    <span class="text-muted">&mdash;</span>
+                {{end}}
+            </li>
+        </ul>
+        {{end}}
+    </div>
+</div>
+
+<script>
+(function () {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'cloud') {
+            var btn = document.getElementById('cloud-tab');
+            if (btn && window.bootstrap && bootstrap.Tab) {
+                bootstrap.Tab.getOrCreateInstance(btn).show();
+            }
+        }
+    } catch (e) { /* ignore */ }
+
+    // Show the relevant file-storage fields based on the selected method.
+    var mode = document.getElementById('offsite_files_mode');
+    var s3 = document.getElementById('offsiteS3Fields');
+    var rc = document.getElementById('offsiteRcloneFields');
+    function syncFileBackend() {
+        if (!mode || !s3 || !rc) return;
+        var v = mode.value;
+        s3.style.display = (v === 'rclone') ? 'none' : '';
+        rc.style.display = (v === 's3') ? 'none' : '';
+    }
+    if (mode) {
+        mode.addEventListener('change', syncFileBackend);
+        syncFileBackend();
+    }
+})();
+</script>
+{{end}}

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	"arsippro/internal/config"
@@ -67,8 +67,8 @@ func (h *ArsipHandler) BeritaAcaraDetail(c *gin.Context) {
 		return
 	}
 	Render(c, 200, "arsip/berita_acara_detail.html", gin.H{
-		"title":   "Detail Berita Acara - SIMARC",
-		"BA":      ba,
+		"title": "Detail Berita Acara - SIMARC",
+		"BA":    ba,
 	})
 }
 
@@ -188,22 +188,22 @@ func (h *ArsipHandler) GenerateBeritaAcara(c *gin.Context) {
 	}
 
 	ba := models.BeritaAcara{
-		ID:                uuid.New().String(),
-		NomorBA:           nomorBA,
-		Tanggal:           tanggal,
-		Tempat:            tempat,
-		PihakPertamaNama:  pihak1Nama,
-		PihakPertamaNIP:   pihak1NIP,
+		ID:                  uuid.New().String(),
+		NomorBA:             nomorBA,
+		Tanggal:             tanggal,
+		Tempat:              tempat,
+		PihakPertamaNama:    pihak1Nama,
+		PihakPertamaNIP:     pihak1NIP,
 		PihakPertamaJabatan: pihak1Jabatan,
-		PihakPertamaUnit:  pihak1Unit,
-		PihakKeduaNama:    pihak2Nama,
-		PihakKeduaNIP:     pihak2NIP,
-		PihakKeduaJabatan: pihak2Jabatan,
-		PihakKeduaUnit:    pihak2Unit,
-		LokasiAsalID:      &lokasiAsalID,
-		LokasiTujuanID:    &lokasiTujuanID,
-		Catatan:           catatan,
-		CreatedBy:         user.ID,
+		PihakPertamaUnit:    pihak1Unit,
+		PihakKeduaNama:      pihak2Nama,
+		PihakKeduaNIP:       pihak2NIP,
+		PihakKeduaJabatan:   pihak2Jabatan,
+		PihakKeduaUnit:      pihak2Unit,
+		LokasiAsalID:        &lokasiAsalID,
+		LokasiTujuanID:      &lokasiTujuanID,
+		Catatan:             catatan,
+		CreatedBy:           user.ID,
 	}
 
 	if lokasiAsalID == "" {

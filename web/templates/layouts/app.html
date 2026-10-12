@@ -145,9 +145,6 @@ html, body { overflow-x: hidden; }
 </head>
 <body>
 
-{{template "components/sidebar.html" .}}
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-
 <!-- Mobile Search Bar (hidden on mobile - using bottom nav search instead) -->
 <div class="mobile-search-bar" id="mobileSearchBar">
   <form action="/search" method="GET" style="display:contents;flex:1">
@@ -164,22 +161,20 @@ html, body { overflow-x: hidden; }
 <!-- Top Navbar -->
 <header class="top-navbar">
   <div class="navbar-left">
-    <button class="nav-icon-btn d-md-none" id="sidebarToggle" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="sidebarNav">
-      <i class="bi bi-list"></i>
-    </button>
     <a href="/dashboard" class="navbar-brand-mobile" aria-label="SIMARC Beranda">
       <i class="bi bi-archive-fill"></i>
       <span>SIMARC</span>
     </a>
+  </div>
 
+  {{template "components/topnav.html" .}}
+
+  <div class="navbar-right">
     <form action="/search" method="GET" class="nav-search d-none d-lg-flex">
       <i class="bi bi-search" style="color:var(--ink-4);font-size:14px;flex-shrink:0"></i>
       <input type="search" name="q" placeholder="Cari arsip...">
       <kbd style="font-size:11px;color:var(--ink-4);background:var(--surface-3);border:1px solid var(--border);border-radius:4px;padding:2px 6px;flex-shrink:0">/</kbd>
     </form>
-  </div>
-
-  <div class="navbar-right">
     <button class="nav-icon-btn" id="themeToggle" title="Toggle Dark Mode">
       <i class="bi bi-moon" id="themeIcon"></i>
     </button>
@@ -247,13 +242,9 @@ html, body { overflow-x: hidden; }
       <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Dark mode</span>
       <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:36px;text-align:center;">D</kbd>
     </div>
-    <div class="d-flex justify-content-between align-items-center py-3 shortcut-row" style="border-bottom:1px solid var(--border);">
-      <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Tutup modal / sidebar</span>
-      <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:36px;text-align:center;">Esc</kbd>
-    </div>
     <div class="d-flex justify-content-between align-items-center py-3">
-      <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Sidebar toggle</span>
-      <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:70px;text-align:center;">Ctrl+B</kbd>
+      <span style="font-size:13px;font-weight:500;color:var(--ink-3);">Tutup modal</span>
+      <kbd class="shortcut-key" style="background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--ink-3);min-width:36px;text-align:center;">Esc</kbd>
     </div>
   </div>
   <div class="sm-footer">
@@ -270,7 +261,6 @@ html, body { overflow-x: hidden; }
 <script src="/vendor/datatables/dataTables.bootstrap5.min.js?v={{.AssetVersion}}" defer></script>
 <script src="/vendor/select2/select2.min.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/lazy-load.js" defer></script>
-<script src="/js/sidebar.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/modal-manager.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/arsip-download.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/ui-animations.js?v={{.AssetVersion}}" defer></script>
@@ -344,11 +334,6 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     document.getElementById('themeToggle')?.click();
   }
-  // Ctrl+B to toggle sidebar
-  if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
-    e.preventDefault();
-    document.getElementById('sidebarToggle')?.click();
-  }
 });
 
 /* ── CSRF injection ── */
@@ -417,12 +402,9 @@ document.addEventListener('DOMContentLoaded', function() {
     'role': 'Role & Hak Akses',
     'pengaturan': 'Pengaturan',
     'backup': 'Backup & Restore',
-    'integrations': 'Integrasi Google Sheet',
     'blockchain': 'Blockchain Audit',
-    'qrcode': 'QR Code',
     'ocr': 'OCR',
     'profil': 'Profil Saya',
-    'import-export': 'Impor & Ekspor',
     'disposal': 'Pemusnahan'
   };
   var named = {
@@ -433,7 +415,6 @@ document.addEventListener('DOMContentLoaded', function() {
     'history': 'Riwayat',
     'versions': 'Versi',
     'pemindahan': 'Pemindahan',
-    'scanner': 'Pindai QR',
     'settings': 'Pengaturan',
     'statistik': 'Statistik',
     'aktivitas': 'Log Aktivitas',
@@ -473,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   function isKnown(p) {
-    var known = ['/dashboard','/advanced/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/advanced/integrations','/blockchain','/qrcode','/ocr','/profil','/retention'];
+    var known = ['/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/blockchain','/ocr','/profil','/retention'];
     return known.indexOf(p) !== -1;
   }
   bc.innerHTML = html;
@@ -690,9 +671,6 @@ document.addEventListener('DOMContentLoaded', function() {
         <a href="/peminjaman/create" class="mobile-more-item">
           <i class="bi bi-file-earmark-arrow-up"></i><span>Permohonan</span>
         </a>
-        <a href="/advanced/dashboard" class="mobile-more-item">
-          <i class="bi bi-cpu"></i><span>Analitik</span>
-        </a>
       </div>
     </div>
 
@@ -770,9 +748,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </a>
         <a href="/blockchain" class="mobile-more-item">
           <i class="bi bi-shield-check"></i><span>Blockchain Audit</span>
-        </a>
-        <a href="/advanced/integrations" class="mobile-more-item">
-          <i class="bi bi-table"></i><span>Google Sheet</span>
         </a>
         <a href="/pengaturan" class="mobile-more-item">
           <i class="bi bi-gear"></i><span>Pengaturan</span>

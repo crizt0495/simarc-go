@@ -150,16 +150,6 @@
 }
 .side-stat .side-body { padding: 1rem; }
 
-.qr-box {
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 0.85rem;
-    text-align: center;
-    transition: all 0.15s ease;
-}
-.qr-box:hover { border-color: var(--ink-2); box-shadow: var(--sh-sm); }
-.qr-box img { max-width: 110px; border-radius: 6px; }
-
 .meta-row {
     display: flex; justify-content: space-between; align-items: center;
     padding: 0.5rem 0;
@@ -384,21 +374,6 @@
                     <div class="col-4"><div class="p-2 rounded" style="background:var(--neu-bg);"><div class="fw-bold text-success" style="font-size:1.2rem;">{{.VersionCount}}</div><small class="text-muted" style="font-size:0.65rem;">Versi</small></div></div>
                     <div class="col-4"><div class="p-2 rounded" style="background:var(--neu-bg);"><div class="fw-bold" style="font-size:1.2rem;color:var(--ink-2);">{{if .arsip.LokasiArsip}}<i class="bi bi-geo-alt-fill"></i>{{else}}<i class="bi bi-dash"></i>{{end}}</div><small class="text-muted" style="font-size:0.65rem;">Lokasi</small></div></div>
                 </div>
-            </div>
-        </div>
-
-        <!-- QR Code -->
-        <div class="side-stat">
-            <div class="side-head"><i class="bi bi-qr-code"></i><span class="label">QR Code</span></div>
-            <div class="side-body text-center">
-                {{if .qrCode.ID}}
-                <div class="qr-box mb-2">
-                    <img src="/arsip/{{.arsip.ID}}/qrcode" alt="QR Code" class="img-fluid">
-                </div>
-                <a href="/arsip/{{.arsip.ID}}/qrcode/download" class="action-bar-btn w-100 justify-content-center" style="font-size:0.75rem;"><i class="bi bi-download"></i> Unduh QR</a>
-                {{else}}
-                <div class="text-muted py-3"><i class="bi bi-qr-code d-block mb-2" style="font-size:2rem;opacity:0.3"></i><small>QR Code belum tersedia</small></div>
-                {{end}}
             </div>
         </div>
 

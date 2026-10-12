@@ -20,7 +20,7 @@ Version: 1.0.0
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: chromium-browser | google-chrome | chromium | firefox (>=78)
+Depends: chromium-browser | google-chrome | google-chrome-stable | chromium | firefox | www-browser
 Maintainer: Bakesbangpol Kota Probolinggo <info@bakesbangpol.probolinggo.go.id>
 Description: SIMARC - Sistem Informasi Manajemen Arsip Record Center
  Aplikasi desktop SIMARC untuk manajemen arsip record center.
@@ -53,7 +53,14 @@ exec /opt/simarc/run-desktop.sh "$@"
 EOF
   chmod 0755 "$TMP/usr/bin/simarc"
 
-  rsync -a --exclude='.git/' --exclude='tmp/' --exclude='dist/' --exclude='build-deb*/' --exclude='node_modules/' --exclude='*.AppImage' "$ROOT/" "$TMP/opt/simarc/"
+  rsync -a --exclude='.git/' --exclude='tmp/' --exclude='dist/' --exclude='build-deb*/' --exclude='node_modules/' --exclude='storage/' --exclude='*.AppImage' "$ROOT/" "$TMP/opt/simarc/"
+
+  # Sertakan binary server (linux/amd64) agar mode lokal berjalan tanpa perlu Go.
+  if [[ -f "$ROOT/dist/simarc-server-linux-amd64" ]]; then
+    mkdir -p "$TMP/opt/simarc/tmp"
+    cp -f "$ROOT/dist/simarc-server-linux-amd64" "$TMP/opt/simarc/tmp/simarc-server"
+    chmod 0755 "$TMP/opt/simarc/tmp/simarc-server"
+  fi
 
   for s in 16 24 32 48 64 128 192 256 512; do
     [[ -f "$ROOT/web/static/images/icon-${s}.png" ]] && cp "$ROOT/web/static/images/icon-${s}.png" "$TMP/usr/share/icons/hicolor/${s}x${s}/apps/simarc.png"

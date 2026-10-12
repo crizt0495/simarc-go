@@ -2,13 +2,10 @@ package handlers
 
 import (
 	"compress/gzip"
-	"context"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
-	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -57,13 +54,13 @@ type DisposalClassificationStat struct {
 }
 
 type DisposalSummary struct {
-	TotalArchives          int64
-	TotalReadyForDisposal  int64
-	TotalOverdue           int64
-	TotalClassifications   int64
-	DisposalByType         map[string]int64
-	UrgentItems            []DisposalUrgentItem
-	Classifications        []DisposalClassificationStat
+	TotalArchives         int64
+	TotalReadyForDisposal int64
+	TotalOverdue          int64
+	TotalClassifications  int64
+	DisposalByType        map[string]int64
+	UrgentItems           []DisposalUrgentItem
+	Classifications       []DisposalClassificationStat
 }
 
 func disposalRecommendation(daysOverdue int) string {
@@ -209,7 +206,7 @@ func (h *DisposalHandler) Index(c *gin.Context) {
 		"title": "Smart Disposal", "pageTitle": "Smart Disposal - Berdasarkan Klasifikasi",
 		"klasifikasiList": klasifikasiList, "stats": stats,
 		"Summary": buildDisposalSummary(""),
-		"Total": total, "Page": page, "PerPage": perPage,
+		"Total":   total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":  offset + 1,
 		"LastItem":   offset + len(klasifikasiList),
@@ -251,7 +248,7 @@ func (h *DisposalHandler) ShowByClassification(c *gin.Context) {
 		"title": "Disposal - " + kk.KodeKlasifikasi, "pageTitle": "Disposal: " + kk.NamaKlasifikasi,
 		"ArsipList": arsipList, "kk": kk,
 		"Summary": buildDisposalSummary(kk.ID),
-		"Total": total, "Page": page, "PerPage": perPage,
+		"Total":   total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":  offset + 1,
 		"LastItem":   offset + len(arsipList),
@@ -328,7 +325,7 @@ func (h *DisposalHandler) Schedules(c *gin.Context) {
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Jadwal Disposal", "pageTitle": "Jadwal Disposal", "schedules": schedules, "scheduleMode": true,
 		"Summary": buildDisposalSummary(""),
-		"Total": total, "Page": page, "PerPage": perPage,
+		"Total":   total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":  offset + 1,
 		"LastItem":   offset + len(schedules),
@@ -376,720 +373,6 @@ func (h *DisposalHandler) PreviewRecommendations(c *gin.Context) {
 	svc := &services.SmartDisposalService{}
 	eligible := svc.GetEligibleArsip()
 	c.JSON(http.StatusOK, gin.H{"data": eligible, "count": len(eligible)})
-}
-
-// ── ADVANCED DASHBOARD ──────────────────────────────────────────────────────
-
-type AdvancedDashboardHandler struct{}
-
-func (h *AdvancedDashboardHandler) Index(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-	var stats struct {
-		Total          int64 `gorm:"column:total"`
-		Aktif          int64 `gorm:"column:aktif"`
-		TotalItems     int64 `gorm:"column:total_items"`
-		Inaktif        int64 `gorm:"column:inaktif"`
-		SiapPenyusutan int64 `gorm:"column:siap_penyusutan"`
-		Musnah         int64 `gorm:"column:musnah"`
-		Digital        int64 `gorm:"column:digital"`
-	}
-	database.DB.Raw(`SELECT
-		SUM(jumlah) as total_items,
-		COUNT(*) as total,
-		SUM(CASE WHEN status_arsip='aktif' OR status_arsip='diberkaskan' THEN 1 ELSE 0 END) as aktif,
-		SUM(CASE WHEN status_arsip='inaktif' THEN 1 ELSE 0 END) as inaktif,
-		SUM(CASE WHEN status_arsip='siap_penyusutan' THEN 1 ELSE 0 END) as siap_penyusutan,
-		SUM(CASE WHEN status_arsip='musnah' THEN 1 ELSE 0 END) as musnah,
-		SUM(CASE WHEN file_path IS NOT NULL AND file_path != '' THEN 1 ELSE 0 END) as digital
-		FROM arsip WHERE deleted_at IS NULL`).Scan(&stats)
-
-	var widgets []models.DashboardWidget
-	database.DB.Where("user_id = ?", user.ID).Order("position ASC").Find(&widgets)
-
-	// Recent archives for activity table
-	type RecentArchive struct {
-		NamaArsip   string `gorm:"column:nama_arsip"`
-		UnitKerja   string `gorm:"column:unit_kerja"`
-		CreatedAt   string `gorm:"column:created_at"`
-		StatusArsip string `gorm:"column:status_arsip"`
-	}
-	var recentArchives []RecentArchive
-	database.DB.Raw(`
-		SELECT a.nama_arsip, COALESCE(uk.nama_unit,'-') as unit_kerja,
-		       TO_CHAR(a.created_at, 'DD Mon YYYY') as created_at, a.status_arsip
-		FROM arsip a
-		LEFT JOIN unit_kerja uk ON a.unit_kerja_id = uk.id
-		WHERE a.deleted_at IS NULL
-		ORDER BY a.created_at DESC LIMIT 10
-	`).Scan(&recentArchives)
-
-	// Monthly growth chart
-	type MonthlyStat struct {
-		Month string `gorm:"column:month"`
-		Total int64  `gorm:"column:total"`
-	}
-	var monthlyStats []MonthlyStat
-	database.DB.Raw(`SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
-		FROM arsip WHERE deleted_at IS NULL GROUP BY month ORDER BY month ASC LIMIT 12`).Scan(&monthlyStats)
-
-	var growthLabels []string
-	var growthData []int64
-	for _, m := range monthlyStats {
-		growthLabels = append(growthLabels, m.Month)
-		growthData = append(growthData, m.Total)
-	}
-
-	// Top 5 classification distribution
-	type DistRow struct {
-		Kode  string `gorm:"column:kode"`
-		Total int64  `gorm:"column:total"`
-	}
-	var distRows []DistRow
-	database.DB.Raw(`
-		SELECT COALESCE(kk.kode_klasifikasi,'TANPA KLASIFIKASI') as kode, COUNT(a.id) as total
-		FROM arsip a
-		LEFT JOIN kode_klasifikasi kk ON a.kode_klasifikasi_id = kk.id
-		WHERE a.deleted_at IS NULL
-		GROUP BY kode ORDER BY total DESC LIMIT 5
-	`).Scan(&distRows)
-
-	var distLabels []string
-	var distData []int64
-	for _, d := range distRows {
-		distLabels = append(distLabels, d.Kode)
-		distData = append(distData, d.Total)
-	}
-
-	// Document types (jenis arsip)
-	type DocTypeRow struct {
-		Jenis string `gorm:"column:jenis"`
-		Total int64  `gorm:"column:total"`
-	}
-	var docTypeRows []DocTypeRow
-	database.DB.Raw(`
-		SELECT COALESCE(NULLIF(a.jenis_arsip,''),'Lainnya') as jenis, COUNT(a.id) as total
-		FROM arsip a WHERE a.deleted_at IS NULL
-		GROUP BY jenis ORDER BY total DESC LIMIT 5
-	`).Scan(&docTypeRows)
-
-	var docTypeLabels []string
-	var docTypeData []int64
-	for _, d := range docTypeRows {
-		docTypeLabels = append(docTypeLabels, d.Jenis)
-		docTypeData = append(docTypeData, d.Total)
-	}
-
-	// Retention lifecycle (aktif, inaktif, siap_penyusutan)
-	retentionLabels := []string{"Aktif", "Inaktif", "Siap Musnah"}
-	retentionData := []int64{stats.Aktif, stats.Inaktif, stats.SiapPenyusutan}
-
-	// AkurasiSistem - health score based on digital ratio + status distribution
-	akurasiSistem := 100.0
-	if stats.Total > 0 {
-		unclassified := stats.Total - stats.Aktif - stats.Inaktif - stats.SiapPenyusutan - stats.Musnah
-		if unclassified < 0 {
-			unclassified = 0
-		}
-		knownRatio := float64(stats.Total-unclassified) / float64(stats.Total)
-		digitalRatio := float64(stats.Digital) / float64(stats.Total)
-		akurasiSistem = (knownRatio*0.6 + digitalRatio*0.4) * 100
-	}
-
-	Render(c, 200, "dashboard/advanced.html", gin.H{
-		"title": "Advanced Dashboard", "pageTitle": "Advanced Dashboard",
-		"Stats": gin.H{
-			"TotalDokumen":   stats.Total,
-			"DokumenAktif":   stats.Aktif,
-			"DokumenInaktif": stats.Inaktif,
-			"SiapMusnah":     stats.SiapPenyusutan,
-			"AkurasiSistem":  int64(akurasiSistem),
-		},
-		"widgets": widgets,
-		"RecentActivity": gin.H{
-			"RecentArchives": recentArchives,
-		},
-		"ChartsData": gin.H{
-			"Growth": gin.H{
-				"Data":   growthData,
-				"Labels": growthLabels,
-			},
-			"Distribution": gin.H{
-				"Data":   distData,
-				"Labels": distLabels,
-			},
-			"DocTypes": gin.H{
-				"Data":   docTypeData,
-				"Labels": docTypeLabels,
-			},
-			"Retention": gin.H{
-				"Data":   retentionData,
-				"Labels": retentionLabels,
-			},
-		},
-	})
-}
-
-func (h *AdvancedDashboardHandler) GetWidgetData(c *gin.Context) {
-	key := c.Param("widgetKey")
-	data := map[string]interface{}{}
-	switch key {
-	case "arsip_growth":
-		svc := &services.AnalyticsService{}
-		data["growth"] = svc.GetArsipGrowth(12)
-	case "forecast":
-		svc := &services.DataScienceService{}
-		data["forecast"] = svc.ForecastGrowth(6)
-	case "anomalies":
-		svc := &services.DataScienceService{}
-		data["anomalies"] = svc.DetectSpjAnomalies()
-	case "leaderboard":
-		svc := &services.ArchivalSupervisionService{}
-		data["leaderboard"] = svc.GetLeaderboard()
-	default:
-		data["message"] = "Widget not found"
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": data})
-}
-
-func (h *AdvancedDashboardHandler) SaveWidgetConfig(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-	var body []struct {
-		WidgetKey string `json:"widget_key"`
-		Position  int    `json:"position"`
-		IsVisible bool   `json:"is_visible"`
-	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false})
-		return
-	}
-	database.DB.Where("user_id = ?", user.ID).Delete(&models.DashboardWidget{})
-	for _, w := range body {
-		widget := models.DashboardWidget{
-			ID: uuid.New().String(), UserID: user.ID, WidgetKey: w.WidgetKey,
-			Position: w.Position, IsVisible: w.IsVisible,
-		}
-		database.DB.Create(&widget)
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-// ── INTEGRATION HUB ─────────────────────────────────────────────────────────
-
-type IntegrationHandler struct{}
-
-func (h *IntegrationHandler) Index(c *gin.Context) {
-	var list []models.Integration
-	var totalInt int64
-	db := database.DB.Model(&models.Integration{})
-	db.Count(&totalInt)
-	perPage := 15
-	page := 1
-	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
-		page = p
-	}
-	totalPages := (int(totalInt) + perPage - 1) / perPage
-	if totalPages == 0 {
-		totalPages = 1
-	}
-	if page > totalPages {
-		page = totalPages
-	}
-	offset := (page - 1) * perPage
-	db.Order("name").Limit(perPage).Offset(offset).Find(&list)
-
-	// External spreadsheet links for google_sheets integrations.
-	sheetLinks := make(map[string]string, len(list))
-	for i := range list {
-		if list[i].Type == "google_sheets" {
-			if u := services.SheetsWebURL(&list[i]); u != "" {
-				sheetLinks[list[i].ID] = u
-			}
-		}
-	}
-
-	var total, active, inactive, errorCount int64
-	database.DB.Model(&models.Integration{}).Count(&total)
-	database.DB.Model(&models.Integration{}).Where("is_active = 1").Count(&active)
-	database.DB.Model(&models.Integration{}).Where("is_active = 0").Count(&inactive)
-	database.DB.Model(&models.Integration{}).Where("last_status = 'error'").Count(&errorCount)
-	Render(c, 200, "integrations/index.html", gin.H{
-		"title": "Integrasi", "pageTitle": "Integration Hub", "List": list,
-		"SheetLinks": sheetLinks,
-		"Stats": gin.H{
-			"Total":    total,
-			"Active":   active,
-			"Inactive": inactive,
-			"Error":    errorCount,
-		},
-		"Total": totalInt, "Page": page, "PerPage": perPage,
-		"TotalPages": totalPages, "StartIndex": offset + 1,
-		"FirstItem":  offset + 1,
-		"LastItem":   offset + len(list),
-		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
-		"HasPages":   totalPages > 1,
-	})
-}
-
-func (h *IntegrationHandler) Create(c *gin.Context) {
-	Render(c, 200, "integrations/index.html", gin.H{"title": "Tambah Integrasi", "pageTitle": "Tambah Integrasi", "createForm": true})
-}
-
-func (h *IntegrationHandler) Store(c *gin.Context) {
-	m := models.Integration{
-		ID: uuid.New().String(), Name: c.PostForm("name"), Type: c.PostForm("type"),
-		BaseURL: c.PostForm("base_url"), ApiKey: c.PostForm("api_key"),
-		IsActive: c.PostForm("is_active") == "on",
-	}
-	if m.Type == "google_sheets" {
-		m.BaseURL = services.ExtractSheetID(m.BaseURL)
-		gid := services.ExtractGid(c.PostForm("base_url"))
-		if cfg, err := json.Marshal(map[string]int64{"gid": gid}); err == nil {
-			m.Config = string(cfg)
-		}
-	}
-	if err := database.DB.Create(&m).Error; err != nil {
-		log.Printf("[INTEGRASI] Gagal menyimpan integrasi: %v", err)
-		middleware.SetFlash(c, "error", "Gagal menyimpan integrasi: "+err.Error())
-		c.Redirect(http.StatusFound, "/advanced/integrations")
-		return
-	}
-	middleware.SetFlash(c, "success", "Integrasi berhasil ditambahkan.")
-	c.Redirect(http.StatusFound, "/advanced/integrations")
-}
-
-func (h *IntegrationHandler) Show(c *gin.Context) {
-	var m models.Integration
-	if err := database.DB.First(&m, "id = ?", c.Param("id")).Error; err != nil {
-		c.Redirect(http.StatusFound, "/advanced/integrations")
-		return
-	}
-	var logs []models.IntegrationLog
-	database.DB.Where("integration_id = ?", m.ID).Order("created_at DESC").Limit(20).Find(&logs)
-	c.JSON(http.StatusOK, gin.H{"data": m, "logs": logs})
-}
-
-func (h *IntegrationHandler) Edit(c *gin.Context) {
-	var m models.Integration
-	database.DB.First(&m, "id = ?", c.Param("id"))
-	Render(c, 200, "integrations/index.html", gin.H{"title": "Edit Integrasi", "pageTitle": "Edit Integrasi", "m": m, "editForm": true})
-}
-
-func (h *IntegrationHandler) Update(c *gin.Context) {
-	var m models.Integration
-	if err := database.DB.First(&m, "id = ?", c.Param("id")).Error; err != nil {
-		middleware.SetFlash(c, "error", "Integrasi tidak ditemukan.")
-		c.Redirect(http.StatusFound, "/advanced/integrations")
-		return
-	}
-	m.Name = c.PostForm("name")
-	m.Type = c.PostForm("type")
-	m.BaseURL = c.PostForm("base_url")
-	m.ApiKey = c.PostForm("api_key")
-	m.IsActive = c.PostForm("is_active") == "on"
-	if m.Type == "google_sheets" {
-		gid := services.ExtractGid(c.PostForm("base_url"))
-		if old := services.ExtractGid(m.Config); gid == 0 && old != 0 {
-			gid = old
-		}
-		m.BaseURL = services.ExtractSheetID(m.BaseURL)
-		if cfg, err := json.Marshal(map[string]int64{"gid": gid}); err == nil {
-			m.Config = string(cfg)
-		}
-	}
-	database.DB.Save(&m)
-	middleware.SetFlash(c, "success", "Integrasi berhasil diperbarui.")
-	c.Redirect(http.StatusFound, "/advanced/integrations")
-}
-
-func (h *IntegrationHandler) Destroy(c *gin.Context) {
-	database.DB.Delete(&models.Integration{}, "id = ?", c.Param("id"))
-	database.DB.Where("integration_id = ?", c.Param("id")).Delete(&models.IntegrationLog{})
-	middleware.SetFlash(c, "success", "Integrasi berhasil dihapus.")
-	c.Redirect(http.StatusFound, "/advanced/integrations")
-}
-
-func (h *IntegrationHandler) Test(c *gin.Context) {
-	var m models.Integration
-	database.DB.First(&m, "id = ?", c.Param("id"))
-
-	start := time.Now()
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 35*time.Second)
-	defer cancel()
-
-	status, statusCode, detail := "success", http.StatusOK, ""
-	if m.Type != "google_sheets" {
-		// Generic integrations: only check that a URL is configured.
-		if m.BaseURL == "" {
-			status, statusCode, detail = "error", 400, "URL belum diisi"
-		}
-	} else if res, err := testGoogleSheet(ctx, &m); err != nil {
-		status, statusCode, detail = "error", 502, err.Error()
-	} else {
-		detail = fmt.Sprintf("%d baris, %d kolom", res["rows"], res["cols"])
-	}
-
-	durationMs := int(time.Since(start).Milliseconds())
-	logEntry := models.IntegrationLog{
-		IntegrationID: m.ID, Action: "test", Status: status, StatusCode: statusCode,
-		DurationMs: durationMs,
-	}
-	if len(detail) > 500 {
-		detail = detail[:500]
-	}
-	logEntry.ResponseBody = detail
-	database.DB.Create(&logEntry)
-
-	c.JSON(http.StatusOK, gin.H{
-		"success":     status == "success",
-		"status_code": statusCode,
-		"detail":      detail,
-	})
-}
-
-// testGoogleSheet validates connectivity and parses the sheet structure.
-func testGoogleSheet(ctx context.Context, m *models.Integration) (map[string]int, error) {
-	client := &http.Client{Timeout: 30 * time.Second}
-	gid := services.ExtractGid(m.Config)
-	data, err := services.FetchSheetCSV(ctx, client, services.ExtractSheetID(m.BaseURL), gid)
-	if err != nil {
-		return nil, err
-	}
-	headers, rows, err := services.ParseCSV(data)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]int{"rows": len(rows), "cols": len(headers)}, nil
-}
-
-func (h *IntegrationHandler) Sync(c *gin.Context) {
-	var m models.Integration
-	database.DB.First(&m, "id = ?", c.Param("id"))
-	now := time.Now()
-
-	start := time.Now()
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 60*time.Second)
-	defer cancel()
-
-	statusCode := http.StatusOK
-	var detail string
-	if m.Type == "google_sheets" {
-		res, err := services.SyncGoogleSheetToArsip(ctx, &m)
-		if err != nil {
-			statusCode = 502
-			detail = err.Error()
-			logEntry := models.IntegrationLog{
-				IntegrationID: m.ID, Action: "sync", Status: "error",
-				StatusCode: statusCode, DurationMs: int(time.Since(start).Milliseconds()),
-				ResponseBody: truncateString(detail, 500),
-			}
-			database.DB.Create(&logEntry)
-			database.DB.Model(&m).Updates(map[string]interface{}{
-				"last_sync_at": now, "last_status": "error",
-			})
-			middleware.SetFlash(c, "error", "Sinkronisasi gagal: "+detail)
-			c.Redirect(http.StatusFound, "/advanced/integrations")
-			return
-		}
-		detail = fmt.Sprintf("Total %d baris — dibuat %d, diperbarui %d, dilewati %d",
-			res.TotalRows, res.Created, res.Updated, res.Skipped)
-		middleware.SetFlash(c, "success", "Sinkronisasi berhasil. "+detail)
-	} else {
-		middleware.SetFlash(c, "success", "Sinkronisasi berhasil.")
-	}
-
-	logEntry := models.IntegrationLog{
-		IntegrationID: m.ID, Action: "sync", Status: "success", StatusCode: statusCode,
-		DurationMs: int(time.Since(start).Milliseconds()), ResponseBody: truncateString(detail, 500),
-	}
-	database.DB.Create(&logEntry)
-	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "synced"})
-	c.Redirect(http.StatusFound, "/advanced/integrations")
-}
-
-// PushToSheet exports the database arsip table INTO the configured Google
-// Sheet (database → spreadsheet), using the service-account credentials from
-// env/integration. The target tab is replaced with current data.
-func (h *IntegrationHandler) PushToSheet(c *gin.Context) {
-	var m models.Integration
-	database.DB.First(&m, "id = ?", c.Param("id"))
-	now := time.Now()
-	start := time.Now()
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 55*time.Second)
-	defer cancel()
-
-	statusCode := http.StatusOK
-	if m.Type != "google_sheets" {
-		h.logIntegration(m.ID, "push", "error", http.StatusBadRequest, start, "Integrasi bukan google_sheets")
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Push hanya tersedia untuk integrasi google_sheets"})
-		return
-	}
-
-	res, err := services.PushArsipToSheet(ctx, &m)
-	detail := ""
-	if err != nil {
-		statusCode = http.StatusBadGateway
-		detail = err.Error()
-		h.logIntegration(m.ID, "push", "error", statusCode, start, detail)
-		database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "push_error"})
-		c.JSON(statusCode, gin.H{"success": false, "error": detail})
-		return
-	}
-	detail = fmt.Sprintf("%d arsip dikirim ke tab \"%s\" (%s)", res.Rows, res.SheetTitle, res.SpreadsheetID)
-	h.logIntegration(m.ID, "push", "success", statusCode, start, detail)
-	database.DB.Model(&m).Updates(map[string]interface{}{"last_sync_at": now, "last_status": "pushed"})
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Database berhasil dikirim ke Google Sheet. " + detail,
-	})
-}
-
-// logIntegration records one integration event and swallows logging errors.
-func (h *IntegrationHandler) logIntegration(id, action, status string, code int, start time.Time, body string) {
-	database.DB.Create(&models.IntegrationLog{
-		IntegrationID: id, Action: action, Status: status,
-		StatusCode: code, DurationMs: int(time.Since(start).Milliseconds()),
-		ResponseBody: truncateString(body, 500),
-	})
-}
-
-// ViewSheet renders a read-only preview of the connected Google Sheet tab.
-func (h *IntegrationHandler) ViewSheet(c *gin.Context) {
-	var m models.Integration
-	if err := database.DB.First(&m, "id = ?", c.Param("id")).Error; err != nil {
-		middleware.SetFlash(c, "error", "Integrasi tidak ditemukan.")
-		c.Redirect(http.StatusFound, "/advanced/integrations")
-		return
-	}
-	if m.Type != "google_sheets" {
-		middleware.SetFlash(c, "error", "Pratinjau sheet hanya tersedia untuk integrasi google_sheets.")
-		c.Redirect(http.StatusFound, "/advanced/integrations")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
-	defer cancel()
-
-	tbl, err := services.FetchSheetTable(ctx, &m)
-	if err != nil {
-		Render(c, http.StatusBadGateway, "integrations/view.html", gin.H{
-			"title": "Pratinjau Sheet", "pageTitle": "Pratinjau Google Sheet", "Sheet": nil, "Err": err.Error(), "Integration": m,
-		})
-		return
-	}
-	Render(c, 200, "integrations/view.html", gin.H{
-		"title": "Pratinjau Sheet", "pageTitle": "Pratinjau Google Sheet",
-		"Sheet": tbl, "Err": "", "Integration": m,
-	})
-}
-
-func truncateString(s string, n int) string {
-	if len(s) > n {
-		return s[:n]
-	}
-	return s
-}
-
-func (h *IntegrationHandler) ShowLog(c *gin.Context) {
-	var log models.IntegrationLog
-	database.DB.First(&log, "id = ?", c.Param("logId"))
-	c.JSON(http.StatusOK, gin.H{"data": log})
-}
-
-func (h *IntegrationHandler) Status(c *gin.Context) {
-	var m models.Integration
-	database.DB.First(&m, "id = ?", c.Param("id"))
-	c.JSON(http.StatusOK, gin.H{"is_active": m.IsActive, "last_status": m.LastStatus, "last_sync_at": m.LastSyncAt})
-}
-
-// ── IMPORT/EXPORT ────────────────────────────────────────────────────────────
-
-type ImportExportHandler struct{}
-
-func (h *ImportExportHandler) Index(c *gin.Context) {
-	var jobs []models.ImportExportJob
-	var total int64
-	db := database.DB.Model(&models.ImportExportJob{})
-	db.Count(&total)
-	perPage := 20
-	page := 1
-	if p, err := strconv.Atoi(c.Query("page")); err == nil && p > 0 {
-		page = p
-	}
-	totalPages := (int(total) + perPage - 1) / perPage
-	if totalPages == 0 {
-		totalPages = 1
-	}
-	if page > totalPages {
-		page = totalPages
-	}
-	offset := (page - 1) * perPage
-	db.Order("created_at DESC").Limit(perPage).Offset(offset).Find(&jobs)
-	var totalJobs, pending, processing, completed, failed int64
-	database.DB.Model(&models.ImportExportJob{}).Count(&totalJobs)
-	database.DB.Model(&models.ImportExportJob{}).Where("status = 'pending'").Count(&pending)
-	database.DB.Model(&models.ImportExportJob{}).Where("status = 'processing'").Count(&processing)
-	database.DB.Model(&models.ImportExportJob{}).Where("status = 'completed'").Count(&completed)
-	database.DB.Model(&models.ImportExportJob{}).Where("status = 'failed'").Count(&failed)
-	Render(c, 200, "import-export/index.html", gin.H{
-		"title": "Import/Export", "pageTitle": "Import/Export Data", "jobs": jobs,
-		"Stats": gin.H{
-			"TotalJobs":  totalJobs,
-			"Pending":    pending,
-			"Processing": processing,
-			"Completed":  completed,
-			"Failed":     failed,
-		},
-		"Total": total, "Page": page, "PerPage": perPage,
-		"TotalPages": totalPages, "StartIndex": offset + 1,
-		"FirstItem":  offset + 1,
-		"LastItem":   offset + len(jobs),
-		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
-		"HasPages":   totalPages > 1,
-	})
-}
-
-func (h *ImportExportHandler) ShowImportForm(c *gin.Context) {
-	Render(c, 200, "import-export/index.html", gin.H{"title": "Import Data", "pageTitle": "Import Data", "importForm": true})
-}
-
-func (h *ImportExportHandler) ProcessImport(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-	file, err := c.FormFile("file")
-	if err != nil {
-		middleware.SetFlash(c, "error", "File wajib diunggah.")
-		c.Redirect(http.StatusFound, "/advanced/import-export/import")
-		return
-	}
-	entityType := c.PostForm("entity_type")
-	uploadDir := filepath.Join(config.StorageDir(), "imports")
-	os.MkdirAll(uploadDir, 0755)
-	dst := filepath.Join(uploadDir, fmt.Sprintf("import_%d%s", time.Now().Unix(), filepath.Ext(file.Filename)))
-	c.SaveUploadedFile(file, dst)
-	job := models.ImportExportJob{
-		ID: uuid.New().String(), UserID: user.ID, Type: "import",
-		EntityType: entityType, Status: "processing", InputFile: dst,
-	}
-	database.DB.Create(&job)
-	middleware.SetFlash(c, "success", "Import sedang diproses.")
-	c.Redirect(http.StatusFound, "/advanced/import-export")
-}
-
-func (h *ImportExportHandler) ShowExportForm(c *gin.Context) {
-	Render(c, 200, "import-export/index.html", gin.H{"title": "Export Data", "pageTitle": "Export Data", "exportForm": true})
-}
-
-func (h *ImportExportHandler) ProcessExport(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-	entityType := c.PostForm("entity_type")
-	format := c.PostForm("format")
-	if format == "" {
-		format = "csv"
-	}
-	exportDir := filepath.Join(config.StorageDir(), "exports")
-	os.MkdirAll(exportDir, 0755)
-	filename := fmt.Sprintf("export_%s_%d.%s", entityType, time.Now().Unix(), format)
-	path := filepath.Join(exportDir, filename)
-	job := models.ImportExportJob{
-		ID: uuid.New().String(), UserID: user.ID, Type: "export",
-		EntityType: entityType, Status: "processing", OutputFile: path,
-	}
-	database.DB.Create(&job)
-	go func() {
-		f, err := os.Create(path)
-		if err != nil {
-			database.DB.Model(&job).Updates(map[string]interface{}{"status": "failed"})
-			return
-		}
-		defer f.Close()
-		w := csv.NewWriter(f)
-		switch entityType {
-		case "arsip":
-			w.Write([]string{"Nomor Arsip", "Nama Arsip", "Kode Klasifikasi", "Unit Kerja", "Status"})
-			var list []models.Arsip
-			database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Find(&list)
-			for _, a := range list {
-				kk, uk := "", ""
-				if a.KodeKlasifikasi != nil {
-					kk = a.KodeKlasifikasi.KodeKlasifikasi
-				}
-				if a.UnitKerja != nil {
-					uk = a.UnitKerja.NamaUnit
-				}
-				w.Write([]string{a.NomorArsip, a.NamaArsip, kk, uk, a.StatusArsip})
-			}
-			job.TotalRows = len(list)
-		case "users":
-			w.Write([]string{"Username", "Name", "Role", "Active"})
-			var list []models.User
-			database.DB.Preload("Role").Find(&list)
-			for _, u := range list {
-				role := ""
-				if u.Role != nil {
-					role = u.Role.Name
-				}
-				active := "false"
-				if u.IsActive {
-					active = "true"
-				}
-				w.Write([]string{u.Username, u.Name, role, active})
-			}
-			job.TotalRows = len(list)
-		}
-		w.Flush()
-		now := time.Now()
-		database.DB.Model(&job).Updates(map[string]interface{}{"status": "completed", "completed_at": now, "total_rows": job.TotalRows})
-	}()
-	middleware.SetFlash(c, "success", "Export sedang diproses.")
-	c.Redirect(http.StatusFound, "/advanced/import-export")
-}
-
-func (h *ImportExportHandler) DownloadTemplate(c *gin.Context) {
-	entityType := c.Param("type")
-	c.Header("Content-Type", "text/csv")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=template_%s.csv", entityType))
-	w := csv.NewWriter(c.Writer)
-	switch entityType {
-	case "arsip":
-		w.Write([]string{"nomor_arsip", "nama_arsip", "kode_klasifikasi", "unit_kerja", "status_arsip", "uraian"})
-	case "users":
-		w.Write([]string{"username", "name", "password", "role", "is_active"})
-	default:
-		w.Write([]string{"column1", "column2", "column3"})
-	}
-	w.Flush()
-}
-
-func (h *ImportExportHandler) ShowJob(c *gin.Context) {
-	var job models.ImportExportJob
-	database.DB.First(&job, "id = ?", c.Param("jobId"))
-	c.JSON(http.StatusOK, gin.H{"data": job})
-}
-
-func (h *ImportExportHandler) DownloadResult(c *gin.Context) {
-	var job models.ImportExportJob
-	if err := database.DB.First(&job, "id = ?", c.Param("jobId")).Error; err != nil || job.OutputFile == "" {
-		c.String(http.StatusNotFound, "File tidak ditemukan")
-		return
-	}
-	c.Header("Content-Disposition", "attachment; filename="+filepath.Base(job.OutputFile))
-	c.File(job.OutputFile)
-}
-
-func (h *ImportExportHandler) Progress(c *gin.Context) {
-	var job models.ImportExportJob
-	database.DB.First(&job, "id = ?", c.Param("jobId"))
-	c.JSON(http.StatusOK, gin.H{
-		"status": job.Status, "total_rows": job.TotalRows,
-		"processed_rows": job.ProcessedRows, "error_rows": job.ErrorRows,
-	})
-}
-
-func (h *ImportExportHandler) Retry(c *gin.Context) {
-	database.DB.Model(&models.ImportExportJob{}).Where("id = ?", c.Param("jobId")).Updates(map[string]interface{}{
-		"status": "pending", "processed_rows": 0, "error_rows": 0, "error_log": "",
-	})
-	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 // ── LAPORAN EXPORT ──────────────────────────────────────────────────────────
@@ -2830,8 +2113,9 @@ func (h *JadwalRetensiAdvancedHandler) SearchArsip(c *gin.Context) {
 	q := c.Query("q")
 	var results []models.Arsip
 	if q != "" {
+		cond, sargs := arsipSearchLike(q, "nama_arsip", "nomor_arsip")
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-			Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).Limit(20).Find(&results)
+			Where(cond, sargs...).Limit(20).Find(&results)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": results})
 }
@@ -3259,22 +2543,6 @@ func (h *MobileAPIHandler) Store(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/mobile/archives")
 }
 
-func (h *MobileAPIHandler) ScanQR(c *gin.Context) {
-	qrData := c.PostForm("qr_data")
-	if qrData == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "QR data kosong"})
-		return
-	}
-	var qr models.QrCode
-	if err := database.DB.Preload("Arsip").Where("qr_data = ?", qrData).First(&qr).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "QR Code tidak ditemukan"})
-		return
-	}
-	log := models.QrScanLog{QrCodeID: qr.ID, IPAddress: c.ClientIP(), ScannedAt: time.Now()}
-	database.DB.Create(&log)
-	c.JSON(http.StatusOK, gin.H{"success": true, "arsip": qr.Arsip})
-}
-
 func (h *MobileAPIHandler) SearchAPI(c *gin.Context) {
 	q := c.Query("q")
 	if q == "" {
@@ -3282,8 +2550,9 @@ func (h *MobileAPIHandler) SearchAPI(c *gin.Context) {
 	}
 	var results []models.Arsip
 	if q != "" {
+		cond, sargs := arsipSearchLike(q, "nama_arsip", "nomor_arsip")
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-			Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).Limit(20).Find(&results)
+			Where(cond, sargs...).Limit(20).Find(&results)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": results, "count": len(results)})
 }
@@ -3499,9 +2768,10 @@ func (h *SearchAdvancedHandler) Suggestions(c *gin.Context) {
 		Text       string `json:"text"`
 		NomorArsip string `json:"nomor_arsip"`
 	}
+	cond, sargs := arsipSearchLike(q, "nama_arsip", "nomor_arsip")
 	database.DB.Model(&models.Arsip{}).
 		Select("id, nama_arsip as text, nomor_arsip").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).
+		Where(cond, sargs...).
 		Limit(10).Find(&results)
 	c.JSON(http.StatusOK, results)
 }

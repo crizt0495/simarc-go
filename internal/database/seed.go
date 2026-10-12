@@ -103,10 +103,10 @@ func upsertLokasi(namaLokasi, deskripsi string) {
 	result := DB.Where("nama_lokasi = ?", namaLokasi).First(&existing)
 	if result.Error != nil {
 		DB.Create(&models.LokasiArsip{
-			ID:          uuid.New().String(),
-			NamaLokasi:  namaLokasi,
-			Deskripsi:   deskripsi,
-			IsActive:    true,
+			ID:         uuid.New().String(),
+			NamaLokasi: namaLokasi,
+			Deskripsi:  deskripsi,
+			IsActive:   true,
 		})
 		log.Printf("[SEED] Lokasi arsip \"%s\" dibuat dengan deskripsi \"%s\"", namaLokasi, deskripsi)
 	} else {

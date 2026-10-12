@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"strings"
@@ -33,10 +34,10 @@ func ExportDatabaseAsSQL() ([]byte, error) {
 
 	// Skip internal/system tables
 	skipTables := map[string]bool{
-		"sqlite_sequence":       true,
-		"gorp_migrations":      true,
-		"permission_role":      true,
-		"goose_db_version":     true,
+		"sqlite_sequence":  true,
+		"gorp_migrations":  true,
+		"permission_role":  true,
+		"goose_db_version": true,
 	}
 
 	for _, tableName := range tables {
@@ -69,7 +70,7 @@ func exportTableStructure(buf *bytes.Buffer, db *gorm.DB, tableName string) erro
 		CreateTable string `gorm:"column:Create Table"`
 	}
 	var result CreateTableResult
-	if err := db.Raw("SHOW CREATE TABLE `"+tableName+"`").Scan(&result).Error; err != nil {
+	if err := db.Raw("SHOW CREATE TABLE `" + tableName + "`").Scan(&result).Error; err != nil {
 		return err
 	}
 
@@ -93,7 +94,7 @@ func exportTableData(buf *bytes.Buffer, db *gorm.DB, tableName string) error {
 		FieldType string `gorm:"column:Type"`
 	}
 	var columns []ColumnInfo
-	if err := db.Raw("SHOW COLUMNS FROM `"+tableName+"`").Scan(&columns).Error; err != nil {
+	if err := db.Raw("SHOW COLUMNS FROM `" + tableName + "`").Scan(&columns).Error; err != nil {
 		return err
 	}
 	if len(columns) == 0 {
@@ -130,7 +131,7 @@ func exportTableData(buf *bytes.Buffer, db *gorm.DB, tableName string) error {
 		for j, row := range batch {
 			vals := make([]string, len(columns))
 			for k, col := range columns {
-				vals[k] = formatSQLValue(row[col.FieldName])
+				vals[k] = formatSQLValue(row[col.FieldName], col.FieldType)
 			}
 			comma := ","
 			if j == len(batch)-1 {
@@ -144,22 +145,51 @@ func exportTableData(buf *bytes.Buffer, db *gorm.DB, tableName string) error {
 	return nil
 }
 
-// formatSQLValue converts a Go value to a SQL literal.
-func formatSQLValue(v interface{}) string {
+// isBinaryColumn reports whether a MySQL column type stores raw bytes
+// (BLOB/BINARY/VARBINARY/BIT). Such values must be emitted as hex literals so
+// a restore reproduces the exact bytes; escaping them as text can corrupt them.
+func isBinaryColumn(fieldType string) bool {
+	t := strings.ToLower(fieldType)
+	return strings.Contains(t, "blob") ||
+		strings.HasPrefix(t, "binary") ||
+		strings.HasPrefix(t, "varbinary") ||
+		strings.HasPrefix(t, "bit")
+}
+
+// quoteSQLString escapes a Go string as a single-quoted MySQL literal.
+func quoteSQLString(s string) string {
+	escaped := strings.ReplaceAll(s, "\\", "\\\\")
+	escaped = strings.ReplaceAll(escaped, "'", "\\'")
+	escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+	escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+	escaped = strings.ReplaceAll(escaped, "\x00", "\\0")
+	escaped = strings.ReplaceAll(escaped, "\x1a", "\\Z")
+	return "'" + escaped + "'"
+}
+
+// formatSQLValue converts a Go value to a SQL literal. fieldType is the MySQL
+// column type from SHOW COLUMNS, used to detect binary columns.
+func formatSQLValue(v interface{}, fieldType string) string {
 	if v == nil {
 		return "NULL"
 	}
 
+	// Binary columns: emit as 0x... hex so bytes survive exactly. The MySQL
+	// driver returns these as []byte (occasionally string).
+	if isBinaryColumn(fieldType) {
+		switch val := v.(type) {
+		case []byte:
+			return "0x" + hex.EncodeToString(val)
+		case string:
+			return "0x" + hex.EncodeToString([]byte(val))
+		}
+	}
+
 	switch val := v.(type) {
 	case string:
-		escaped := strings.ReplaceAll(val, "\\", "\\\\")
-		escaped = strings.ReplaceAll(escaped, "'", "\\'")
-		escaped = strings.ReplaceAll(escaped, "\n", "\\n")
-		escaped = strings.ReplaceAll(escaped, "\r", "\\r")
-		escaped = strings.ReplaceAll(escaped, "\x00", "")
-		return "'" + escaped + "'"
+		return quoteSQLString(val)
 	case []byte:
-		return formatSQLValue(string(val))
+		return quoteSQLString(string(val))
 	case int, int8, int16, int32, int64:
 		return fmt.Sprintf("%d", val)
 	case uint, uint8, uint16, uint32, uint64:
@@ -179,8 +209,6 @@ func formatSQLValue(v interface{}) string {
 		}
 		return "'" + val.Format("2006-01-02 15:04:05") + "'"
 	default:
-		s := fmt.Sprintf("%v", val)
-		escaped := strings.ReplaceAll(s, "'", "\\'")
-		return "'" + escaped + "'"
+		return quoteSQLString(fmt.Sprintf("%v", val))
 	}
 }

@@ -23,7 +23,6 @@ import (
 	"arsippro/internal/database"
 	"arsippro/internal/middleware"
 	"arsippro/internal/models"
-	"arsippro/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -313,9 +312,6 @@ func GetLANIP() string {
 // TemplateFuncs returns common template functions
 func TemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"SheetsWebURL": func(m models.Integration) string {
-			return services.SheetsWebURL(&m)
-		},
 		"add": func(a, b interface{}) int {
 			ai, aok := toInt(a)
 			bi, bok := toInt(b)
@@ -574,19 +570,39 @@ func TemplateFuncs() template.FuncMap {
 			}
 			return tags
 		},
-		"upper": func(s string) string { if s == "" { return "" }; return strings.ToUpper(s[:1]) + s[1:] },
-		"upperFirst": func(s string) string { if s == "" { return "" }; return strings.ToUpper(s[:1]) + s[1:] },
-		"split":     strings.Split,
-		"join":      strings.Join,
-		"replace":   strings.ReplaceAll,
+		"upper": func(s string) string {
+			if s == "" {
+				return ""
+			}
+			return strings.ToUpper(s[:1]) + s[1:]
+		},
+		"upperFirst": func(s string) string {
+			if s == "" {
+				return ""
+			}
+			return strings.ToUpper(s[:1]) + s[1:]
+		},
+		"split":   strings.Split,
+		"join":    strings.Join,
+		"replace": strings.ReplaceAll,
 		"inArray": func(item interface{}, arr interface{}) bool {
 			switch v := arr.(type) {
 			case []string:
 				s, ok := item.(string)
-				if !ok { return false }
-				for _, x := range v { if x == s { return true } }
+				if !ok {
+					return false
+				}
+				for _, x := range v {
+					if x == s {
+						return true
+					}
+				}
 			case []interface{}:
-				for _, x := range v { if x == item { return true } }
+				for _, x := range v {
+					if x == item {
+						return true
+					}
+				}
 			}
 			return false
 		},
@@ -624,7 +640,7 @@ func TemplateFuncs() template.FuncMap {
 				pos := start + idx
 				result.WriteString(template.HTMLEscapeString(text[start:pos]))
 				result.WriteString("<mark class=\"bg-warning text-dark px-1 rounded\">")
-				result.WriteString(template.HTMLEscapeString(text[pos:pos+len(kw)]))
+				result.WriteString(template.HTMLEscapeString(text[pos : pos+len(kw)]))
 				result.WriteString("</mark>")
 				start = pos + len(kw)
 			}

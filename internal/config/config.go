@@ -243,14 +243,6 @@ func BackupDir() string {
 	return "storage/app/backups/database"
 }
 
-// QRCodeDir returns the directory for QR code images.
-func QRCodeDir() string {
-	if IsVercel() {
-		return "/tmp/qr-codes"
-	}
-	return "public/storage/qr-codes"
-}
-
 // UploadDir returns the directory for file uploads.
 func UploadDir() string {
 	if IsVercel() {

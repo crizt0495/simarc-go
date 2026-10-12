@@ -4,13 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"html/template"
 	"strings"
 	"time"
 
@@ -261,14 +261,14 @@ func (h *ArsipHandler) Index(c *gin.Context) {
 		"FilterEndDate":          c.Query("end_date"),
 		"FilterBerkasDigital":    c.Query("status_berkas_digital"),
 
-		"FilterNilaiMin":         c.Query("nilai_min"),
-		"FilterNilaiMax":         c.Query("nilai_max"),
-		"FilterPemberkasanID":    c.Query("pemberkasan_id"),
-		"FilterSortBy":           c.Query("sort_by"),
-		"FilterSortOrder":        c.Query("sort_order"),
-		"AuthUser":               user,
-		"HasFilters":             hasFilters,
-		"FilterSearch":           c.Query("search"),
+		"FilterNilaiMin":      c.Query("nilai_min"),
+		"FilterNilaiMax":      c.Query("nilai_max"),
+		"FilterPemberkasanID": c.Query("pemberkasan_id"),
+		"FilterSortBy":        c.Query("sort_by"),
+		"FilterSortOrder":     c.Query("sort_order"),
+		"AuthUser":            user,
+		"HasFilters":          hasFilters,
+		"FilterSearch":        c.Query("search"),
 	})
 }
 
@@ -321,20 +321,20 @@ func validasiFileUpload(c *gin.Context) (string, bool) {
 	if err != nil {
 		return "", true // file opsional, tidak wajib
 	}
-	
+
 	// Validasi ukuran file (maks 32MB)
 	const maxSize int64 = 32 * 1024 * 1024
 	if file.Size > maxSize {
 		return fmt.Sprintf("Ukuran file terlalu besar (%.1f MB). Maksimal 32 MB.", float64(file.Size)/(1024*1024)), false
 	}
-	
+
 	// Validasi tipe file
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	allowedExt := map[string]bool{".pdf": true, ".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".tiff": true, ".tif": true, ".bmp": true}
 	if !allowedExt[ext] {
 		return fmt.Sprintf("Tipe file %s tidak diizinkan. Hanya: PDF, JPG, PNG, GIF, TIFF", ext), false
 	}
-	
+
 	return "", true
 }
 
@@ -361,23 +361,23 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 		middleware.SetFlash(c, "error", "Nama arsip, kode klasifikasi, dan unit kerja wajib diisi.")
 		c.Redirect(http.StatusFound, createURL)
 
-	// Validasi No. SPM wajib untuk kategori SPJ
-	if c.PostForm("nomor_spm") == "" {
-		// Cek apakah jenis arsip yang dipilih memiliki kode SPJ
-		var selectedJenis models.JenisArsip
-		if v := c.PostForm("jenis_arsip_id"); v != "" {
-			if id, err := strconv.ParseUint(v, 10, 64); err == nil {
-				if database.DB.First(&selectedJenis, id).Error == nil && selectedJenis.KodeJenis == "SPJ" {
-					middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
-					c.Redirect(http.StatusFound, createURL)
-					return
+		// Validasi No. SPM wajib untuk kategori SPJ
+		if c.PostForm("nomor_spm") == "" {
+			// Cek apakah jenis arsip yang dipilih memiliki kode SPJ
+			var selectedJenis models.JenisArsip
+			if v := c.PostForm("jenis_arsip_id"); v != "" {
+				if id, err := strconv.ParseUint(v, 10, 64); err == nil {
+					if database.DB.First(&selectedJenis, id).Error == nil && selectedJenis.KodeJenis == "SPJ" {
+						middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
+						c.Redirect(http.StatusFound, createURL)
+						return
+					}
 				}
 			}
 		}
-	}
 		return
 	}
-	
+
 	// Validasi file upload
 	if msg, ok := validasiFileUpload(c); !ok {
 		middleware.SetFlash(c, "error", "Upload gagal: "+msg)
@@ -513,11 +513,11 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 		arsip.ID = uuid.New().String()
 	}
 
-if err := database.DB.Transaction(func(tx *gorm.DB) error {
+	if err := database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&arsip).Error; err != nil {
 			return err
 		}
-		
+
 		// Log activity — failure here must NOT block arsip creation.
 		actLog := models.ActivityLog{
 			UserID:      &user.ID,
@@ -530,7 +530,7 @@ if err := database.DB.Transaction(func(tx *gorm.DB) error {
 			// Activity log failure is non-fatal — arsip was already saved.
 			log.Printf("[WARN] Gagal log aktivitas untuk arsip %s: %v", arsip.ID, err)
 		}
-		
+
 		// Note: blockchain audit isn't part of logActivity if we bypass it, but logActivity internally uses global DB.
 		// So we will just use the tx instead of calling logActivity.
 		return nil
@@ -540,7 +540,7 @@ if err := database.DB.Transaction(func(tx *gorm.DB) error {
 		c.Redirect(http.StatusFound, createURL)
 		return
 	}
-	
+
 	// Record audit block on the blockchain (after transaction committed)
 	_ = (&services.BlockchainAuditService{}).RecordAudit("arsip", arsip.ID, "create", "Menambah arsip: "+arsip.NamaArsip, user.ID, c.ClientIP(), c.GetHeader("User-Agent"))
 
@@ -577,10 +577,6 @@ func (h *ArsipHandler) Show(c *gin.Context) {
 	// Arsip versions
 	var versions []models.ArsipVersion
 	database.DB.Where("arsip_id = ?", id).Order("nomor_versi DESC").Find(&versions)
-
-	// QR Code
-	var qrCode models.QrCode
-	database.DB.Where("arsip_id = ?", id).First(&qrCode)
 
 	// File info
 	fileExists := arsip.FilePath != ""
@@ -628,7 +624,6 @@ func (h *ArsipHandler) Show(c *gin.Context) {
 		"pageTitle":        "Detail Arsip",
 		"arsip":            arsip,
 		"versions":         versions,
-		"qrCode":           qrCode,
 		"FileType":         fileType,
 		"Extension":        fileExt,
 		"FileSize":         fileSize,
@@ -788,7 +783,7 @@ func (h *ArsipHandler) Update(c *gin.Context) {
 	if v := c.PostForm("nilai_anggaran"); v != "" {
 		if f, err := strconv.ParseFloat(strings.ReplaceAll(v, ",", ""), 64); err == nil {
 
-	arsip.NomorSPM = c.PostForm("nomor_spm")
+			arsip.NomorSPM = c.PostForm("nomor_spm")
 			arsip.NilaiAnggaran = &f
 		}
 	}
@@ -974,8 +969,8 @@ func (h *ArsipHandler) ShowMoveLocationForm(c *gin.Context) {
 					loc = a.LokasiArsip.NamaLokasi
 				}
 				archives = append(archives, gin.H{
-					"nomor_arsip":     a.NomorArsip,
-					"nama_arsip":      a.NamaArsip,
+					"nomor_arsip":      a.NomorArsip,
+					"nama_arsip":       a.NamaArsip,
 					"current_location": loc,
 				})
 			}
@@ -1073,7 +1068,9 @@ func (h *ArsipHandler) MoveLocation(c *gin.Context) {
 
 	blockNumber++
 	ids := make([]string, len(arsipList))
-	for i, a := range arsipList { ids[i] = a.ID + ":" + a.NomorArsip }
+	for i, a := range arsipList {
+		ids[i] = a.ID + ":" + a.NomorArsip
+	}
 	detail := fmt.Sprintf("Pindah %d arsip ke %s. IDs: [%s]%s", len(arsipList), lokasi.NamaLokasi, strings.Join(ids, ","),
 		map[bool]string{true: " — " + catatan, false: ""}[catatan != ""])
 	// Truncate detail if too long for blockchain
@@ -1096,7 +1093,7 @@ func (h *ArsipHandler) MoveLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": fmt.Sprintf("%d arsip berhasil dipindahkan ke %s", len(arsipIDs), lokasi.NamaLokasi),
-		"data": gin.H{"arsip_ids": arsipIDs, "lokasi_tujuan": lokasi.NamaLokasi},
+		"data":    gin.H{"arsip_ids": arsipIDs, "lokasi_tujuan": lokasi.NamaLokasi},
 	})
 }
 
@@ -1151,11 +1148,11 @@ func (h *ArsipHandler) PemindahanIndex(c *gin.Context) {
 		"MutasiLogs":     mutasiLogs,
 		"TempatDefault":  "Kantor",
 		"Total":          totalLogs, "Page": page, "PerPage": perPage,
-		"TotalPages":     totalPages, "StartIndex": offset + 1,
-		"FirstItem":      offset + 1,
-		"LastItem":       offset + len(mutasiLogs),
-		"Pagination":     BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
-		"HasPages":       totalPages > 1,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(mutasiLogs),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -1222,13 +1219,22 @@ func (h *ArsipHandler) PemindahanSearchJSON(c *gin.Context) {
 }
 
 func unitSafe(u *models.UnitKerja) string {
-	if u != nil { return u.NamaUnit }; return ""
+	if u != nil {
+		return u.NamaUnit
+	}
+	return ""
 }
 func lokasiSafe(l *models.LokasiArsip) string {
-	if l != nil { return l.NamaLokasi }; return ""
+	if l != nil {
+		return l.NamaLokasi
+	}
+	return ""
 }
 func kkSafe(k *models.KodeKlasifikasi) string {
-	if k != nil { return k.KodeKlasifikasi }; return ""
+	if k != nil {
+		return k.KodeKlasifikasi
+	}
+	return ""
 }
 
 func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
@@ -1330,10 +1336,10 @@ func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
 	inArgs := make([]interface{}, 0, len(toMove)+1)
 	inArgs = append(inArgs, lokasiID)
 	for i, id := range toMove {
-		inPH[i] = fmt.Sprintf("$%d", i+2)
+		inPH[i] = "?"
 		inArgs = append(inArgs, id)
 	}
-	res := tx.Exec(fmt.Sprintf("UPDATE arsip SET lokasi_arsip_id = $1 WHERE id IN (%s) AND deleted_at IS NULL", strings.Join(inPH, ",")), inArgs...)
+	res := tx.Exec(fmt.Sprintf("UPDATE arsip SET lokasi_arsip_id = ? WHERE id IN (%s) AND deleted_at IS NULL", strings.Join(inPH, ",")), inArgs...)
 	if res.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal memperbarui lokasi arsip: " + res.Error.Error()})
 		return
@@ -1353,7 +1359,7 @@ func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
 	if catatan != "" {
 		desc += " — " + catatan
 	}
-	if err := tx.Exec("INSERT INTO activity_logs (user_id,action,description,model_type,model_id,created_at) VALUES ($1,$2,$3,$4,$5,$6)",
+	if err := tx.Exec("INSERT INTO activity_logs (user_id,action,description,model_type,model_id,created_at) VALUES (?,?,?,?,?,?)",
 		userID, "move_location", desc, "arsip", "batch:"+strings.Join(toMove, ","), now).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal mencatat aktivitas: " + err.Error()})
 		return
@@ -1365,7 +1371,7 @@ func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
 		batchIDs = batchIDs[:5000] + "..."
 	}
 	blockData := fmt.Sprintf("%s:%s:%s:%s:%s", "arsip", batchIDs, "move_location", desc, prevHash)
-	if err := tx.Exec("INSERT INTO blockchain_audits (uuid,previous_hash,current_hash,block_number,timestamp,user_id,action,entity_type,entity_id,details,ip_address,user_agent,is_valid) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1)",
+	if err := tx.Exec("INSERT INTO blockchain_audits (uuid,previous_hash,current_hash,block_number,timestamp,user_id,action,entity_type,entity_id,details,ip_address,user_agent,is_valid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)",
 		uuid.New().String(), prevHash, fmt.Sprintf("%x", sha256.Sum256([]byte(blockData))),
 		blockNumber, now.Format(time.RFC3339), userID, "move_location", "arsip",
 		batchIDs, desc, ipAddr, userAgent).Error; err != nil {
@@ -1378,8 +1384,8 @@ func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
 
 	// Siapkan response termasuk lokasi asal untuk BA
 	responseData := gin.H{
-		"arsip_ids":     toMove,
-		"lokasi_tujuan": lokasi.NamaLokasi,
+		"arsip_ids":        toMove,
+		"lokasi_tujuan":    lokasi.NamaLokasi,
 		"lokasi_tujuan_id": lokasiID,
 	}
 	if lokasiAsalID != "" {
@@ -1700,9 +1706,9 @@ func (h *ArsipHandler) ShowBerkaskanFormJSON(c *gin.Context) {
 		"success": true,
 		"data": gin.H{
 			"arsip": gin.H{
-				"id": arsip.ID,
+				"id":          arsip.ID,
 				"nomor_arsip": arsip.NomorArsip,
-				"nama_arsip": arsip.NamaArsip,
+				"nama_arsip":  arsip.NamaArsip,
 			},
 			"pemberkasanOptions": pemberkasanOpts,
 		},
@@ -1847,9 +1853,10 @@ func (h *ArsipHandler) Suggestions(c *gin.Context) {
 		NomorArsip string `json:"nomor_arsip"`
 		NamaArsip  string `json:"nama_arsip"`
 	}
+	cond, sargs := arsipSearchLike(q, "nama_arsip", "nomor_arsip")
 	database.DB.Model(&models.Arsip{}).
 		Select("id, nomor_arsip, nama_arsip").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q).
+		Where(cond, sargs...).
 		Limit(10).Find(&results)
 	c.JSON(http.StatusOK, gin.H{"data": results})
 }
@@ -1864,7 +1871,8 @@ func (h *ArsipHandler) ExportSearch(c *gin.Context) {
 	var arsipList []models.Arsip
 	query := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip")
 	if q != "" {
-		query = query.Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'')) @@ plainto_tsquery('simple', ?))", q)
+		cond, sargs := arsipSearchLike(q, "nama_arsip", "nomor_arsip")
+		query = query.Where(cond, sargs...)
 	}
 	query.Order("created_at DESC").Limit(5000).Find(&arsipList)
 
@@ -1895,9 +1903,9 @@ func (h *ArsipHandler) ExportSearch(c *gin.Context) {
 	}
 
 	if format == "pdf" {
-		exportPDF(c, "Export-Arsip-" + time.Now().Format("2006-01-02"), "Hasil Pencarian Arsip", headers, rows)
+		exportPDF(c, "Export-Arsip-"+time.Now().Format("2006-01-02"), "Hasil Pencarian Arsip", headers, rows)
 	} else {
-		exportXLSX(c, "Export-Arsip-" + time.Now().Format("2006-01-02"), headers, rows)
+		exportXLSX(c, "Export-Arsip-"+time.Now().Format("2006-01-02"), headers, rows)
 	}
 }
 
@@ -1936,8 +1944,9 @@ func (h *ArsipHandler) SemanticSearchAI(c *gin.Context) {
 		return
 	}
 	var results []models.Arsip
+	cond, sargs := arsipSearchLike(q, "nama_arsip", "nomor_arsip", "uraian", "ocr_text", "tags")
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
-		Where("(to_tsvector('simple', COALESCE(nama_arsip,'') || ' ' || COALESCE(nomor_arsip,'') || ' ' || COALESCE(uraian,'') || ' ' || COALESCE(ocr_text,'') || ' ' || COALESCE(tags,'')) @@ plainto_tsquery('simple', ?))", q).
+		Where(cond, sargs...).
 		Limit(20).Find(&results)
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": results, "count": len(results)})
 }
@@ -2025,7 +2034,7 @@ func (h *ArsipHandler) ImportExcel(c *gin.Context) {
 			Uraian:      getCell(row, 5),
 			StatusArsip: "aktif",
 		}
-		
+
 		// Kolom 3: Kode Klasifikasi
 		if kkCode := getCell(row, 2); kkCode != "" {
 			var kk models.KodeKlasifikasi

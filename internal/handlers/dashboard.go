@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func Dashboard(c *gin.Context) {
 	cacheKey := "dashboard:data"
 	if cached, ok := cache.Default.Get(cacheKey); ok {
@@ -235,16 +234,16 @@ func Dashboard(c *gin.Context) {
 		},
 		"RefreshUrl": "/dashboard/refresh",
 		"BoxStats": gin.H{
-			"TotalRcBoxes":    len(listAll),
-			"BoxMurniSpj":     len(listMurniSpj),
-			"BoxMurniNonSpj":  len(listMurniNonSpj),
-			"BoxCampuran":     len(listCampuran),
+			"TotalRcBoxes":     len(listAll),
+			"BoxMurniSpj":      len(listMurniSpj),
+			"BoxMurniNonSpj":   len(listMurniNonSpj),
+			"BoxCampuran":      len(listCampuran),
 			"RcDigitalPercent": rcDigitalPercent,
-			"RcWithDigital":   rcDigitalStat.WithDigital,
-			"ListAll":         listAll,
-			"ListMurniSpj":    listMurniSpj,
-			"ListMurniNonSpj": listMurniNonSpj,
-			"ListCampuran":    listCampuran,
+			"RcWithDigital":    rcDigitalStat.WithDigital,
+			"ListAll":          listAll,
+			"ListMurniSpj":     listMurniSpj,
+			"ListMurniNonSpj":  listMurniNonSpj,
+			"ListCampuran":     listCampuran,
 		},
 	}
 	cache.Default.SetWithTTL(cacheKey, data, 30*time.Second)

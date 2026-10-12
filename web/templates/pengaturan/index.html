@@ -35,6 +35,11 @@
             <i class="bi bi-database me-2"></i>Database
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="cloud-tab" data-bs-toggle="tab" data-bs-target="#cloud" type="button">
+            <i class="bi bi-cloud-arrow-up me-2"></i>Backup Cloud
+        </button>
+    </li>
     {{end}}
 </ul>
 
@@ -520,6 +525,11 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Cloud / Offsite Backup Tab -->
+    <div class="tab-pane fade" id="cloud" role="tabpanel">
+        {{template "offsite-form" .}}
     </div>
     {{end}}
 </div>

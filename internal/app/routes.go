@@ -30,7 +30,6 @@ func registerRoutes(r *gin.Engine) {
 	searchH := &handlers.SearchHandler{}
 	peminjamanH := &handlers.PeminjamanHandler{}
 	laporanH := &handlers.LaporanHandler{}
-	qrH := &handlers.QrCodeHandler{}
 	ocrH := &handlers.OcrHandler{}
 	blockchainH := &handlers.BlockchainHandler{}
 	backupH := &handlers.BackupHandler{}
@@ -38,9 +37,6 @@ func registerRoutes(r *gin.Engine) {
 
 	// New handlers
 	disposalH := &handlers.DisposalHandler{}
-	advDashH := &handlers.AdvancedDashboardHandler{}
-	integrationH := &handlers.IntegrationHandler{}
-	importExportH := &handlers.ImportExportHandler{}
 	laporanExpH := &handlers.LaporanExportHandler{}
 	backupAdvH := &handlers.BackupAdvancedHandler{}
 
@@ -137,8 +133,6 @@ func registerRoutes(r *gin.Engine) {
 		auth.GET("/arsip/:id/berkaskan/json", arsipH.ShowBerkaskanFormJSON)
 		auth.POST("/arsip/:id/berkaskan", arsipH.Berkaskan)
 		auth.GET("/arsip/:id/versions", arsipH.Versions)
-		auth.GET("/arsip/:id/qrcode", qrH.Generate)
-		auth.GET("/arsip/:id/qrcode/download", qrH.DownloadByArsip)
 		auth.GET("/arsip/:id/history", arsipH.History)
 		auth.GET("/arsip/:id/history/json", arsipH.HistoryJSON)
 		auth.GET("/arsip/:id/history/export-pdf", arsipH.HistoryPDF)
@@ -294,6 +288,12 @@ func registerRoutes(r *gin.Engine) {
 		auth.POST("/pengaturan/update", pengaturanAdvH.Update)
 		auth.POST("/pengaturan/clear-cache", pengaturanAdvH.ClearCache)
 		auth.GET("/pengaturan/system", pengaturanAdvH.SystemInfo)
+		// Backup cloud (offsite): lokal tetap sumber utama, cloud = salinan.
+		auth.POST("/pengaturan/offsite/save", pengaturanAdvH.OffsiteSave)
+		auth.POST("/pengaturan/offsite/test-db", pengaturanAdvH.OffsiteTestDB)
+		auth.POST("/pengaturan/offsite/test-s3", pengaturanAdvH.OffsiteTestS3)
+		auth.POST("/pengaturan/offsite/test-files", pengaturanAdvH.OffsiteTestFiles)
+		auth.POST("/pengaturan/offsite/run", pengaturanAdvH.OffsiteRun)
 
 		// ═══════════════════════════════════════════
 		// ROLES
@@ -472,52 +472,6 @@ func registerRoutes(r *gin.Engine) {
 	advanced := r.Group("/advanced")
 	advanced.Use(middleware.Auth())
 	{
-		// Advanced Dashboard
-		advanced.GET("/dashboard", advDashH.Index)
-		advanced.GET("/dashboard/widget/:widgetKey", advDashH.GetWidgetData)
-		advanced.POST("/dashboard/widgets", advDashH.SaveWidgetConfig)
-
-		// Integration Hub
-		advanced.GET("/integrations", integrationH.Index)
-		advanced.GET("/integrations/create", integrationH.Create)
-		advanced.POST("/integrations/store", integrationH.Store)
-		advanced.GET("/integrations/:id", integrationH.Show)
-		advanced.GET("/integrations/:id/sheet", integrationH.ViewSheet)
-		advanced.GET("/integrations/:id/edit", integrationH.Edit)
-		advanced.PUT("/integrations/:id", integrationH.Update)
-		advanced.POST("/integrations/:id", integrationH.Update)
-		advanced.DELETE("/integrations/:id", integrationH.Destroy)
-		advanced.POST("/integrations/:id/delete", integrationH.Destroy)
-		advanced.POST("/integrations/:id/test", integrationH.Test)
-		advanced.POST("/integrations/:id/sync", integrationH.Sync)
-		advanced.POST("/integrations/:id/push", integrationH.PushToSheet)
-		advanced.GET("/integrations/log/:logId", integrationH.ShowLog)
-		advanced.GET("/integrations/:id/status", integrationH.Status)
-
-		// Import/Export
-		advanced.GET("/import-export", importExportH.Index)
-		advanced.GET("/import-export/import", importExportH.ShowImportForm)
-		advanced.POST("/import-export/import", importExportH.ProcessImport)
-		advanced.GET("/import-export/export", importExportH.ShowExportForm)
-		advanced.POST("/import-export/export", importExportH.ProcessExport)
-		advanced.GET("/import-export/template/:type", importExportH.DownloadTemplate)
-		advanced.GET("/import-export/job/:jobId", importExportH.ShowJob)
-		advanced.GET("/import-export/job/:jobId/download", importExportH.DownloadResult)
-		advanced.GET("/import-export/job/:jobId/progress", importExportH.Progress)
-		advanced.POST("/import-export/job/:jobId/retry", importExportH.Retry)
-
-		// QR Code (advanced)
-		advanced.GET("/qrcode", qrH.Index)
-		advanced.GET("/qrcode/:qrCodeId", qrH.Show)
-		advanced.GET("/qrcode/:qrCodeId/download", qrH.Download)
-		advanced.POST("/qrcode/bulk-generate", qrH.BulkGenerate)
-		advanced.POST("/qrcode/scan", qrH.ScanAPI)
-		advanced.POST("/qrcode/:qrCodeId/deactivate", qrH.Deactivate)
-		advanced.GET("/qrcode/arsip/:arsipId/location", qrH.CheckLocation)
-		advanced.GET("/qrcode/location", qrH.GetByLocation)
-		advanced.GET("/qrcode/scanner", qrH.Scanner)
-		advanced.POST("/qrcode/generate/:arsipId", qrH.Generate)
-
 		// Retention (advanced)
 		advanced.GET("/retention", jadwalH.Index)
 		advanced.GET("/retention/create", jadwalAdvH.Create)
@@ -569,15 +523,11 @@ func registerRoutes(r *gin.Engine) {
 		mobile.GET("/search", func(c *gin.Context) {
 			handlers.Render(c, 200, "mobile/search.html", gin.H{})
 		})
-		mobile.GET("/scan", func(c *gin.Context) {
-			handlers.Render(c, 200, "mobile/scan.html", gin.H{})
-		})
 		mobile.GET("/settings", func(c *gin.Context) {
 			handlers.Render(c, 200, "mobile/settings.html", gin.H{})
 		})
 		mobile.POST("/settings/update", mobileAPIH.UpdateSettings)
 		// Mobile API
-		mobile.POST("/api/scan", mobileAPIH.ScanQR)
 		mobile.POST("/api/search", mobileAPIH.SearchAPI)
 		mobile.GET("/api/search", mobileAPIH.SearchAPI)
 		mobile.GET("/api/archive/:id", mobileAPIH.ArchiveAPI)

@@ -1,0 +1,91 @@
+{{define "components/topnav.html"}}
+<nav class="topbar-nav d-none d-lg-flex" id="topbarNav" aria-label="Navigasi utama">
+  {{/* ── Dashboard ── */}}
+  <a class="topbar-link {{if eq .CurrentPath "/dashboard"}}active{{end}}" href="/dashboard" title="Dashboard">
+    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+  </a>
+
+  {{/* ── Manajemen Arsip ── */}}
+  <div class="dropdown">
+    <button class="topbar-link dropdown-toggle {{if or (hasPrefix .CurrentPath "/arsip") (eq .CurrentPath "/pemberkasan") (hasPrefix .CurrentPath "/pemusnahan")}}active{{end}}" type="button" title="Manajemen Arsip" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-folder2-open"></i><span>Manajemen Arsip</span>
+    </button>
+    <ul class="dropdown-menu topbar-menu">
+      <li><a class="dropdown-item {{if eq .CurrentPath "/arsip"}}active{{end}}" href="/arsip"><i class="bi bi-file-earmark-text"></i> Daftar Arsip</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/pemberkasan"}}active{{end}}" href="/pemberkasan"><i class="bi bi-folder-plus"></i> Pemberkasan</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/arsip/pemindahan"}}active{{end}}" href="/arsip/pemindahan"><i class="bi bi-map"></i> Pemindahan Arsip</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/pemusnahan"}}active{{end}}" href="/pemusnahan"><i class="bi bi-trash"></i> Pemusnahan Arsip</a></li>
+    </ul>
+  </div>
+
+  {{/* ── Layanan ── */}}
+  <div class="dropdown">
+    <button class="topbar-link dropdown-toggle {{if hasPrefix .CurrentPath "/peminjaman"}}active{{end}}" type="button" title="Layanan" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-journal-check"></i><span>Layanan</span>
+    </button>
+    <ul class="dropdown-menu topbar-menu">
+      <li><a class="dropdown-item {{if eq .CurrentPath "/peminjaman/create"}}active{{end}}" href="/peminjaman/create"><i class="bi bi-file-earmark-arrow-up"></i> Permohonan Pinjam</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/peminjaman"}}active{{end}}" href="/peminjaman"><i class="bi bi-journal-check"></i> Daftar Peminjaman</a></li>
+    </ul>
+  </div>
+
+  {{/* ── Master Data ── */}}
+  <div class="dropdown">
+    <button class="topbar-link dropdown-toggle {{if or (hasPrefix .CurrentPath "/unit-kerja") (hasPrefix .CurrentPath "/lokasi-arsip") (hasPrefix .CurrentPath "/users") (hasPrefix .CurrentPath "/kode-klasifikasi") (hasPrefix .CurrentPath "/jenis-arsip")}}active{{end}}" type="button" title="Master Data" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-diagram-3"></i><span>Master Data</span>
+    </button>
+    <ul class="dropdown-menu topbar-menu">
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/unit-kerja"}}active{{end}}" href="/unit-kerja"><i class="bi bi-building"></i> Unit Kerja</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/lokasi-arsip"}}active{{end}}" href="/lokasi-arsip"><i class="bi bi-geo-alt"></i> Lokasi Arsip</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/users"}}active{{end}}" href="/users"><i class="bi bi-people"></i> Petugas</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/kode-klasifikasi"}}active{{end}}" href="/kode-klasifikasi"><i class="bi bi-tags"></i> Kode Klasifikasi</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/jenis-arsip"}}active{{end}}" href="/jenis-arsip"><i class="bi bi-folder"></i> Jenis Arsip</a></li>
+    </ul>
+  </div>
+
+  {{/* ── Laporan ── */}}
+  <div class="dropdown">
+    <button class="topbar-link dropdown-toggle {{if or (eq .CurrentPath "/search") (hasPrefix .CurrentPath "/laporan")}}active{{end}}" type="button" title="Laporan" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-graph-up"></i><span>Laporan</span>
+    </button>
+    <ul class="dropdown-menu topbar-menu">
+      <li><a class="dropdown-item {{if eq .CurrentPath "/search"}}active{{end}}" href="/search"><i class="bi bi-search"></i> Pencarian Arsip</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan"}}active{{end}}" href="/laporan"><i class="bi bi-graph-up"></i> Dashboard Laporan</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/arsip"}}active{{end}}" href="/laporan/arsip"><i class="bi bi-file-earmark-text"></i> Laporan Arsip</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/digital"}}active{{end}}" href="/laporan/digital"><i class="bi bi-cloud-check"></i> Arsip Digital</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/pemberkasan"}}active{{end}}" href="/laporan/pemberkasan"><i class="bi bi-folder"></i> Laporan Pemberkasan</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/lokasi"}}active{{end}}" href="/laporan/lokasi"><i class="bi bi-geo-alt"></i> Laporan per Lokasi</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/klasifikasi"}}active{{end}}" href="/laporan/klasifikasi"><i class="bi bi-tags"></i> Laporan Klasifikasi</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/retensi"}}active{{end}}" href="/laporan/retensi"><i class="bi bi-hourglass-split"></i> Laporan Retensi</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/pemusnahan"}}active{{end}}" href="/laporan/pemusnahan"><i class="bi bi-trash"></i> Laporan Pemusnahan</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/aktivitas"}}active{{end}}" href="/laporan/aktivitas"><i class="bi bi-clock-history"></i> Log Aktivitas</a></li>
+      <li><a class="dropdown-item {{if eq .CurrentPath "/laporan/statistik"}}active{{end}}" href="/laporan/statistik"><i class="bi bi-pie-chart"></i> Statistik</a></li>
+    </ul>
+  </div>
+
+  {{/* ── Monitoring ── */}}
+  <div class="dropdown">
+    <button class="topbar-link dropdown-toggle {{if or (hasPrefix .CurrentPath "/monitoring") (hasPrefix .CurrentPath "/jadwal-retensi") (hasPrefix .CurrentPath "/disposal")}}active{{end}}" type="button" title="Monitoring" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-activity"></i><span>Monitoring</span>
+    </button>
+    <ul class="dropdown-menu topbar-menu">
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/monitoring/retensi"}}active{{end}}" href="/monitoring/retensi"><i class="bi bi-clock"></i> Monitoring Retensi</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/jadwal-retensi"}}active{{end}}" href="/jadwal-retensi"><i class="bi bi-calendar-check"></i> Jadwal Retensi</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/disposal"}}active{{end}}" href="/disposal"><i class="bi bi-arrow-right-left"></i> Dashboard Penyusutan</a></li>
+    </ul>
+  </div>
+
+  {{/* ── Administrasi ── */}}
+  <div class="dropdown">
+    <button class="topbar-link dropdown-toggle {{if or (hasPrefix .CurrentPath "/roles") (hasPrefix .CurrentPath "/pengaturan") (hasPrefix .CurrentPath "/backup") (hasPrefix .CurrentPath "/blockchain")}}active{{end}}" type="button" title="Administrasi" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-gear"></i><span>Administrasi</span>
+    </button>
+    <ul class="dropdown-menu topbar-menu">
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/roles"}}active{{end}}" href="/roles"><i class="bi bi-person-badge"></i> Manajemen Role</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/pengaturan"}}active{{end}}" href="/pengaturan"><i class="bi bi-gear"></i> Pengaturan</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/backup"}}active{{end}}" href="/backup"><i class="bi bi-database"></i> Backup &amp; Restore</a></li>
+      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/blockchain"}}active{{end}}" href="/blockchain"><i class="bi bi-shield-check"></i> Blockchain Audit</a></li>
+    </ul>
+  </div>
+</nav>
+{{end}}

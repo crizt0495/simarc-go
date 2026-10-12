@@ -122,14 +122,14 @@ func (KodeKlasifikasi) TableName() string { return "kode_klasifikasi" }
 // ── LOKASI ARSIP ──────────────────────────────────────────────────────────────
 
 type LokasiArsip struct {
-	ID          string         `gorm:"type:char(36);primaryKey" json:"id"`
-	NamaLokasi  string         `gorm:"column:nama_lokasi;size:255;not null" json:"nama_lokasi"`
-	Deskripsi   string         `gorm:"type:text" json:"deskripsi"`
-	Kapasitas   *string        `gorm:"size:100" json:"kapasitas"`
-	IsActive    bool           `gorm:"default:true" json:"is_active"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	ID         string         `gorm:"type:char(36);primaryKey" json:"id"`
+	NamaLokasi string         `gorm:"column:nama_lokasi;size:255;not null" json:"nama_lokasi"`
+	Deskripsi  string         `gorm:"type:text" json:"deskripsi"`
+	Kapasitas  *string        `gorm:"size:100" json:"kapasitas"`
+	IsActive   bool           `gorm:"default:true" json:"is_active"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 }
 
 func (LokasiArsip) TableName() string { return "lokasi_arsips" }
@@ -279,29 +279,29 @@ func (ArsipVersion) TableName() string { return "arsip_versions" }
 // ── PEMUSNAHAN ARSIP ──────────────────────────────────────────────────────────
 
 type PemusnahanArsip struct {
-	ID                 string         `gorm:"type:char(36);primaryKey" json:"id"`
-	ArsipID            *string        `gorm:"type:char(36)" json:"arsip_id"`
-	NamaKegiatan       string         `gorm:"size:255" json:"nama_kegiatan"`
-	TanggalPelaksanaan *time.Time     `json:"tanggal_pelaksanaan"`
-	AlasanPengajuan    string         `gorm:"type:text" json:"alasan_pengajuan"`
-	KeteranganApprove  string         `gorm:"type:text" json:"keterangan_approve"`
-	Keterangan         string         `gorm:"type:text" json:"keterangan"`
-	UserPengajuID      string         `gorm:"type:char(36)" json:"user_pengaju_id"`
-	UserApproveID      *string        `gorm:"type:char(36)" json:"user_approve_id"`
-	CreatedBy          *string        `gorm:"type:char(36)" json:"created_by"`
-	ApprovedBy         *string        `gorm:"type:char(36)" json:"approved_by"`
-	Status             string         `gorm:"size:50;default:diajukan" json:"status"`
-	TanggalPengajuan   *time.Time     `json:"tanggal_pengajuan"`
-	TanggalApprove     *time.Time     `json:"tanggal_approve"`
-	IsAuto             bool           `gorm:"default:false" json:"is_auto"`
-	CreatedAt          time.Time      `json:"created_at"`
-	UpdatedAt          time.Time      `json:"updated_at"`
-	DeletedAt          gorm.DeletedAt `gorm:"index" json:"deleted_at"`
-	Arsip              *Arsip         `gorm:"foreignKey:ArsipID" json:"arsip,omitempty"`
-	Creator            *User          `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
-	Approver           *User          `gorm:"foreignKey:ApprovedBy" json:"approver,omitempty"`
-	UserPengaju        *User          `gorm:"foreignKey:UserPengajuID" json:"user_pengaju,omitempty"`
-	UserApprove        *User          `gorm:"foreignKey:UserApproveID" json:"user_approve,omitempty"`
+	ID                 string           `gorm:"type:char(36);primaryKey" json:"id"`
+	ArsipID            *string          `gorm:"type:char(36)" json:"arsip_id"`
+	NamaKegiatan       string           `gorm:"size:255" json:"nama_kegiatan"`
+	TanggalPelaksanaan *time.Time       `json:"tanggal_pelaksanaan"`
+	AlasanPengajuan    string           `gorm:"type:text" json:"alasan_pengajuan"`
+	KeteranganApprove  string           `gorm:"type:text" json:"keterangan_approve"`
+	Keterangan         string           `gorm:"type:text" json:"keterangan"`
+	UserPengajuID      string           `gorm:"type:char(36)" json:"user_pengaju_id"`
+	UserApproveID      *string          `gorm:"type:char(36)" json:"user_approve_id"`
+	CreatedBy          *string          `gorm:"type:char(36)" json:"created_by"`
+	ApprovedBy         *string          `gorm:"type:char(36)" json:"approved_by"`
+	Status             string           `gorm:"size:50;default:diajukan" json:"status"`
+	TanggalPengajuan   *time.Time       `json:"tanggal_pengajuan"`
+	TanggalApprove     *time.Time       `json:"tanggal_approve"`
+	IsAuto             bool             `gorm:"default:false" json:"is_auto"`
+	CreatedAt          time.Time        `json:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at"`
+	DeletedAt          gorm.DeletedAt   `gorm:"index" json:"deleted_at"`
+	Arsip              *Arsip           `gorm:"foreignKey:ArsipID" json:"arsip,omitempty"`
+	Creator            *User            `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
+	Approver           *User            `gorm:"foreignKey:ApprovedBy" json:"approver,omitempty"`
+	UserPengaju        *User            `gorm:"foreignKey:UserPengajuID" json:"user_pengaju,omitempty"`
+	UserApprove        *User            `gorm:"foreignKey:UserApproveID" json:"user_approve,omitempty"`
 	Items              []PemusnahanItem `gorm:"foreignKey:PemusnahanID" json:"items,omitempty"`
 }
 
@@ -387,7 +387,7 @@ func (l *LoginLog) BeforeCreate(tx *gorm.DB) error {
 // ── ACTIVITY LOG ──────────────────────────────────────────────────────────────
 
 type ActivityLog struct {
-	ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID          string    `gorm:"type:char(36);primaryKey" json:"id"`
 	UserID      *string   `gorm:"type:char(36)" json:"user_id"`
 	Action      string    `gorm:"size:255" json:"action"`
 	Description string    `gorm:"type:text" json:"description"`
@@ -399,9 +399,14 @@ type ActivityLog struct {
 
 func (ActivityLog) TableName() string { return "activity_logs" }
 
+// BeforeCreate ensures the primary key is populated before insert. The
+// activity_logs.id column is VARCHAR(36) with no AUTO_INCREMENT (legacy
+// schema), and GORM omits the primary key when it is the zero value — which
+// MySQL rejects with Error 1364 "Field 'id' doesn't have a default value".
+// Mirrors the pattern used by Arsip, LoginLog, AuditLog, QrScanLog, etc.
 func (a *ActivityLog) BeforeCreate(tx *gorm.DB) error {
-	if a.ID == 0 {
-		// let DB auto-increment; this hook ensures it's called
+	if a.ID == "" {
+		a.ID = uuid.New().String()
 	}
 	return nil
 }
@@ -429,62 +434,15 @@ func (l *AuditLog) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// ── QR CODE ───────────────────────────────────────────────────────────────────
-
-type QrCode struct {
-	ID            string         `gorm:"type:char(36);primaryKey" json:"id"`
-	ArsipID       *string        `gorm:"type:char(36)" json:"arsip_id"`
-	LokasiID      *string        `gorm:"type:char(36)" json:"lokasi_id"`
-	QrType        string         `gorm:"size:50;default:arsip" json:"qr_type"`
-	BoxNumber     *string        `gorm:"size:100" json:"box_number"`
-	ShelfLocation *string        `gorm:"size:255" json:"shelf_location"`
-	RoomLocation  *string        `gorm:"size:255" json:"room_location"`
-	LocationData  *string        `gorm:"type:json" json:"location_data"`
-	QrCodePath    string         `gorm:"type:text" json:"qr_code_path"`
-	QrData        string         `gorm:"type:text" json:"qr_data"`
-	IsActive      bool           `gorm:"default:true" json:"is_active"`
-	LastScannedAt *time.Time     `json:"last_scanned_at"`
-	LastScannedBy *string        `gorm:"type:char(36)" json:"last_scanned_by"`
-	ScanCount     int            `gorm:"default:0" json:"scan_count"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at"`
-	Arsip         *Arsip         `gorm:"foreignKey:ArsipID" json:"arsip,omitempty"`
-}
-
-func (QrCode) TableName() string { return "qr_codes" }
-
-type QrScanLog struct {
-	ID        string    `gorm:"type:char(36);primaryKey" json:"id"`
-	QrCodeID  string    `gorm:"type:char(36);not null" json:"qr_code_id"`
-	UserID    *string   `gorm:"type:char(36)" json:"user_id"`
-	Action    string    `gorm:"size:50" json:"action"`
-	Notes     *string   `gorm:"type:text" json:"notes"`
-	IPAddress string    `gorm:"size:50" json:"ip_address"`
-	UserAgent string    `gorm:"type:text" json:"user_agent"`
-	Metadata  *string   `gorm:"type:json" json:"metadata"`
-	ScannedAt time.Time `json:"scanned_at"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-func (QrScanLog) TableName() string { return "qr_scan_logs" }
-
-func (l *QrScanLog) BeforeCreate(tx *gorm.DB) error {
-	if l.ID == "" {
-		l.ID = uuid.New().String()
-	}
-	return nil
-}
-
 // ── OCR ───────────────────────────────────────────────────────────────────────
 
 type OcrLog struct {
 	ID            string     `gorm:"type:char(36);primaryKey" json:"id"`
 	ArsipID       *string    `gorm:"type:char(36)" json:"arsip_id"`
-	FileName      string     `gorm:"column:filename;size:255" json:"file_name"`
+	FileName      string     `gorm:"column:file_path;size:255" json:"file_name"`
 	Status        string     `gorm:"size:50" json:"status"`
 	ExtractedText string     `gorm:"type:longtext" json:"extracted_text"`
-	ProcessedAt   *time.Time `json:"processed_at"`
+	ProcessedAt   *time.Time `gorm:"-" json:"processed_at"`
 	CreatedAt     time.Time  `json:"created_at"`
 }
 
@@ -673,81 +631,6 @@ type Notification struct {
 }
 
 func (Notification) TableName() string { return "notifications" }
-
-// ── INTEGRATION ──────────────────────────────────────────────────────────────
-
-type Integration struct {
-	ID         string         `gorm:"type:char(36);primaryKey" json:"id"`
-	Name       string         `gorm:"size:255;not null" json:"name"`
-	Type       string         `gorm:"size:50" json:"type"`
-	BaseURL    string         `gorm:"type:text" json:"base_url"`
-	ApiKey     string         `gorm:"type:text" json:"api_key"`
-	Config     string         `gorm:"type:json" json:"config"`
-	IsActive   bool           `gorm:"default:false" json:"is_active"`
-	LastSyncAt *time.Time     `json:"last_sync_at"`
-	LastStatus string         `gorm:"size:50" json:"last_status"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`
-}
-
-func (Integration) TableName() string { return "integrations" }
-
-type IntegrationLog struct {
-	ID            string    `gorm:"type:char(36);primaryKey" json:"id"`
-	IntegrationID string    `gorm:"type:char(36);not null" json:"integration_id"`
-	Action        string    `gorm:"size:100" json:"action"`
-	Status        string    `gorm:"size:50" json:"status"`
-	RequestBody   string    `gorm:"type:text" json:"request_body"`
-	ResponseBody  string    `gorm:"type:text" json:"response_body"`
-	StatusCode    int       `json:"status_code"`
-	DurationMs    int       `json:"duration_ms"`
-	CreatedAt     time.Time `json:"created_at"`
-}
-
-func (IntegrationLog) TableName() string { return "integration_logs" }
-
-func (l *IntegrationLog) BeforeCreate(tx *gorm.DB) error {
-	if l.ID == "" {
-		l.ID = uuid.New().String()
-	}
-	return nil
-}
-
-// ── IMPORT EXPORT JOB ────────────────────────────────────────────────────────
-
-type ImportExportJob struct {
-	ID            string     `gorm:"type:char(36);primaryKey" json:"id"`
-	UserID        string     `gorm:"type:char(36)" json:"user_id"`
-	Type          string     `gorm:"size:50" json:"type"`
-	EntityType    string     `gorm:"size:100" json:"entity_type"`
-	Status        string     `gorm:"size:50;default:pending" json:"status"`
-	TotalRows     int        `gorm:"default:0" json:"total_rows"`
-	ProcessedRows int        `gorm:"default:0" json:"processed_rows"`
-	ErrorRows     int        `gorm:"default:0" json:"error_rows"`
-	InputFile     string     `gorm:"type:text" json:"input_file"`
-	OutputFile    string     `gorm:"type:text" json:"output_file"`
-	ErrorLog      string     `gorm:"type:text" json:"error_log"`
-	CreatedAt     time.Time  `json:"created_at"`
-	CompletedAt   *time.Time `json:"completed_at"`
-}
-
-func (ImportExportJob) TableName() string { return "import_export_jobs" }
-
-// ── DASHBOARD WIDGET ─────────────────────────────────────────────────────────
-
-type DashboardWidget struct {
-	ID        string    `gorm:"type:char(36);primaryKey" json:"id"`
-	UserID    string    `gorm:"type:char(36);not null" json:"user_id"`
-	WidgetKey string    `gorm:"size:100" json:"widget_key"`
-	Position  int       `gorm:"default:0" json:"position"`
-	IsVisible bool      `gorm:"default:true" json:"is_visible"`
-	Config    string    `gorm:"type:json" json:"config"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-func (DashboardWidget) TableName() string { return "dashboard_widgets" }
 
 // ── DISPOSAL SCHEDULE ────────────────────────────────────────────────────────
 
@@ -1038,38 +921,38 @@ func (WorkflowExecution) TableName() string { return "workflow_executions" }
 // ── BERITA ACARA PEMINDAHAN ────────────────────────────────────────────────────
 
 type BeritaAcara struct {
-	ID                 string             `gorm:"type:char(36);primaryKey" json:"id"`
-	NomorBA            string             `gorm:"column:nomor_ba;size:100;not null" json:"nomor_ba"`
-	Tanggal            time.Time          `gorm:"column:tanggal" json:"tanggal"`
-	Tempat             string             `gorm:"column:tempat;size:255" json:"tempat"`
-	PihakPertamaNama   string             `gorm:"column:pihak_pertama_nama;size:255;not null" json:"pihak_pertama_nama"`
-	PihakPertamaNIP    string             `gorm:"column:pihak_pertama_nip;size:100" json:"pihak_pertama_nip"`
+	ID                  string            `gorm:"type:char(36);primaryKey" json:"id"`
+	NomorBA             string            `gorm:"column:nomor_ba;size:100;not null" json:"nomor_ba"`
+	Tanggal             time.Time         `gorm:"column:tanggal" json:"tanggal"`
+	Tempat              string            `gorm:"column:tempat;size:255" json:"tempat"`
+	PihakPertamaNama    string            `gorm:"column:pihak_pertama_nama;size:255;not null" json:"pihak_pertama_nama"`
+	PihakPertamaNIP     string            `gorm:"column:pihak_pertama_nip;size:100" json:"pihak_pertama_nip"`
 	PihakPertamaJabatan string            `gorm:"column:pihak_pertama_jabatan;size:255" json:"pihak_pertama_jabatan"`
-	PihakPertamaUnit   string             `gorm:"column:pihak_pertama_unit;size:255" json:"pihak_pertama_unit"`
-	PihakKeduaNama     string             `gorm:"column:pihak_kedua_nama;size:255;not null" json:"pihak_kedua_nama"`
-	PihakKeduaNIP      string             `gorm:"column:pihak_kedua_nip;size:100" json:"pihak_kedua_nip"`
-	PihakKeduaJabatan  string             `gorm:"column:pihak_kedua_jabatan;size:255" json:"pihak_kedua_jabatan"`
-	PihakKeduaUnit     string             `gorm:"column:pihak_kedua_unit;size:255" json:"pihak_kedua_unit"`
-	LokasiAsalID       *string            `gorm:"column:lokasi_asal_id;type:char(36)" json:"lokasi_asal_id"`
-	LokasiTujuanID     *string            `gorm:"column:lokasi_tujuan_id;type:char(36)" json:"lokasi_tujuan_id"`
-	Catatan            string             `gorm:"type:text" json:"catatan"`
-	CreatedBy          string             `gorm:"column:created_by;type:char(36)" json:"created_by"`
-	CreatedAt          time.Time          `json:"created_at"`
-	UpdatedAt          time.Time          `json:"updated_at"`
-	DeletedAt          gorm.DeletedAt     `gorm:"index" json:"deleted_at"`
-	Items              []BeritaAcaraItem  `gorm:"foreignKey:BeritaAcaraID" json:"items,omitempty"`
-	LokasiAsal         *LokasiArsip       `gorm:"foreignKey:LokasiAsalID" json:"lokasi_asal,omitempty"`
-	LokasiTujuan       *LokasiArsip       `gorm:"foreignKey:LokasiTujuanID" json:"lokasi_tujuan,omitempty"`
-	Creator            *User              `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
+	PihakPertamaUnit    string            `gorm:"column:pihak_pertama_unit;size:255" json:"pihak_pertama_unit"`
+	PihakKeduaNama      string            `gorm:"column:pihak_kedua_nama;size:255;not null" json:"pihak_kedua_nama"`
+	PihakKeduaNIP       string            `gorm:"column:pihak_kedua_nip;size:100" json:"pihak_kedua_nip"`
+	PihakKeduaJabatan   string            `gorm:"column:pihak_kedua_jabatan;size:255" json:"pihak_kedua_jabatan"`
+	PihakKeduaUnit      string            `gorm:"column:pihak_kedua_unit;size:255" json:"pihak_kedua_unit"`
+	LokasiAsalID        *string           `gorm:"column:lokasi_asal_id;type:char(36)" json:"lokasi_asal_id"`
+	LokasiTujuanID      *string           `gorm:"column:lokasi_tujuan_id;type:char(36)" json:"lokasi_tujuan_id"`
+	Catatan             string            `gorm:"type:text" json:"catatan"`
+	CreatedBy           string            `gorm:"column:created_by;type:char(36)" json:"created_by"`
+	CreatedAt           time.Time         `json:"created_at"`
+	UpdatedAt           time.Time         `json:"updated_at"`
+	DeletedAt           gorm.DeletedAt    `gorm:"index" json:"deleted_at"`
+	Items               []BeritaAcaraItem `gorm:"foreignKey:BeritaAcaraID" json:"items,omitempty"`
+	LokasiAsal          *LokasiArsip      `gorm:"foreignKey:LokasiAsalID" json:"lokasi_asal,omitempty"`
+	LokasiTujuan        *LokasiArsip      `gorm:"foreignKey:LokasiTujuanID" json:"lokasi_tujuan,omitempty"`
+	Creator             *User             `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
 }
 
 func (BeritaAcara) TableName() string { return "berita_acara" }
 
 type BeritaAcaraItem struct {
-	ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	BeritaAcaraID string    `gorm:"column:berita_acara_id;type:char(36);not null;index" json:"berita_acara_id"`
-	ArsipID       string    `gorm:"column:arsip_id;type:char(36);not null" json:"arsip_id"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID            uint         `gorm:"primaryKey;autoIncrement" json:"id"`
+	BeritaAcaraID string       `gorm:"column:berita_acara_id;type:char(36);not null;index" json:"berita_acara_id"`
+	ArsipID       string       `gorm:"column:arsip_id;type:char(36);not null" json:"arsip_id"`
+	CreatedAt     time.Time    `json:"created_at"`
 	BeritaAcara   *BeritaAcara `gorm:"foreignKey:BeritaAcaraID" json:"berita_acara,omitempty"`
 	Arsip         *Arsip       `gorm:"foreignKey:ArsipID" json:"arsip,omitempty"`
 }

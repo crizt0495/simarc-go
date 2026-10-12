@@ -556,15 +556,11 @@ kbd {
 }
 .sidebar-overlay.active { opacity: 1; visibility: visible; }
 
-/* ── Desktop: sidebar visible; body offset; toggle hides it ── */
+/* ── Desktop: topbar navigation (no sidebar offset) ── */
 @media (min-width: 992px) {
   body { padding-left: 0; }
-  .sidebar.active { transform: translateX(-100%); box-shadow: none; }
-  .top-navbar { left: var(--sidebar-w); }
-  .main-content { margin-left: var(--sidebar-w); }
-  body.sidebar-collapsed .top-navbar,
-  body.sidebar-collapsed .main-content { margin-left: 0; }
-  .sidebar-overlay { display: none; }
+  .top-navbar { left: 0; }
+  .main-content { margin-left: 0; }
 }
 
 /* ── Mobile / tablet: sidebar slides in ── */
@@ -594,9 +590,54 @@ kbd {
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-  flex: 1;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+/* ── Topbar navigation: horizontal menu with dropdown groups ──
+   NOTE: must NOT be a scroll container (no overflow hidden/auto) —
+   that would clip the Bootstrap dropdown panels, which are positioned
+   below the bar. */
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.05rem;
+  flex: 0 0 auto;
+}
+
+.topbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--nb-ink-3);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.topbar-link i { font-size: 0.95rem; color: var(--nb-ink-4); }
+.topbar-link:hover { background: var(--nb-surface-2); color: var(--nb-ink); }
+.topbar-link:hover i { color: var(--nb-ink); }
+.topbar-link.active { color: var(--nb-primary); background: var(--nb-primary-light); border-color: var(--nb-primary-light); }
+.topbar-link.active i { color: var(--nb-primary); }
+
+.topbar-menu {
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  min-width: 220px;
+  margin-top: 0.35rem;
+}
+
+/* Medium desktops (992–1199px): collapse the topbar to icon-only so the
+   search field and the rest of the bar always fit without clipping. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .topbar-link span { display: none; }
+  .topbar-link { padding: 0.42rem 0.6rem; }
 }
 
 .navbar-brand-mobile {
@@ -615,7 +656,9 @@ kbd {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: min(420px, 100%);
+  flex: 0 1 420px;
+  min-width: 120px;
+  width: auto;
   padding: 0.4rem 0.8rem;
   background: var(--nb-surface-2);
   border: 1px solid var(--nb-border);
@@ -643,6 +686,8 @@ kbd {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .nav-icon-btn {

@@ -26,7 +26,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	qrcode "github.com/skip2/go-qrcode"
 	"gorm.io/gorm"
 )
 
@@ -51,36 +50,36 @@ func (h *LaporanHandler) Index(c *gin.Context) {
 		(SELECT COUNT(*) FROM unit_kerja WHERE deleted_at IS NULL) as total_unit,
 		(SELECT COUNT(*) FROM pemberkasan WHERE deleted_at IS NULL) as total_berkas
 	`).Scan(&struct {
-		TotalArsip     *int64 `gorm:"column:total_arsip"`
-		ArsipAktif     *int64 `gorm:"column:arsip_aktif"`
-		ArsipInaktif   *int64 `gorm:"column:arsip_inaktif"`
+		TotalArsip      *int64 `gorm:"column:total_arsip"`
+		ArsipAktif      *int64 `gorm:"column:arsip_aktif"`
+		ArsipInaktif    *int64 `gorm:"column:arsip_inaktif"`
 		TotalPemusnahan *int64 `gorm:"column:total_pemusnahan"`
-		TotalUnitKerja *int64 `gorm:"column:total_unit"`
-		TotalBerkas    *int64 `gorm:"column:total_berkas"`
+		TotalUnitKerja  *int64 `gorm:"column:total_unit"`
+		TotalBerkas     *int64 `gorm:"column:total_berkas"`
 	}{
-		TotalArsip:     &totalArsip,
-		ArsipAktif:     &arsipAktif,
-		ArsipInaktif:   &arsipInaktif,
+		TotalArsip:      &totalArsip,
+		ArsipAktif:      &arsipAktif,
+		ArsipInaktif:    &arsipInaktif,
 		TotalPemusnahan: &totalPemusnahan,
-		TotalUnitKerja: &totalUnitKerja,
-		TotalBerkas:    &totalBerkas,
+		TotalUnitKerja:  &totalUnitKerja,
+		TotalBerkas:     &totalBerkas,
 	})
 	var diberkaskanCount, layakMusnah, sudahMusnah int64
 	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'diberkaskan'").Count(&diberkaskanCount)
 	database.DB.Model(&models.Arsip{}).Where("tanggal_retensi_berakhir < ? AND status_arsip != 'musnah'", time.Now()).Count(&layakMusnah)
 	database.DB.Model(&models.Arsip{}).Where("status_arsip = 'musnah' AND deleted_at IS NULL").Count(&sudahMusnah)
 	stats = gin.H{
-		"TotalArsip":      totalArsip,
-		"ArsipAktif":      arsipAktif,
-		"ArsipInaktif":    arsipInaktif,
+		"TotalArsip":       totalArsip,
+		"ArsipAktif":       arsipAktif,
+		"ArsipInaktif":     arsipInaktif,
 		"ArsipDiberkaskan": diberkaskanCount,
-		"LayakMusnah":     layakMusnah,
+		"LayakMusnah":      layakMusnah,
 		"SudahDimusnahkan": sudahMusnah,
 	}
 
 	// Arsip per unit kerja
 	type UnitStat struct {
-		NamaUnit   string `gorm:"column:nama_unit"`
+		NamaUnit    string `gorm:"column:nama_unit"`
 		JumlahArsip int64  `gorm:"column:total"`
 	}
 	var perUnit []UnitStat
@@ -260,23 +259,23 @@ func (h *LaporanHandler) Arsip(c *gin.Context) {
 
 	Render(c, 200, "laporan/arsip.html", gin.H{
 		"title": "Laporan Arsip - SIMARC", "pageTitle": "Laporan Arsip",
-		"ArsipList":             arsipList,
-		"UnitKerjaList":         unitKerjaOpts,
-		"KodeKlasifikasiList":   kodeKlasifikasiOpts,
-		"LokasiArsipList":       lokasiArsipOpts,
-		"count":                 len(arsipList),
-		"HasFilters":            hasFilters,
-		"QueryString":           exportQueryStr,
-		"RequestSearch":         c.Query("search"),
-		"RequestUnitKerjaID":    c.Query("unit_kerja_id"),
-		"RequestStatusArsip":    reqStatus,
+		"ArsipList":                arsipList,
+		"UnitKerjaList":            unitKerjaOpts,
+		"KodeKlasifikasiList":      kodeKlasifikasiOpts,
+		"LokasiArsipList":          lokasiArsipOpts,
+		"count":                    len(arsipList),
+		"HasFilters":               hasFilters,
+		"QueryString":              exportQueryStr,
+		"RequestSearch":            c.Query("search"),
+		"RequestUnitKerjaID":       c.Query("unit_kerja_id"),
+		"RequestStatusArsip":       reqStatus,
 		"RequestKodeKlasifikasiID": c.Query("kode_klasifikasi_id"),
-		"RequestLokasiArsipID":  c.Query("lokasi_arsip_id"),
-		"RequestTahun":          c.Query("tahun"),
-		"RequestRetensiFilter":  c.Query("retensi_filter"),
-		"RequestStartDate":      c.Query("start_date"),
-		"RequestEndDate":        c.Query("end_date"),
-		"TahunList":             tahunList,
+		"RequestLokasiArsipID":     c.Query("lokasi_arsip_id"),
+		"RequestTahun":             c.Query("tahun"),
+		"RequestRetensiFilter":     c.Query("retensi_filter"),
+		"RequestStartDate":         c.Query("start_date"),
+		"RequestEndDate":           c.Query("end_date"),
+		"TahunList":                tahunList,
 		"SummaryStats": gin.H{
 			"Total":       totalArsip,
 			"Aktif":       aktifArsip,
@@ -287,9 +286,9 @@ func (h *LaporanHandler) Arsip(c *gin.Context) {
 		"ArsipListLastItem":  lastItem,
 		"ArsipListTotal":     int(totalFiltered),
 		"ArsipListHasPages":  hasPages,
-		"Pagination":        paginationHTML,
-		"ShowUserUnitInfo":  false,
-		"UserUnitKerja":     "",
+		"Pagination":         paginationHTML,
+		"ShowUserUnitInfo":   false,
+		"UserUnitKerja":      "",
 	})
 }
 
@@ -370,13 +369,13 @@ func (h *LaporanHandler) Retensi(c *gin.Context) {
 
 	Render(c, 200, "laporan/laporan-retensi.html", gin.H{
 		"title": "Laporan Retensi - SIMARC", "pageTitle": "Laporan Retensi Arsip",
-		"List":                  enhancedList,
-		"ArsipRetensi":          enhancedList,
-		"ArsipListFirstItem":    firstItem,
-		"ArsipListLastItem":     lastItem,
-		"ArsipListTotal":        int(totalFiltered),
-		"ArsipListHasPages":     hasPages,
-		"Pagination":            paginationHTML,
+		"List":               enhancedList,
+		"ArsipRetensi":       enhancedList,
+		"ArsipListFirstItem": firstItem,
+		"ArsipListLastItem":  lastItem,
+		"ArsipListTotal":     int(totalFiltered),
+		"ArsipListHasPages":  hasPages,
+		"Pagination":         paginationHTML,
 		"Stats": gin.H{
 			"Total":        totalArsip,
 			"SiapMusnah":   siapMusnah,
@@ -433,299 +432,14 @@ func (h *LaporanHandler) Pemusnahan(c *gin.Context) {
 
 	Render(c, 200, "laporan/pemusnahan.html", gin.H{
 		"title": "Laporan Pemusnahan - SIMARC", "pageTitle": "Laporan Pemusnahan",
-		"PemusnahanList":           list,
-		"PemusnahanListFirstItem":  firstItem,
-		"PemusnahanListLastItem":   lastItem,
-		"PemusnahanListTotal":      int(totalFiltered),
-		"PemusnahanListHasPages":   hasPages,
-		"Pagination":               paginationHTML,
-		"RequestStatus":            c.Query("status"),
+		"PemusnahanList":          list,
+		"PemusnahanListFirstItem": firstItem,
+		"PemusnahanListLastItem":  lastItem,
+		"PemusnahanListTotal":     int(totalFiltered),
+		"PemusnahanListHasPages":  hasPages,
+		"Pagination":              paginationHTML,
+		"RequestStatus":           c.Query("status"),
 	})
-}
-
-// ── QR CODE ───────────────────────────────────────────────────────────────────
-
-type QrCodeHandler struct{}
-
-func (h *QrCodeHandler) Index(c *gin.Context) {
-	var total, active, totalScans, totalBoxes, totalArchives int64
-	database.DB.Model(&models.QrCode{}).Count(&total)
-	database.DB.Model(&models.QrCode{}).Where("is_active = 1").Count(&active)
-	database.DB.Model(&models.QrScanLog{}).Count(&totalScans)
-	database.DB.Model(&models.QrCode{}).Where("qr_type = 'box'").Count(&totalBoxes)
-	database.DB.Model(&models.QrCode{}).Where("qr_type = 'arsip'").Count(&totalArchives)
-
-	var recentScans []models.QrScanLog
-	database.DB.Order("scanned_at DESC").Limit(10).Find(&recentScans)
-
-	var qrCodes []models.QrCode
-	database.DB.Preload("Arsip").Order("created_at DESC").Limit(50).Find(&qrCodes)
-
-	Render(c, 200, "qrcode/index.html", gin.H{
-		"title": "QR Code - SIMARC", "pageTitle": "Manajemen QR Code",
-		"recentScans": recentScans, "qrCodes": qrCodes,
-		"Stats": gin.H{
-			"TotalQr":    total,
-			"Active":     active,
-			"TotalScans": totalScans,
-			"Boxes":      totalBoxes,
-			"Archives":   totalArchives,
-		},
-	})
-}
-
-func (h *QrCodeHandler) Scanner(c *gin.Context) {
-	Render(c, 200, "qrcode/scanner.html", gin.H{
-		"title": "QR Scanner", "pageTitle": "QR Code Scanner",
-	})
-}
-
-func (h *QrCodeHandler) Generate(c *gin.Context) {
-	arsipID := c.Param("arsipId")
-	if arsipID == "" {
-		arsipID = c.Param("id")
-	}
-	var arsip models.Arsip
-	if err := database.DB.First(&arsip, "id = ?", arsipID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Arsip tidak ditemukan"})
-		return
-	}
-
-	qrDir := config.QRCodeDir()
-	os.MkdirAll(qrDir, 0755)
-	filename := fmt.Sprintf("qr_%s.png", arsip.ID)
-	path := filepath.Join(qrDir, filename)
-
-	qrData := fmt.Sprintf("/arsip/%s", arsip.ID)
-	if err := qrcode.WriteFile(qrData, qrcode.Medium, 256, path); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat QR Code"})
-		return
-	}
-
-	// Save to DB
-	database.DB.Where("arsip_id = ?", arsipID).Delete(&models.QrCode{})
-	qr := models.QrCode{
-		ID: uuid.New().String(), ArsipID: &arsipID,
-		QrType: "arsip", QrCodePath: path, QrData: qrData, IsActive: true,
-	}
-	database.DB.Create(&qr)
-
-	middleware.SetFlash(c, "success", "QR Code berhasil dibuat.")
-	c.Redirect(http.StatusFound, "/arsip/"+arsipID)
-}
-
-func (h *QrCodeHandler) Download(c *gin.Context) {
-	id := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.First(&qr, "id = ?", id).Error; err != nil || qr.QrCodePath == "" {
-		c.String(http.StatusNotFound, "QR Code tidak ditemukan")
-		return
-	}
-	if _, err := os.Stat(qr.QrCodePath); os.IsNotExist(err) {
-		c.String(http.StatusNotFound, "File QR Code tidak ditemukan di server")
-		return
-	}
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=qr_%s.png", qr.ID))
-	c.Header("Content-Type", "image/png")
-	c.File(qr.QrCodePath)
-}
-
-func (h *QrCodeHandler) DownloadByArsip(c *gin.Context) {
-	arsipID := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.First(&qr, "arsip_id = ?", arsipID).Error; err != nil || qr.QrCodePath == "" {
-		c.String(http.StatusNotFound, "QR Code tidak ditemukan")
-		return
-	}
-	if _, err := os.Stat(qr.QrCodePath); os.IsNotExist(err) {
-		c.String(http.StatusNotFound, "File QR Code tidak ditemukan")
-		return
-	}
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=qr_%s.png", arsipID))
-	c.Header("Content-Type", "image/png")
-	c.File(qr.QrCodePath)
-}
-
-func (h *QrCodeHandler) Show(c *gin.Context) {
-	id := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.Preload("Arsip").First(&qr, "id = ?", id).Error; err != nil {
-		c.Redirect(http.StatusFound, "/qrcode")
-		return
-	}
-	var scanLogs []models.QrScanLog
-	database.DB.Where("qr_code_id = ?", qr.ID).Order("scanned_at DESC").Limit(20).Find(&scanLogs)
-	Render(c, 200, "qrcode/show.html", gin.H{
-		"title": "Detail QR Code", "pageTitle": "Detail QR Code",
-		"qr": qr, "scanLogs": scanLogs,
-	})
-}
-
-func (h *QrCodeHandler) Scan(c *gin.Context) {
-	// Log scan
-	qrID := c.Param("id")
-	var qr models.QrCode
-	if err := database.DB.Preload("Arsip").First(&qr, "id = ?", qrID).Error; err != nil {
-		Render404(c)
-		return
-	}
-
-	user := middleware.GetCurrentUser(c)
-	userID := ""
-	if user != nil {
-		userID = user.ID
-	}
-
-	now := time.Now()
-	log := models.QrScanLog{
-		QrCodeID:  qr.ID,
-		UserID:    &userID,
-		IPAddress: c.ClientIP(),
-		UserAgent: c.Request.UserAgent(),
-		ScannedAt: now,
-		CreatedAt: now,
-	}
-	if c.Query("action") != "" {
-		log.Action = c.Query("action")
-	}
-	database.DB.Create(&log)
-
-	// Update scan count
-	database.DB.Model(&qr).Updates(map[string]interface{}{
-		"scan_count":      qr.ScanCount + 1,
-		"last_scanned_at": now,
-		"last_scanned_by": &userID,
-	})
-
-	if qr.ArsipID != nil {
-		c.Redirect(http.StatusFound, "/arsip/"+*qr.ArsipID)
-	} else {
-		c.Redirect(http.StatusFound, "/dashboard")
-	}
-}
-
-func (h *QrCodeHandler) ScanAPI(c *gin.Context) {
-	action := c.PostForm("action")
-	qrData := c.PostForm("qr_data")
-
-	if qrData == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "QR data kosong"})
-		return
-	}
-
-	var qr models.QrCode
-	if err := database.DB.Preload("Arsip").Where("qr_data = ?", qrData).First(&qr).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "QR Code tidak ditemukan"})
-		return
-	}
-
-	user := middleware.GetCurrentUser(c)
-	userID := ""
-	if user != nil {
-		userID = user.ID
-	}
-
-	now := time.Now()
-	log := models.QrScanLog{
-		QrCodeID:  qr.ID,
-		UserID:    &userID,
-		Action:    action,
-		IPAddress: c.ClientIP(),
-		UserAgent: c.Request.UserAgent(),
-		ScannedAt: now,
-		CreatedAt: now,
-	}
-	database.DB.Create(&log)
-
-	database.DB.Model(&qr).Updates(map[string]interface{}{
-		"scan_count":      qr.ScanCount + 1,
-		"last_scanned_at": now,
-		"last_scanned_by": &userID,
-	})
-
-	result := gin.H{"success": true, "qr": qr}
-	if qr.Arsip != nil {
-		result["arsip"] = qr.Arsip
-	}
-	c.JSON(http.StatusOK, result)
-}
-
-func (h *QrCodeHandler) BulkGenerate(c *gin.Context) {
-	arsipIDs := c.PostFormArray("arsip_ids[]")
-	if len(arsipIDs) == 0 {
-		middleware.SetFlash(c, "error", "Pilih minimal satu arsip.")
-		c.Redirect(http.StatusFound, "/qrcode")
-		return
-	}
-
-	qrDir := config.QRCodeDir()
-	os.MkdirAll(qrDir, 0755)
-
-	count := 0
-	for _, arsipID := range arsipIDs {
-		var arsip models.Arsip
-		if database.DB.First(&arsip, "id = ?", arsipID).Error != nil {
-			continue
-		}
-
-		filename := fmt.Sprintf("qr_%s.png", arsip.ID)
-		path := filepath.Join(qrDir, filename)
-		qrData := fmt.Sprintf("/arsip/%s", arsip.ID)
-
-		if err := qrcode.WriteFile(qrData, qrcode.Medium, 256, path); err != nil {
-			continue
-		}
-
-		database.DB.Where("arsip_id = ?", arsipID).Delete(&models.QrCode{})
-		qr := models.QrCode{
-			ID: uuid.New().String(), ArsipID: &arsipID,
-			QrType: "arsip", QrCodePath: path, QrData: qrData, IsActive: true,
-		}
-		database.DB.Create(&qr)
-		count++
-	}
-
-	middleware.SetFlash(c, "success", fmt.Sprintf("%d QR Code berhasil dibuat.", count))
-	c.Redirect(http.StatusFound, "/qrcode")
-}
-
-func (h *QrCodeHandler) Deactivate(c *gin.Context) {
-	id := c.Param("id")
-	database.DB.Model(&models.QrCode{}).Where("id = ?", id).Update("is_active", false)
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-func (h *QrCodeHandler) CheckLocation(c *gin.Context) {
-	arsipID := c.Param("arsipId")
-	var qr models.QrCode
-	if err := database.DB.Where("arsip_id = ?", arsipID).First(&qr).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "QR Code tidak ditemukan"})
-		return
-	}
-	location := map[string]interface{}{
-		"box_number":    qr.BoxNumber,
-		"shelf":         qr.ShelfLocation,
-		"room":          qr.RoomLocation,
-		"location_data": qr.LocationData,
-		"scan_count":    qr.ScanCount,
-		"last_scanned":  qr.LastScannedAt,
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "location": location})
-}
-
-func (h *QrCodeHandler) GetByLocation(c *gin.Context) {
-	boxNumber := c.Query("box")
-	shelf := c.Query("shelf")
-	db := database.DB.Model(&models.QrCode{}).Preload("Arsip")
-	if boxNumber != "" {
-		db = db.Where("box_number = ?", boxNumber)
-	}
-	if shelf != "" {
-		db = db.Where("shelf_location = ?", shelf)
-	}
-	var list []models.QrCode
-	db.Find(&list)
-	c.JSON(http.StatusOK, gin.H{"data": list})
 }
 
 // ── OCR ───────────────────────────────────────────────────────────────────────
@@ -741,7 +455,7 @@ func (h *OcrHandler) Index(c *gin.Context) {
 	Render(c, 200, "ocr/index.html", gin.H{
 		"title": "OCR - Text Extraction - SIMARC", "pageTitle": "OCR - Ekstraksi Teks",
 		"supportedFormats": []string{"JPG", "JPEG", "PNG", "PDF"},
-		"Languages": languages,
+		"Languages":        languages,
 	})
 }
 
@@ -784,10 +498,10 @@ func (h *OcrHandler) Process(c *gin.Context) {
 			"text": text,
 		},
 		"stats": gin.H{
-			"characters":     len(text),
-			"words":          words,
-			"lines":          lines,
-			"pages":          1,
+			"characters":      len(text),
+			"words":           words,
+			"lines":           lines,
+			"pages":           1,
 			"processing_time": elapsed.Milliseconds(),
 		},
 		"filename": file.Filename,
@@ -1048,7 +762,7 @@ func (h *BackupHandler) Index(c *gin.Context) {
 		"CanBackup":      config.CanBackup(),
 		"CanRestore":     config.CanRestore(),
 		"IsVercel":       config.IsVercel(),
-		"Total": total, "Page": page, "PerPage": perPage,
+		"Total":          total, "Page": page, "PerPage": perPage,
 		"TotalPages": totalPages, "StartIndex": offset + 1,
 		"FirstItem":  offset + 1,
 		"LastItem":   offset + len(logs),
@@ -1179,33 +893,7 @@ func backupWithMysqldump(isJSON bool) ([]byte, error) {
 // current database that should be skipped when creating a backup. Only tables
 // that actually exist are returned so mysqldump never fails on a missing one.
 func legacyBackupExcludeTables() []string {
-	excluded := map[string]bool{
-		// Laravel Telescope debug traces (~95MB on migrated installs)
-		"telescope_entries": true, "telescope_entries_tags": true, "telescope_monitoring": true,
-		// Caches — dapat dihasilkan ulang, bukan data
-		"ai_classification_cache": true, "ai_classification_caches": true, "analytics_cache": true,
-		// Infrastruktur / autentikasi Laravel lama
-		"failed_jobs": true, "jobs": true, "migrations": true, "tenants": true,
-		// Duplikat skema Laravel (aplikasi Go memakai bentuk tunggal: arsip, jadwal_retensi, dll)
-		"arsips": true, "jadwal_retensis": true, "jadwal_retensi_arsips": true,
-		"jenis_arsips": true, "kode_klasifikasis": true, "pemberkasans": true,
-		"unit_kerjas": true, "pemusnahan_arsips": true,
-	}
-	var rows []struct {
-		TableName string `gorm:"column:table_name"`
-	}
-	if err := database.DB.Raw(
-		"SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()",
-	).Scan(&rows).Error; err != nil {
-		return nil
-	}
-	var out []string
-	for _, r := range rows {
-		if excluded[r.TableName] {
-			out = append(out, r.TableName)
-		}
-	}
-	return out
+	return services.LegacyExcludeTables()
 }
 
 // saveBackupAndRespond saves the backup to disk, logs it, and responds.
@@ -1453,8 +1141,8 @@ func (h *BackupHandler) SaveGDriveFile(c *gin.Context) {
 
 	database.DB.Model(&log).Updates(map[string]interface{}{
 		"google_drive_file_id": req.GoogleDriveFileID,
-		"google_drive_url":    req.GoogleDriveURL,
-		"cloud_provider":      "google_drive",
+		"google_drive_url":     req.GoogleDriveURL,
+		"cloud_provider":       "google_drive",
 	})
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -1498,7 +1186,7 @@ func (h *MonitoringHandler) Retensi(c *gin.Context) {
 	database.DB.Model(&models.Arsip{}).Where("tanggal_retensi_berakhir < ?", time.Now()).Count(&sudahBerakhir)
 	database.DB.Model(&models.Arsip{}).Where("tanggal_retensi_berakhir BETWEEN ? AND ?", time.Now(), time.Now().AddDate(1, 0, 0)).Count(&akanBerakhir)
 	database.DB.Model(&models.Arsip{}).Where("(tanggal_retensi_berakhir IS NULL OR tanggal_retensi_berakhir > ?) AND status_arsip != 'musnah'", time.Now().AddDate(1, 0, 0)).Count(&masihAktif)
-	
+
 	// Build list with computed fields
 	now := time.Now()
 	enhancedList := make([]retensiArsipItem, 0, len(list))
@@ -1513,13 +1201,13 @@ func (h *MonitoringHandler) Retensi(c *gin.Context) {
 			sisaRetensi = a.TanggalRetensiAkhir.Sub(now).Hours() / 24 / 365.25
 		}
 		enhancedList = append(enhancedList, retensiArsipItem{
-			Arsip:                       a,
-			TotalRetensi:                totalRetensi,
+			Arsip:                         a,
+			TotalRetensi:                  totalRetensi,
 			TanggalRetensiBerakhirExpired: expired,
-			SisaRetensi:                 sisaRetensi,
+			SisaRetensi:                   sisaRetensi,
 		})
 	}
-	
+
 	Render(c, 200, "monitoring/retensi.html", gin.H{
 		"title": "Monitoring Retensi - SIMARC", "pageTitle": "Monitoring Retensi", "List": enhancedList,
 		"Total": total, "Page": page, "PerPage": perPage,
@@ -1547,8 +1235,6 @@ func HealthCheck(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().Format(time.RFC3339), "app": config.App.AppName, "deploy": "a62435b-activitylog-fix"})
 }
-
-
 
 // ── BACKUP HELPERS ────────────────────────────────────────────────────────────
 

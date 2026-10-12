@@ -135,7 +135,6 @@ func Migrate() error {
 			&models.LoginLog{},
 			&models.ActivityLog{},
 			&models.AuditLog{},
-			&models.QrCode{},
 			&models.OcrTempImage{},
 			&models.BlockchainAudit{},
 			&models.PeminjamanArsip{},
@@ -144,9 +143,6 @@ func Migrate() error {
 			&models.SavedSearch{},
 			&models.BackupLog{},
 			&models.Notification{},
-			&models.Integration{},
-			&models.ImportExportJob{},
-			&models.DashboardWidget{},
 
 			&models.ComplianceScore{},
 			&models.LeaderboardStat{},
@@ -209,9 +205,6 @@ func Migrate() error {
 	addBackupLogGDriveColumns()
 	addBackupLogContentColumn()
 	addArsipGDriveURLColumn()
-
-	// Align legacy Laravel-era integration tables with the Go models.
-	alignIntegrationTables()
 
 	// jADWAL drop OK karena tidak ada data referensi lagi pada legacy schema.
 	dropJenisLokasiColumnIfUnused()
@@ -562,47 +555,6 @@ func ensureActivityLogAutoIncrement() {
 	log.Println("[MIGRASI] Menambahkan AUTO_INCREMENT ke kolom id tabel activity_logs")
 }
 
-// alignIntegrationTables adapts the legacy Laravel schema of integrations and
-// integration_logs so the Go models can insert into them. The Go model writes
-// request_body/response_body/status_code which the legacy tables lack, while
-// the legacy NOT NULL columns (provider, status, created_by, records_*) are
-// never populated by the Go code — every insert silently failed. Both tables
-// are expected to be empty or near-empty; the ALTERs are idempotent.
-func alignIntegrationTables() {
-	if !tableExists("integrations") {
-		return
-	}
-	log.Println("[MIGRASI] Menyesuaikan skema tabel integrasi legacy...")
-	DB.Exec("ALTER TABLE integrations MODIFY COLUMN provider VARCHAR(50) NULL DEFAULT 'custom'")
-	DB.Exec("ALTER TABLE integrations MODIFY COLUMN status VARCHAR(20) NULL DEFAULT 'active'")
-	DB.Exec("ALTER TABLE integrations MODIFY COLUMN created_by VARCHAR(36) NULL")
-	if !columnExists("integrations", "request_body") {
-		DB.Exec("ALTER TABLE integrations ADD COLUMN request_body TEXT NULL")
-	}
-	if !columnExists("integrations", "response_body") {
-		DB.Exec("ALTER TABLE integrations ADD COLUMN response_body TEXT NULL")
-	}
-	if !columnExists("integrations", "status_code") {
-		DB.Exec("ALTER TABLE integrations ADD COLUMN status_code INT NULL DEFAULT 0")
-	}
-	if tableExists("integration_logs") {
-		DB.Exec("ALTER TABLE integration_logs MODIFY COLUMN records_processed INT NULL DEFAULT 0")
-		DB.Exec("ALTER TABLE integration_logs MODIFY COLUMN records_created INT NULL DEFAULT 0")
-		DB.Exec("ALTER TABLE integration_logs MODIFY COLUMN records_updated INT NULL DEFAULT 0")
-		DB.Exec("ALTER TABLE integration_logs MODIFY COLUMN records_failed INT NULL DEFAULT 0")
-		// The Go model writes these columns; the legacy table never had them.
-		if !columnExists("integration_logs", "request_body") {
-			DB.Exec("ALTER TABLE integration_logs ADD COLUMN request_body TEXT NULL")
-		}
-		if !columnExists("integration_logs", "response_body") {
-			DB.Exec("ALTER TABLE integration_logs ADD COLUMN response_body TEXT NULL")
-		}
-		if !columnExists("integration_logs", "status_code") {
-			DB.Exec("ALTER TABLE integration_logs ADD COLUMN status_code INT NULL DEFAULT 0")
-		}
-	}
-}
-
 // dropJenisLokasiColumnIfUnused removed the legacy jenis_lokasi column from lokasi_arsips.
 // SAFE: it was added and removed multiple times historically and is not referenced in code;
 // we drop only if it has been retained by an older schema.
@@ -618,4 +570,3 @@ func dropJenisLokasiColumnIfUnused() {
 		log.Println("[MIGRASI] Kolom jenis_lokasi sudah tidak ada, dilewati")
 	}
 }
-

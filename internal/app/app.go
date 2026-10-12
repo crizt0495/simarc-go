@@ -150,6 +150,8 @@ func Init() (*gin.Engine, error) {
 	}
 	middleware.InitSession()
 	services.InitQueue(3, services.ProcessJob)
+	// Offsite (cloud) backup scheduler — server mode only, opt-in via settings.
+	services.StartOffsiteScheduler()
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -226,9 +228,9 @@ func buildTemplates(r *gin.Engine) {
 		"unit-kerja", "lokasi-arsip", "jenis-arsip", "pemberkasan",
 		"pemusnahan", "jadwal-retensi", "users", "role", "profil",
 		"pengaturan", "search", "peminjaman",
-		"laporan", "laporan/lokasi", "qrcode", "ocr", "blockchain",
-		"backup", "monitoring", "disposal", "import-export",
-		"integrations", "retention", "settings", "mobile", "supervision",
+		"laporan", "laporan/lokasi", "ocr", "blockchain",
+		"backup", "monitoring", "disposal",
+		"retention", "settings", "mobile", "supervision",
 		"viewer",
 	}
 
