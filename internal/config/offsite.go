@@ -28,6 +28,10 @@ type OffsiteConfig struct {
 	DBPass   string
 	DBTLS    string // disabled | preferred | required | verify
 	DBCAFile string
+	// IncludeLegacy, when true, mirrors *every* table so the cloud copy is a
+	// true 1:1 duplicate. When false (default) the large/unused legacy tables
+	// (Laravel Telescope, caches, duplicate plural tables) are skipped.
+	IncludeLegacy bool
 
 	// S3-compatible object storage (Cloudflare R2 / Backblaze B2 / MinIO)
 	S3Endpoint  string
@@ -64,6 +68,8 @@ func LoadOffsite() OffsiteConfig {
 		DBPass:   os.Getenv("OFFSITE_DB_PASS"),
 		DBTLS:    getEnv("OFFSITE_DB_TLS", "required"),
 		DBCAFile: os.Getenv("OFFSITE_DB_CA_FILE"),
+
+		IncludeLegacy: getBoolEnv("OFFSITE_DB_INCLUDE_LEGACY", false),
 
 		S3Endpoint:  os.Getenv("OFFSITE_S3_ENDPOINT"),
 		S3Region:    getEnv("OFFSITE_S3_REGION", "auto"),

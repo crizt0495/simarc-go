@@ -26,8 +26,11 @@ layanan cloud gratis, sebagai cadangan jika server lokal rusak/hilang.
 ```
 
 - **Database:** `mysqldump` database lokal lalu diimpor ke database cloud.
-  Tabel-tabel lama/debug (Laravel Telescope, cache, tabel duplikat) dikecualikan
-  agar ukuran dump kecil (~10 MB, bukan ~172 MB).
+  Secara default tabel lama/debug (Laravel Telescope, cache, tabel duplikat)
+  dilewati agar dump kecil (~10 MB). Dengan opsi **Mirror 100% (1:1)**
+  (`OFFSITE_DB_INCLUDE_LEGACY=true`) **semua** tabel disalin sehingga salinan
+  cloud identik byte-per-byte dengan lokal (dump ~125 MB; masih dalam kuota
+  gratis Aiven 1 GB).
 - Dump memakai `--hex-blob` supaya kolom biner (BLOB) tercatat sebagai literal
   heksadesimal dan byte-nya **identik** setelah diimpor ke MySQL (tanpa ini,
   `backup_logs.file_content` bisa berubah 2 byte karena escaping teks).
@@ -147,6 +150,7 @@ OFFSITE_DB_USER=avnadmin
 OFFSITE_DB_PASS=********
 OFFSITE_DB_TLS=required       # disabled | preferred | required | verify
 OFFSITE_DB_CA_FILE=           # path ca.pem (opsional, untuk TLS=verify)
+OFFSITE_DB_INCLUDE_LEGACY=true # true = mirror 100% (semua tabel); false = lewati tabel legacy
 
 # Object storage (S3-compatible)
 OFFSITE_S3_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
@@ -208,9 +212,13 @@ cat storage/app/offsite/status.json
 
 - Klien `mysql`/`mysqldump` di server adalah **MariaDB**, sehingga argumen TLS
   disesuaikan otomatis (`--ssl` / `--skip-ssl`), bukan `--ssl-mode` milik MySQL.
-- Tabel yang dikecualikan dari dump: `telescope_entries`, `telescope_entries_tags`,
-  `telescope_monitoring`, cache AI/analytics, `failed_jobs`, `jobs`, `migrations`,
-  `tenants`, dan tabel duplikat bentuk jamak (`arsips`, `jenis_arsips`, dll).
+- Tabel yang **dilewati** dari dump saat `OFFSITE_DB_INCLUDE_LEGACY=false`:
+  `telescope_entries`, `telescope_entries_tags`, `telescope_monitoring`, cache
+  AI/analytics, `failed_jobs`, `jobs`, `migrations`, `tenants`, dan tabel
+  duplikat bentuk jamak (`arsips`, `jenis_arsips`, dll). Dengan
+  `OFFSITE_DB_INCLUDE_LEGACY=true` **tidak ada** tabel yang dilewati (mirror 1:1).
+- Agar salinan cloud benar-benar identik, opsi **Mirror 100% (1:1)** disarankan
+  aktif: seluruh 71 tabel disalin dan data diverifikasi byte-per-byte.
 - Penjadwal berjalan **di dalam proses server** dan tidak aktif pada mode klien
   atau saat dijalankan di Vercel.
 - Untuk backend rclone, binary `rclone` harus tersedia di `PATH` user yang

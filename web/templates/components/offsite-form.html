@@ -194,6 +194,21 @@
                 </div>
             </div>
 
+            <div class="form-check form-switch mt-3">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="offsite_db_include_legacy" name="offsite_db_include_legacy"
+                       {{if .Offsite.IncludeLegacy}}checked{{end}}>
+                <label class="form-check-label" for="offsite_db_include_legacy">
+                    Mirror 100% (1:1) &mdash; sertakan tabel legacy/debug
+                </label>
+                <div class="form-text">
+                    Bila dicentang, <strong>semua</strong> tabel disalin ke cloud (termasuk
+                    Telescope, cache, dan tabel duplikat) sehingga salinan cloud identik
+                    dengan database lokal. Lebih besar &amp; lebih lambat (~2&times;), tapi
+                    benar-benar 1:1. Bila tidak dicentang, tabel legacy dilewati.
+                </div>
+            </div>
+
             <hr>
 
             <div class="d-flex flex-wrap align-items-center gap-2">

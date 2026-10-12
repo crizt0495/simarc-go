@@ -1018,6 +1018,8 @@ func offsiteSettingsForTemplate() gin.H {
 		"DBTLS":     off.DBTLS,
 		"DBCAFile":  off.DBCAFile,
 
+		"IncludeLegacy": off.IncludeLegacy,
+
 		"S3Endpoint":  off.S3Endpoint,
 		"S3Region":    off.S3Region,
 		"S3Bucket":    off.S3Bucket,

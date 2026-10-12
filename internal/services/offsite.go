@@ -80,7 +80,9 @@ func offsiteDir() string {
 }
 
 // dumpLocalDatabase runs mysqldump against the local database and returns the
-// SQL bytes. Legacy/debug tables are excluded so the dump stays small.
+// SQL bytes. When called with no table names it dumps the whole database: the
+// legacy/debug tables are skipped only when OffsiteConfig.IncludeLegacy is
+// false (the dump stays small); with IncludeLegacy=true it is a full 1:1 copy.
 func dumpLocalDatabase(tables ...string) ([]byte, error) {
 	if !config.CanBackup() {
 		return nil, fmt.Errorf("mysqldump tidak tersedia di sistem ini")
@@ -106,8 +108,11 @@ func dumpLocalDatabase(tables ...string) ([]byte, error) {
 		"--hex-blob",
 	}
 	if len(tables) == 0 {
-		for _, t := range LegacyExcludeTables() {
-			args = append(args, "--ignore-table="+dbName+"."+t)
+		// Full 1:1 mirror (include legacy tables) unless the operator opted out.
+		if !config.LoadOffsite().IncludeLegacy {
+			for _, t := range LegacyExcludeTables() {
+				args = append(args, "--ignore-table="+dbName+"."+t)
+			}
 		}
 		// backup_logs is mirrored separately (see syncBackupLogsToCloud) right
 		// after the run records itself, so the cloud copy includes the newest
