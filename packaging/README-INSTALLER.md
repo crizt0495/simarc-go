@@ -20,7 +20,23 @@ Uninstall:
 sudo dpkg -r simarc
 ```
 
-## 2) Windows — ZIP Standalone Installer/Updater (DIREKOMENDASIKAN)
+## 2) Windows — Installer SATU FILE (.exe) (DIREKOMENDASIKAN)
+
+File: `dist/SIMARC-Setup-<versi>.exe` (+ `...-arm64.exe`)
+(dibuat dengan `bash packaging/make-windows-package.sh`, dari Linux/CI)
+
+Satu berkas ini **sudah memuat seluruh aplikasi** (biner server, web/, template,
+dokumentasi, `.env.example`, skrip integrasi desktop). **Tidak perlu folder
+lain** — cukup salin satu `.exe` ke komputer tujuan lalu klik dua kali.
+
+**UPDATE revisi kode / versi baru — TANPA uninstall, TANPA install ulang:**
+salin `SIMARC-Setup-<versi-baru>.exe` → klik dua kali. File aplikasi ditimpa
+in-place; `.env` dan `storage\` **tidak pernah disentuh**.
+
+Butuh admin? **Tidak.** Butuh Inno Setup? **Tidak** (dibangun dengan Go).
+Install per-user ke `%LocalAppData%\SIMARC`.
+
+## 2a) Windows — ZIP Standalone Installer/Updater (alternatif folder)
 
 File: `dist/SIMARC-Windows-<versi>.zip`
 (dibuat dengan `bash packaging/make-windows-package.sh`, bisa dari Linux/CI)

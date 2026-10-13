@@ -67,3 +67,35 @@ cd "$ROOT"
 echo "==> OK: $OUT ($(du -h "$OUT" | cut -f1))"
 echo "    Isi:"; unzip -l "$OUT" | grep -E "run.bat|simarc-server-windows|SIMARC-Setup|Install-SIMARC|\.env\.example|VERSION" | head -12
 echo "    Pastikan TIDAK ada .env maupun storage/ di dalam paket:"; unzip -l "$OUT" | grep -E "(^|/)(\.env|storage)/" | grep -v "\.env\.example" || echo "    aman — tidak ada (.env maupun storage)."
+
+# ── Installer SATU FILE (.exe self-extracting) ──────────────────────────────
+#  Satu .exe memuat seluruh payload (biner server + web/ + skrip) lalu
+#  menjalankan SIMARC-Setup.ps1. Cukup SALIN 1 file ke komputer lain.
+build_installer() {
+  local arch="$1" out="$2"
+  local bdir; bdir="$(mktemp -d /tmp/opencode/simarc-inst-XXXXXX)"
+  cp -f packaging/windows/installer/go.mod  "$bdir/"
+  cp -f packaging/windows/installer/main.go "$bdir/"
+  mkdir -p "$bdir/payload"
+  cp -a "$STAGE/." "$bdir/payload/"
+  # Tiap installer hanya memuat biner yang sesuai arsitekturnya (hemat ukuran).
+  if [ "$arch" = "amd64" ]; then
+    rm -f "$bdir/payload/dist/simarc-server-windows-arm64.exe"
+  else
+    rm -f "$bdir/payload/dist/simarc-server-windows-amd64.exe"
+  fi
+  ( cd "$bdir" && GOFLAGS= GOWORK=off GO111MODULE=on GOOS=windows GOARCH="$arch" CGO_ENABLED=0 \
+      go build -trimpath -ldflags="-s -w" -o "$out" . )
+  rm -rf "$bdir"
+}
+
+echo "==> Membangun installer SATU FILE (Windows .exe)..."
+EXE_AMD="$ROOT/dist/SIMARC-Setup-${VERSION_CLEAN}.exe"
+build_installer amd64 "$EXE_AMD"
+echo "==> OK: $EXE_AMD ($(du -h "$EXE_AMD" | cut -f1))"
+if [ -f dist/simarc-server-windows-arm64.exe ]; then
+  EXE_ARM="$ROOT/dist/SIMARC-Setup-${VERSION_CLEAN}-arm64.exe"
+  build_installer arm64 "$EXE_ARM"
+  echo "==> OK: $EXE_ARM ($(du -h "$EXE_ARM" | cut -f1))"
+fi
+echo "    Cukup SALIN: dist/SIMARC-Setup-${VERSION_CLEAN}.exe  (satu file) ke komputer lain, lalu klik dua kali."
