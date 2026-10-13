@@ -476,6 +476,10 @@ func registerRoutes(r *gin.Engine) {
 		dbSetup.POST("/save", pengaturanAdvH.DatabaseSave)
 	}
 
+	// Database recovery page — public, and kept reachable by recoveryGuard
+	// even when the database is down (loopback-only for changes in that mode).
+	r.GET("/database-setup", pengaturanAdvH.DatabaseSetupPage)
+
 	// ═══════════════════════════════════════════════
 	// ADVANCED ROUTES (Tier A, B, C)
 	// ═══════════════════════════════════════════════

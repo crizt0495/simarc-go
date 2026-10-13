@@ -378,25 +378,47 @@ func recoveryGuard(r *gin.Engine) {
 	}
 
 	r.Use(func(c *gin.Context) {
-		if database.DB == nil && c.Request.URL.Path != "/health" && c.Request.URL.Path != "/ping" {
+		path := c.Request.URL.Path
+		allowed := recoveryPathAllowed(path)
+		if database.DB == nil && !allowed {
 			tryReconnect()
 		}
-		if database.DB == nil {
-			path := c.Request.URL.Path
-			if path == "/health" || path == "/ping" {
-				c.Next()
+		if database.DB == nil && !allowed {
+			// Send the user straight to the recovery form instead of a dead
+			// end — important for the desktop app, which opens "/" on startup.
+			if c.Request.Method == http.MethodGet && (path == "/" || path == "/viewer" || path == "/login") {
+				c.Redirect(http.StatusFound, "/database-setup")
+				c.Abort()
 				return
 			}
 			handlers.Render(c, http.StatusServiceUnavailable, "errors/503.html", gin.H{
 				"title":     "Database Tidak Tersedia",
 				"pageTitle": "Database Tidak Tersedia",
-				"message":   "Aplikasi tidak dapat terhubung ke database. Hubungi administrator.",
+				"message":   "Aplikasi tidak dapat terhubung ke database. Klik \"Konfigurasi Database\" untuk memperbaikinya, atau hubungi administrator.",
 			})
 			c.Abort()
 			return
 		}
 		c.Next()
 	})
+}
+
+// recoveryPathAllowed reports whether a request path must stay reachable while
+// the database is unreachable: health probes, plus the database recovery page
+// and its API so the connection can be repaired from the UI.
+func recoveryPathAllowed(path string) bool {
+	switch path {
+	case "/health", "/ping", "/database-setup",
+		"/pengaturan/database/test", "/pengaturan/database/save",
+		"/favicon.ico", "/sw.js", "/manifest.json":
+		return true
+	}
+	for _, p := range []string{"/css/", "/js/", "/images/", "/vendor/", "/storage/"} {
+		if strings.HasPrefix(path, p) {
+			return true
+		}
+	}
+	return false
 }
 
 // registerAppRoutes mounts all application routes.

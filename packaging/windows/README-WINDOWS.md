@@ -47,6 +47,39 @@ jendela mandiri (Chromium/Edge). Butuh browser Chrome/Edge sudah terpasang.
 
 Tidak butuh hak admin, tidak butuh Go. Install ke `%LocalAppData%\SIMARC`.
 
+## 2.1) Komputer BARU tanpa database — "Database Tidak Tersedia"
+
+Bila SIMARC dibuka di komputer yang **belum punya database** `simarc`, aplikasi
+**tidak lagi menampilkan layar buntu**: otomatis diarahkan ke **halaman
+Konfigurasi Database** (`/database-setup`). Alur lengkapnya:
+
+1. Pasang **MySQL/MariaDB** di komputer itu (mis. MariaDB 10.11) dan pastikan
+   servisnya berjalan.
+2. Buka SIMARC — Anda diarahkan ke halaman **Konfigurasi Database**.
+3. Isi form:
+   - **Host**: `127.0.0.1`
+   - **Port**: `3306`
+   - **Nama database**: `simarc`
+   - **Username / Password**: kredensial MySQL yang berhak membuat database
+     (mis. `root`).
+4. Klik **Uji Koneksi**. Jika database belum ada, muncul pesan
+   *"Server database terjangkau, tetapi database "simarc" belum ada. Simpan
+   untuk membuatnya otomatis."*
+5. Klik **Simpan**. Aplikasi otomatis:
+   - **membuat database `simarc`**,
+   - menjalankan seluruh migrasi (membuat semua tabel),
+   - membuat akun admin awal **`admin` / `admin`**.
+6. Login `admin` / `admin`, lalu **ganti password** di menu Pengaturan.
+
+Keamanan: saat database bermasalah, perubahan konfigurasi database hanya
+diizinkan **dari komputer itu sendiri** (loopback) — klien lain di jaringan
+tidak bisa mengubahnya. Saat database normal, hanya **admin yang login** yang
+bisa mengubahnya dari menu **Pengaturan**.
+
+> Tidak punya hak `root`? Minta admin MySQL membuatkan sekali saja:
+> `CREATE DATABASE simarc CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+> lalu di halaman Konfigurasi Database cukup isi user/password yang berhak.
+
 ## 3) Cara UPDATE (revisi kode / versi baru) — TANPA uninstall
 
 Prosedur **satu langkah yang sama** untuk tiap revisi:

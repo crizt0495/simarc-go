@@ -122,6 +122,70 @@ func TestConnection(host, port, name, user, pass string) error {
 	return sqlDB.PingContext(ctx)
 }
 
+// ServerReachable reports whether the database server at host:port accepts the
+// given credentials — WITHOUT requiring the target database to exist. This lets
+// the setup page distinguish "server unreachable / bad credentials" from
+// "server fine, database not created yet".
+func ServerReachable(host, port, user, pass string) error {
+	db, err := openDB(host, port, "", user, pass)
+	if err != nil {
+		return err
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	defer sqlDB.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return sqlDB.PingContext(ctx)
+}
+
+// EnsureDatabase creates the named database if it does not already exist. It
+// connects to the server without selecting a database, so it works even when
+// the target database is missing (a fresh MySQL/MariaDB install). The
+// credentials must grant the CREATE privilege.
+func EnsureDatabase(host, port, name, user, pass string) error {
+	if !validDBName(name) {
+		return fmt.Errorf("nama database tidak valid: %q", name)
+	}
+	db, err := openDB(host, port, "", user, pass)
+	if err != nil {
+		return err
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	defer sqlDB.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return err
+	}
+	_, err = sqlDB.ExecContext(ctx, "CREATE DATABASE IF NOT EXISTS `"+name+"` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+	return err
+}
+
+// validDBName allows only characters safe to place inside backticks, so the
+// database name (which comes from a web form) cannot break out of the
+// CREATE DATABASE statement.
+func validDBName(name string) bool {
+	if name == "" || len(name) > 64 {
+		return false
+	}
+	for _, r := range name {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '$':
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 // Reconnect swaps the live connection to the values currently stored in
 // config.App, then re-runs migration + seed so the new database is ready.
 func Reconnect() error {

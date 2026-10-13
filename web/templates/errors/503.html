@@ -35,8 +35,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--surface);min-
 <div class="error-icon"><i class="bi bi-database-dash"></i></div>
 <div class="error-code">503</div>
 <h1 class="error-title">{{if .pageTitle}}{{.pageTitle}}{{else}}Layanan Tidak Tersedia{{end}}</h1>
-<p class="error-message">{{if .Message}}{{.Message}}{{else}}Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.{{end}}</p>
+<p class="error-message">{{if .message}}{{.message}}{{else}}Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.{{end}}</p>
+<div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
 <button onclick="location.reload()" class="btn-retry"><i class="bi bi-arrow-clockwise"></i> Coba Lagi</button>
+<a href="/database-setup" class="btn-retry" style="background:transparent;color:var(--brand);box-shadow:none;border:2px solid var(--brand)"><i class="bi bi-database-gear"></i> Konfigurasi Database</a>
+</div>
 </div>
 </div>
 <script src="/vendor/bootstrap/bootstrap.bundle.min.js?v={{.AssetVersion}}"></script>

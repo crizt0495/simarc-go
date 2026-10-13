@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"log"
+	"net"
 	"net/http"
 	"strings"
 
@@ -12,14 +14,49 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// dbSettingsAllowed returns true when the current request may manage the
-// database settings: only logged-in admins.
+// dbSettingsAllowed reports whether the current request may manage database
+// settings.
+//
+//   - Normal mode (DB connected): only logged-in admins.
+//   - Recovery mode (DB unreachable): the app is unusable and nobody can log
+//     in, so the connection MAY be fixed — but only from the local machine
+//     (loopback), so a remote LAN client cannot hijack the configuration.
 func dbSettingsAllowed(c *gin.Context) bool {
-	if !database.Connected() {
-		return false
+	if database.Connected() {
+		user := middleware.GetCurrentUser(c)
+		return user != nil && user.IsAdmin()
 	}
-	user := middleware.GetCurrentUser(c)
-	return user != nil && user.IsAdmin()
+	return isLoopbackClient(c)
+}
+
+// isLoopbackClient reports whether the request originated from this machine.
+//
+// It inspects the raw TCP peer (RemoteAddr) rather than c.ClientIP(), because
+// the latter honours X-Forwarded-For and could be spoofed by a remote LAN
+// client to bypass the recovery-mode restriction.
+func isLoopbackClient(c *gin.Context) bool {
+	host, _, err := net.SplitHostPort(c.Request.RemoteAddr)
+	if err != nil {
+		host = c.Request.RemoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+// DatabaseSetupPage renders the standalone database connection form. It is
+// reachable WITHOUT login so that it also works when the database is
+// unreachable (recoveryGuard keeps this path open in recovery mode).
+func (h *PengaturanAdvancedHandler) DatabaseSetupPage(c *gin.Context) {
+	Render(c, http.StatusOK, "auth/database-setup.html", gin.H{
+		"title":     "Konfigurasi Database - SIMARC",
+		"pageTitle": "Konfigurasi Database",
+		"DBInfo": gin.H{
+			"Host": config.App.DBHost,
+			"Port": config.App.DBPort,
+			"Name": config.App.DBName,
+			"User": config.App.DBUser,
+		},
+	})
 }
 
 // dbSettingsRedirect returns where to send the user after a save attempt.
@@ -50,6 +87,12 @@ func (h *PengaturanAdvancedHandler) DatabaseTest(c *gin.Context) {
 	}
 
 	if err := database.TestConnection(host, port, name, user, pass); err != nil {
+		// Distinguish "server reachable but database missing" from a genuine
+		// connection failure, so the user knows saving will create it.
+		if rerr := database.ServerReachable(host, port, user, pass); rerr == nil {
+			c.JSON(http.StatusOK, gin.H{"success": false, "message": "Server database terjangkau, tetapi database \"" + name + "\" belum ada. Simpan untuk membuatnya otomatis."})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"success": false, "message": "Gagal terhubung: " + err.Error()})
 		return
 	}
@@ -90,11 +133,21 @@ func (h *PengaturanAdvancedHandler) DatabaseSave(c *gin.Context) {
 		pass = config.App.DBPass
 	}
 
-	// Test the new settings first — never switch to a broken connection
+	// Test the new settings first — never switch to a broken connection.
+	// If the database simply does not exist yet (fresh MySQL/MariaDB install),
+	// create it automatically when the credentials allow it, then retry.
 	if err := database.TestConnection(host, port, name, user, pass); err != nil {
-		middleware.SetFlash(c, "error", "Koneksi ke database baru gagal, pengaturan TIDAK disimpan: "+err.Error())
-		c.Redirect(http.StatusFound, redirectTo)
-		return
+		if cerr := database.EnsureDatabase(host, port, name, user, pass); cerr != nil {
+			middleware.SetFlash(c, "error", "Koneksi ke database baru gagal, pengaturan TIDAK disimpan: "+err.Error())
+			c.Redirect(http.StatusFound, redirectTo)
+			return
+		}
+		if err2 := database.TestConnection(host, port, name, user, pass); err2 != nil {
+			middleware.SetFlash(c, "error", "Database \""+name+"\" dibuat, tetapi masih gagal terhubung: "+err2.Error())
+			c.Redirect(http.StatusFound, redirectTo)
+			return
+		}
+		log.Printf("Database %q dibuat otomatis dan berhasil terhubung", name)
 	}
 
 	// Remember the previous values so we can roll back on failure
