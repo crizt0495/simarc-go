@@ -5,7 +5,7 @@
  * Usage: node scripts/wcag-audit.js
  * Exit code: 0 = all AA pass, 1 = failure.
  *
- * Parses the REAL palette tokens from neo-brutalism.css :root (light) and
+ * Parses the REAL palette tokens from enterprise.css :root (light) and
  * [data-theme="dark"], then verifies every foreground/background pairing
  * the design system actually relies on meets WCAG 2.1 AA
  * (4.5:1 body text, 3.0:1 large graphical/UI).
@@ -17,7 +17,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const css = readFileSync(join(__dirname, '..', 'web', 'static', 'css', 'neo-brutalism.css'), 'utf8');
+const css = readFileSync(join(__dirname, '..', 'web', 'static', 'css', 'enterprise.css'), 'utf8');
 
 function hex2rgb(h, fallback = [0, 0, 0]) {
   h = (h || '').replace('#', '');
@@ -77,14 +77,14 @@ const checks = [
   ['L ink-4 on surface-2',     v('--nb-ink-4', L),      v('--nb-surface-2', L), 4.5],
   ['L ink-4 on surface-3',     v('--nb-ink-4', L),      v('--nb-surface-3', L), 4.5],
   // Light buttons: ink/white on fills
-  ['L on-primary on #FF4D00',  v('--nb-on-primary', L), v('--nb-primary', L),   4.5],
-  ['L on-primary-hover on dark', v('--nb-on-primary-hover', L), v('--nb-primary-dark', L), 4.5],
-  ['L on-success on success',  v('--nb-on-success', L), v('--nb-success', L),   4.5],
-  ['L on-danger on danger',    v('--nb-on-danger', L),  v('--nb-danger', L),    4.5],
-  ['L on-warning on warning',  v('--nb-on-warning', L), v('--nb-warning', L),   4.5],
-  ['L on-info on info',        v('--nb-on-info', L),    v('--nb-info', L),      4.5],
-  ['L on-dark on ink',         v('--nb-on-dark', L),    v('--nb-ink', L),       4.5],
-  ['L on-orange on orange',    v('--nb-on-primary', L), v('--nb-orange', L),    4.5],
+  ['L on-accent on primary',   v('--nb-on-accent', L),  v('--nb-primary', L),   4.5],
+  ['L on-accent on primary-dark', v('--nb-on-accent', L), v('--nb-primary-dark', L), 4.5],
+  ['L on-accent on success',   v('--nb-on-accent', L),  v('--nb-success', L),   4.5],
+  ['L on-accent on danger',    v('--nb-on-accent', L),  v('--nb-danger', L),    4.5],
+  ['L on-accent on warning',   v('--nb-on-accent', L),  v('--nb-warning', L),   4.5],
+  ['L on-accent on info',      v('--nb-on-accent', L),  v('--nb-info', L),      4.5],
+  ['L on-accent on ink',       v('--nb-on-accent', L),  v('--nb-ink', L),       4.5],
+  ['L on-accent on orange',    v('--nb-on-accent', L),  v('--nb-orange', L),    4.5],
   // Light: text/link accents on surfaces (4.5) & UI (3.0)
   ['L primary-dark on surface', v('--nb-primary-dark', L), v('--nb-surface', L), 4.5],
   ['L primary-dark on bg',     v('--nb-primary-dark', L),  v('--nb-bg', L),       4.5],
@@ -102,14 +102,14 @@ const checks = [
   ['L ink-2 on status-inactive-ish', v('--nb-ink-4', L), v('--nb-surface-3', L), 4.5],
 
   // ── Dark mode ──
-  ['D on-primary on primary',  v('--nb-on-primary', D), v('--nb-primary', D),   4.5],
-  ['D on-primary-hover on dark', v('--nb-on-primary-hover', D), v('--nb-primary-dark', D), 4.5],
-  ['D on-success on success',  v('--nb-on-success', D), v('--nb-success', D),   4.5],
-  ['D on-danger on danger',    v('--nb-on-danger', D),  v('--nb-danger', D),    4.5],
-  ['D on-warning on warning',  v('--nb-on-warning', D), v('--nb-warning', D),   4.5],
-  ['D on-info on info',        v('--nb-on-info', D),    v('--nb-info', D),      4.5],
-  ['D on-dark on ink',         v('--nb-on-dark', D),    v('--nb-ink', D),       4.5],
-  ['D on-orange on orange',    v('--nb-on-primary', D), v('--nb-orange', D),    4.5],
+  ['D on-accent on primary',   v('--nb-on-accent', D),  v('--nb-primary', D),   4.5],
+  ['D on-accent on primary-dark', v('--nb-on-accent', D), v('--nb-primary-dark', D), 4.5],
+  ['D on-accent on success',   v('--nb-on-accent', D),  v('--nb-success', D),   4.5],
+  ['D on-accent on danger',    v('--nb-on-accent', D),  v('--nb-danger', D),    4.5],
+  ['D on-accent on warning',   v('--nb-on-accent', D),  v('--nb-warning', D),   4.5],
+  ['D on-accent on info',      v('--nb-on-accent', D),  v('--nb-info', D),      4.5],
+  ['D on-accent on ink',       v('--nb-on-accent', D),  v('--nb-ink', D),       4.5],
+  ['D on-accent on orange',    v('--nb-on-accent', D),  v('--nb-orange', D),    4.5],
   // Dark body text
   ['D ink on bg',              v('--nb-ink', D),        v('--nb-bg', D),        4.5],
   ['D ink on surface',         v('--nb-ink', D),        v('--nb-surface', D),   4.5],
