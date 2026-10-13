@@ -95,15 +95,26 @@ Windows + Inno Setup 6:
 Skrip `.iss` sudah diset agar instalasi/upgrade **in-place** (AppId tetap,
 instal ke `%LocalAppData%\SIMARC`, `.env`/`storage` tidak pernah dipaket).
 
-## 7) Membangun ulang paket (dari kode sumber, di Linux/GitHub Actions)
+## 7) Membangun ulang installer (dari kode sumber, di Linux/GitHub Actions)
 
+**Cara cepat — hasilkan SATU file & rapikan `dist/` otomatis:**
 ```bash
-bash packaging/build-all.sh                 # biner + deb (sekali per rilis)
+bash packaging/build-windows-installer.sh
+# -> dist/SIMARC-Setup.exe   (dan dist/ dibersihkan: hanya 1 file)
+
+# varian ARM64 (opsional):
+SIMARC_BUILD_ARM64=1 bash packaging/build-windows-installer.sh
+# -> dist/SIMARC-Setup-arm64.exe
+```
+
+**Cara lengkap (semua OS + zip, untuk rilis besar):**
+```bash
+bash packaging/build-all.sh                 # biner Linux/Windows/macOS + deb
 bash packaging/make-windows-package.sh      # -> dist/SIMARC-Windows-<versi>.zip
                                             #    dist/SIMARC-Setup.exe          (satu file, amd64)
-                                            #    dist/SIMARC-Setup-arm64.exe    (opsional, ARM64)
 ```
 
 Installer `.exe` dibuat dengan cross-compile Go (lihat
 `packaging/windows/installer/`) — **tidak butuh Inno Setup**, bisa dibangun
 dari Linux. Hasilnya satu file yang memuat seluruh aplikasi.
+Tambahkan `SIMARC_KEEP_DIST=1` bila ingin skrip tidak membersihkan `dist/`.
