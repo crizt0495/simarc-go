@@ -74,6 +74,47 @@
   var flat = [];
   var activeIndex = 0;
 
+  /* ── Pencarian live ke database (omnibox Ctrl+K) ───────────────── */
+  var DATA_ICON = {
+    'arsip': 'bi-file-earmark-text',
+    'kode-klasifikasi': 'bi-tags',
+    'unit-kerja': 'bi-building',
+    'lokasi': 'bi-geo-alt'
+  };
+  var remote = { q: '', items: [], timer: 0, seq: 0 };
+
+  function clearRemote() { remote.q = ''; remote.items = []; }
+
+  function fetchRemote(q) {
+    var seq = ++remote.seq;
+    fetch('/api/cmdk/search?q=' + encodeURIComponent(q), {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+      .then(function (j) {
+        if (seq !== remote.seq) return;        // respons usang
+        if (input.value.trim() !== q) return;  // query sudah berubah
+        remote.q = q;
+        remote.items = ((j && j.data) || []).map(function (r) {
+          return {
+            id: 'data:' + r.type + ':' + (r.id || r.url),
+            label: r.title, hint: r.subtitle,
+            icon: DATA_ICON[r.type] || 'bi-database',
+            href: r.url
+          };
+        });
+        render(input.value);
+      })
+      .catch(function () { /* offline / API tidak tersedia: abaikan */ });
+  }
+
+  function scheduleRemote(q) {
+    clearTimeout(remote.timer);
+    if (!q || q.trim().length < 2) { remote.seq++; clearRemote(); return; }
+    remote.timer = setTimeout(function () { fetchRemote(q.trim()); }, 180);
+  }
+
   /* ── Util ─────────────────────────────────────────────────────── */
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -110,7 +151,7 @@
     try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]') || []; } catch (e) { return []; }
   }
   function addRecent(id) {
-    if (!id || id === '__search__') return;
+    if (!id || id === '__search__' || id.indexOf('data:') === 0) return;
     var arr = readRecents().filter(function (x) { return x !== id; });
     arr.unshift(id);
     if (arr.length > 5) arr = arr.slice(0, 5);
@@ -152,6 +193,7 @@
       var pseudo = { id: '__search__', label: 'Cari arsip: "' + q + '"', icon: 'bi-search',
                      href: '/search?q=' + encodeURIComponent(q), hint: 'Enter' };
       groups.push(['Pencarian', [pseudo]]);
+      if (remote.q === q && remote.items.length) groups.push(['Data', remote.items]);
       var nav = rank(NAV_ITEMS, q);
       var act = rank(ACTION_ITEMS, q);
       if (nav.length) groups.push(['Navigasi', nav]);
@@ -225,7 +267,10 @@
   }
 
   /* ── Events ───────────────────────────────────────────────────── */
-  input.addEventListener('input', function () { render(input.value); });
+  input.addEventListener('input', function () {
+    render(input.value);
+    scheduleRemote(input.value);
+  });
 
   input.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }

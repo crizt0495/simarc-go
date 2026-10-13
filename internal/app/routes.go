@@ -104,6 +104,7 @@ func registerRoutes(r *gin.Engine) {
 		// ═══════════════════════════════════════════
 		auth.GET("/search", searchH.Results)
 		auth.GET("/api/arsip/search/suggestions", arsipH.Suggestions)
+		auth.GET("/api/cmdk/search", handlers.CmdkSearch)
 		auth.POST("/arsip/export-search", arsipH.ExportSearch)
 
 		// ═══════════════════════════════════════════
