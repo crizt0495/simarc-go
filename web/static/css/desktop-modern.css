@@ -294,3 +294,32 @@ html.cmdk-open, html.cmdk-open body { overflow: hidden; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ── 7. Sidebar kiri (desktop ≥1200px) ──────────────────────────── */
+/* Sistem .sidebar sudah ada di enterprise.css (gelap, --sidebar-w).
+   Di sini kita mengaktifkannya di layar lebar dan menggeser topbar +
+   konten agar tidak tertutup; nav horizontal digantikan sidebar. */
+.simarc-sidebar { display: none; }
+
+@media (min-width: 1200px) {
+  .simarc-sidebar { display: block; }
+
+  /* Nav horizontal & brand topbar digantikan oleh sidebar */
+  .topbar-nav { display: none !important; }
+  .navbar-left .navbar-brand-mobile { display: none; }
+
+  .top-navbar { left: var(--sidebar-w); }
+  .main-content { margin-left: var(--sidebar-w); }
+}
+
+/* Mode rail (ikon saja) */
+html.simarc-rail-min { --sidebar-w: 76px; }
+html.simarc-rail-min .simarc-sidebar .sidebar-logo-text,
+html.simarc-rail-min .simarc-sidebar .sidebar-link span,
+html.simarc-rail-min .simarc-sidebar .sidebar-section-label,
+html.simarc-rail-min .simarc-sidebar .sidebar-footer-link span { display: none; }
+html.simarc-rail-min .simarc-sidebar .sidebar-header { justify-content: center; }
+html.simarc-rail-min .simarc-sidebar .sidebar-link,
+html.simarc-rail-min .simarc-sidebar .sidebar-footer-link { justify-content: center; padding-left: 0; padding-right: 0; }
+html.simarc-rail-min .simarc-sidebar .sidebar-section-label { padding: 0; height: 0.7rem; }
+html.simarc-rail-min .simarc-sidebar .sidebar-link i { width: auto; font-size: 1.05rem; }

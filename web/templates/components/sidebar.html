@@ -1,0 +1,67 @@
+{{define "components/sidebar.html"}}
+{{/* Sidebar kiri (desktop ≥1200px) — menggunakan kembali sistem .sidebar
+     yang sudah ada di enterprise.css. Tersembunyi di layar kecil. */}}
+<aside class="sidebar simarc-sidebar" id="appSidebar" aria-label="Navigasi utama">
+  <div class="sidebar-header">
+    <div class="sidebar-logo-icon"><i class="bi bi-archive-fill"></i></div>
+    <div class="sidebar-logo-text">
+      SIMARC
+      <div class="sidebar-logo-sub">Arsip Record Center</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-link {{if eq .CurrentPath "/dashboard"}}active{{end}}" href="/dashboard" title="Dashboard">
+      <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+    </a>
+
+    <span class="sidebar-section-label">Manajemen Arsip</span>
+    <a class="sidebar-link {{if eq .CurrentPath "/arsip"}}active{{end}}" href="/arsip"><i class="bi bi-file-earmark-text"></i><span>Daftar Arsip</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/arsip/create"}}active{{end}}" href="/arsip/create"><i class="bi bi-plus-circle"></i><span>Tambah Arsip</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/pemberkasan"}}active{{end}}" href="/pemberkasan"><i class="bi bi-folder-plus"></i><span>Pemberkasan</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/arsip/pemindahan"}}active{{end}}" href="/arsip/pemindahan"><i class="bi bi-map"></i><span>Pemindahan Arsip</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/pemusnahan"}}active{{end}}" href="/pemusnahan"><i class="bi bi-trash"></i><span>Pemusnahan Arsip</span></a>
+
+    <span class="sidebar-section-label">Layanan</span>
+    <a class="sidebar-link {{if eq .CurrentPath "/peminjaman/create"}}active{{end}}" href="/peminjaman/create"><i class="bi bi-file-earmark-arrow-up"></i><span>Permohonan Pinjam</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/peminjaman"}}active{{end}}" href="/peminjaman"><i class="bi bi-journal-check"></i><span>Daftar Peminjaman</span></a>
+
+    <span class="sidebar-section-label">Master Data</span>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/unit-kerja"}}active{{end}}" href="/unit-kerja"><i class="bi bi-building"></i><span>Unit Kerja</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/lokasi-arsip"}}active{{end}}" href="/lokasi-arsip"><i class="bi bi-geo-alt"></i><span>Lokasi Arsip</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/users"}}active{{end}}" href="/users"><i class="bi bi-people"></i><span>Petugas</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/kode-klasifikasi"}}active{{end}}" href="/kode-klasifikasi"><i class="bi bi-tags"></i><span>Kode Klasifikasi</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/jenis-arsip"}}active{{end}}" href="/jenis-arsip"><i class="bi bi-folder"></i><span>Jenis Arsip</span></a>
+
+    <span class="sidebar-section-label">Laporan</span>
+    <a class="sidebar-link {{if eq .CurrentPath "/search"}}active{{end}}" href="/search"><i class="bi bi-search"></i><span>Pencarian Arsip</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan"}}active{{end}}" href="/laporan"><i class="bi bi-graph-up"></i><span>Dashboard Laporan</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/arsip"}}active{{end}}" href="/laporan/arsip"><i class="bi bi-file-earmark-text"></i><span>Laporan Arsip</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/digital"}}active{{end}}" href="/laporan/digital"><i class="bi bi-cloud-check"></i><span>Arsip Digital</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/pemberkasan"}}active{{end}}" href="/laporan/pemberkasan"><i class="bi bi-folder"></i><span>Laporan Pemberkasan</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/lokasi"}}active{{end}}" href="/laporan/lokasi"><i class="bi bi-geo-alt"></i><span>Laporan per Lokasi</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/klasifikasi"}}active{{end}}" href="/laporan/klasifikasi"><i class="bi bi-tags"></i><span>Laporan Klasifikasi</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/retensi"}}active{{end}}" href="/laporan/retensi"><i class="bi bi-hourglass-split"></i><span>Laporan Retensi</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/pemusnahan"}}active{{end}}" href="/laporan/pemusnahan"><i class="bi bi-trash"></i><span>Laporan Pemusnahan</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/aktivitas"}}active{{end}}" href="/laporan/aktivitas"><i class="bi bi-clock-history"></i><span>Log Aktivitas</span></a>
+    <a class="sidebar-link {{if eq .CurrentPath "/laporan/statistik"}}active{{end}}" href="/laporan/statistik"><i class="bi bi-pie-chart"></i><span>Statistik</span></a>
+
+    <span class="sidebar-section-label">Monitoring</span>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/monitoring/retensi"}}active{{end}}" href="/monitoring/retensi"><i class="bi bi-clock"></i><span>Monitoring Retensi</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/jadwal-retensi"}}active{{end}}" href="/jadwal-retensi"><i class="bi bi-calendar-check"></i><span>Jadwal Retensi</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/disposal"}}active{{end}}" href="/disposal"><i class="bi bi-arrow-right-left"></i><span>Dashboard Penyusutan</span></a>
+
+    <span class="sidebar-section-label">Administrasi</span>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/roles"}}active{{end}}" href="/roles"><i class="bi bi-person-badge"></i><span>Manajemen Role</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/pengaturan"}}active{{end}}" href="/pengaturan"><i class="bi bi-gear"></i><span>Pengaturan</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/backup"}}active{{end}}" href="/backup"><i class="bi bi-database"></i><span>Backup &amp; Restore</span></a>
+    <a class="sidebar-link {{if hasPrefix .CurrentPath "/blockchain"}}active{{end}}" href="/blockchain"><i class="bi bi-shield-check"></i><span>Blockchain Audit</span></a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a class="sidebar-footer-link" href="/profil"><i class="bi bi-person-circle"></i><span>Profil Saya</span></a>
+    <a class="sidebar-footer-link" href="#" onclick="var f=document.getElementById('logout-form');if(f){f.submit();}return false;"><i class="bi bi-box-arrow-right"></i><span>Keluar</span></a>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="appSidebarOverlay" hidden></div>
+{{end}}

@@ -146,6 +146,8 @@ html, body { overflow-x: hidden; }
 </head>
 <body>
 
+{{template "components/sidebar.html" .}}
+
 <!-- Mobile Search Bar (hidden on mobile - using bottom nav search instead) -->
 <div class="mobile-search-bar" id="mobileSearchBar">
   <form action="/search" method="GET" style="display:contents;flex:1">
@@ -162,6 +164,9 @@ html, body { overflow-x: hidden; }
 <!-- Top Navbar -->
 <header class="top-navbar">
   <div class="navbar-left">
+    <button type="button" class="nav-icon-btn simarc-rail-toggle d-none d-xl-flex" id="sidebarToggle" title="Sembunyikan / tampilkan sidebar" aria-label="Sembunyikan atau tampilkan sidebar" aria-controls="appSidebar" aria-expanded="true">
+      <i class="bi bi-layout-sidebar-inset" id="sidebarToggleIcon"></i>
+    </button>
     <a href="/dashboard" class="navbar-brand-mobile" aria-label="SIMARC Beranda">
       <i class="bi bi-archive-fill"></i>
       <span>SIMARC</span>
@@ -786,6 +791,32 @@ if ('scrollBehavior' in document.documentElement.style) {
 
 /* ── Fix 300ms tap delay removal ── */
 document.addEventListener('touchstart', function() {}, { passive: true });
+</script>
+
+<script>
+/* ── Sidebar (rail) collapse — persisted di localStorage ── */
+(function () {
+  var KEY = 'simarc.nav.collapsed';
+  var html = document.documentElement;
+  var btn = document.getElementById('sidebarToggle');
+  var icon = document.getElementById('sidebarToggleIcon');
+
+  function apply(collapsed) {
+    html.classList.toggle('simarc-rail-min', collapsed);
+    if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    if (icon) icon.className = collapsed ? 'bi bi-layout-sidebar' : 'bi bi-layout-sidebar-inset';
+  }
+
+  var saved = false;
+  try { saved = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  apply(saved);
+
+  if (btn) btn.addEventListener('click', function () {
+    var next = !html.classList.contains('simarc-rail-min');
+    apply(next);
+    try { localStorage.setItem(KEY, next ? '1' : '0'); } catch (e) {}
+  });
+})();
 </script>
 </body>
 </html>
