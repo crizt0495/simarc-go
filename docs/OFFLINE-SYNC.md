@@ -171,3 +171,55 @@ Yang **tidak** disinkronkan secara sengaja:
 - **Mode klien** (`SIMARC_SERVER_URL`) tetap ada untuk kantor yang memilih
   satu server pusat + klien tipis. Sinkronisasi ini adalah alternatifnya: setiap
   komputer mandiri (offline) lalu menyatu otomatis.
+
+---
+
+## 9. Hub yang sudah disiapkan (komputer server kantor)
+
+Komputer ini sudah disiapkan sebagai **hub** LAN:
+
+- **Host hub**: `192.168.1.86` (port `3306`)
+- **Database hub**: `simarc`
+- **User khusus sinkronisasi**: `simarc_sync` (hanya boleh dari jaringan
+  `192.168.1.%`, hanya database `simarc`)
+- **TLS**: `preferred`
+
+Password user `simarc_sync` **tidak ditulis di dokumen ini** (agar tidak ikut
+tersimpan di Git). Password disimpan di file khusus hanya-baca root di server,
+dan dicetak saat penyiapan. Bila lupa, buat ulang dengan:
+
+```bash
+NEWPASS=$(openssl rand -hex 16)
+mysql -u chris -p -e "ALTER USER 'simarc_sync'@'192.168.1.%' IDENTIFIED BY '${NEWPASS}';"
+echo "Password baru: ${NEWPASS}"
+```
+
+### Isi ini di `.env` setiap komputer lain
+
+```dotenv
+SYNC_ENABLED=true
+SYNC_NODE_ID=komputer-nama-unik        # WAJIB berbeda tiap komputer
+SYNC_INTERVAL_MINUTES=15
+
+SYNC_HUB_DB_HOST=192.168.1.86
+SYNC_HUB_DB_PORT=3306
+SYNC_HUB_DB_NAME=simarc
+SYNC_HUB_DB_USER=simarc_sync
+SYNC_HUB_DB_PASS=<password simarc_sync>
+SYNC_HUB_DB_TLS=preferred
+```
+
+Setelah itu buka **Pengaturan → Sinkronisasi → Sinkronkan Sekarang**.
+
+### Catatan pemeliharaan hub
+
+- MariaDB di komputer ini kini mendengarkan di `0.0.0.0:3306`
+  (`bind-address` di `/etc/mysql/mariadb.conf.d/50-server.cnf`). Salinan
+  pengaturan lama: `50-server.cnf.simarc.bak`. Untuk menutup kembali ke LAN,
+  kembalikan `bind-address = 127.0.0.1` lalu
+  `sudo systemctl restart mariadb`.
+- Karena alamat LAN bisa berubah (DHCP), sebaiknya **set IP statis** atau
+  **reservasi DHCP** untuk komputer hub (`192.168.1.86`) agar alamat di `.env`
+  komputer lain tetap benar.
+- Hub **tidak perlu** menjalankan sinkronisasi (datanya sudah menjadi titik
+  temu). Cukup MySQL-nya hidup dan terjangkau.
