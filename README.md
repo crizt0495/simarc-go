@@ -119,14 +119,21 @@ Atur lewat `SIMARC_WINDOW` di `.env`:
 SIMARC_WINDOW=maximized
 ```
 
-### Satu database untuk banyak komputer (server pusat)
+### Satu database untuk banyak komputer (server pusat + klien)
 
 SIMARC menyimpan **berkas arsip di disk server** (database hanya mencatat
 lokasinya). Karena itu, jika setiap komputer menjalankan server sendiri —
 walaupun database-nya sama — berkas yang diunggah di satu komputer **tidak**
 akan muncul di komputer lain.
 
-Solusinya: jalankan **satu server pusat**, lalu komputer lain dijadikan **klien**.
+| Cara | Database terhubung? | Berkas ikut? | Disarankan |
+|------|:-------------------:|:------------:|:----------:|
+| Semua konek ke DB yang sama | Ya | ❌ | ❌ |
+| **Satu server pusat + sisanya klien** | Ya | ✅ | ✅ |
+
+Solusi yang benar: jalankan **satu server pusat**, lalu komputer lain menjadi
+**klien** (tidak menjalankan server/database lokal — hanya membuka jendela ke
+server pusat). Panduan lengkap: **[docs/MULTI-KOMPUTER.md](docs/MULTI-KOMPUTER.md)**.
 
 **1) Server pusat** (satu komputer / VPS — pemegang database & semua berkas):
 
@@ -136,23 +143,42 @@ SIMARC_NO_BROWSER=1 ./tmp/simarc-server
 ```
 
 Catat alamat jaringan yang tampil di banner (mis. `http://192.168.1.10:8080`)
-dan pastikan port tersebut **dibuka di firewall** LAN.
+dan pastikan port tersebut **dibuka di firewall** LAN. Agar otomatis menyala
+saat komputer dinyalakan: `sudo ./systemd/install-systemd.sh`.
 
-**2) Komputer klien** — cukup satu baris di `.env`:
+**2) Komputer klien** — arahkan ke alamat server pusat (tanpa MySQL lokal):
+
+```bash
+# Linux / macOS / WSL
+./setup-client.sh http://192.168.1.10:8080
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .\setup-client.ps1 -ServerUrl http://192.168.1.10:8080
+```
+
+Skrip menulis `SIMARC_SERVER_URL` ke `.env` dan menguji koneksi. Secara manual
+cukup satu baris di `.env` (contoh: `.env.client.example`):
 
 ```bash
 SIMARC_SERVER_URL=http://192.168.1.10:8080
 ```
 
 Lalu jalankan seperti biasa (`./run-desktop.sh`, `run.bat`, atau ikon **SIMARC**).
-Klien **tidak** menjalankan server/database lokal — hanya membuka jendela
-aplikasi ke server pusat. Hasilnya: semua komputer memakai database **dan**
-berkas yang sama, tanpa perlu menyalin data.
+Hasilnya: semua komputer memakai database **dan** berkas yang sama, tanpa perlu
+menyalin data.
 
-> Untuk beberapa komputer, "server pusat" dapat berupa salah satu komputer
-> kantor; untuk akses dari luar kantor gunakan domain + reverse proxy (HTTPS)
-> atau VPN. Bila `SIMARC_SERVER_URL` dibiarkan kosong, aplikasi kembali ke
-> mode server lokal seperti biasa.
+> Untuk akses dari luar kantor gunakan domain + reverse proxy (HTTPS) atau VPN —
+> jangan membuka MySQL langsung ke internet. Bila `SIMARC_SERVER_URL` dikosongkan,
+> aplikasi kembali ke mode server lokal seperti biasa (butuh MySQL lokal).
+
+**Troubleshooting singkat** (detail di [docs/MULTI-KOMPUTER.md](docs/MULTI-KOMPUTER.md)):
+
+| Gejala | Solusi |
+|--------|--------|
+| Klien "connection refused" | Server pusat mati / alamat salah |
+| Klien blank / terus memuat | Buka port (mis. 8080) di firewall server |
+| Muncul halaman *Konfigurasi Database* di klien | Isi `SIMARC_SERVER_URL` (mode klien) |
+| Berkas tidak muncul di komputer lain | Pastikan pakai mode klien, bukan server lokal |
 
 ### Server pusat otomatis menyala (systemd)
 
@@ -312,7 +338,10 @@ simarc/
 ├── run.bat                  # Launcher desktop (Windows)
 ├── setup.sh                 # Setup otomatis
 ├── simarc-control.sh        # Control panel
-├── packaging/build-all.sh    # Build semua installer ├── scripts/build-release.sh   # Build binary rilis (cross-compile) binary cross-compile
+├── packaging/build-all.sh     # Build semua installer (deb / exe)
+├── setup-client.sh            # Setup komputer klien (Linux / macOS)
+├── setup-client.ps1           # Setup komputer klien (Windows)
+├── run.ps1                    # Launcher Windows (PowerShell)
 ├── systemd/install-systemd.sh # Pasang server pusat sebagai layanan
 ├── systemd/simarc.service     # Template unit systemd
 ```

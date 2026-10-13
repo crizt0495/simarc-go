@@ -12,7 +12,10 @@ dist/
 node_modules/
 
 # ── Environment ──
-.env
+.env*
+# Izinkan template .env tetap dilacak (contoh untuk server & klien).
+!.env.example
+!.env.client.example
 
 # ── Runtime storage (regenerated) ──
 storage/app/backups/*
@@ -36,7 +39,6 @@ Thumbs.db
 # ── macOS app bundle symlink ──
 SIMARC.app
 .vercel
-.env*
 
 # ── Screenshots / captures (local artifacts) ──
 Screenshot_*.png
