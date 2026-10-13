@@ -137,7 +137,7 @@ func (LokasiArsip) TableName() string { return "lokasi_arsips" }
 // ── JENIS ARSIP ───────────────────────────────────────────────────────────────
 
 type JenisArsip struct {
-	ID         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID         string    `gorm:"type:char(36);primaryKey" json:"id"`
 	KodeJenis  string    `gorm:"size:50" json:"kode_jenis"`
 	NamaJenis  string    `gorm:"size:255;not null" json:"nama_jenis"`
 	Keterangan string    `gorm:"type:text" json:"keterangan"`
@@ -146,6 +146,14 @@ type JenisArsip struct {
 }
 
 func (JenisArsip) TableName() string { return "jenis_arsip" }
+
+// BeforeCreate supplies a UUID for new rows (see Arsip.BeforeCreate).
+func (j *JenisArsip) BeforeCreate(tx *gorm.DB) error {
+	if j.ID == "" {
+		j.ID = uuid.New().String()
+	}
+	return nil
+}
 
 // ── PEMBERKASAN ───────────────────────────────────────────────────────────────
 
@@ -178,7 +186,7 @@ type Arsip struct {
 	NomorArsip          string           `gorm:"size:100" json:"nomor_arsip"`
 	NamaArsip           string           `gorm:"size:500;not null" json:"nama_arsip"`
 	TingkatPerkembangan string           `gorm:"size:50" json:"tingkat_perkembangan"`
-	JenisArsipID        *uint            `json:"jenis_arsip_id"`
+	JenisArsipID        *string          `gorm:"type:char(36)" json:"jenis_arsip_id"`
 	Uraian              string           `gorm:"type:text" json:"uraian"`
 	KodeKlasifikasiID   string           `gorm:"type:char(36);not null" json:"kode_klasifikasi_id"`
 	UnitKerjaID         string           `gorm:"type:char(36);not null" json:"unit_kerja_id"`
@@ -308,7 +316,7 @@ type PemusnahanArsip struct {
 func (PemusnahanArsip) TableName() string { return "pemusnahan_arsip" }
 
 type PemusnahanItem struct {
-	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID           string    `gorm:"type:char(36);primaryKey" json:"id"`
 	PemusnahanID string    `gorm:"type:char(36);not null" json:"pemusnahan_id"`
 	ArsipID      string    `gorm:"type:char(36);not null" json:"arsip_id"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -316,6 +324,14 @@ type PemusnahanItem struct {
 }
 
 func (PemusnahanItem) TableName() string { return "pemusnahan_arsip_items" }
+
+// BeforeCreate supplies a UUID for new rows (see Arsip.BeforeCreate).
+func (p *PemusnahanItem) BeforeCreate(tx *gorm.DB) error {
+	if p.ID == "" {
+		p.ID = uuid.New().String()
+	}
+	return nil
+}
 
 // ── JADWAL RETENSI ────────────────────────────────────────────────────────────
 
@@ -469,7 +485,7 @@ func (OcrTempImage) TableName() string { return "ocr_temp_images" }
 // ── BLOCKCHAIN AUDIT ──────────────────────────────────────────────────────────
 
 type BlockchainAudit struct {
-	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID           string    `gorm:"type:char(36);primaryKey" json:"id"`
 	UUID         string    `gorm:"column:uuid;size:36" json:"uuid"`
 	PreviousHash string    `gorm:"column:previous_hash;size:64" json:"previous_hash"`
 	CurrentHash  string    `gorm:"column:current_hash;size:64" json:"current_hash"`
@@ -488,6 +504,14 @@ type BlockchainAudit struct {
 }
 
 func (BlockchainAudit) TableName() string { return "blockchain_audits" }
+
+// BeforeCreate supplies a UUID for new rows (see Arsip.BeforeCreate).
+func (b *BlockchainAudit) BeforeCreate(tx *gorm.DB) error {
+	if b.ID == "" {
+		b.ID = uuid.New().String()
+	}
+	return nil
+}
 
 // ── PEMINJAMAN ARSIP ──────────────────────────────────────────────────────────
 
@@ -949,7 +973,7 @@ type BeritaAcara struct {
 func (BeritaAcara) TableName() string { return "berita_acara" }
 
 type BeritaAcaraItem struct {
-	ID            uint         `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID            string       `gorm:"type:char(36);primaryKey" json:"id"`
 	BeritaAcaraID string       `gorm:"column:berita_acara_id;type:char(36);not null;index" json:"berita_acara_id"`
 	ArsipID       string       `gorm:"column:arsip_id;type:char(36);not null" json:"arsip_id"`
 	CreatedAt     time.Time    `json:"created_at"`
@@ -958,6 +982,14 @@ type BeritaAcaraItem struct {
 }
 
 func (BeritaAcaraItem) TableName() string { return "berita_acara_items" }
+
+// BeforeCreate supplies a UUID for new rows (see Arsip.BeforeCreate).
+func (b *BeritaAcaraItem) BeforeCreate(tx *gorm.DB) error {
+	if b.ID == "" {
+		b.ID = uuid.New().String()
+	}
+	return nil
+}
 
 // ── SEARCH LOG ────────────────────────────────────────────────────────────────
 

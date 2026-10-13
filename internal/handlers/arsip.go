@@ -366,12 +366,10 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 			// Cek apakah jenis arsip yang dipilih memiliki kode SPJ
 			var selectedJenis models.JenisArsip
 			if v := c.PostForm("jenis_arsip_id"); v != "" {
-				if id, err := strconv.ParseUint(v, 10, 64); err == nil {
-					if database.DB.First(&selectedJenis, id).Error == nil && selectedJenis.KodeJenis == "SPJ" {
-						middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
-						c.Redirect(http.StatusFound, createURL)
-						return
-					}
+				if database.DB.First(&selectedJenis, "id = ?", v).Error == nil && selectedJenis.KodeJenis == "SPJ" {
+					middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
+					c.Redirect(http.StatusFound, createURL)
+					return
 				}
 			}
 		}
@@ -395,10 +393,7 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 		arsip.PemberkasanID = &v
 	}
 	if v := c.PostForm("jenis_arsip_id"); v != "" {
-		if id, err := strconv.ParseUint(v, 10, 64); err == nil {
-			uid := uint(id)
-			arsip.JenisArsipID = &uid
-		}
+		arsip.JenisArsipID = &v
 	}
 	if v := c.PostForm("tanggal_dibuat"); v != "" {
 		// Fix: handle multiple date formats (d-m-Y, Y-m-d, d/m/Y)
@@ -692,12 +687,10 @@ func (h *ArsipHandler) Update(c *gin.Context) {
 		// Cek apakah jenis arsip yang dipilih memiliki kode SPJ
 		var selectedJenis models.JenisArsip
 		if v := c.PostForm("jenis_arsip_id"); v != "" {
-			if idJenis, err := strconv.ParseUint(v, 10, 64); err == nil {
-				if database.DB.First(&selectedJenis, idJenis).Error == nil && selectedJenis.KodeJenis == "SPJ" {
-					middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
-					c.Redirect(http.StatusFound, "/arsip/"+id+"/edit")
-					return
-				}
+			if database.DB.First(&selectedJenis, "id = ?", v).Error == nil && selectedJenis.KodeJenis == "SPJ" {
+				middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
+				c.Redirect(http.StatusFound, "/arsip/"+id+"/edit")
+				return
 			}
 		}
 	}
@@ -736,10 +729,7 @@ func (h *ArsipHandler) Update(c *gin.Context) {
 		arsip.PemberkasanID = nil
 	}
 	if v := c.PostForm("jenis_arsip_id"); v != "" {
-		if id, err := strconv.ParseUint(v, 10, 64); err == nil {
-			uid := uint(id)
-			arsip.JenisArsipID = &uid
-		}
+		arsip.JenisArsipID = &v
 	} else {
 		arsip.JenisArsipID = nil
 	}
@@ -1371,8 +1361,8 @@ func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
 		batchIDs = batchIDs[:5000] + "..."
 	}
 	blockData := fmt.Sprintf("%s:%s:%s:%s:%s", "arsip", batchIDs, "move_location", desc, prevHash)
-	if err := tx.Exec("INSERT INTO blockchain_audits (uuid,previous_hash,current_hash,block_number,timestamp,user_id,action,entity_type,entity_id,details,ip_address,user_agent,is_valid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)",
-		uuid.New().String(), prevHash, fmt.Sprintf("%x", sha256.Sum256([]byte(blockData))),
+	if err := tx.Exec("INSERT INTO blockchain_audits (id,uuid,previous_hash,current_hash,block_number,timestamp,user_id,action,entity_type,entity_id,details,ip_address,user_agent,is_valid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1)",
+		uuid.New().String(), uuid.New().String(), prevHash, fmt.Sprintf("%x", sha256.Sum256([]byte(blockData))),
 		blockNumber, now.Format(time.RFC3339), userID, "move_location", "arsip",
 		batchIDs, desc, ipAddr, userAgent).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Gagal mencatat blockchain: " + err.Error()})

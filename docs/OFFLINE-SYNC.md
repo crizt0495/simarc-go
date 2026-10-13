@@ -111,6 +111,13 @@ Strategi per tabel ditentukan otomatis dari skema:
 | **append** | tabel log (daftar di kode) | delta `created_at`, insert-once | ❌ (riwayat tak diubah) |
 | **keyed** | punya PK, tanpa `deleted_at` | delta `updated_at`/`created_at`, upsert by PK | ✅ ikut (tombstone) |
 
+Sejak **v2**, PK dari empat tabel yang wajib menyatu antar komputer —
+`jenis_arsip`, `berita_acara_items`, `pemusnahan_arsip_items`,
+`blockchain_audits` — dikonversi dari `AUTO_INCREMENT` ke UUID `char(36)`
+(baris lama diberi UUID deterministik, lihat §5.1). Keempat tabel itu kini
+ikut disinkronkan ber-strategi **keyed**, termasuk penambahan/penghapusan
+item berita acara dan pemusnahan lintas komputer.
+
 Baris database di atas disinkronkan **lewat MySQL**. **Berkas arsip**
 (`storage/app/uploads`) disinkronkan **terpisah** lewat aplikasi hub (lihat §7).
 
@@ -124,19 +131,29 @@ Yang **tidak** disinkronkan secara sengaja:
 - **Tabel duplikat warisan (plural)**: `arsips`, `kode_klasifikasis`,
   `unit_kerjas`, `jenis_arsips`, `jadwal_retensis`, `jadwal_retensi_arsips`,
   `pemberkasans`, `pemusnahan_arsips`, `permission_roles`.
-- **Tabel ber-PK auto-increment** — lihat batasan di §5.
+- **Tabel kunci UUID yang isinya lokal per komputer**: `api_tokens` (rahasia),
+  `search_logs`, `webhooks`, `webhook_logs`, `workflows`,
+  `workflow_executions`, `compliance_risks`, `compliance_scores`,
+  `digital_signatures`, `leaderboard_stats` — jarang/bernilai hanya di
+  komputer masing-masing, sengaja tidak digabung (lihat §5.1).
 
 ---
 
 ## 5. Batasan (v1) — penting
 
-1. **Tabel ber-PK `AUTO_INCREMENT` belum disinkronkan.** Beberapa node dapat
-   membuat ID yang sama untuk baris yang berbeda, sehingga bisa saling
-   menimpa. Yang terkena saat ini: `jenis_arsip`, `berita_acara_items`,
-   `pemusnahan_arsip_items`, `blockchain_audits`, `search_logs`, `webhooks`,
-   `webhook_logs`, `workflows`, `workflow_executions`, `api_tokens`,
-   `compliance_risks`, `compliance_scores`, `digital_signatures`,
-   `leaderboard_stats`. Solusi jangka panjang: ubah PK-nya ke UUID.
+1. **Empat tabel dulu tidak ikut karena PK `AUTO_INCREMENT`.** Beberapa node
+   dapat membuat ID yang sama untuk baris berbeda sehingga saling menimpa, maka
+   `jenis_arsip`, `berita_acara_items`, `pemusnahan_arsip_items`, dan
+   `blockchain_audits` tidak ikut sinkron. Sejak **v2** PK-nya dikonversi ke
+   UUID `char(36)` otomatis saat aplikasi menyala (migrasi
+   `migrateAutoIncToUUID`): baris lama diberi UUID deterministik
+   `00000000-0000-0000-0000-<hex id lama>`, `arsip.jenis_arsip_id` ditulis
+   ulang mengikuti, dan FK `fk_arsip_jenis` dibuat ulang. Migrasi idempotent —
+   aman dijalankan ulang / lanjut setelah terputus. Sisa tabel ber-PK
+   auto-increment **sengaja tidak digabung** karena isinya lokal per komputer:
+   `search_logs`, `webhooks`, `webhook_logs`, `workflows`,
+   `workflow_executions`, `api_tokens` (rahasia), `compliance_risks`,
+   `compliance_scores`, `digital_signatures`, `leaderboard_stats`.
 2. **Penghapusan pada tabel tanpa `deleted_at` (strategi keyed) sudah
    tersebar** lewat mekanisme *tombstone* (lihat §7). Ini mencakup
    **`permission_role`**, jadi **pencabutan izin sekarang ikut** ke komputer

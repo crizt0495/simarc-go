@@ -8,8 +8,11 @@ import (
 	"os"
 	"strings"
 
+	"arsippro/internal/config"
 	"arsippro/internal/models"
 
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
@@ -66,6 +69,211 @@ func columnDataType(table, column string) string {
 	return dt
 }
 
+// isAutoIncrementPK reports whether a table's primary key still uses
+// AUTO_INCREMENT. Such tables cannot be synchronised between computers because
+// independently-inserted numeric ids collide.
+func isAutoIncrementPK(table string) bool {
+	var n int64
+	DB.Raw(`SELECT COUNT(1) FROM information_schema.columns
+		WHERE table_schema = DATABASE() AND table_name = ? AND extra LIKE '%auto_increment%'`, table).Scan(&n)
+	return n > 0
+}
+
+// needsUUIDConversion reports whether a table is still on the legacy layout:
+// an AUTO_INCREMENT primary key, or a partially-converted state from an
+// interrupted run (numeric id, or a leftover new_id staging column).
+func needsUUIDConversion(table string) bool {
+	dt := columnDataType(table, "id")
+	return dt == "bigint" || isAutoIncrementPK(table) || columnExists(table, "new_id")
+}
+
+// dropFksIfExist drops named foreign keys when present.
+func dropFksIfExist(table string, names []string) {
+	for _, name := range names {
+		var n int64
+		DB.Raw(`SELECT COUNT(1) FROM information_schema.KEY_COLUMN_USAGE
+			WHERE table_schema = DATABASE() AND table_name = ? AND constraint_name = ?`, table, name).Scan(&n)
+		if n > 0 {
+			DB.Exec("ALTER TABLE `" + table + "` DROP FOREIGN KEY `" + name + "`")
+		}
+	}
+}
+
+// migrateAutoIncToUUID converts the tables that must join multi-computer sync
+// from BIGINT AUTO_INCREMENT primary keys to CHAR(36) UUID keys.
+//
+// Two computers inserting independently would collide on numeric ids, so the
+// sync engine ignores AUTO_INCREMENT tables entirely. Existing rows keep their
+// identity through deterministic UUIDs (00000000-0000-0000-0000-<12 hex>), and
+// referencing columns are rewritten to match.
+//
+// The conversion is self-gating and per-step idempotent: it returns as soon as
+// no targeted table still uses an AUTO_INCREMENT primary key, and unfinished
+// steps are retried on the next boot after a partial failure.
+func migrateAutoIncToUUID() error {
+	targets := []string{"jenis_arsip", "berita_acara_items", "pemusnahan_arsip_items", "blockchain_audits"}
+	if !tableExists("jenis_arsip") {
+		return nil
+	}
+	needed := false
+	for _, tbl := range targets {
+		if needsUUIDConversion(tbl) {
+			needed = true
+			break
+		}
+	}
+	// Also repair a partially-converted database where jenis_arsip was converted
+	// but the referencing arsip column still holds numeric ids.
+	if !needed && columnDataType("arsip", "jenis_arsip_id") == "bigint" {
+		needed = true
+	}
+	if !needed {
+		return nil
+	}
+
+	log.Println("[MIGRASI] Mengonversi tabel BIGINT AUTO_INCREMENT ke kunci UUID: jenis_arsip, berita_acara_items, pemusnahan_arsip_items, blockchain_audits")
+
+	// Heavy ALTERs on a live database can exceed the application's 20s socket
+	// read timeout. When booting against the configured database (production),
+	// use a dedicated connection with generous timeouts. Test harnesses that
+	// swap DB for a scratch database never match config.App.DBName, so they keep
+	// using their own connection — DDL is never aimed at the real database.
+	mx := DB
+	if config.App.DBName != "" {
+		var current string
+		DB.Raw("SELECT DATABASE()").Scan(&current)
+		if current == config.App.DBName {
+			if ddl, err := openDDLConn(); err == nil {
+				mx = ddl
+				defer func() {
+					if sqlDB, e := mx.DB(); e == nil {
+						_ = sqlDB.Close()
+					}
+				}()
+			} else {
+				log.Printf("[MIGRASI] Gagal membuka koneksi DDL (memakai koneksi biasa): %v", err)
+			}
+		}
+	}
+
+	// The column type of arsip.jenis_arsip_id must change too, which requires
+	// dropping its foreign keys first.
+	if needsUUIDConversion("jenis_arsip") {
+		dropFksIfExist("arsip", []string{"arsip_jenis_arsip_id_foreign", "fk_arsip_jenis", "fk_arsip_jenis_arsip_rel"})
+	}
+
+	// Deterministic id for every existing row preserves old identity.
+	const uuidFromID = "CONCAT('00000000-0000-0000-0000-', LPAD(HEX(`id`), 12, '0'))"
+
+	convertPK := func(tbl string) error {
+		var err error
+		// Self-heal a partially converted table (retry after a mid-migration
+		// failure): the temporary column is only ever ours, drop it so the
+		// conversion restarts cleanly for this table.
+		if columnExists(tbl, "new_id") {
+			if err = mx.Exec("ALTER TABLE `" + tbl + "` DROP COLUMN `new_id`").Error; err != nil {
+				return err
+			}
+		}
+		if err = mx.Exec("ALTER TABLE `" + tbl + "` ADD COLUMN `new_id` CHAR(36) NULL").Error; err != nil {
+			return err
+		}
+		if err = mx.Exec("UPDATE `" + tbl + "` SET `new_id` = " + uuidFromID).Error; err != nil {
+			return err
+		}
+		if err = mx.Exec("ALTER TABLE `" + tbl + "` MODIFY `id` BIGINT NOT NULL").Error; err != nil { // drop auto_increment
+			return err
+		}
+		if err = mx.Exec("ALTER TABLE `" + tbl + "` DROP PRIMARY KEY").Error; err != nil {
+			return err
+		}
+		if err = mx.Exec("ALTER TABLE `" + tbl + "` DROP COLUMN `id`").Error; err != nil {
+			return err
+		}
+		if err = mx.Exec("ALTER TABLE `" + tbl + "` CHANGE COLUMN `new_id` `id` CHAR(36) NOT NULL").Error; err != nil {
+			return err
+		}
+		if err = mx.Exec("ALTER TABLE `" + tbl + "` ADD PRIMARY KEY (`id`)").Error; err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Keep the old→new mapping for jenis_arsip: arsip.jenis_arsip_id still holds
+	// the numeric ids and must be rewritten after the primary keys are converted.
+	if needsUUIDConversion("jenis_arsip") {
+		if err := mx.Exec("CREATE TABLE IF NOT EXISTS `_mig_jenis_uuid` (`old_id` BIGINT NOT NULL PRIMARY KEY, `new_id` CHAR(36) NOT NULL)").Error; err != nil {
+			return err
+		}
+		if err := mx.Exec("DELETE FROM `_mig_jenis_uuid`").Error; err != nil {
+			return err
+		}
+		if err := mx.Exec("INSERT INTO `_mig_jenis_uuid` (`old_id`,`new_id`) SELECT `id`, " + uuidFromID + " FROM `jenis_arsip`").Error; err != nil {
+			return err
+		}
+	}
+
+	for _, tbl := range targets {
+		if needsUUIDConversion(tbl) {
+			if err := convertPK(tbl); err != nil {
+				return fmt.Errorf("konversi UUID %s: %w", tbl, err)
+			}
+		}
+	}
+
+	// Rewrite arsip.jenis_arsip_id (bigint) to the new UUID mapping.
+	if columnDataType("arsip", "jenis_arsip_id") == "bigint" {
+		// Self-heal a partial state where the temp column was left behind.
+		if columnExists("arsip", "new_jenis") {
+			if err := mx.Exec("ALTER TABLE `arsip` DROP COLUMN `new_jenis`").Error; err != nil {
+				return err
+			}
+		}
+		if err := mx.Exec("ALTER TABLE `arsip` ADD COLUMN `new_jenis` CHAR(36) NULL").Error; err != nil {
+			return err
+		}
+		if err := mx.Exec("UPDATE `arsip` a JOIN `_mig_jenis_uuid` m ON a.`jenis_arsip_id` = m.`old_id` SET a.`new_jenis` = m.`new_id`").Error; err != nil {
+			return err
+		}
+		if err := mx.Exec("ALTER TABLE `arsip` DROP COLUMN `jenis_arsip_id`").Error; err != nil {
+			return err
+		}
+		if err := mx.Exec("ALTER TABLE `arsip` CHANGE COLUMN `new_jenis` `jenis_arsip_id` CHAR(36) NULL").Error; err != nil {
+			return err
+		}
+		if err := mx.Exec("ALTER TABLE `arsip` ADD CONSTRAINT `fk_arsip_jenis` FOREIGN KEY (`jenis_arsip_id`) REFERENCES `jenis_arsip`(`id`)").Error; err != nil {
+			return err
+		}
+	}
+
+	mx.Exec("DROP TABLE IF EXISTS `_mig_jenis_uuid`")
+	log.Println("[MIGRASI] Konversi ke UUID selesai untuk 4 tabel + arsip.jenis_arsip_id")
+	return nil
+}
+
+// openDDLConn opens a dedicated connection to the configured database with
+// generous socket timeouts, used for the one-time ALTER-heavy UUID conversion.
+func openDDLConn() (*gorm.DB, error) {
+	tlsMode := config.App.DBTLS
+	if tlsMode == "" {
+		tlsMode = "preferred"
+	}
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s&readTimeout=300s&writeTimeout=300s&multiStatements=true&interpolateParams=true&tls=%s",
+		config.App.DBUser, config.App.DBPass, config.App.DBHost, config.App.DBPort, config.App.DBName, tlsMode,
+	)
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		cleanURL := strings.TrimPrefix(strings.TrimPrefix(dbURL, "mysql://"), "postgresql://")
+		if !strings.Contains(cleanURL, "?") {
+			cleanURL += "?readTimeout=300s&writeTimeout=300s"
+		} else {
+			cleanURL += "&readTimeout=300s&writeTimeout=300s"
+		}
+		dsn = cleanURL
+	}
+	return gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Error)})
+}
+
 // Migrate runs auto-migration for all models. It returns an error instead of
 // crashing the process so runtime reconnects can fail gracefully.
 //
@@ -74,6 +282,14 @@ func columnDataType(table, column string) string {
 func Migrate() error {
 	// Quiet GORM SQL logging for migration step (we explicitly log meaningful events).
 	DB.Logger = logger.Default.LogMode(logger.Error)
+
+	// Post-2.0: any table that joins multi-computer sync must use UUID keys
+	// instead of AUTO_INCREMENT (numeric ids collide across computers, so the
+	// sync engine ignores such tables). Convert once, idempotently, before the
+	// schema-version fast path.
+	if err := migrateAutoIncToUUID(); err != nil {
+		return err
+	}
 
 	// Fast path: already migrated to the current schema version — skip all
 	// heavy checks/updates (they would otherwise run on every serverless
@@ -88,7 +304,7 @@ func Migrate() error {
 	// Create tables manually to avoid GORM FK constraint issues.
 	// MySQL: BIGINT AUTO_INCREMENT PRIMARY KEY (no BIGSERIAL in MySQL).
 	DB.Exec(`CREATE TABLE IF NOT EXISTS pemusnahan_arsip_items (
-		id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+		id VARCHAR(36) NOT NULL PRIMARY KEY,
 		pemusnahan_id VARCHAR(36) NOT NULL,
 		arsip_id VARCHAR(36) NOT NULL,
 		created_at DATETIME(3) NULL,
@@ -402,8 +618,8 @@ func migratePemusnahanData() {
 	}
 	log.Printf("[MIGRASI] Memigrasi %d data pemusnahan lama ke pemusnahan_arsip_items...", count)
 
-	result := DB.Exec(`INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at)
-		SELECT pa.id, pa.arsip_id, pa.created_at
+	result := DB.Exec(`INSERT INTO pemusnahan_arsip_items (id, pemusnahan_id, arsip_id, created_at)
+		SELECT UUID(), pa.id, pa.arsip_id, pa.created_at
 		FROM pemusnahan_arsip pa
 		WHERE pa.arsip_id IS NOT NULL AND pa.arsip_id != ''
 		AND pa.id NOT IN (SELECT DISTINCT pi.pemusnahan_id FROM pemusnahan_arsip_items pi)`)

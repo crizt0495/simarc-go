@@ -632,7 +632,7 @@ func (h *PemusnahanHandler) Store(c *gin.Context) {
 			return err
 		}
 		for _, aid := range uniqueIDs {
-			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?)", m.ID, aid, now).Error; err != nil {
+			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (id, pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?, ?)", uuid.New().String(), m.ID, aid, now).Error; err != nil {
 				return err
 			}
 		}
@@ -685,7 +685,7 @@ func (h *PemusnahanHandler) AutoCreate(c *gin.Context) {
 			return err
 		}
 		for _, a := range expiredArsip {
-			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?)", m.ID, a.ID, now).Error; err != nil {
+			if err := tx.Exec("INSERT INTO pemusnahan_arsip_items (id, pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?, ?)", uuid.New().String(), m.ID, a.ID, now).Error; err != nil {
 				return err
 			}
 		}

@@ -143,8 +143,8 @@ func (s *PemusnahanArsipService) AjukanPemusnahan(arsipID, userID, alasan string
 			return err
 		}
 		if err := tx.Exec(
-			"INSERT INTO pemusnahan_arsip_items (pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?)",
-			p.ID, arsipID, now,
+			"INSERT INTO pemusnahan_arsip_items (id, pemusnahan_id, arsip_id, created_at) VALUES (?, ?, ?, ?)",
+			uuid.New().String(), p.ID, arsipID, now,
 		).Error; err != nil {
 			return err
 		}

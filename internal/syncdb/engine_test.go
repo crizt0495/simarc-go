@@ -190,8 +190,12 @@ func TestConvergence(t *testing.T) {
 		}
 	}
 
-	// Re-granting on A after the tombstone must survive on both nodes.
-	grantTime := now.Add(20 * time.Second)
+	// Re-granting on A after the tombstone must survive on both nodes. The
+	// tombstone is stamped with the wall clock at deletion-detection time, so a
+	// small fixed offset becomes fragile under heavy parallel load (wall clock
+	// may pass it before the re-insert). Use a generous future offset: survival
+	// only requires the re-created row to be newer than the tombstone.
+	grantTime := now.Add(2 * time.Hour)
 	mustExec(t, connA, `INSERT INTO permission_role (id,role_id,permission_id,created_at) VALUES (?,?,?,?)`,
 		"aaaaaaaa-0000-0000-0000-000000000001", "role-1", "perm-1", grantTime)
 

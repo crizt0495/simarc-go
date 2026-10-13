@@ -114,7 +114,7 @@ anti-tamper untuk data kearsipan.
 
   Kolom           | Tipe          | Keterangan
   ----------------+---------------+-----------------------------------------
-  id              | uint (PK)     | Primary key auto-increment
+  id              | char(36) (PK)  | UUID primary key (v2; dulu auto-increment, dikonversi agar ikut sinkron)
   uuid            | varchar(36)   | UUID unik untuk setiap blok
   previous_hash   | varchar(64)   | SHA-256 hash dari blok sebelumnya
   current_hash    | varchar(64)   | SHA-256 hash dari blok ini

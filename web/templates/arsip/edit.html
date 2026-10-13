@@ -207,7 +207,7 @@
                             <select name="jenis_arsip_id" id="jenis_arsip_edit" class="form-select select2-search">
                                 <option value="">-- Pilih Kategori --</option>
                                 {{range .jenisArsipOptions}}
-                                <option value="{{.ID}}" data-kode="{{.KodeJenis}}" {{if eq (derefUint $.arsip.JenisArsipID) .ID}}selected{{end}}>{{.NamaJenis}}</option>
+                                <option value="{{.ID}}" data-kode="{{.KodeJenis}}" {{if eq (deref $.arsip.JenisArsipID) .ID}}selected{{end}}>{{.NamaJenis}}</option>
                                 {{end}}
                             </select>
                         </div>

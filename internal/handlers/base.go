@@ -394,12 +394,6 @@ func TemplateFuncs() template.FuncMap {
 			}
 			return *s
 		},
-		"derefUint": func(u *uint) uint {
-			if u == nil {
-				return 0
-			}
-			return *u
-		},
 		"slice": func(s string, start, end int) string {
 			r := []rune(s)
 			if start >= len(r) {
