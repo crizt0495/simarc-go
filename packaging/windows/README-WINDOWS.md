@@ -25,6 +25,16 @@ disentuh**. Tidak perlu uninstall/reinstall.
 > Alternatif paket ZIP (folder) tetap tersedia bila diinginkan; isinya setara
 > dengan apa yang di-embed di dalam exe tunggal ini.
 
+**Ikon aplikasi:** file `SIMARC-Setup.exe` dan biner aplikasi
+(`simarc-server.exe`) sudah membawa **ikon SIMARC** (multi-resolusi 16–256 px,
+cocok untuk layar biasa maupun high-DPI). Shortcut Start Menu/Desktop juga
+memakai ikon ini. Ingin mengganti ikon? Jalankan
+`bash packaging/make-windows-icon.sh` setelah menyiapkan `rsrc`
+(`go install github.com/akavel/rsrc@latest`) dan `python3` + Pillow — skrip itu
+membangkitkan `packaging/windows/simarc.ico` dari
+`web/static/images/icon-256.png` beserta file resource `.syso`, lalu bangun
+ulang installer.
+
 ---
 
 ## 1) Menjalankan aplikasi (setelah install)

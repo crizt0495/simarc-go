@@ -45,6 +45,7 @@ cp -f packaging/windows/Install-SIMARC.bat        "$STAGE/"
 cp -f packaging/windows/Uninstall-SIMARC.bat      "$STAGE/"
 cp -f packaging/windows/Uninstall-SIMARC.ps1      "$STAGE/"
 cp -f packaging/windows/README-WINDOWS.md         "$STAGE/README-WINDOWS.md"
+cp -f packaging/windows/simarc.ico                "$STAGE/simarc.ico"
 cp -f packaging/install-desktop.ps1               "$STAGE/packaging/"
 cp -f packaging/uninstall-desktop.ps1             "$STAGE/packaging/"
 printf '%s' "$VERSION_CLEAN" > "$STAGE/VERSION"
@@ -76,6 +77,10 @@ build_installer() {
   local bdir; bdir="$(mktemp -d /tmp/opencode/simarc-inst-XXXXXX)"
   cp -f packaging/windows/installer/go.mod  "$bdir/"
   cp -f packaging/windows/installer/main.go "$bdir/"
+  # Windows icon resource (.syso) so the installer .exe carries the SIMARC icon.
+  if [ -f "packaging/windows/installer/rsrc_windows_${arch}.syso" ]; then
+    cp -f "packaging/windows/installer/rsrc_windows_${arch}.syso" "$bdir/"
+  fi
   mkdir -p "$bdir/payload"
   cp -a "$STAGE/." "$bdir/payload/"
   # Tiap installer hanya memuat biner yang sesuai arsitekturnya (hemat ukuran).

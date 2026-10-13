@@ -80,7 +80,7 @@ try {
 New-Item -ItemType Directory -Path $Dest -Force | Out-Null
 
 $Copied = 0
-foreach ($item in @("run.bat", ".env.example", "web", "docs", "dist", "packaging")) {
+foreach ($item in @("run.bat", ".env.example", "simarc.ico", "web", "docs", "dist", "packaging")) {
   $s = Join-Path $Src $item
   if (-not (Test-Path $s)) { continue }
   Copy-Item -Path $s -Destination $Dest -Recurse -Force -ErrorAction SilentlyContinue
@@ -117,7 +117,10 @@ if (Test-Path $BinSrc) {
 
 # ── Shortcut Start Menu + Desktop ───────────────────────────────────────────
 $Shell = New-Object -ComObject WScript.Shell
-$IconPath = Join-Path $Dest "web\static\images\favicon.ico"
+# Prefer the high-quality multi-resolution app icon shipped with the package;
+# fall back to the web favicon if it is absent.
+$IconPath = Join-Path $Dest "simarc.ico"
+if (-not (Test-Path $IconPath)) { $IconPath = Join-Path $Dest "web\static\images\favicon.ico" }
 $RunBat   = Join-Path $Dest "run.bat"
 
 $StartMenuBase = [Environment]::GetFolderPath("StartMenu")
