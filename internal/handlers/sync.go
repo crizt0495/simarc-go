@@ -26,6 +26,11 @@ type syncFormData struct {
 	HubDBName       string
 	HubUser         string
 	HubTLS          string
+
+	HubURL       string
+	HubTokenSet  bool
+	FilesEnabled bool
+	FilesMaxMB   int
 }
 
 func syncSettingsForTemplate() syncFormData {
@@ -39,6 +44,11 @@ func syncSettingsForTemplate() syncFormData {
 		HubDBName:       cfg.HubDBName,
 		HubUser:         cfg.HubDBUser,
 		HubTLS:          cfg.HubDBTLS,
+
+		HubURL:       cfg.HubURL,
+		HubTokenSet:  cfg.HubToken != "",
+		FilesEnabled: cfg.FilesEnabled,
+		FilesMaxMB:   cfg.FilesMaxMB,
 	}
 }
 
@@ -59,10 +69,17 @@ func (h *PengaturanAdvancedHandler) SyncSave(c *gin.Context) {
 		"SYNC_HUB_DB_NAME":      strings.TrimSpace(c.PostForm("sync_hub_db_name")),
 		"SYNC_HUB_DB_USER":      strings.TrimSpace(c.PostForm("sync_hub_db_user")),
 		"SYNC_HUB_DB_TLS":       offsiteDefault(c.PostForm("sync_hub_db_tls"), "preferred"),
+
+		"SYNC_FILES_ENABLED": offsiteBoolStr(c.PostForm("sync_files_enabled") == "on"),
+		"SYNC_HUB_URL":       strings.TrimRight(strings.TrimSpace(c.PostForm("sync_hub_url")), "/"),
+		"SYNC_FILES_MAX_MB":  offsiteDefault(c.PostForm("sync_files_max_mb"), "128"),
 	}
 	// Blank password keeps the current value (never echo secrets back).
 	if p := c.PostForm("sync_hub_db_pass"); p != "" {
 		updates["SYNC_HUB_DB_PASS"] = p
+	}
+	if t := strings.TrimSpace(c.PostForm("sync_hub_token")); t != "" {
+		updates["SYNC_HUB_TOKEN"] = t
 	}
 
 	if err := config.UpdateEnv(updates); err != nil {

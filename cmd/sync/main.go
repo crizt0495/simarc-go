@@ -56,10 +56,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Archive files (storage/app/uploads) travel over the hub's HTTP endpoints.
+	var files syncdb.FileSyncResult
+	if cfg.FilesActive() {
+		files, err = syncdb.SyncFiles(ctx, cfg, log.Printf)
+		if err != nil {
+			log.Printf("[sync] berkas dilewati: %v", err)
+		}
+	}
+
 	fmt.Printf("Selesai (%s) dalam %s\n", res.Status(), res.FinishedAt.Sub(res.StartedAt).Round(time.Millisecond))
 	fmt.Printf("  didorong ke hub : %d baris\n", res.Pushed)
 	fmt.Printf("  ditarik dari hub: %d baris\n", res.Pulled)
 	fmt.Printf("  tabel gagal     : %d\n", res.Errors)
+	if cfg.FilesActive() {
+		fmt.Printf("  berkas didorong : %d (%.1f MB)\n", files.Pushed, float64(files.BytesOut)/1048576)
+		fmt.Printf("  berkas ditarik  : %d (%.1f MB)\n", files.Pulled, float64(files.BytesIn)/1048576)
+	}
 	for _, t := range res.Tables {
 		if t.Err != "" {
 			fmt.Printf("    - %s (%s): %s\n", t.Name, t.Strategy, t.Err)

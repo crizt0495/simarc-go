@@ -168,6 +168,44 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-folder-symlink"></i><span>Berkas Arsip (uploads)</span></div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Baris database sudah tersinkron; <strong>berkas</strong> arsip di
+                        <code>storage/app/uploads</code> ikut disalin lewat aplikasi hub (HTTP).
+                        Isi <em>URL aplikasi hub</em> dan <em>token</em> yang sama di setiap
+                        komputer. Di komputer hub cukup isi token.
+                    </p>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="sync_files_enabled" name="sync_files_enabled" {{if .Sync.FilesEnabled}}checked{{end}}>
+                        <label class="form-check-label fw-semibold" for="sync_files_enabled">Sinkronkan berkas arsip</label>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">URL aplikasi hub</label>
+                            <input type="text" class="form-control" name="sync_hub_url"
+                                   value="{{.Sync.HubURL}}" placeholder="http://192.168.1.86:8080">
+                            <div class="form-text">Alamat aplikasi SIMARC di komputer hub (port 8080).</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Token hub</label>
+                            <input type="password" class="form-control" name="sync_hub_token"
+                                   placeholder="{{if .Sync.HubTokenSet}}•••••• (kosongkan bila tidak diubah){{end}}">
+                            <div class="form-text">Rahasia bersama antar komputer.</div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Maks (MB)</label>
+                            <input type="number" min="1" class="form-control" name="sync_files_max_mb"
+                                   value="{{.Sync.FilesMaxMB}}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </form>
 

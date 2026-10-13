@@ -37,6 +37,18 @@ type SyncConfig struct {
 	HubDBUser string
 	HubDBPass string
 	HubDBTLS  string
+
+	// Hub HTTP (archive-file transfer). The hub application serves
+	// token-protected endpoints so nodes can push/pull files under
+	// storage/app/uploads. HubURL is the base URL of the hub app, e.g.
+	// http://192.168.1.86:8080.
+	HubURL       string
+	HubToken     string
+	FilesEnabled bool
+	FilesMaxMB   int
+	// FilesExclude lists uploads sub-directories that are machine-local and
+	// must never be copied between computers (temporary working dirs).
+	FilesExclude []string
 }
 
 // LoadSync reads the synchronisation settings from the environment. Like the
@@ -56,6 +68,12 @@ func LoadSync() SyncConfig {
 		HubDBUser: strings.TrimSpace(os.Getenv("SYNC_HUB_DB_USER")),
 		HubDBPass: os.Getenv("SYNC_HUB_DB_PASS"),
 		HubDBTLS:  getEnv("SYNC_HUB_DB_TLS", "preferred"),
+
+		HubURL:       strings.TrimRight(strings.TrimSpace(os.Getenv("SYNC_HUB_URL")), "/"),
+		HubToken:     strings.TrimSpace(os.Getenv("SYNC_HUB_TOKEN")),
+		FilesEnabled: getBoolEnv("SYNC_FILES_ENABLED", true),
+		FilesMaxMB:   getIntEnv("SYNC_FILES_MAX_MB", 128),
+		FilesExclude: splitList(getEnv("SYNC_FILES_EXCLUDE", "ocr-temp,imports,restore")),
 	}
 
 	if c.NodeID == "" {
@@ -70,6 +88,9 @@ func LoadSync() SyncConfig {
 	if c.BatchSize < 1 {
 		c.BatchSize = 200
 	}
+	if c.FilesMaxMB < 1 {
+		c.FilesMaxMB = 128
+	}
 	return c
 }
 
@@ -82,6 +103,53 @@ func (c SyncConfig) HubReady() bool {
 // Active reports whether synchronisation should run at all.
 func (c SyncConfig) Active() bool {
 	return c.Enabled && c.HubReady()
+}
+
+// FilesReady reports whether archive-file transfer is configured. The hub app
+// URL and the shared token are both required.
+func (c SyncConfig) FilesReady() bool {
+	return c.HubURL != "" && c.HubToken != ""
+}
+
+// FilesActive reports whether archive-file transfer should run alongside the
+// database sync.
+func (c SyncConfig) FilesActive() bool {
+	return c.Active() && c.FilesEnabled && c.FilesReady()
+}
+
+// FilesMaxBytes is the largest file (in bytes) that will be copied.
+func (c SyncConfig) FilesMaxBytes() int64 {
+	return int64(c.FilesMaxMB) * 1024 * 1024
+}
+
+// ExcludesUpload reports whether a slash-separated relative path is inside one
+// of the machine-local uploads sub-directories that must not be synced.
+func (c SyncConfig) ExcludesUpload(rel string) bool {
+	rel = strings.TrimPrefix(strings.ReplaceAll(rel, "\\", "/"), "/")
+	for _, ex := range c.FilesExclude {
+		ex = strings.Trim(strings.TrimSpace(ex), "/")
+		if ex == "" {
+			continue
+		}
+		if rel == ex || strings.HasPrefix(rel, ex+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// splitList parses a comma/space separated list, dropping empty entries.
+func splitList(s string) []string {
+	fields := strings.FieldsFunc(s, func(r rune) bool {
+		return r == ',' || r == ' ' || r == ';' || r == '\n' || r == '\t'
+	})
+	out := make([]string, 0, len(fields))
+	for _, f := range fields {
+		if f = strings.TrimSpace(f); f != "" {
+			out = append(out, f)
+		}
+	}
+	return out
 }
 
 // Overlap returns the safety window used when reading changes.

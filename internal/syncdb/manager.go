@@ -53,6 +53,22 @@ func (m *Manager) RunNow(ctx context.Context) (Result, error) {
 	if err != nil {
 		return res, err
 	}
+
+	// Archive files travel separately, over the hub's HTTP endpoints.
+	if cfg.FilesActive() {
+		fr, ferr := SyncFiles(ctx, cfg, log.Printf)
+		res.FilesPushed = fr.Pushed
+		res.FilesPulled = fr.Pulled
+		res.FileBytesOut = fr.BytesOut
+		res.FileBytesIn = fr.BytesIn
+		if ferr != nil {
+			log.Printf("[sync] berkas: %v", ferr)
+		} else if fr.Pushed > 0 || fr.Pulled > 0 {
+			log.Printf("[sync] berkas: dorong=%d tarik=%d (%.1f MB keluar, %.1f MB masuk)",
+				fr.Pushed, fr.Pulled, float64(fr.BytesOut)/1048576, float64(fr.BytesIn)/1048576)
+		}
+	}
+
 	m.mu.Lock()
 	r := res
 	m.last = &r

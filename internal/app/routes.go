@@ -558,6 +558,17 @@ func registerRoutes(r *gin.Engine) {
 	}
 
 	// ═══════════════════════════════════════════════
+	// ARCHIVE-FILE SYNC (token protected; served by the hub)
+	// ═══════════════════════════════════════════════
+	syncFiles := r.Group("/api/sync/files")
+	syncFiles.Use(handlers.SyncTokenRequired())
+	{
+		syncFiles.GET("/list", handlers.SyncFilesList)
+		syncFiles.GET("/get", handlers.SyncFileGet)
+		syncFiles.POST("/put", handlers.SyncFilePut)
+	}
+
+	// ═══════════════════════════════════════════════
 	// API ROUTES (Auth required)
 	// ═══════════════════════════════════════════════
 	api := r.Group("/api")

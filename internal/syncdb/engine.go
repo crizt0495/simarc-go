@@ -123,6 +123,13 @@ type Result struct {
 	Pulled     int           `json:"pulled"`
 	Tables     []TableResult `json:"tables"`
 	Errors     int           `json:"errors"`
+
+	// Archive-file transfer counts (filled in by the caller after SyncFiles;
+	// the database engine itself does not move files).
+	FilesPushed  int   `json:"files_pushed,omitempty"`
+	FilesPulled  int   `json:"files_pulled,omitempty"`
+	FileBytesOut int64 `json:"file_bytes_out,omitempty"`
+	FileBytesIn  int64 `json:"file_bytes_in,omitempty"`
 }
 
 // Status returns "ok" when the run completed without per-table errors.

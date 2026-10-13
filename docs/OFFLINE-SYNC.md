@@ -58,6 +58,11 @@ SYNC_HUB_DB_NAME=simarc
 SYNC_HUB_DB_USER=simarc
 SYNC_HUB_DB_PASS=...
 SYNC_HUB_DB_TLS=preferred               # LAN: preferred | cloud: required
+
+# Berkas arsip (storage/app/uploads) — lewat aplikasi hub di port 8080
+SYNC_FILES_ENABLED=true
+SYNC_HUB_URL=http://192.168.1.86:8080   # alamat aplikasi hub
+SYNC_HUB_TOKEN=<rahasia bersama>        # buat: openssl rand -hex 24
 ```
 
 4. **Sinkronkan pertama kali** (mengisi hub / menarik data hub):
@@ -73,8 +78,11 @@ Atau lewat aplikasi: **Pengaturan → Sinkronisasi → Sinkronkan Sekarang**.
 ## 3. Memilih hub
 
 - **Komputer server di kantor** (mis. `192.168.1.86`) — sederhana; hanya perlu
-  komputer itu menyala saat komputer lain ingin menyatu. Hub **tidak** perlu
-  menjalankan aplikasi khusus: cukup MySQL-nya dapat diakses jaringan.
+  komputer itu menyala saat komputer lain ingin menyatu. Untuk **baris
+  database**, hub **tidak** perlu menjalankan aplikasi khusus: cukup MySQL-nya
+  dapat diakses jaringan. Tetapi untuk **berkas arsip**, hub harus menjalankan
+  **aplikasi SIMARC** (port `8080`) karena berkas disalin lewat aplikasi, dan
+  hub perlu mengisi `SYNC_HUB_TOKEN` (rahasia bersama) agar bisa melayani.
 
   Di hub, isi `.env` hub-nya sendiri (DB lokal) dan **kosongkan** `SYNC_HUB_DB_*`
   bila ia tidak perlu menarik dari siapa pun. Komputer lain mengarah ke hub.
@@ -102,6 +110,9 @@ Strategi per tabel ditentukan otomatis dari skema:
 | **soft** | punya `deleted_at` | delta `updated_at`/`deleted_at`, LWW | ✅ ikut (tombstone) |
 | **append** | tabel log (daftar di kode) | delta `created_at`, insert-once | ❌ (riwayat tak diubah) |
 | **keyed** | punya PK, tanpa `deleted_at` | delta `updated_at`/`created_at`, upsert by PK | ✅ ikut (tombstone) |
+
+Baris database di atas disinkronkan **lewat MySQL**. **Berkas arsip**
+(`storage/app/uploads`) disinkronkan **terpisah** lewat aplikasi hub (lihat §7).
 
 Yang **tidak** disinkronkan secara sengaja:
 
@@ -133,10 +144,12 @@ Yang **tidak** disinkronkan secara sengaja:
    menulis penanda hapus (`sync_tombstones`) yang ikut disinkronkan. Bila baris
    yang sama dibuat ulang setelah tanggal penghapusan, baris baru menang
    (tombstone lama tidak menghapusnya).
-3. **Berkas arsip** (`storage/app/uploads`) belum ikut tersinkron. Saat ini
-   berkas arsip masih **0**. Bila mulai dipakai, berkas perlu disinkronkan
-   terpisah (mis. lewat rclone/offsite), sedangkan baris database-nya sudah
-   aman karena hanya menyimpan *lokasi* berkas.
+3. **Berkas arsip** (`storage/app/uploads`) **ikut disinkronkan** lewat aplikasi
+   hub (lihat §7). Batasnya: berkas hanya tersalin saat **aplikasi hub**
+   terjangkau (port `8080`), berkas yang lebih besar dari `SYNC_FILES_MAX_MB`
+   dilewati, dan sub-folder pada `SYNC_FILES_EXCLUDE` (default
+   `ocr-temp,imports,restore`) tidak pernah disalin. Baris database tetap aman
+   walau berkas belum tersalin karena hanya menyimpan *lokasi* berkas.
 
 ---
 
@@ -144,9 +157,12 @@ Yang **tidak** disinkronkan secara sengaja:
 
 - **Pengaturan → Sinkronisasi**: lihat node, hub, status, dan riwayat 10
   sinkronisasi terakhir (jumlah baris didorong/ditarik, tabel gagal).
-- CLI: `go run ./cmd/sync` — mencetak ringkasan dan keluar dengan kode ≠ 0 bila
-  ada tabel yang gagal.
+- CLI: `go run ./cmd/sync` — mencetak ringkasan **baris dan berkas** yang
+  didorong/ditarik, lalu keluar dengan kode ≠ 0 bila ada tabel yang gagal.
 - API (login): `GET /api/sync/status`, `POST /api/sync/run`.
+- Endpoint berkas (tanpa login, wajib header `X-Sync-Token`):
+  `GET /api/sync/files/list`, `GET /api/sync/files/get?path=…`,
+  `POST /api/sync/files/put?path=…&mtime=…`.
 - Riwayat disimpan di tabel lokal `sync_runs`; posisi watermark di `sync_state`.
 
 ---
@@ -171,10 +187,19 @@ Yang **tidak** disinkronkan secara sengaja:
   komputer ini, lalu dicatat di `sync_tombstones` dan disinkronkan seperti tabel
   biasa. Penerima menghapus baris terkait kecuali baris dibuat ulang **setelah**
   `deleted_at` (perbandingan waktu `created_at`/`updated_at`).
+- **Berkas arsip.** Setelah baris database, mesin menyalin berkas di
+  `storage/app/uploads` lewat **aplikasi hub** (HTTP, header `X-Sync-Token`).
+  Kesegaran memakai pasangan (ukuran, `mtime`) seperti pemeriksaan cepat rsync:
+  berkas disalin bila belum ada di sisi lain atau jelas lebih baru; selisih
+  waktu di bawah 2 detik dianggap sama (mencegah salin berulang karena beda
+  jam). Berkas ditulis atomik (file sementara lalu di-`rename`) dan `mtime`
+  dipertahankan. Endpoint hub: `internal/handlers/syncfiles.go`; mesin klien:
+  `internal/syncdb/files.go`.
 - Pengujian: `SIMARC_TEST_DSN_BASE='user:pass@tcp(127.0.0.1:3306)/' go test ./internal/syncdb/`
   membuat dua database sementara dan memverifikasi konvergensi (soft delete,
   update, log append, baris ber-`updated_at` NULL, dan pencabutan izin
-  `permission_role` lewat tombstone).
+  `permission_role` lewat tombstone). Sinkronisasi berkas diuji terpisah
+  (`TestSyncFilesConverges`, `TestSyncFileEndpoints`).
 
 ---
 
@@ -222,6 +247,11 @@ SYNC_HUB_DB_NAME=simarc
 SYNC_HUB_DB_USER=simarc_sync
 SYNC_HUB_DB_PASS=<password simarc_sync>
 SYNC_HUB_DB_TLS=preferred
+
+# Berkas arsip (uploads) — aplikasi hub di port 8080
+SYNC_FILES_ENABLED=true
+SYNC_HUB_URL=http://192.168.1.86:8080
+SYNC_HUB_TOKEN=<token dari server>
 ```
 
 Setelah itu buka **Pengaturan → Sinkronisasi → Sinkronkan Sekarang**.
@@ -238,3 +268,8 @@ Setelah itu buka **Pengaturan → Sinkronisasi → Sinkronkan Sekarang**.
   komputer lain tetap benar.
 - Hub **tidak perlu** menjalankan sinkronisasi (datanya sudah menjadi titik
   temu). Cukup MySQL-nya hidup dan terjangkau.
+- **Berkas arsip**: hub harus menjalankan aplikasi SIMARC (port `8080`) agar
+  komputer lain bisa menyalin berkas. Token bersama disimpan di `.env` hub
+  sebagai `SYNC_HUB_TOKEN` (juga tercatat di `/root/simarc-sync-hub.txt`).
+  Bila firewall aktif, buka port `8080` untuk LAN
+  (mis. `sudo ufw allow from 192.168.1.0/24 to any port 8080`).
