@@ -158,6 +158,52 @@ func TestConvergence(t *testing.T) {
 			t.Errorf("%s: uraian = %q, want %q (update should propagate)", label, uraian, "Berkas B diubah")
 		}
 	}
+
+	// Rows written by legacy importers often have created_at but NULL
+	// updated_at; those must still travel (COALESCE fallback in readDelta).
+	mustExec(t, connA, `INSERT INTO activity_logs (id,action,created_at,updated_at) VALUES (?,?,?,NULL)`,
+		"cccccccc-0000-0000-0000-000000000001", "legacy-a", now2)
+
+	runEngine(t, ctx, dsn(a), dsn(b), cfgA)
+	runEngine(t, ctx, dsn(b), dsn(a), cfgB)
+	runEngine(t, ctx, dsn(a), dsn(b), cfgA)
+
+	for label, db := range map[string]*sql.DB{"A": connA, "B": connB} {
+		if got := countRows(t, ctx, db, "activity_logs", "id='cccccccc-0000-0000-0000-000000000001'"); got != 1 {
+			t.Errorf("%s: NULL-updated_at row count = %d, want 1 (created_at fallback)", label, got)
+		}
+	}
+
+	// ── Keyed table (hard delete): revoke the grant on A, must vanish on B ──
+	mustExec(t, connA, `DELETE FROM permission_role WHERE id=?`,
+		"aaaaaaaa-0000-0000-0000-000000000001")
+
+	// A detects the deletion and tombstones it; B must apply it too. Run a few
+	// rounds so tombstones flow A→hub→B and back.
+	runEngine(t, ctx, dsn(a), dsn(b), cfgA)
+	runEngine(t, ctx, dsn(b), dsn(a), cfgB)
+	runEngine(t, ctx, dsn(a), dsn(b), cfgA)
+
+	for label, db := range map[string]*sql.DB{"A": connA, "B": connB} {
+		if got := countRows(t, ctx, db, "permission_role", "1=1"); got != 0 {
+			t.Errorf("%s: permission_role count = %d, want 0 (revoked grant must propagate)", label, got)
+		}
+	}
+
+	// Re-granting on A after the tombstone must survive on both nodes.
+	grantTime := now.Add(20 * time.Second)
+	mustExec(t, connA, `INSERT INTO permission_role (id,role_id,permission_id,created_at) VALUES (?,?,?,?)`,
+		"aaaaaaaa-0000-0000-0000-000000000001", "role-1", "perm-1", grantTime)
+
+	runEngine(t, ctx, dsn(a), dsn(b), cfgA)
+	runEngine(t, ctx, dsn(b), dsn(a), cfgB)
+	runEngine(t, ctx, dsn(a), dsn(b), cfgA)
+
+	for label, db := range map[string]*sql.DB{"A": connA, "B": connB} {
+		if got := countRows(t, ctx, db, "permission_role", "1=1"); got != 1 {
+			t.Errorf("%s: permission_role count = %d, want 1 (re-grant newer than tombstone survives)", label, got)
+		}
+	}
 }
 
 func runEngine(t *testing.T, ctx context.Context, localDSN, hubDSN string, cfg config.SyncConfig) {

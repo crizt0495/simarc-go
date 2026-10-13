@@ -35,6 +35,35 @@ func ensureLocalSyncTables(ctx context.Context, db *sql.DB) error {
 		detail LONGTEXT NULL,
 		INDEX idx_sync_runs_started (started_at)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
+	if err != nil {
+		return err
+	}
+
+	// sync_keys is the local-only snapshot of keyed-table primary keys from the
+	// previous run. It is how the engine detects hard deletes (a key that was
+	// present before and is now gone). It is never synchronised.
+	_, err = db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS sync_keys (
+		table_name VARCHAR(64) NOT NULL,
+		key_hash CHAR(64) NOT NULL,
+		key_json VARCHAR(1024) NOT NULL,
+		PRIMARY KEY (table_name, key_hash)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
+	if err != nil {
+		return err
+	}
+
+	// sync_tombstones records hard deletions of keyed-table rows. Unlike
+	// sync_keys it IS synchronised between nodes, so a revocation made on one
+	// computer deletes the same row on the others.
+	_, err = db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS sync_tombstones (
+		table_name VARCHAR(64) NOT NULL,
+		key_hash CHAR(64) NOT NULL,
+		key_json VARCHAR(1024) NOT NULL,
+		deleted_at DATETIME(3) NOT NULL,
+		updated_at DATETIME(3) NOT NULL,
+		PRIMARY KEY (table_name, key_hash),
+		INDEX idx_sync_tomb_updated (updated_at)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
 	return err
 }
 

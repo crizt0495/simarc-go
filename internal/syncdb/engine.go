@@ -79,14 +79,14 @@ func OpenWithDSN(ctx context.Context, localDSN, hubDSN string, cfg config.SyncCo
 		return nil, fmt.Errorf("set foreign_key_checks hub: %w", err)
 	}
 
-	tables, err := loadTables(ctx, local)
-	if err != nil {
+	if err := ensureLocalSyncTables(ctx, local); err != nil {
 		local.Close()
 		hub.Close()
 		return nil, err
 	}
 
-	if err := ensureLocalSyncTables(ctx, local); err != nil {
+	tables, err := loadTables(ctx, local)
+	if err != nil {
 		local.Close()
 		hub.Close()
 		return nil, err
@@ -156,7 +156,13 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 		}
 		tr := TableResult{Name: name, Strategy: strategyName(strat)}
 
-		if err := e.syncTable(ctx, ti, strat, &tr); err != nil {
+		var err error
+		if strat == stratKeyed {
+			err = e.syncKeyedTable(ctx, ti, &tr)
+		} else {
+			err = e.syncTable(ctx, ti, strat, &tr)
+		}
+		if err != nil {
 			tr.Err = err.Error()
 			res.Errors++
 			e.logf("[sync] tabel %s gagal: %v", name, err)
@@ -224,6 +230,88 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 	return setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax))
 }
 
+// syncKeyedTable merges a hard-delete table (no deleted_at). Rows travel as
+// usual, but permanent deletions cannot, so the run also:
+//
+//  1. detects rows deleted locally since the previous run (shadow diff) and
+//     writes tombstones,
+//  2. copies those tombstones to the hub and deletes the referenced rows there,
+//  3. pulls hub rows back and applies local tombstones (a row re-created after
+//     its tombstone survives).
+func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableResult) error {
+	exists, err := tableExistsIn(ctx, e.hub, ti.Name)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if err := createTableLike(ctx, e.local, e.hub, ti.Name); err != nil {
+			return fmt.Errorf("buat tabel di hub: %w", err)
+		}
+	}
+
+	// 1. Destroyed rows this side become tombstones.
+	if n, err := detectDeletes(ctx, e.local, ti); err != nil {
+		return fmt.Errorf("deteksi penghapusan: %w", err)
+	} else if n > 0 {
+		e.logf("[sync] %s: %d penghapusan permanen terdeteksi", ti.Name, n)
+	}
+
+	// 2. Send tombstones to the hub and apply them there.
+	if err := copyTombstones(ctx, e.local, e.hub, ti.Name); err != nil {
+		return fmt.Errorf("kirim tombstone ke hub: %w", err)
+	}
+	if n, err := applyTombstones(ctx, e.hub, ti); err != nil {
+		return fmt.Errorf("terapkan tombstone di hub: %w", err)
+	} else if n > 0 {
+		e.logf("[sync] %s: %d baris dihapus di hub oleh tombstone", ti.Name, n)
+	}
+
+	// Push rows (delta) to the hub.
+	pushSince, err := getWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push")
+	if err != nil {
+		return err
+	}
+	pushedRows, pushMax, err := readDelta(ctx, e.local, ti, readFrom(pushSince, e.cfg.Overlap()))
+	if err != nil {
+		return fmt.Errorf("baca perubahan lokal: %w", err)
+	}
+	if len(pushedRows) > 0 {
+		if err := upsertRows(ctx, e.hub, ti, stratKeyed, pushedRows, e.cfg.BatchSize); err != nil {
+			return fmt.Errorf("tulis ke hub: %w", err)
+		}
+		tr.Pushed = len(pushedRows)
+	}
+	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push", advance(pushSince, pushMax)); err != nil {
+		return err
+	}
+
+	// Pull rows (delta) from the hub, then apply local tombstones.
+	pullSince, err := getWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull")
+	if err != nil {
+		return err
+	}
+	pulledRows, pullMax, err := readDelta(ctx, e.hub, ti, readFrom(pullSince, e.cfg.Overlap()))
+	if err != nil {
+		return fmt.Errorf("baca perubahan hub: %w", err)
+	}
+	if len(pulledRows) > 0 {
+		if err := upsertRows(ctx, e.local, ti, stratKeyed, pulledRows, e.cfg.BatchSize); err != nil {
+			return fmt.Errorf("tulis ke lokal: %w", err)
+		}
+		tr.Pulled = len(pulledRows)
+	}
+	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
+		return err
+	}
+
+	if n, err := applyTombstones(ctx, e.local, ti); err != nil {
+		return fmt.Errorf("terapkan tombstone lokal: %w", err)
+	} else if n > 0 {
+		e.logf("[sync] %s: %d baris dihapus lokal oleh tombstone", ti.Name, n)
+	}
+	return nil
+}
+
 // advance returns the next watermark: the newest timestamp seen. When nothing
 // newer was seen the previous watermark is kept. re-reads are made safe by the
 // overlap window in readFrom plus last-write-wins.
@@ -263,13 +351,19 @@ func readDelta(ctx context.Context, db *sql.DB, ti *tableInfo, since time.Time) 
 	var args []any
 	if tsCol != "" {
 		from := since
+		// COALESCE lets rows whose updated_at is NULL fall back to created_at
+		// (legacy rows were often written with only created_at). Rows where
+		// every timestamp column is NULL are always included: they carry no
+		// change time so the only safe option is to resend them (idempotent
+		// upsert) until they pick up a timestamp.
+		coalesce, allNull := deltaExpr(ti)
 		if ti.HasDeletedAt {
 			// A soft-deleted row carries deleted_at; updated_at may or may not
 			// move on delete, so test both to never miss a tombstone.
-			q += " WHERE `" + tsCol + "` >= ? OR (`deleted_at` IS NOT NULL AND `deleted_at` >= ?)"
+			q += " WHERE (" + coalesce + ") >= ? OR (`deleted_at` IS NOT NULL AND `deleted_at` >= ?) OR (" + allNull + ")"
 			args = []any{from, from}
 		} else {
-			q += " WHERE `" + tsCol + "` >= ?"
+			q += " WHERE (" + coalesce + ") >= ? OR (" + allNull + ")"
 			args = []any{from}
 		}
 	}
@@ -452,6 +546,8 @@ func asTime(v any) (time.Time, bool) {
 // orderKey sorts master/reference tables before their dependants and logs last.
 func orderKey(name string) int {
 	switch name {
+	case "sync_tombstones":
+		return -1 // deletions must reach the hub before keyed tables are merged
 	case "roles", "permissions", "unit_kerja", "kode_klasifikasi", "jenis_arsip",
 		"lokasi_arsips", "users", "tenants":
 		return 0

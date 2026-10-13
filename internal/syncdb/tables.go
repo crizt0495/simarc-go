@@ -35,9 +35,11 @@ var skipTables = map[string]bool{
 	"failed_jobs":        true,
 	"import_export_jobs": true,
 
-	// Sync bookkeeping lives on the local database only.
+	// Sync bookkeeping: state/runs/keys are local-only. sync_tombstones is NOT
+	// skipped — it is deliberately shared so deletes propagate.
 	"sync_state": true,
 	"sync_runs":  true,
+	"sync_keys":  true,
 
 	"telescope_entries":      true,
 	"telescope_entries_tags": true,
@@ -94,6 +96,25 @@ func (t *tableInfo) timestampColumn() string {
 		return "created_at"
 	}
 	return ""
+}
+
+// deltaExpr returns the SQL pieces used by readDelta: an expression that
+// resolves a row's change time (falling back to created_at when updated_at is
+// NULL, which legacy data often has), and a test that matches rows where every
+// timestamp column is NULL. The latter have no usable change time, so they are
+// always included (the upsert is idempotent).
+func deltaExpr(t *tableInfo) (coalesce, allNull string) {
+	switch {
+	case t.HasUpdatedAt && t.HasCreatedAt:
+		return "COALESCE(`updated_at`, `created_at`)",
+			"(`updated_at` IS NULL AND `created_at` IS NULL)"
+	case t.HasUpdatedAt:
+		return "`updated_at`", "(`updated_at` IS NULL)"
+	case t.HasCreatedAt:
+		return "`created_at`", "(`created_at` IS NULL)"
+	default:
+		return "1=1", ""
+	}
 }
 
 // strategyFor decides how (and whether) a table participates in sync.

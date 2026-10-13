@@ -101,13 +101,15 @@ Strategi per tabel ditentukan otomatis dari skema:
 |----------|--------|------|:-----------:|
 | **soft** | punya `deleted_at` | delta `updated_at`/`deleted_at`, LWW | ✅ ikut (tombstone) |
 | **append** | tabel log (daftar di kode) | delta `created_at`, insert-once | ❌ (riwayat tak diubah) |
-| **keyed** | punya PK, tanpa `deleted_at` | upsert semua baris by PK | ⚠️ belum (lihat §5) |
+| **keyed** | punya PK, tanpa `deleted_at` | delta `updated_at`/`created_at`, upsert by PK | ✅ ikut (tombstone) |
 
 Yang **tidak** disinkronkan secara sengaja:
 
 - **Cache & infrastruktur**: `*_cache`, `analytics_cache`, `telescope_*`,
   `jobs`, `failed_jobs`, `import_export_jobs`, `migrations`,
-  `schema_migrations`, `ocr_temp_images`, dan tabel `sync_*` (pembukuan lokal).
+  `schema_migrations`, `ocr_temp_images`, dan tabel pembukuan lokal
+  `sync_state`, `sync_runs`, `sync_keys` (`sync_tombstones` justru **ikut**
+  disinkronkan agar penghapusan tersebar).
 - **Tabel duplikat warisan (plural)**: `arsips`, `kode_klasifikasis`,
   `unit_kerjas`, `jenis_arsips`, `jadwal_retensis`, `jadwal_retensi_arsips`,
   `pemberkasans`, `pemusnahan_arsips`, `permission_roles`.
@@ -124,10 +126,13 @@ Yang **tidak** disinkronkan secara sengaja:
    `webhook_logs`, `workflows`, `workflow_executions`, `api_tokens`,
    `compliance_risks`, `compliance_scores`, `digital_signatures`,
    `leaderboard_stats`. Solusi jangka panjang: ubah PK-nya ke UUID.
-2. **Tabel tanpa `deleted_at` (strategi keyed)** belum menyebarkan
-   **penghapusan** di v1 — penambahan/perubahan tetap tersinkron. Yang paling
-   perlu diperhatikan: **`permission_role`** (pencabutan izin belum otomatis
-   tersebar ke komputer lain; penambahan izin tersebar).
+2. **Penghapusan pada tabel tanpa `deleted_at` (strategi keyed) sudah
+   tersebar** lewat mekanisme *tombstone* (lihat §7). Ini mencakup
+   **`permission_role`**, jadi **pencabutan izin sekarang ikut** ke komputer
+   lain: setiap komputer menyimpan cuplikan primary key (`sync_keys`) dan
+   menulis penanda hapus (`sync_tombstones`) yang ikut disinkronkan. Bila baris
+   yang sama dibuat ulang setelah tanggal penghapusan, baris baru menang
+   (tombstone lama tidak menghapusnya).
 3. **Berkas arsip** (`storage/app/uploads`) belum ikut tersinkron. Saat ini
    berkas arsip masih **0**. Bila mulai dipakai, berkas perlu disinkronkan
    terpisah (mis. lewat rclone/offsite), sedangkan baris database-nya sudah
@@ -157,9 +162,19 @@ Yang **tidak** disinkronkan secara sengaja:
   terlewat; pengiriman ulang aman karena LWW (idempoten).
 - Penggabungan memakai `INSERT ... ON DUPLICATE KEY UPDATE` dengan kondisi
   `VALUES(updated_at) >= IFNULL(updated_at, ...)`.
+- Delta dibaca dengan `COALESCE(updated_at, created_at) >= watermark`; baris
+  warisan yang `updated_at`-nya `NULL` tetap terkirim (dibaca dari `created_at`,
+  atau selalu dikirim bila kedua kolom waktu `NULL`) lalu di-upsert idempoten.
+- **Penghapusan permanen (tombstone).** Untuk tabel tanpa `deleted_at`, setiap
+  kali sinkron mesin membandingkan primary key saat ini dengan cuplikan
+  sebelumnya (`sync_keys`, lokal saja). Key yang hilang = baris dihapus di
+  komputer ini, lalu dicatat di `sync_tombstones` dan disinkronkan seperti tabel
+  biasa. Penerima menghapus baris terkait kecuali baris dibuat ulang **setelah**
+  `deleted_at` (perbandingan waktu `created_at`/`updated_at`).
 - Pengujian: `SIMARC_TEST_DSN_BASE='user:pass@tcp(127.0.0.1:3306)/' go test ./internal/syncdb/`
-  membuat dua database sementara dan memverifikasi konvergensi (termasuk soft
-  delete, update, dan log append).
+  membuat dua database sementara dan memverifikasi konvergensi (soft delete,
+  update, log append, baris ber-`updated_at` NULL, dan pencabutan izin
+  `permission_role` lewat tombstone).
 
 ---
 
