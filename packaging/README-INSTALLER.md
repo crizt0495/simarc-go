@@ -20,23 +20,45 @@ Uninstall:
 sudo dpkg -r simarc
 ```
 
-## 2) Windows (.exe Installer)
+## 2) Windows — ZIP Standalone Installer/Updater (DIREKOMENDASIKAN)
+
+File: `dist/SIMARC-Windows-<versi>.zip`
+(dibuat dengan `bash packaging/make-windows-package.sh`, bisa dari Linux/CI)
+
+Isi paket: `Install-SIMARC.bat`, `SIMARC-Setup.ps1`, `run.bat`, `Uninstall-*.bat`,
+`README-WINDOWS.md`, `web/`, `docs/`, `dist/simarc-server-windows-{amd64,arm64}.exe`,
+`.env.example`, `VERSION`. **Tidak berisi `.env`/`storage`** (data pengguna).
+
+Cara pakai di Windows:
+1. Ekstrak ZIP → klik dua kali **`Install-SIMARC.bat`**.
+2. Butuh hak admin? **Tidak.** Install per-user ke `%LocalAppData%\SIMARC`.
+3. Butuh Go? **Tidak.** Biner rilis sudah tersedia.
+
+**UPDATE revisi kode / versi baru — TANPA uninstall, TANPA install ulang:**
+ekstrak ZIP versi baru → jalankan `Install-SIMARC.bat` lagi. Updater
+menimpa file aplikasi in-place, sedangkan `.env` dan `storage\` (arsip)
+**tidak pernah disentuh**. Idempoten (aman dijalankan berulang).
+
+Detail lengkap: `packaging/windows/README-WINDOWS.md`.
+
+## 2b) Windows (.exe Installer, opsional via Inno Setup)
 
 File: `dist/SIMARC-Setup-1.0.0.exe` (dibuat dengan Inno Setup Compiler di Windows)
 
-Script Inno Setup: `simarc.iss`
+Script Inno Setup: `simarc.iss` (sudah diset agar **upgrade in-place**: AppId
+tetap, install ke `%LocalAppData%\SIMARC`, `.env`/`storage` tidak dipaket).
 
 Cara build di Windows:
 1. Install [Inno Setup](https://jrsoftware.org/isinfo.php)
-2. Buka `simarc.iss` dengan Inno Setup Compiler
+2. Jalankan `ISCC.exe packaging\simarc.iss`
 3. Build → hasilnya `dist/SIMARC-Setup-1.0.0.exe`
 
 Fitur installer:
 - Membuat shortcut Start Menu: `SIMARC` & `Uninstall SIMARC`
 - Opsi membuat shortcut Desktop
 - Menambahkan entry Uninstall di Control Panel (HKEY_CURRENT_USER)
-- Menjalankan `install-desktop.ps1` saat install untuk setup desktop integration
-- Menjalankan `uninstall-desktop.ps1` saat uninstall
+- Mengeksekusi `install-desktop.ps1` saat install / `uninstall-desktop.ps1` saat uninstall
+- Menjalankan ulang Setup versi baru = **update in-place** (tanpa uninstall)
 
 ## 3) Script Installer (tanpa .exe/.deb)
 
