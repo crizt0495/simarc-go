@@ -37,8 +37,8 @@ SolidCompression=yes
 ; Hanya arsitektur yang biner rilisnya tersedia.
 ArchitecturesAllowed=x64compatible arm64
 ArchitecturesInstallIn64BitMode=x64compatible arm64
-SetupIconFile=web\static\images\favicon.ico
-UninstallDisplayIcon={app}\web\static\images\favicon.ico
+SetupIconFile=packaging\windows\simarc.ico
+UninstallDisplayIcon={app}\simarc.ico
 UninstallDisplayName=SIMARC - Arsip Record Center
 WizardStyle=modern
 
@@ -52,6 +52,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Peluncur & konfigurasi contoh (hanya .example — .env milik pengguna dibuat saat install).
 Source: "run.bat";                            DestDir: "{app}"; Flags: ignoreversion
 Source: ".env.example";                       DestDir: "{app}"; Flags: onlyifdoesntexist
+Source: "packaging\windows\simarc.ico";       DestDir: "{app}"; Flags: ignoreversion
 Source: "VERSION";                            DestDir: "{app}"; Flags: ignoreversion; Check: FileExists('{src}\VERSION')
 ; Aplikasi web (template, css/js, vendor).
 Source: "web\*";                              DestDir: "{app}\web"; Flags: recursesubdirs createallsubdirs ignoreversion
@@ -64,9 +65,9 @@ Source: "packaging\install-desktop.ps1";      DestDir: "{app}\packaging"; Flags:
 Source: "packaging\uninstall-desktop.ps1";    DestDir: "{app}\packaging"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\SIMARC"; Filename: "{app}\run.bat"; WorkingDir: "{app}"; IconFilename: "{app}\web\static\images\favicon.ico"
+Name: "{group}\SIMARC"; Filename: "{app}\run.bat"; WorkingDir: "{app}"; IconFilename: "{app}\simarc.ico"
 Name: "{group}\Uninstall SIMARC"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\SIMARC"; Filename: "{app}\run.bat"; WorkingDir: "{app}"; IconFilename: "{app}\web\static\images\favicon.ico"; Tasks: desktopicon
+Name: "{commondesktop}\SIMARC"; Filename: "{app}\run.bat"; WorkingDir: "{app}"; IconFilename: "{app}\simarc.ico"; Tasks: desktopicon
 
 [Run]
 ; Buat .env dari contoh bila belum ada (jangan pernah timpa config pengguna).

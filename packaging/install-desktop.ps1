@@ -14,7 +14,8 @@ function Write-Err($msg) { if (-not $Quiet) { Write-Host "[ERR]  $msg" -Foregrou
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $AppDir = $ScriptDir
-$IconPath = Join-Path $AppDir "web\static\images\favicon.ico"
+$IconPath = Join-Path $AppDir "simarc.ico"
+if (-not (Test-Path $IconPath)) { $IconPath = Join-Path $AppDir "web\static\images\favicon.ico" }
 $BatPath = Join-Path $AppDir "run.bat"
 
 if (-not (Test-Path $BatPath)) {
