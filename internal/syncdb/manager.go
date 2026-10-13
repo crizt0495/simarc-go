@@ -125,11 +125,19 @@ func localSQL() *sql.DB {
 // lastScheduled tracks the previous scheduler tick to enforce the interval.
 var lastScheduled time.Time
 
+// schedulerOnce guarantees a single background scheduler even when the settings
+// page is saved repeatedly.
+var schedulerOnce sync.Once
+
 // StartScheduler launches the background synchronisation goroutine. It is a
 // no-op until SYNC_ENABLED=true and the hub is configured; the loop re-reads the
 // settings on every tick, so enabling sync in the settings page takes effect
-// without a restart.
+// without a restart. Safe to call many times.
 func StartScheduler() {
+	schedulerOnce.Do(startScheduler)
+}
+
+func startScheduler() {
 	go func() {
 		ticker := time.NewTicker(time.Minute)
 		defer ticker.Stop()
