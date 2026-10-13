@@ -13,6 +13,7 @@ import (
 	"arsippro/internal/middleware"
 	"arsippro/internal/models"
 	"arsippro/internal/services"
+	"arsippro/internal/syncdb"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -996,6 +997,8 @@ func (h *PengaturanHandler) Index(c *gin.Context) {
 		"Offsite":           offsiteSettingsForTemplate(),
 		"OffsiteStatus":     services.OffsiteStatus(),
 		"OffsiteRunning":    services.OffsiteRunning(),
+		"Sync":              syncSettingsForTemplate(),
+		"SyncStatus":        syncdb.Mgr.Status(c.Request.Context()),
 	})
 }
 

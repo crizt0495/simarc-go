@@ -22,6 +22,7 @@ import (
 	"arsippro/internal/handlers"
 	"arsippro/internal/middleware"
 	"arsippro/internal/services"
+	"arsippro/internal/syncdb"
 
 	"github.com/gin-gonic/gin"
 )
@@ -178,6 +179,9 @@ func Init() (*gin.Engine, error) {
 	services.InitQueue(3, services.ProcessJob)
 	// Offsite (cloud) backup scheduler — server mode only, opt-in via settings.
 	services.StartOffsiteScheduler()
+	// Multi-computer database synchronisation (offline-first), opt-in via
+	// SYNC_ENABLED + SYNC_HUB_DB_*; the loop re-reads settings every tick.
+	syncdb.StartScheduler()
 
 	gin.SetMode(gin.ReleaseMode)
 

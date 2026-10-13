@@ -1,0 +1,227 @@
+{{define "sync-form"}}
+<div class="alert alert-info d-flex gap-3 mb-4">
+    <i class="bi bi-arrow-left-right fs-4"></i>
+    <div>
+        <strong>Sinkronisasi Multi-Komputer (offline-first).</strong>
+        Setiap komputer menjalankan <em>database sendiri</em> sehingga aplikasi tetap bisa
+        dipakai <strong>tanpa jaringan sama sekali</strong>. Bila salah satu database ditetapkan
+        sebagai <strong>hub</strong> (titik temu), perubahan di setiap komputer akan digabungkan
+        (dua arah) saat hub terjangkau &mdash; berdasarkan <em>waktu perubahan terakhir</em>.
+        Komputer lain cukup mengisi bagian <em>Hub</em> di bawah.
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-activity"></i><span>Status Sinkronisasi</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="text-muted small">Identitas komputer (node)</div>
+                <strong>{{.SyncStatus.NodeID}}</strong>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Hub</div>
+                {{if .SyncStatus.Ready}}
+                <strong>{{.SyncStatus.HubHost}} / {{.SyncStatus.HubDatabase}}</strong>
+                {{else}}
+                <span class="badge bg-secondary">Belum dikonfigurasi</span>
+                {{end}}
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Otomatis</div>
+                {{if .SyncStatus.Enabled}}
+                <span class="badge bg-success">Aktif &mdash; tiap {{.SyncStatus.IntervalMinutes}} menit</span>
+                {{else}}
+                <span class="badge bg-secondary">Nonaktif</span>
+                {{end}}
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Status</div>
+                <span id="syncRunState" class="badge bg-{{if .SyncStatus.Running}}warning{{else}}light text-dark{{end}}">
+                    {{if .SyncStatus.Running}}Berjalan&hellip;{{else}}Siap{{end}}
+                </span>
+            </div>
+        </div>
+
+        <button type="button" id="syncRunBtn" class="btn btn-success"
+                {{if or (not .SyncStatus.Ready) .SyncStatus.Running}}disabled{{end}}>
+            <i class="bi bi-arrow-repeat me-1"></i> Sinkronkan Sekarang
+        </button>
+        <div class="form-text mt-2" id="syncRunHint">
+            {{if not .SyncStatus.Ready}}Isi dan simpan pengaturan Hub terlebih dahulu.{{end}}
+        </div>
+
+        {{if .SyncStatus.Recent}}
+        <hr>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Waktu</th><th>Hasil</th><th class="text-end">Didorong</th>
+                        <th class="text-end">Ditarik</th><th class="text-end">Tabel gagal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .SyncStatus.Recent}}
+                    <tr>
+                        <td class="text-nowrap">{{.FinishedAt.Format "02 Jan 15:04:05"}}</td>
+                        <td>
+                            {{if eq .Status "ok"}}<span class="badge bg-success">OK</span>
+                            {{else}}<span class="badge bg-warning text-dark">Sebagian</span>{{end}}
+                        </td>
+                        <td class="text-end">{{.Pushed}}</td>
+                        <td class="text-end">{{.Pulled}}</td>
+                        <td class="text-end">{{.TablesFail}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <p class="text-muted mt-3 mb-0">Belum ada riwayat sinkronisasi.</p>
+        {{end}}
+    </div>
+</div>
+
+<form method="POST" action="/pengaturan/sync/save" id="syncForm">
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-hdd-network"></i><span>Hub (Titik Temu)</span></div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        Database MySQL tempat semua komputer bertemu. Boleh berupa komputer
+                        server di kantor (alamat LAN, mis. <code>192.168.1.86</code>) atau
+                        database cloud (mis. Aiven). <strong>Kosongkan</strong> bila komputer ini
+                        adalah hub dan tidak perlu menarik dari siapa pun.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Host hub</label>
+                            <input type="text" class="form-control" name="sync_hub_db_host"
+                                   value="{{.Sync.HubHost}}" placeholder="192.168.1.86">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Port</label>
+                            <input type="text" class="form-control" name="sync_hub_db_port"
+                                   value="{{.Sync.HubPort}}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nama database</label>
+                            <input type="text" class="form-control" name="sync_hub_db_name"
+                                   value="{{.Sync.HubDBName}}" placeholder="simarc">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" name="sync_hub_db_user"
+                                   value="{{.Sync.HubUser}}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="sync_hub_db_pass"
+                                   placeholder="{{if .Sync.HubHost}}•••••• (kosongkan bila tidak diubah){{end}}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">TLS</label>
+                            <select class="form-select" name="sync_hub_db_tls">
+                                <option value="preferred" {{if eq .Sync.HubTLS "preferred"}}selected{{end}}>preferred (LAN lokal)</option>
+                                <option value="required" {{if eq .Sync.HubTLS "required"}}selected{{end}}>required (cloud/Aiven)</option>
+                                <option value="disabled" {{if eq .Sync.HubTLS "disabled"}}selected{{end}}>disabled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-sliders"></i><span>Jadwal &amp; Identitas</span></div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="sync_enabled" name="sync_enabled" {{if .Sync.Enabled}}checked{{end}}>
+                        <label class="form-check-label fw-semibold" for="sync_enabled">
+                            Sinkronkan otomatis di latar belakang
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Interval (menit)</label>
+                        <input type="number" min="5" max="1440" class="form-control"
+                               name="sync_interval_minutes" value="{{.Sync.IntervalMinutes}}">
+                        <div class="form-text">Seberapa sering mencoba menyambung ke hub.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Identitas komputer (node)</label>
+                        <input type="text" class="form-control" name="sync_node_id"
+                               value="{{.Sync.NodeID}}" placeholder="mis. komputer-front-office">
+                        <div class="form-text">
+                            Harus <strong>berbeda</strong> untuk setiap komputer. Kosongkan untuk
+                            memakai nama komputer secara otomatis.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Simpan Pengaturan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+(function () {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'sync') {
+            var btn = document.getElementById('sync-tab');
+            if (btn && window.bootstrap && bootstrap.Tab) {
+                bootstrap.Tab.getOrCreateInstance(btn).show();
+            }
+        }
+    } catch (e) { /* ignore */ }
+
+    var runBtn = document.getElementById('syncRunBtn');
+    if (!runBtn) return;
+    var state = document.getElementById('syncRunState');
+    var hint = document.getElementById('syncRunHint');
+
+    function poll() {
+        fetch('/api/sync/status', { headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (st) {
+                if (st.running) {
+                    state.className = 'badge bg-warning text-dark';
+                    state.textContent = 'Berjalan…';
+                    setTimeout(poll, 2000);
+                } else {
+                    state.className = 'badge bg-success';
+                    state.textContent = 'Selesai';
+                    if (hint) hint.textContent = 'Selesai. Muat ulang halaman untuk melihat riwayat terbaru.';
+                    runBtn.disabled = false;
+                }
+            })
+            .catch(function () { runBtn.disabled = false; });
+    }
+
+    runBtn.addEventListener('click', function () {
+        runBtn.disabled = true;
+        state.className = 'badge bg-warning text-dark';
+        state.textContent = 'Memulai…';
+        fetch('/api/sync/run', { method: 'POST' })
+            .then(function (r) {
+                if (!r.ok && r.status !== 202) return r.json().then(function (j) { throw new Error(j.error || 'gagal'); });
+            })
+            .then(function () { setTimeout(poll, 1500); })
+            .catch(function (e) {
+                state.className = 'badge bg-danger';
+                state.textContent = 'Gagal';
+                if (hint) hint.textContent = e.message;
+                runBtn.disabled = false;
+            });
+    });
+})();
+</script>
+{{end}}

@@ -108,6 +108,12 @@ func registerRoutes(r *gin.Engine) {
 		auth.POST("/arsip/export-search", arsipH.ExportSearch)
 
 		// ═══════════════════════════════════════════
+		// SINKRONISASI MULTI-KOMPUTER (offline-first)
+		// ═══════════════════════════════════════════
+		auth.GET("/api/sync/status", handlers.SyncStatus)
+		auth.POST("/api/sync/run", handlers.SyncRun)
+
+		// ═══════════════════════════════════════════
 		// ARSIP (Manajemen Arsip)
 		// ═══════════════════════════════════════════
 		// Move location (before resource routes)
@@ -295,6 +301,9 @@ func registerRoutes(r *gin.Engine) {
 		auth.POST("/pengaturan/offsite/test-s3", pengaturanAdvH.OffsiteTestS3)
 		auth.POST("/pengaturan/offsite/test-files", pengaturanAdvH.OffsiteTestFiles)
 		auth.POST("/pengaturan/offsite/run", pengaturanAdvH.OffsiteRun)
+
+		// Sinkronisasi multi-komputer (offline-first): simpan + jalankan.
+		auth.POST("/pengaturan/sync/save", pengaturanAdvH.SyncSave)
 
 		// ═══════════════════════════════════════════
 		// ROLES

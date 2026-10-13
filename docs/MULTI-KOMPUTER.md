@@ -4,6 +4,11 @@ Panduan menjalankan SIMARC di **beberapa komputer sekaligus** (mis. 1 komputer
 server + beberapa komputer petugas) dengan satu database dan satu penyimpanan
 berkas bersama.
 
+> **Butuh tiap komputer tetap jalan tanpa jaringan?** Lihat
+> [`docs/OFFLINE-SYNC.md`](OFFLINE-SYNC.md) — setiap komputer memakai database
+> sendiri (offline penuh) lalu menyatu otomatis lewat satu "hub". Mode klien di
+> dokumen ini adalah alternatifnya (satu server pusat + klien tipis).
+
 ---
 
 ## 1. Kenapa harus "server pusat + klien"?
