@@ -8,13 +8,13 @@ database sendiri) maupun mode klien.
 
 ## 0) Installer SATU FILE (.exe) — DIREKOMENDASIKAN
 
-Cukup **satu berkas**: `SIMARC-Setup-<versi>.exe` (32/64-bit; biner amd64 +
-arm64 tersedia). File ini **sudah memuat seluruh aplikasi** di dalamnya
+Cukup **satu berkas**: `SIMARC-Setup.exe` (biner amd64; varian `SIMARC-Setup-arm64.exe`
+tersedia bila diinginkan). File ini **sudah memuat seluruh aplikasi** di dalamnya
 (biner server, web/template, dokumentasi, `.env.example`, skrip integrasi) —
 **tidak ada folder lain yang perlu disalin**.
 
 Cara pakai di komputer lain:
-1. Salin **`SIMARC-Setup-<versi>.exe`** (satu file) ke komputer tujuan.
+1. Salin **`SIMARC-Setup.exe`** (satu file) ke komputer tujuan.
 2. Klik dua kali file tersebut.
 3. Selesai — aplikasi terpasang, shortcut Start Menu/Desktop dibuat.
 
@@ -51,9 +51,9 @@ Tidak butuh hak admin, tidak butuh Go. Install ke `%LocalAppData%\SIMARC`.
 
 Prosedur **satu langkah yang sama** untuk tiap revisi:
 
-1. Dapatkan paket **versi baru** — entah `SIMARC-Setup-<versi>.exe` (satu file)
+1. Dapatkan paket **versi baru** — entah `SIMARC-Setup.exe` (satu file)
    atau `SIMARC-Windows-<versi>.zip`.
-2. Jalankan installer versi baru itu: klik dua kali **`SIMARC-Setup-<versi>.exe`**,
+2. Jalankan installer versi baru itu: klik dua kali **`SIMARC-Setup.exe`**,
    atau klik dua kali **`Install-SIMARC.bat`** dari zip baru.
 3. Selesai. Aplikasi = versi baru. **Tidak ada uninstall, tidak ada install ulang.**
 
@@ -90,7 +90,7 @@ kali (idempoten).
 
 Windows + Inno Setup 6:
 1. Buka `simarc.iss` dengan Inno Setup Compiler (`ISCC.exe`).
-2. Build → `dist\SIMARC-Setup-<versi>.exe`.
+2. Build → `dist\SIMARC-Setup.exe`.
 
 Skrip `.iss` sudah diset agar instalasi/upgrade **in-place** (AppId tetap,
 instal ke `%LocalAppData%\SIMARC`, `.env`/`storage` tidak pernah dipaket).
@@ -100,8 +100,8 @@ instal ke `%LocalAppData%\SIMARC`, `.env`/`storage` tidak pernah dipaket).
 ```bash
 bash packaging/build-all.sh                 # biner + deb (sekali per rilis)
 bash packaging/make-windows-package.sh      # -> dist/SIMARC-Windows-<versi>.zip
-                                            #    dist/SIMARC-Setup-<versi>.exe         (satu file, amd64)
-                                            #    dist/SIMARC-Setup-<versi>-arm64.exe   (satu file, arm64)
+                                            #    dist/SIMARC-Setup.exe          (satu file, amd64)
+                                            #    dist/SIMARC-Setup-arm64.exe    (opsional, ARM64)
 ```
 
 Installer `.exe` dibuat dengan cross-compile Go (lihat

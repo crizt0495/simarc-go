@@ -90,12 +90,14 @@ build_installer() {
 }
 
 echo "==> Membangun installer SATU FILE (Windows .exe)..."
-EXE_AMD="$ROOT/dist/SIMARC-Setup-${VERSION_CLEAN}.exe"
+EXE_AMD="$ROOT/dist/SIMARC-Setup.exe"
 build_installer amd64 "$EXE_AMD"
 echo "==> OK: $EXE_AMD ($(du -h "$EXE_AMD" | cut -f1))"
-if [ -f dist/simarc-server-windows-arm64.exe ]; then
-  EXE_ARM="$ROOT/dist/SIMARC-Setup-${VERSION_CLEAN}-arm64.exe"
+# Varian ARM64 hanya bila diminta: SIMARC_BUILD_ARM64=1 bash packaging/make-windows-package.sh
+if [ "${SIMARC_BUILD_ARM64:-0}" = "1" ] && [ -f dist/simarc-server-windows-arm64.exe ]; then
+  EXE_ARM="$ROOT/dist/SIMARC-Setup-arm64.exe"
   build_installer arm64 "$EXE_ARM"
   echo "==> OK: $EXE_ARM ($(du -h "$EXE_ARM" | cut -f1))"
 fi
-echo "    Cukup SALIN: dist/SIMARC-Setup-${VERSION_CLEAN}.exe  (satu file) ke komputer lain, lalu klik dua kali."
+echo "    Cukup SALIN: dist/SIMARC-Setup.exe  (satu file) ke komputer lain, lalu klik dua kali."
+echo "    (opsional) ARM64 Windows: SIMARC_BUILD_ARM64=1 -> dist/SIMARC-Setup-arm64.exe"

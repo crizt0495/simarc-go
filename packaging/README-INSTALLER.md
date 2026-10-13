@@ -22,7 +22,7 @@ sudo dpkg -r simarc
 
 ## 2) Windows — Installer SATU FILE (.exe) (DIREKOMENDASIKAN)
 
-File: `dist/SIMARC-Setup-<versi>.exe` (+ `...-arm64.exe`)
+File: `dist/SIMARC-Setup.exe` (varian `dist/SIMARC-Setup-arm64.exe` opsional)
 (dibuat dengan `bash packaging/make-windows-package.sh`, dari Linux/CI)
 
 Satu berkas ini **sudah memuat seluruh aplikasi** (biner server, web/, template,
@@ -30,7 +30,7 @@ dokumentasi, `.env.example`, skrip integrasi desktop). **Tidak perlu folder
 lain** — cukup salin satu `.exe` ke komputer tujuan lalu klik dua kali.
 
 **UPDATE revisi kode / versi baru — TANPA uninstall, TANPA install ulang:**
-salin `SIMARC-Setup-<versi-baru>.exe` → klik dua kali. File aplikasi ditimpa
+salin `SIMARC-Setup.exe` (versi baru) → klik dua kali. File aplikasi ditimpa
 in-place; `.env` dan `storage\` **tidak pernah disentuh**.
 
 Butuh admin? **Tidak.** Butuh Inno Setup? **Tidak** (dibangun dengan Go).
