@@ -104,7 +104,28 @@ func serveStaticFile(dir string, cacheControl string) gin.HandlerFunc {
 	}
 }
 
+// staticAssetPrefixes lists URL prefixes served as immutable, content-versioned
+// static assets. Responses under these prefixes set their own Cache-Control and
+// must NOT be forced to no-store.
+var staticAssetPrefixes = []string{
+	"/css/", "/js/", "/images/", "/vendor/", "/storage/", "/fonts/",
+	"/favicon.ico", "/manifest.json", "/sw.js",
+}
+
+func isStaticAssetPath(p string) bool {
+	for _, prefix := range staticAssetPrefixes {
+		if strings.HasPrefix(p, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 // securityHeaders sets baseline response headers on every request.
+//
+// Dynamic responses (HTML pages, JSON, downloads) are marked no-store so a new
+// deployment is always picked up on the next navigation. Static assets stay
+// cacheable because they are content-versioned via the ?v= query string.
 func securityHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("X-Content-Type-Options", "nosniff")
@@ -112,6 +133,11 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("X-XSS-Protection", "1; mode=block")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		if !isStaticAssetPath(c.Request.URL.Path) {
+			c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
+		}
 		c.Next()
 	}
 }

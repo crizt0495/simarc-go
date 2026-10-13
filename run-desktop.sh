@@ -178,6 +178,18 @@ if [[ -z "$CLIENT_URL" ]]; then
     fi
 fi
 
+# ── Cache-buster jendela ─────────────────────────────────────────────────────
+# Dokumen HTML memakai URL tetap ("/"), sehingga browser bisa menyajikan versi
+# lama dari cache walau server sudah diperbarui. Menambahkan ?v=<versi> memaksa
+# muat HTML terbaru tiap peluncuran, jadi perubahan UI langsung terlihat tanpa
+# perlu clear cache atau install ulang.
+if [[ -z "$CLIENT_URL" ]]; then
+    BUILD_ID="$(stat -c %Y "$BIN" 2>/dev/null || date +%s)"
+else
+    BUILD_ID="$(date +%s)"
+fi
+URL="${URL}?v=${BUILD_ID}"
+
 # ── Cari browser berbasis Chromium ──────────────────────────────────────────
 CHROME_BIN=""
 for b in google-chrome google-chrome-stable chromium chromium-browser brave-browser microsoft-edge; do
