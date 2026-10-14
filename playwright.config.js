@@ -10,6 +10,10 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
+  // The suite drives the live app on the same (single) machine, so four parallel
+  // browsers starve it and teardown/trace recordings time out. Two workers keeps
+  // the run reliable and actually faster.
+  workers: 2,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',

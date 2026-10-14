@@ -11,6 +11,12 @@ dist/
 # ── Node / frontend tooling ──
 node_modules/
 
+# ── Playwright artifacts ──
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
 # ── Environment ──
 .env*
 # Izinkan template .env tetap dilacak (contoh untuk server & klien).

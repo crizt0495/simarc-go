@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -18,10 +20,33 @@ var (
 	rateMu       sync.Mutex
 )
 
-const (
-	maxAttempts = 5
-	windowTime  = 1 * time.Minute
+// envInt reads a positive integer from the environment, falling back to def.
+func envInt(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return def
+}
+
+// The default window/limit suit a LAN deployment. They can be tuned with
+// SIMARC_LOGIN_MAX_ATTEMPTS and SIMARC_LOGIN_WINDOW_SECONDS.
+var (
+	maxAttempts = envInt("SIMARC_LOGIN_MAX_ATTEMPTS", 5)
+	windowTime  = time.Duration(envInt("SIMARC_LOGIN_WINDOW_SECONDS", 60)) * time.Second
 )
+
+// isLoopback reports whether ip is a local (loopback) address. The desktop
+// app serves on localhost for a single user, so brute-force throttling there
+// only hurts legitimate use (and local tooling/tests).
+func isLoopback(ip string) bool {
+	switch ip {
+	case "127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1":
+		return true
+	}
+	return false
+}
 
 func cleanupRateLimiters() {
 	rateMu.Lock()
@@ -45,6 +70,12 @@ func init() {
 func LoginRateLimit() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
+
+		// Local (desktop app / tooling) is not throttled.
+		if isLoopback(ip) {
+			c.Next()
+			return
+		}
 
 		rateMu.Lock()
 		a, exists := rateLimiters[ip]

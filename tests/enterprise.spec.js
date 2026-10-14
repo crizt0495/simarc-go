@@ -21,11 +21,22 @@ async function login(page) {
   await Promise.all([page.waitForURL('**/dashboard'), page.click('button[type="submit"]')]);
 }
 
+// The desktop sidebar is only rendered at >= 992px; below that the layout
+// intentionally swaps to the mobile bottom nav (see desktop-modern.css §7).
+async function expectLayoutChrome(page) {
+  await expect(page.locator('.top-navbar')).toBeVisible();
+  const width = page.viewportSize()?.width ?? 1440;
+  if (width >= 992) {
+    await expect(page.locator('.sidebar')).toBeVisible();
+  } else {
+    await expect(page.locator('.mobile-bottom-nav')).toBeVisible();
+  }
+}
+
 test.describe('enterprise layout contract', () => {
   test('dashboard renders modern chrome', async ({ page }) => {
     await login(page);
-    await expect(page.locator('.sidebar')).toBeVisible();
-    await expect(page.locator('.top-navbar')).toBeVisible();
+    await expectLayoutChrome(page);
     // Enterprise contract: crisp 1px hairline under the topbar
     const bar = await page.locator('.top-navbar').evaluate(el => getComputedStyle(el).borderBottomWidth);
     expect(bar).toBe('1px');
@@ -42,8 +53,7 @@ test.describe('enterprise layout contract', () => {
     await login(page);
     await page.click(THEME_TOGGLE);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await expect(page.locator('.sidebar')).toBeVisible();
-    await expect(page.locator('.top-navbar')).toBeVisible();
+    await expectLayoutChrome(page);
     await page.click(THEME_TOGGLE);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
@@ -59,7 +69,7 @@ test.describe('component contrast fixtures', () => {
   test('primary button uses soft shadow, not offset hard shadow', async ({ page }) => {
     await login(page);
     await page.goto('/arsip');
-    const btn = page.locator('.btn-primary').first();
+    const btn = page.locator('.btn-primary:visible').first();
     await btn.waitFor({ state: 'visible' });
     const shadow = await btn.evaluate(el => getComputedStyle(el).boxShadow);
     // Enterprise: blurred ambient shadow (rgb(…, a) fade), not a solid offset pair
@@ -82,8 +92,11 @@ test.describe('auth page', () => {
     const card = page.locator('.auth-card');
     await expect(card).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
-    const radius = await card.evaluate(el => getComputedStyle(el).borderRadius);
-    expect(parseFloat(radius)).toBeGreaterThan(0); // modern: soft rounding
+    // Two-pane redesign: the rounded, elevated container is .auth-shell and the
+    // form card (.auth-card) sits flat inside the right pane.
+    const shell = page.locator('.auth-shell');
+    const radius = await shell.evaluate(el => getComputedStyle(el).borderRadius);
+    expect(parseFloat(radius)).toBeGreaterThan(0);
   });
 
   test('auth theme toggle transitions+persists', async ({ page }) => {
@@ -92,3 +105,4 @@ test.describe('auth page', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 });
+
