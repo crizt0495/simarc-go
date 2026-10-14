@@ -57,11 +57,20 @@ jendela mandiri (Chromium/Edge). Butuh browser Chrome/Edge sudah terpasang.
 
 Tidak butuh hak admin, tidak butuh Go. Install ke `%LocalAppData%\SIMARC`.
 
+> **Komputer selain hub (192.168.1.86):** installer otomatis mengenali bahwa
+> komputer ini **bukan hub**, lalu mengatur aplikasi sebagai **klien** ke
+> `http://192.168.1.86:8080`. Anda **tidak perlu install MariaDB/MySQL** di
+> komputer ini.
+>
+> **Komputer hub (192.168.1.86):** installer tetap membuat `.env` mode server
+> lokal, sehingga hub tetap menjalankan database & aplikasinya sendiri.
+
 ## 2.1) Komputer BARU tanpa database — "Database Tidak Tersedia"
 
-Bila SIMARC dibuka di komputer yang **belum punya database** `simarc`, aplikasi
-**tidak lagi menampilkan layar buntu**: otomatis diarahkan ke **halaman
-Konfigurasi Database** (`/database-setup`). Alur lengkapnya:
+Bila SIMARC dibuka di komputer yang **belum punya database** `simarc` (misal
+komputer hub yang belum disiapkan), aplikasi **tidak lagi menampilkan layar
+buntu**: otomatis diarahkan ke **halaman Konfigurasi Database**
+(`/database-setup`). Alur lengkapnya:
 
 1. Pasang **MySQL/MariaDB** di komputer itu (mis. MariaDB 10.11) dan pastikan
    servisnya berjalan.

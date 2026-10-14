@@ -38,6 +38,11 @@ if (-not $env:LOCALAPPDATA) {
 }
 $Dest = Join-Path $env:LOCALAPPDATA "SIMARC"              # folder instalasi tetap
 
+# Komputer selain hub langsung menjadi klien tanpa MySQL/database lokal.
+# Ubah hanya bila alamat hub kantor berubah.
+$HubIP  = "192.168.1.86"
+$HubURL = "http://$($HubIP):8080"
+
 # ── Persyaratan payload ─────────────────────────────────────────────────────
 $BatRun   = Join-Path $Src "run.bat"
 $EnvEx    = Join-Path $Src ".env.example"
@@ -92,7 +97,28 @@ Write-Ok "File aplikasi disalin/ditimpa di $Dest ($Copied komponen)."
 $EnvDest = Join-Path $Dest ".env"
 if (-not (Test-Path $EnvDest)) {
   Copy-Item -Path $EnvEx -Destination $EnvDest -Force
-  Write-Ok ".env dibuat dari .env.example (sunting bila komputer ini klien/hub AKTIF)."
+
+  # Deteksi hub berdasarkan IP lokal. Komputer lain otomatis klien:
+  # tidak perlu MariaDB/MySQL lokal dan langsung memakai aplikasi hub.
+  $IsHubComputer = $false
+  try {
+    $localIPv4 = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+      Where-Object { $_.IPAddress -notmatch '^(127\\.|169\\.254\\.)' } |
+      Select-Object -ExpandProperty IPAddress)
+    $IsHubComputer = $localIPv4 -contains $HubIP
+  } catch {
+    Write-Warn "Tidak dapat mendeteksi IP komputer; mode server lokal dipertahankan."
+  }
+
+  if (-not $IsHubComputer) {
+    $envText = Get-Content -Path $EnvDest -Raw
+    $envText = [regex]::Replace($envText, '(?m)^SIMARC_SERVER_URL=.*$', "SIMARC_SERVER_URL=$HubURL")
+    Set-Content -Path $EnvDest -Value $envText -Encoding UTF8
+    Write-Ok "Komputer ini otomatis dikonfigurasi sebagai KLIEN ke $HubURL."
+    Write-Info "Tidak perlu install MariaDB/MySQL di komputer ini."
+  } else {
+    Write-Ok "IP hub $HubIP terdeteksi — mode SERVER lokal dipertahankan."
+  }
 } else {
   Write-Info ".env sudah ada — TIDAK ditimpa (dipertahankan)."
 }
