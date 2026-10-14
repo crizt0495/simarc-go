@@ -295,13 +295,11 @@ html.cmdk-open, html.cmdk-open body { overflow: hidden; }
   }
 }
 
-/* ── 7. Sidebar kiri (desktop ≥1200px) ──────────────────────────── */
-/* Sistem .sidebar sudah ada di enterprise.css (gelap, --sidebar-w).
-   Di sini kita mengaktifkannya di layar lebar dan menggeser topbar +
-   konten agar tidak tertutup; nav horizontal digantikan sidebar. */
+/* ── 7. Sidebar kiri (desktop ≥992px) ──────────────────────────── */
+/* Navigasi sidebar sekarang aktif di semua layar desktop/laptop standar (>= 992px) */
 .simarc-sidebar { display: none; }
 
-@media (min-width: 1200px) {
+@media (min-width: 992px) {
   .simarc-sidebar { display: block; }
 
   /* Nav horizontal & brand topbar digantikan oleh sidebar */
@@ -310,6 +308,11 @@ html.cmdk-open, html.cmdk-open body { overflow: hidden; }
 
   .top-navbar { left: var(--sidebar-w); }
   .main-content { margin-left: var(--sidebar-w); }
+}
+
+/* Konsistensi padding konten desktop (tetap sisakan ruang topbar tetap) */
+@media (min-width: 992px) {
+  .main-content { padding: calc(var(--topbar-h) + 1.25rem) 2rem 2.5rem; }
 }
 
 /* Mode rail (ikon saja) */
