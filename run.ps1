@@ -59,9 +59,10 @@ if ($SERVER_URL) {
     Write-Host "[INFO]  Mode KLIEN - server pusat: $SERVER_URL" -ForegroundColor Cyan
 
     $WINDOW_MODE = (Get-EnvRaw "SIMARC_WINDOW").ToLower()
-    $WINFLAG = "--start-maximized"
+    $WINFLAG = "--start-fullscreen"
     switch ($WINDOW_MODE) {
         "normal"     { $WINFLAG = $null }
+        "maximized"  { $WINFLAG = "--start-maximized" }
         "fullscreen" { $WINFLAG = "--start-fullscreen" }
         "kiosk"      { $WINFLAG = "--kiosk" }
     }

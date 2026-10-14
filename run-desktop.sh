@@ -26,8 +26,8 @@ fi
 PORT="${APP_PORT:-8080}"
 URL="http://127.0.0.1:${PORT}/"
 
-# Mode jendela aplikasi: normal (default) | maximized | fullscreen | kiosk
-WINDOW_MODE="$(printf '%s' "${SIMARC_WINDOW:-normal}" | tr '[:upper:]' '[:lower:]')"
+# Mode jendela aplikasi: normal | maximized | fullscreen (default) | kiosk
+WINDOW_MODE="$(printf '%s' "${SIMARC_WINDOW:-fullscreen}" | tr '[:upper:]' '[:lower:]')"
 WINDOW_ARGS=()
 case "$WINDOW_MODE" in
     maximized)  WINDOW_ARGS+=(--start-maximized) ;;

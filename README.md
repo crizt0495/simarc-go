@@ -109,14 +109,14 @@ Atur lewat `SIMARC_WINDOW` di `.env`:
 
 | Nilai | Efek |
 |-------|------|
-| `normal` | Jendela ukuran biasa (default) |
+| `normal` | Jendela ukuran biasa |
 | `maximized` | Terbuka otomatis memenuhi layar (tombol minimize/close tetap ada) |
-| `fullscreen` | Layar penuh tanpa bingkai (keluar: `F11` atau `Alt+F4`) |
+| `fullscreen` | Layar penuh tanpa bingkai (default; keluar: `F11` atau `Alt+F4`) |
 | `kiosk` | Mode kiosk terkunci penuh (untuk terminal / perangkat khusus) |
 
 ```bash
 # contoh: buka otomatis memenuhi layar
-SIMARC_WINDOW=maximized
+SIMARC_WINDOW=fullscreen
 ```
 
 ### Satu database untuk banyak komputer (server pusat + klien)

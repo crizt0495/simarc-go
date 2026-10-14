@@ -209,8 +209,12 @@ func openAppWindow(url string) (*exec.Cmd, bool) {
 		"--class=SIMARC",
 		"--name=SIMARC",
 	}
-	// Mode jendela: normal (default) | maximized | fullscreen | kiosk
-	switch strings.ToLower(strings.TrimSpace(os.Getenv("SIMARC_WINDOW"))) {
+	// Mode jendela: normal | maximized | fullscreen | kiosk (default: fullscreen)
+	windowMode := strings.ToLower(strings.TrimSpace(os.Getenv("SIMARC_WINDOW")))
+	if windowMode == "" {
+		windowMode = "fullscreen"
+	}
+	switch windowMode {
 	case "maximized":
 		args = append(args, "--start-maximized")
 	case "fullscreen":

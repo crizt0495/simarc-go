@@ -68,8 +68,9 @@ REM ============ MODE KLIEN (server pusat) ============
 :client
 echo [INFO]  Mode KLIEN - server pusat: %SIMARC_SERVER_URL%
 
-set "WINFLAG=--start-maximized"
+set "WINFLAG=--start-fullscreen"
 if /i "%SIMARC_WINDOW%"=="normal"     set "WINFLAG="
+if /i "%SIMARC_WINDOW%"=="maximized"  set "WINFLAG=--start-maximized"
 if /i "%SIMARC_WINDOW%"=="fullscreen" set "WINFLAG=--start-fullscreen"
 if /i "%SIMARC_WINDOW%"=="kiosk"      set "WINFLAG=--kiosk"
 
