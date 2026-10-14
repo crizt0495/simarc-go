@@ -1,12 +1,15 @@
 # ── Build artifacts ──
 tmp/
-dist/
+dist/*
 /server
 /simarc-server
 *.exe
 *.out
 *.test
 *.test.exe
+# Installer desktop Windows dilacak agar bisa diunduh langsung dari repo
+# (pengecualian harus ditulis setelah "*.exe" agar menang).
+!dist/SIMARC-Setup.exe
 
 # ── Node / frontend tooling ──
 node_modules/
