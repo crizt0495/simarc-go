@@ -43,6 +43,7 @@ rsync -a docs/ "$PAY/docs/"
 cp -f run.bat "$PAY/run.bat"
 cp -f .env.example "$PAY/.env.example"
 cp -f packaging/windows/SIMARC-Setup.ps1     "$PAY/"
+cp -f packaging/windows/SIMARC-Installer-GUI.ps1 "$PAY/"
 cp -f packaging/windows/Install-SIMARC.bat   "$PAY/"
 cp -f packaging/windows/Uninstall-SIMARC.bat "$PAY/"
 cp -f packaging/windows/Uninstall-SIMARC.ps1 "$PAY/"
@@ -90,7 +91,7 @@ build_installer() {
     rm -f "$bdir/payload/dist/simarc-server-windows-amd64.exe"
   fi
   ( cd "$bdir" && GOFLAGS= GOWORK=off GO111MODULE=on GOOS=windows GOARCH="$arch" CGO_ENABLED=0 \
-      go build -trimpath -ldflags="-s -w" -o "$out" . )
+      go build -trimpath -ldflags="-s -w -H=windowsgui" -o "$out" . )
   rm -rf "$bdir"
 }
 
