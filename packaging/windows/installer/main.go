@@ -38,9 +38,12 @@ func main() {
 	noShortcut := flag.Bool("no-desktop-shortcut", false, "jangan buat shortcut Desktop")
 	gui := flag.Bool("gui", false, "paksa tampilkan jendela instalasi grafis")
 	cli := flag.Bool("cli", false, "paksa mode konsol (tanpa GUI)")
-	mode := flag.String("mode", "", "mode instalasi: auto|offline|client|local")
-	hub := flag.String("hub", "", "alamat server hub, mis. http://192.168.1.86:8080")
+	modeFlag := flag.String("mode", "", "mode instalasi: auto|offline|client|local")
+	hubFlag := flag.String("hub", "", "alamat server hub, mis. http://192.168.1.86:8080")
 	flag.Parse()
+
+	// Salinan lokal agar dapat diubah pada jalur fallback GUI.
+	mode, hub := *modeFlag, *hubFlag
 
 	// Ekstrak payload ke folder sementara sekali di awal.
 	tmp, err := os.MkdirTemp("", "simarc-setup-")
@@ -56,12 +59,10 @@ func main() {
 	// Konfigurasi instalasi otomatis (opsional): bila ada berkas
 	// `simarc-install.txt` di SAMPING .exe ini, salin ke folder payload agar
 	// dibaca SIMARC-Setup.ps1 (mengatur mode/hub/sync tanpa ditanya).
-	hasSideCfg := false
 	if exe, err := os.Executable(); err == nil {
 		sibling := filepath.Join(filepath.Dir(exe), "simarc-install.txt")
 		if data, err := os.ReadFile(sibling); err == nil {
 			_ = os.WriteFile(filepath.Join(tmp, "simarc-install.txt"), data, 0o644)
-			hasSideCfg = true
 		}
 	}
 
@@ -76,28 +77,44 @@ func main() {
 	if *gui && !*quiet {
 		useGUI = true
 	}
-	// Bila config mode diset (offline/client/local) tanpa minta GUI, tetap
-	// gunakan GUI agar pengguna melihat progres yang rapi — kecuali -quiet/-cli.
-	if hasSideCfg && *mode == "" && !*quiet && !*cli {
-		// biarkan GUI membaca mode dari simarc-install.txt
-	}
 	if useGUI {
-		if err := runGUI(tmp, ps1, *noShortcut); err == nil {
-			return
+		if err := runGUI(tmp, ps1, mode, hub, *noShortcut); err == nil {
+			// Jangan menganggap exit code 0 sebagai sukses: verifikasi hasil nyata.
+			if _, statErr := os.Stat(filepath.Join(resolveInstallDir(), "run.bat")); statErr == nil {
+				return
+			}
 		}
+		// GUI/PowerShell tidak tersedia atau tidak menjalankan skrip (Wine). Jangan
+		// gagal diam-diam: pakai pemasangan Go dan verifikasi semua artefak.
+		if mode == "" || mode == "auto" {
+			mode = "offline"
+		}
+		if err := nativeInstall(tmp, resolveInstallDir(), mode, hub); err != nil {
+			fatalGUI("Instalasi gagal: %v", err)
+		}
+		if err := verifyInstall(resolveInstallDir(), mode); err != nil {
+			fatalGUI("Verifikasi instalasi gagal: %v", err)
+		}
+		return
 	}
 
 	// ── Jalur konsol (fallback / otomatisasi) ─────────────────────────────────
-	runConsole(tmp, ps1, *mode, *hub, *quiet, *noShortcut)
+	runConsole(tmp, ps1, mode, hub, *quiet, *noShortcut)
 }
 
 // runGUI menampilkan jendela instalasi grafis modern lalu menjalankan pemasangan.
-func runGUI(tmp, ps1 string, noShortcut bool) error {
+func runGUI(tmp, ps1, mode, hub string, noShortcut bool) error {
 	guiScript := filepath.Join(tmp, "SIMARC-Installer-GUI.ps1")
 	if _, err := os.Stat(guiScript); err != nil {
 		return err
 	}
 	args := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", guiScript, "-SetupScript", ps1}
+	if mode != "" {
+		args = append(args, "-Mode", mode)
+	}
+	if hub != "" {
+		args = append(args, "-Hub", hub)
+	}
 	if noShortcut {
 		args = append(args, "-NoDesktopShortcut")
 	}
@@ -126,22 +143,34 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 		args = append(args, "-Hub", hub)
 	}
 
-	cmd := exec.Command("powershell.exe", args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	psErr := cmd.Run()
+	installDir := resolveInstallDir()
+	psRan := false
+	if _, err := exec.LookPath("powershell.exe"); err == nil {
+		cmd := exec.Command("powershell.exe", args...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		psErr := cmd.Run()
+		_, appErr := os.Stat(filepath.Join(installDir, "run.bat"))
+		if psErr == nil && appErr == nil {
+			psRan = true
+		}
+	}
 
 	// PowerShell pada beberapa lingkungan (mis. Wine tanpa PowerShell fungsional)
 	// dapat mengembalikan exit code 0 tanpa benar-benar mengeksekusi skrip.
-	// Jika proses gagal ATAU instalasi tidak ditemukan, pasang langsung via Go.
-	installDir := resolveInstallDir()
-	_, appErr := os.Stat(filepath.Join(installDir, "run.bat"))
-	if psErr != nil || appErr != nil {
+	// Bila proses gagal ATAU instalasi tidak ditemukan, pasang langsung via Go.
+	if !psRan {
 		fmt.Println("[INFO] PowerShell tidak menyelesaikan instalasi, menjalankan pemasangan langsung...")
+		if mode == "" || mode == "auto" {
+			mode = "offline"
+		}
 		if err := nativeInstall(tmp, installDir, mode, hub); err != nil {
 			fail("Instalasi langsung gagal: %v", err)
 		}
+	}
+	if err := verifyInstall(installDir, mode); err != nil {
+		fail("Verifikasi instalasi gagal: %v", err)
 	}
 
 	fmt.Println()
@@ -153,6 +182,28 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 }
 
 // resolveInstallDir mengembalikan %LocalAppData%\SIMARC.
+func verifyInstall(installDir, mode string) error {
+	required := []string{
+		"run.bat", ".env", "tmp/simarc-server.exe",
+		"web/templates/layouts/app.html",
+	}
+	for _, rel := range required {
+		fi, err := os.Stat(filepath.Join(installDir, filepath.FromSlash(rel)))
+		if err != nil || fi.IsDir() || fi.Size() == 0 {
+			return fmt.Errorf("file wajib tidak ada atau kosong: %s", rel)
+		}
+	}
+	if strings.EqualFold(mode, "offline") {
+		for _, rel := range []string{"mariadb/bin/mariadbd.exe", "mariadb/bin/mariadb-install-db.exe"} {
+			fi, err := os.Stat(filepath.Join(installDir, filepath.FromSlash(rel)))
+			if err != nil || fi.IsDir() || fi.Size() == 0 {
+				return fmt.Errorf("komponen database portabel tidak ada atau kosong: %s", rel)
+			}
+		}
+	}
+	return nil
+}
+
 func resolveInstallDir() string {
 	localAppData := os.Getenv("LOCALAPPDATA")
 	if localAppData == "" {
@@ -303,9 +354,16 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 	mariadbdExe := filepath.Join(mariadbDest, "bin", "mariadbd.exe")
 	if _, err := os.Stat(zipMaria); err == nil {
 		if _, err := os.Stat(mariadbdExe); os.IsNotExist(err) {
+			fmt.Println("[INFO] Mengekstrak database portabel...")
 			_ = unzip(zipMaria, mariadbDest)
 		}
 	}
+
+	// MariaDB tidak boleh diinisialisasi di sini. Server SIMARC sendiri
+	// menginisialisasi datadir, membuat kata sandi root, lalu membuat user
+	// aplikasi dengan password dari .env secara atomik pada startup pertama.
+	// Dengan begitu fallback ini setara dengan jalur PowerShell dan tidak
+	// menghasilkan user/password database yang tidak cocok.
 
 	return nil
 }
