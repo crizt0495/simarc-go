@@ -96,6 +96,18 @@
     .auth-alert-success { background: var(--nb-success-light); color: var(--nb-success); }
     .auth-alert-danger { background: var(--nb-danger-light); color: var(--nb-danger); }
 
+    /* App mode and sync status */
+    .auth-mode-badge {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+      padding: 9px 11px; margin: 0 0 16px; border-radius: 9px;
+      background: var(--nb-surface-2); color: var(--nb-ink-3);
+      border: 1px solid var(--nb-border); font-size: 11px; line-height: 1.4;
+    }
+    .auth-mode-badge.offline, .auth-mode-badge.offline-sync { background: var(--nb-success-light); color: var(--nb-success); }
+    .auth-mode-badge.client { background: var(--nb-primary-light); color: var(--nb-primary); }
+    .auth-mode-badge.local, .auth-mode-badge.local-sync { background: var(--nb-surface-2); color: var(--nb-ink-3); }
+    .auth-mode-badge .sync-status { margin-left: auto; font-weight: 600; }
+
     /* Form - auth-field, auth-input-wrap, auth-input in enterprise.css */
 
     /* Login button */

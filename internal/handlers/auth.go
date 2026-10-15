@@ -40,6 +40,13 @@ func ShowLogin(c *gin.Context) {
 		"Year":      time.Now().Year(),
 		"CSRFToken": middleware.GetCSRFToken(c),
 	}
+	// Pass current mode and sync status to login page
+	modeLabel, modeClass := AppModeInfo()
+	data["AppModeLabel"] = modeLabel
+	data["AppModeClass"] = modeClass
+	if s, ok := GetSyncStatus(c); ok {
+		data["SyncStatus"] = s
+	}
 
 	// get old username from session
 	if old, ok := session.Values["old_username"].(string); ok {

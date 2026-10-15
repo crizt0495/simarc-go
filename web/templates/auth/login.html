@@ -25,6 +25,17 @@
 {{end}}
 
 <form method="POST" action="/login" id="loginForm">
+  {{if .AppModeLabel}}
+  <div class="auth-mode-badge {{.AppModeClass}}">
+    <i class="bi bi-info-circle"></i> {{.AppModeLabel}}
+    {{if .SyncStatus}}
+      <span class="sync-status {{if .SyncStatus.LastOK}}text-success{{else}}text-danger{{end}}">
+        • Sinkron: {{.SyncStatus.LastSync}}
+      </span>
+    {{end}}
+  </div>
+  {{end}}
+
   <input type="hidden" name="_token" value="{{.CSRFToken}}">
 
   <div class="auth-field">
