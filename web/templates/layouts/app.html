@@ -204,8 +204,13 @@ html, body { overflow-x: hidden; }
         <li><a class="dropdown-item" href="/pengaturan"><i class="bi bi-gear"></i> Pengaturan</a></li>
         <li><div class="dropdown-divider"></div></li>
         <li>
-          <button class="dropdown-item danger" onclick="document.getElementById('logout-form').submit()">
-            <i class="bi bi-box-arrow-right"></i> Keluar
+          <button class="dropdown-item danger" onclick="confirmAppExit()">
+            <i class="bi bi-power"></i> Tutup Aplikasi (Exit)
+          </button>
+        </li>
+        <li>
+          <button class="dropdown-item" onclick="document.getElementById('logout-form').submit()">
+            <i class="bi bi-box-arrow-right"></i> Logout Akun
           </button>
           <form id="logout-form" action="/logout" method="POST" style="display:none">
             <input type="hidden" name="_token" value="{{.CSRFToken}}">
@@ -779,6 +784,14 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </nav>
+
+<script>
+function confirmAppExit() {
+  if (confirm("Apakah Anda yakin ingin menutup aplikasi SIMARC?")) {
+    window.close();
+  }
+}
+</script>
 
 <script>
 /* ── Prevent pull-to-refresh via CSS (better perf) ── */

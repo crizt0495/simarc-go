@@ -87,5 +87,10 @@
       <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/blockchain"}}active{{end}}" href="/blockchain"><i class="bi bi-shield-check"></i> Blockchain Audit</a></li>
     </ul>
   </div>
+
+  {{/* ── Tombol Tutup Aplikasi (Full Screen) ── */}}
+  <button type="button" class="topbar-link topbar-btn-close ms-auto" id="appCloseBtn" title="Tutup Aplikasi" onclick="confirmAppExit()" aria-label="Tutup Aplikasi">
+    <i class="bi bi-power text-danger"></i><span class="text-danger fw-bold">Keluar</span>
+  </button>
 </nav>
 {{end}}

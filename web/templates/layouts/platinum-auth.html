@@ -215,10 +215,15 @@
     </div>
   </div>
 
-  <!-- ─── THEME TOGGLE ─── -->
-  <button class="auth-theme-btn" id="authThemeBtn" title="Toggle tema">
-    <i class="bi bi-moon" id="authThemeIcon"></i>
-  </button>
+  <!-- ─── TOP CONTROLS (TUTUP APLIKASI & TEMA) ─── -->
+  <div style="position: fixed; top: 16px; right: 20px; z-index: 100; display: flex; align-items: center; gap: 10px;">
+    <button class="auth-theme-btn" id="authThemeBtn" title="Toggle tema" style="position: static;">
+      <i class="bi bi-moon" id="authThemeIcon"></i>
+    </button>
+    <button class="auth-theme-btn" onclick="window.close()" title="Tutup Aplikasi" style="position: static; color: var(--nb-danger, #ef4444); border-color: rgba(239,68,68,0.3);">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
 
   <script>
   (function() {
