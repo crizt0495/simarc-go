@@ -71,6 +71,44 @@ function Set-EnvKey([string]$Path, [string]$Key, [string]$Value) {
   [System.IO.File]::WriteAllLines($Path, [string[]]$out, $enc)
 }
 
+# Resolve-SyncEnv menghasilkan pasangan kunci/nilai .env untuk sinkronisasi
+# antar-komputer (mode offline). Mengembalikan larik @{Key=..;Value=..}; kosong
+# bila hub tidak dikonfigurasi (sinkronisasi tetap mati).
+#
+# Aturan:
+#   * Tanpa SYNC_HUB_DB_HOST -> tidak ada yang ditulis (sinkronisasi mati).
+#   * Semua kunci SYNC_* yang ada di simarc-install.txt disalin apa adanya.
+#   * SYNC_ENABLED diisi "true" bila tidak ditentukan (hub sudah dikonfigurasi).
+#   * SYNC_NODE_ID WAJIB unik tiap komputer -> bila tidak ditentukan, diambil
+#     dari nama komputer (COMPUTERNAME). Ini mencegah semua komputer memakai
+#     identitas simpul yang sama saat dipasang massal dari satu berkas config.
+#   * SYNC_INTERVAL_MINUTES diisi 15 bila tidak ditentukan.
+function Resolve-SyncEnv([hashtable]$cfg, [string]$computerName) {
+  if ($null -eq $cfg) { return @() }
+
+  $hubHost = ""
+  if ($cfg.ContainsKey("SYNC_HUB_DB_HOST")) { $hubHost = ([string]$cfg["SYNC_HUB_DB_HOST"]).Trim() }
+  if (-not $hubHost) { return @() }   # hub belum dikonfigurasi
+
+  $out = @()
+  foreach ($k in @($cfg.Keys | Where-Object { $_ -like "SYNC_*" } | Sort-Object)) {
+    $out += @{ Key = $k; Value = [string]$cfg[$k] }
+  }
+  if (-not $cfg.ContainsKey("SYNC_ENABLED")) {
+    $out += @{ Key = "SYNC_ENABLED"; Value = "true" }
+  }
+  if (-not $cfg.ContainsKey("SYNC_NODE_ID")) {
+    $id = ""
+    if ($computerName) { $id = ($computerName -replace '[^A-Za-z0-9._-]', '-').Trim('-').ToLower() }
+    if (-not $id) { $id = "node-unknown" }
+    $out += @{ Key = "SYNC_NODE_ID"; Value = $id }
+  }
+  if (-not $cfg.ContainsKey("SYNC_INTERVAL_MINUTES")) {
+    $out += @{ Key = "SYNC_INTERVAL_MINUTES"; Value = "15" }
+  }
+  return $out
+}
+
 # Test-LocalIPContains memeriksa apakah komputer ini memiliki alamat $ip.
 function Test-LocalIPContains([string]$ip) {
   try {
@@ -183,11 +221,18 @@ if (-not (Test-Path $EnvDest)) {
       Set-EnvKey $EnvDest "DB_PASSWORD" $pw
       Set-EnvKey $EnvDest "SIMARC_EMBEDDED_DB" "1"
       # Salin kunci SYNC_* dari simarc-install.txt (bila ada) agar perubahan
-      # antar-komputer menyatu lewat hub saat jaringan tersedia.
-      foreach ($k in @($Cfg.Keys | Where-Object { $_ -like "SYNC_*" })) {
-        Set-EnvKey $EnvDest $k $Cfg[$k]
-      }
+      # antar-komputer menyatu lewat hub saat jaringan tersedia. Bila hub
+      # dikonfigurasi (SYNC_HUB_DB_HOST), sinkronisasi diaktifkan otomatis
+      # dengan identitas simpul UNIK per komputer (dari nama komputer).
+      $syncPairs = @(Resolve-SyncEnv $Cfg $env:COMPUTERNAME)
+      foreach ($p in $syncPairs) { Set-EnvKey $EnvDest $p.Key $p.Value }
       Write-Ok "Mode OFFLINE MANDIRI: database lokal otomatis (port 3307)."
+      if ($syncPairs.Count -gt 0) {
+        $syncNode = ($syncPairs | Where-Object { $_.Key -eq "SYNC_NODE_ID" } | Select-Object -First 1).Value
+        Write-Ok "Sinkronisasi otomatis AKTIF (simpul: $syncNode) - data menyatu lewat hub saat jaringan tersedia."
+      } else {
+        Write-Info "Sinkronisasi antar-komputer tidak disetel (tanpa SYNC_HUB_DB_HOST di simarc-install.txt)."
+      }
       Write-Info "Tanpa server pusat pun aplikasi tetap jalan."
     } else {
       Write-Warn "Bundel database portabel tidak ada - beralih ke mode klien."

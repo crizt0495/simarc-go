@@ -61,10 +61,11 @@ Semua pengaturan ada di `%LocalAppData%\SIMARC\.env` (dibuat otomatis dari
 `.env.example` pada install pertama).
 
 > **Catatan mode offline mandiri:** tiap komputer punya database **sendiri**,
-> jadi data **tidak** otomatis menyatu antar-komputer. Untuk menggabungkan
-> perubahan antar-komputer (saat jaringan tersedia), aktifkan sinkronisasi —
-> lihat `docs/OFFLINE-SYNC.md` dan kunci `SYNC_*` pada
-> `simarc-install.txt`.
+> jadi data baru menyatu antar-komputer lewat **sinkronisasi otomatis**
+> (last-write-wins) saat hub terjangkau. Cukup isi `SYNC_HUB_DB_HOST` (dll.) di
+> `simarc-install.txt` — installer mengaktifkan sinkronisasi **dan** memberi
+> tiap komputer identitas simpul yang **unik** secara otomatis. Lihat §2.2 dan
+> `docs/OFFLINE-SYNC.md`.
 
 ## 2) Cara INSTALL pertama
 
@@ -118,6 +119,46 @@ bisa mengubahnya dari menu **Pengaturan**.
 > Tidak punya hak `root`? Minta admin MySQL membuatkan sekali saja:
 > `CREATE DATABASE simarc CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
 > lalu di halaman Konfigurasi Database cukup isi user/password yang berhak.
+
+## 2.2) Sinkronisasi otomatis antar-komputer (mode offline mandiri)
+
+Setiap komputer offline punya database sendiri; agar perubahannya **menyatu
+otomatis**, arahkan semuanya ke satu **hub** (komputer server kantor atau MySQL
+cloud). Cukup satu berkas config untuk dipakai semua komputer:
+
+1. Di komputer **hub**, pastikan MySQL/MariaDB-nya bisa diakses jaringan dan
+   ada user khusus sinkronisasi (mis. `simarc_sync`). Lihat
+   `docs/OFFLINE-SYNC.md` §9.
+2. Salin `simarc-install.txt.example` → `simarc-install.txt` **di samping**
+   `SIMARC-Setup.exe`, lalu isi:
+
+   ```ini
+   mode=offline
+   hub=http://192.168.1.86:8080
+   SYNC_HUB_DB_HOST=192.168.1.86
+   SYNC_HUB_DB_PORT=3306
+   SYNC_HUB_DB_NAME=simarc
+   SYNC_HUB_DB_USER=simarc_sync
+   SYNC_HUB_DB_PASS=<password simarc_sync>
+   SYNC_HUB_URL=http://192.168.1.86:8080
+   SYNC_HUB_TOKEN=<rahasia bersama>
+   ```
+
+3. Salin `SIMARC-Setup.exe` + `simarc-install.txt` ke **tiap** komputer klien
+   dan jalankan. Installer otomatis menulis `SYNC_ENABLED=true`,
+   `SYNC_NODE_ID=<nama-komputer>` (unik per komputer, jadi aman dipasang massal
+   dari satu berkas yang sama), dan `SYNC_INTERVAL_MINUTES=15`.
+
+Setelah itu tiap komputer menggabungkan perubahannya **otomatis tiap 15 menit**
+(atau lewat **Pengaturan → Sinkronisasi → Sinkronkan Sekarang**), selama hub
+terjangkau. Bila hub tidak terjangkau, aplikasi **tetap jalan normal**; data
+menyatu begitu jaringan kembali.
+
+> Berkas arsip (uploads) disalin lewat **aplikasi hub** (port `8080`), jadi hub
+> harus menjalankan SIMARC dan memakai `SYNC_HUB_TOKEN` yang sama.
+
+Untuk memverifikasi logika penulisan `.env` tanpa Windows:
+`pwsh -NoProfile -File packaging/windows/test-installer-sync.ps1`.
 
 ## 3) Cara UPDATE (revisi kode / versi baru) — TANPA uninstall
 

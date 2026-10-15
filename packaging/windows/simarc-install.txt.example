@@ -25,18 +25,32 @@ mode=offline
 # pada mode offline). Ganti dengan alamat komputer server kantor Anda.
 hub=http://192.168.1.86:8080
 
-# ── Sinkronisasi (opsional, mode offline) ───────────────────────────────────
-# Bila diisi, perubahan antar-komputer digabung otomatis saat hub terjangkau.
-# Lihat docs/OFFLINE-SYNC.md. Biarkan kosong bila tidak memakai sync.
-#SYNC_ENABLED=true
-#SYNC_NODE_ID=komputer-nama-unik
-#SYNC_INTERVAL_MINUTES=15
+# ── Sinkronisasi antar-komputer (opsional, mode offline) ────────────────────
+# Cukup isi SYNC_HUB_DB_HOST di bawah: installer akan OTOMATIS mengaktifkan
+# sinkronisasi (SYNC_ENABLED=true) dan memberi tiap komputer identitas simpul
+# yang UNIK (SYNC_NODE_ID diambil dari nama komputer) — aman untuk pemasangan
+# massal dari satu berkas config yang sama.
+#
+# Setelah terpasang, perubahan antar-komputer digabung otomatis (last-write-
+# wins) setiap SYNC_INTERVAL_MINUTES selama hub terjangkau. Lihat
+# docs/OFFLINE-SYNC.md. Biarkan SYNC_HUB_DB_HOST kosong bila tidak memakai sync.
+#
+# Bila hub memakai user khusus sinkronisasi di komputer server, isi kredensialnya
+# (jangan ditulis di berkas ini bila berkas disebar bebas).
 #SYNC_HUB_DB_HOST=192.168.1.86
 #SYNC_HUB_DB_PORT=3306
 #SYNC_HUB_DB_NAME=simarc
 #SYNC_HUB_DB_USER=simarc_sync
 #SYNC_HUB_DB_PASS=
 #SYNC_HUB_DB_TLS=preferred
+#
+# Bawaan yang biasanya tidak perlu diubah:
+#   SYNC_ENABLED=true                (otomatis; isi "false" untuk mematikan)
+#   SYNC_NODE_ID=<nama-komputer>     (otomatis & unik; isi hanya bila perlu label khusus)
+#   SYNC_INTERVAL_MINUTES=15         (otomatis)
+#
+# Berkas arsip (uploads) disalin lewat APLIKASI hub (port 8080), bukan MySQL.
+# Hub harus menjalankan aplikasi SIMARC dan mengisi SYNC_HUB_TOKEN yang sama.
 #SYNC_FILES_ENABLED=true
 #SYNC_HUB_URL=http://192.168.1.86:8080
 #SYNC_HUB_TOKEN=

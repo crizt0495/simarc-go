@@ -35,6 +35,15 @@ penghapusan dan penambahan antar komputer aman digabung.
 
 ## 2. Menyiapkan tiap komputer
 
+> **Cara termudah (Windows, installer satu file).** Bila memakai
+> `SIMARC-Setup.exe` mode **offline mandiri** (MariaDB sudah ikut di bundel,
+> tak perlu pasang MySQL manual), cukup sediakan `simarc-install.txt` berisi
+> `SYNC_HUB_DB_*` di samping installer. Installer otomatis menulis
+> `SYNC_ENABLED=true`, `SYNC_NODE_ID` **unik per komputer** (dari nama
+> komputer), dan `SYNC_INTERVAL_MINUTES=15`. Langkah manual di bawah hanya
+> perlu bila memasang tanpa installer. Lihat
+> `packaging/windows/README-WINDOWS.md` §2.2.
+
 1. **Install MySQL/MariaDB** di komputer tersebut (bisa lokal).
 2. Jalankan SIMARC dalam **mode server lokal** — artinya `SIMARC_SERVER_URL`
    **dikosongkan** (jangan mode klien), supaya komputer memakai DB-nya sendiri.
