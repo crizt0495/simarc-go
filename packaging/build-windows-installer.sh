@@ -47,10 +47,23 @@ cp -f packaging/windows/Install-SIMARC.bat   "$PAY/"
 cp -f packaging/windows/Uninstall-SIMARC.bat "$PAY/"
 cp -f packaging/windows/Uninstall-SIMARC.ps1 "$PAY/"
 cp -f packaging/windows/README-WINDOWS.md    "$PAY/README-WINDOWS.md"
+cp -f packaging/windows/simarc-install.txt.example "$PAY/simarc-install.txt.example"
 cp -f packaging/windows/simarc.ico           "$PAY/simarc.ico"
 cp -f packaging/install-desktop.ps1          "$PAY/packaging/"
 cp -f packaging/uninstall-desktop.ps1        "$PAY/packaging/"
 printf '%s' "$VERSION_CLEAN" > "$PAY/VERSION"
+
+# ── 2b) MariaDB portabel (mode "offline mandiri") ───────────────────────────
+#  Default: disertakan, sehingga komputer klien cukup memasang satu file dan
+#  langsung punya database sendiri (tanpa server pusat, tanpa install MySQL).
+#  Matikan dengan SIMARC_BUNDLE_DB=0.
+if [ "${SIMARC_BUNDLE_DB:-1}" = "1" ]; then
+  echo "==> Menyertakan MariaDB portabel (offline mandiri)..."
+  bash packaging/windows/build-mariadb-bundle.sh
+  cp -f packaging/cache/mariadb-winx64.zip "$PAY/mariadb-winx64.zip"
+else
+  echo "==> MariaDB portabel TIDAK disertakan (SIMARC_BUNDLE_DB=0)."
+fi
 
 # ── 3) Normalisasi CRLF untuk skrip Windows ─────────────────────────────────
 while IFS= read -r -d '' f; do

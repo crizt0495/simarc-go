@@ -1,0 +1,42 @@
+# ===========================================================================
+#  SIMARC — Konfigurasi instalasi otomatis (opsional)
+#
+#  Salin berkas ini menjadi `simarc-install.txt` dan letakkan DI SAMPING
+#  `SIMARC-Setup.exe` (satu folder). Installer akan membacanya saat pemasangan
+#  pertama, sehingga tidak perlu ditanya lagi (cocok untuk pemasangan massal).
+#
+#  Pemakaian:
+#    1) salin file ini menjadi simarc-install.txt
+#    2) sesuaikan nilai di bawah
+#    3) salin SIMARC-Setup.exe + simarc-install.txt ke komputer tujuan
+#    4) klik dua kali SIMARC-Setup.exe
+#
+#  Catatan: berkas ini hanya memengaruhi .env yang BARU dibuat. Bila .env sudah
+#  ada (komputer pernah dipasang), berkas ini diabaikan (konfigurasi lama tetap).
+# ===========================================================================
+
+# Mode instalasi:
+#   offline = database lokal otomatis (bundel MariaDB) — tetap jalan tanpa server
+#   client  = klien tipis ke server hub (data & berkas di server)
+#   local   = server lokal memakai MySQL/MariaDB yang sudah terpasang sendiri
+mode=offline
+
+# Alamat server hub (dipakai pada mode client, atau sebagai titik sinkronisasi
+# pada mode offline). Ganti dengan alamat komputer server kantor Anda.
+hub=http://192.168.1.86:8080
+
+# ── Sinkronisasi (opsional, mode offline) ───────────────────────────────────
+# Bila diisi, perubahan antar-komputer digabung otomatis saat hub terjangkau.
+# Lihat docs/OFFLINE-SYNC.md. Biarkan kosong bila tidak memakai sync.
+#SYNC_ENABLED=true
+#SYNC_NODE_ID=komputer-nama-unik
+#SYNC_INTERVAL_MINUTES=15
+#SYNC_HUB_DB_HOST=192.168.1.86
+#SYNC_HUB_DB_PORT=3306
+#SYNC_HUB_DB_NAME=simarc
+#SYNC_HUB_DB_USER=simarc_sync
+#SYNC_HUB_DB_PASS=
+#SYNC_HUB_DB_TLS=preferred
+#SYNC_FILES_ENABLED=true
+#SYNC_HUB_URL=http://192.168.1.86:8080
+#SYNC_HUB_TOKEN=

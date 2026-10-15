@@ -86,6 +86,21 @@ Fitur installer:
 - Install: `./install-desktop.sh`
 - Uninstall: `./uninstall-desktop.sh`
 
+## Database portabel (mode "offline mandiri")
+
+Installer Windows dapat ikut membawa **MariaDB portabel** (`mariadb-winx64.zip`,
+~14 MB) sehingga komputer klien punya database sendiri dan **tetap jalan tanpa
+komputer server**.
+
+- Bundel dibuat otomatis saat build: `bash packaging/windows/build-mariadb-bundle.sh`
+  (mengunduh paket resmi MariaDB, memangkas, lalu zip ke `packaging/cache/`).
+- Build installer menyertakannya secara default; matikan dengan
+  `SIMARC_BUNDLE_DB=0 bash packaging/build-windows-installer.sh`.
+- Saat instalasi, pilih mode **offline mandiri** (atau tetapkan `mode=offline`
+  pada `simarc-install.txt` di samping `SIMARC-Setup.exe`).
+- Aplikasi lalu menjalankan `mariadb\bin\mariadbd.exe` otomatis saat dibuka dan
+  menutupnya saat aplikasi ditutup (lihat `internal/embeddeddb`).
+
 ## Binary Rilis (portable, cross-compile)
 
 Sudah tersedia di `dist/`:

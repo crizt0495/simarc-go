@@ -21,6 +21,7 @@ import (
 
 	"arsippro/internal/app"
 	"arsippro/internal/config"
+	"arsippro/internal/embeddeddb"
 )
 
 // isVirtualIface reports whether the interface is a known virtual, container,
@@ -299,8 +300,28 @@ func main() {
 		return
 	}
 
+	// ── Database portabel (mode offline mandiri) ─────────────────────────────
+	// Bila installer desktop menyertakan MariaDB portabel di samping aplikasi,
+	// jalankan sebagai database lokal komputer ini supaya tetap bisa dipakai
+	// tanpa server pusat (dan tanpa memasang MySQL manual). Matikan dengan
+	// SIMARC_EMBEDDED_DB=0. Lihat internal/embeddeddb.
+	var mdb *embeddeddb.Manager
+	if embeddeddb.Enabled() {
+		base, _ := embeddeddb.Discover()
+		mdb = embeddeddb.New(base, "", config.App.DBName, config.App.DBUser, config.App.DBPass, config.App.DBPort)
+		if err := mdb.Start(context.Background()); err != nil {
+			log.Printf("[WARN] Database portabel gagal dijalankan: %v", err)
+		} else {
+			log.Printf("Database portabel aktif di 127.0.0.1:%s", config.App.DBPort)
+			defer mdb.Stop()
+		}
+	}
+
 	r, err := app.Init()
 	if err != nil {
+		if mdb != nil {
+			mdb.Stop()
+		}
 		log.Fatalf("Gagal menginisialisasi aplikasi: %v", err)
 	}
 

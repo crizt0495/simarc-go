@@ -7,6 +7,8 @@ dist/*
 *.out
 *.test
 *.test.exe
+# Bundel database portabel (hasil unduhan) & cache build — tidak ikut git.
+packaging/cache/
 # Installer desktop Windows dilacak agar bisa diunduh langsung dari repo
 # (pengecualian harus ditulis setelah "*.exe" agar menang).
 !dist/SIMARC-Setup.exe

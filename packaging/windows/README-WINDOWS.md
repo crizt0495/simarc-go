@@ -18,6 +18,10 @@ Cara pakai di komputer lain:
 2. Klik dua kali file tersebut.
 3. Selesai — aplikasi terpasang, shortcut Start Menu/Desktop dibuat.
 
+> Installer ini juga **memuat database portabel (MariaDB)**. Pada mode
+> **offline mandiri**, aplikasi langsung punya database sendiri — **tanpa perlu
+> memasang MySQL/MariaDB** dan tanpa bergantung ke komputer server.
+
 **UPDATE revisi kode / versi baru:** cukup salin exe versi baru → klik dua kali
 lagi. File aplikasi ditimpa in-place; **`.env` dan `storage\` tidak pernah
 disentuh**. Tidak perlu uninstall/reinstall.
@@ -42,12 +46,19 @@ ulang installer.
 Dari menu **Start → SIMARC** (atau shortcut Desktop). Aplikasi membuka
 jendela mandiri (Chromium/Edge). Butuh browser Chrome/Edge sudah terpasang.
 
-> Mode **server lokal** (default): komputer butuh **MySQL/MariaDB lokal** dan
-> DB `simarc` dibuat. Semua pengaturan ada di `%LocalAppData%\SIMARC\.env`
-> (dibuat otomatis dari `.env.example` pada install pertama).
->
-> Mode **klien** (satu server pusat): isi `SIMARC_SERVER_URL=` di `.env`,
-> lalu jalankan — tanpa MySQL.
+Pada install pertama, Anda memilih **mode instalasi** (installer menanyakan,
+atau tetapkan lewat `-Mode` / `simarc-install.txt` — lihat §2):
+
+* **Klien ke server hub** — data & berkas tersimpan di **server pusat**;
+  komputer ini **tidak butuh MySQL**. Alamat hub default
+  `http://192.168.1.86:8080`.
+* **Offline mandiri** — komputer ini menjalankan **database-nya SENDIRI**
+  (MariaDB portabel ikut di bundel installer, port `3307`) sehingga **tetap
+  bisa dipakai walau server pusat mati**. Tak perlu memasang MySQL manual.
+* **Server lokal** — memakai MySQL/MariaDB yang **sudah terpasang sendiri**.
+
+Semua pengaturan ada di `%LocalAppData%\SIMARC\.env` (dibuat otomatis dari
+`.env.example` pada install pertama).
 
 ## 2) Cara INSTALL pertama
 
@@ -57,13 +68,16 @@ jendela mandiri (Chromium/Edge). Butuh browser Chrome/Edge sudah terpasang.
 
 Tidak butuh hak admin, tidak butuh Go. Install ke `%LocalAppData%\SIMARC`.
 
-> **Komputer selain hub (192.168.1.86):** installer otomatis mengenali bahwa
-> komputer ini **bukan hub**, lalu mengatur aplikasi sebagai **klien** ke
-> `http://192.168.1.86:8080`. Anda **tidak perlu install MariaDB/MySQL** di
-> komputer ini.
+> **Pilihan mode (otomatis / massal):** salin `simarc-install.txt.example`
+> menjadi `simarc-install.txt` **di samping** `SIMARC-Setup.exe`, isi `mode=`
+> dan `hub=`, lalu jalankan installer — tidak akan ditanya lagi. Contoh
+> `mode=offline` (tiap komputer punya database sendiri) atau `mode=client`
+> dengan `hub=http://192.168.1.86:8080`. Bisa juga lewat parameter CLI:
+> `SIMARC-Setup.exe -mode offline`.
 >
-> **Komputer hub (192.168.1.86):** installer tetap membuat `.env` mode server
-> lokal, sehingga hub tetap menjalankan database & aplikasinya sendiri.
+> Tanpa berkas/parameter itu, installer **menanyakan** mode saat dijalankan.
+> Pada pemasangan senyap (`-quiet`) perilaku lama dipertahankan: komputer hub
+> (`192.168.1.86`) = server lokal, komputer lain = klien.
 
 ## 2.1) Komputer BARU tanpa database — "Database Tidak Tersedia"
 

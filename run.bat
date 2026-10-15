@@ -62,6 +62,14 @@ if errorlevel 1 (
 echo [OK]    Menjalankan server. Tutup jendela aplikasi untuk berhenti.
 set SIMARC_APP_WINDOW=1
 "%EXE%"
+
+REM Hentikan database portabel (bila aplikasi tidak sempat menutupnya sendiri).
+if exist "%CD%\mariadb\data\mysqld.pid" goto stopdb
+exit /b 0
+
+:stopdb
+set /p MDBPID=<"%CD%\mariadb\data\mysqld.pid"
+if not "%MDBPID%"=="" taskkill /PID %MDBPID% /T /F >nul 2>&1
 exit /b 0
 
 REM ============ MODE KLIEN (server pusat) ============

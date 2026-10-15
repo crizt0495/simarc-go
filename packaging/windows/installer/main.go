@@ -31,6 +31,8 @@ var payload embed.FS
 func main() {
 	quiet := flag.Bool("quiet", false, "jalankan tanpa interaksi")
 	noShortcut := flag.Bool("no-desktop-shortcut", false, "jangan buat shortcut Desktop")
+	mode := flag.String("mode", "", "mode instalasi: auto|offline|client|local")
+	hub := flag.String("hub", "", "alamat server hub, mis. http://192.168.1.86:8080")
 	flag.Parse()
 
 	if !*quiet {
@@ -50,6 +52,16 @@ func main() {
 		fail("Gagal mengekstrak payload: %v", err)
 	}
 
+	// 1b) Konfigurasi instalasi otomatis (opsional): bila ada berkas
+	//     `simarc-install.txt` di SAMPING .exe ini, salin ke folder payload agar
+	//     dibaca SIMARC-Setup.ps1 (mengatur mode/hub/sync tanpa ditanya).
+	if exe, err := os.Executable(); err == nil {
+		sibling := filepath.Join(filepath.Dir(exe), "simarc-install.txt")
+		if data, err := os.ReadFile(sibling); err == nil {
+			_ = os.WriteFile(filepath.Join(tmp, "simarc-install.txt"), data, 0o644)
+		}
+	}
+
 	// 2) Jalankan SIMARC-Setup.ps1 (memasang/memperbarui + shortcut, data aman).
 	ps1 := filepath.Join(tmp, "SIMARC-Setup.ps1")
 	if _, err := os.Stat(ps1); err != nil {
@@ -61,6 +73,12 @@ func main() {
 	}
 	if *noShortcut {
 		args = append(args, "-NoDesktopShortcut")
+	}
+	if *mode != "" {
+		args = append(args, "-Mode", *mode)
+	}
+	if *hub != "" {
+		args = append(args, "-Hub", *hub)
 	}
 
 	cmd := exec.Command("powershell.exe", args...)

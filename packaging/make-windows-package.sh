@@ -45,10 +45,19 @@ cp -f packaging/windows/Install-SIMARC.bat        "$STAGE/"
 cp -f packaging/windows/Uninstall-SIMARC.bat      "$STAGE/"
 cp -f packaging/windows/Uninstall-SIMARC.ps1      "$STAGE/"
 cp -f packaging/windows/README-WINDOWS.md         "$STAGE/README-WINDOWS.md"
+cp -f packaging/windows/simarc-install.txt.example "$STAGE/simarc-install.txt.example"
 cp -f packaging/windows/simarc.ico                "$STAGE/simarc.ico"
 cp -f packaging/install-desktop.ps1               "$STAGE/packaging/"
 cp -f packaging/uninstall-desktop.ps1             "$STAGE/packaging/"
 printf '%s' "$VERSION_CLEAN" > "$STAGE/VERSION"
+
+# MariaDB portabel (mode "offline mandiri"): sertakan zip kecil ini sehingga
+# komputer klien cukup memasang dan langsung punya database sendiri.
+if [ "${SIMARC_BUNDLE_DB:-1}" = "1" ]; then
+  echo "==> Menyertakan MariaDB portabel (offline mandiri)..."
+  bash packaging/windows/build-mariadb-bundle.sh
+  cp -f packaging/cache/mariadb-winx64.zip "$STAGE/mariadb-winx64.zip"
+fi
 
 # Normalisasi line-ending CRLF untuk skrip Windows (cmd.exe & PowerShell).
 while IFS= read -r -d '' f; do
