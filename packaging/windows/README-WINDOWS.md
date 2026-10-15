@@ -60,6 +60,12 @@ atau tetapkan lewat `-Mode` / `simarc-install.txt` — lihat §2):
 Semua pengaturan ada di `%LocalAppData%\SIMARC\.env` (dibuat otomatis dari
 `.env.example` pada install pertama).
 
+> **Catatan mode offline mandiri:** tiap komputer punya database **sendiri**,
+> jadi data **tidak** otomatis menyatu antar-komputer. Untuk menggabungkan
+> perubahan antar-komputer (saat jaringan tersedia), aktifkan sinkronisasi —
+> lihat `docs/OFFLINE-SYNC.md` dan kunci `SYNC_*` pada
+> `simarc-install.txt`.
+
 ## 2) Cara INSTALL pertama
 
 1. Ekstrak `SIMARC-Windows-<versi>.zip` ke folder mana pun (mis. `C:\SIMARC-paket`).

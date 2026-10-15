@@ -17,6 +17,8 @@ package embeddeddb
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net"
@@ -259,6 +261,12 @@ func (m *Manager) listening() bool {
 
 // ensureDataDir menginisialisasi datadir bila belum ada. Mengembalikan true
 // bila datadir baru saja dibuat (perlu bootstrap user/database).
+//
+// Catatan: mariadb-install-db.exe (Windows) memakai opsi yang BERBEDA dari
+// skrip mariadb-install-db (Unix) — Windows tidak mengenal --basedir /
+// --auth-root-authentication-method / --skip-test-db. Di Windows, basedir
+// disimpulkan otomatis dari lokasi biner, dan sandi root di-set lewat
+// --password (disimpan agar bootstrap berikutnya tetap bisa login).
 func (m *Manager) ensureDataDir(ctx context.Context) (bool, error) {
 	marker := filepath.Join(m.DataDir, "mysql")
 	if fi, err := os.Stat(marker); err == nil && fi.IsDir() {
@@ -267,18 +275,75 @@ func (m *Manager) ensureDataDir(ctx context.Context) (bool, error) {
 	if err := os.MkdirAll(m.DataDir, 0o755); err != nil {
 		return false, fmt.Errorf("buat folder data: %w", err)
 	}
-	install := exec.CommandContext(ctx, m.bin("mariadb-install-db"),
-		"--basedir="+m.BaseDir,
-		"--datadir="+m.DataDir,
-		"--auth-root-authentication-method=normal",
-		"--skip-test-db",
-	)
+
+	rootPw := ""
+	needPersist := false
+	if runtime.GOOS == "windows" {
+		if pw, ok := m.readRootPassword(); ok {
+			rootPw = pw
+		} else {
+			pw, err := randomPassword(24)
+			if err != nil {
+				return false, err
+			}
+			rootPw = pw
+			needPersist = true
+		}
+	}
+
+	var args []string
+	if runtime.GOOS == "windows" {
+		args = []string{"--datadir=" + m.DataDir, "--port=" + m.Port}
+		if rootPw != "" {
+			args = append(args, "--password="+rootPw)
+		}
+	} else {
+		args = []string{
+			"--basedir=" + m.BaseDir,
+			"--datadir=" + m.DataDir,
+			"--auth-root-authentication-method=normal",
+			"--skip-test-db",
+		}
+	}
+	install := exec.CommandContext(ctx, m.bin("mariadb-install-db"), args...)
 	install.Dir = m.BaseDir
 	out, err := install.CombinedOutput()
 	if err != nil {
 		return false, fmt.Errorf("inisialisasi database (%v): %s", err, firstLines(out, 400))
 	}
+
+	// Sandi root disimpan SETELAH inisialisasi berhasil, agar datadir tidak
+	// dianggap berisi berkas saat mariadb-install-db dijalankan.
+	if needPersist {
+		if err := os.WriteFile(m.rootPasswordFile(), []byte(rootPw+"\n"), 0o600); err != nil {
+			return false, fmt.Errorf("simpan sandi root: %w", err)
+		}
+	}
 	return true, nil
+}
+
+// rootPasswordFile menyimpan sandi root instance portabel (per datadir).
+func (m *Manager) rootPasswordFile() string {
+	return filepath.Join(m.DataDir, "simarc-root.pw")
+}
+
+// readRootPassword membaca sandi root yang tersimpan (bila ada).
+func (m *Manager) readRootPassword() (string, bool) {
+	b, err := os.ReadFile(m.rootPasswordFile())
+	if err != nil {
+		return "", false
+	}
+	s := strings.TrimSpace(string(b))
+	return s, s != ""
+}
+
+// randomPassword menghasilkan sandi acak heksadesimal sepanjang n karakter.
+func randomPassword(n int) (string, error) {
+	buf := make([]byte, (n+1)/2)
+	if _, err := rand.Read(buf); err != nil {
+		return "", fmt.Errorf("buat sandi acak: %w", err)
+	}
+	return hex.EncodeToString(buf)[:n], nil
 }
 
 // spawn menjalankan proses mariadbd dengan konfigurasi loopback-only.
@@ -298,7 +363,6 @@ func (m *Manager) spawn() error {
 		"--datadir=" + m.DataDir,
 		"--port=" + m.Port,
 		"--bind-address=127.0.0.1",
-		"--skip-name-resolve",
 		"--character-set-server=utf8mb4",
 		"--collation-server=utf8mb4_unicode_ci",
 		"--pid-file=" + filepath.Join(m.DataDir, "mysqld.pid"),
@@ -358,9 +422,16 @@ func (m *Manager) bootstrap(ctx context.Context) error {
 			"FLUSH PRIVILEGES;",
 		m.Name, m.User, m.Pass)
 
-	client := exec.CommandContext(ctx, m.bin("mariadb"),
-		"--protocol=TCP", "-h127.0.0.1", "-P"+m.Port,
-		"-uroot", "--skip-password", "-e", sql)
+	args := []string{"--protocol=TCP", "-h127.0.0.1", "-P" + m.Port, "-uroot"}
+	if pw, ok := m.readRootPassword(); ok {
+		// -p<sandi> (tanpa spasi) agar tidak dipisah sebagai argumen lain.
+		args = append(args, "-p"+pw)
+	} else {
+		args = append(args, "--skip-password")
+	}
+	args = append(args, "-e", sql)
+
+	client := exec.CommandContext(ctx, m.bin("mariadb"), args...)
 	client.Dir = m.BaseDir
 	out, err := client.CombinedOutput()
 	if err != nil {
