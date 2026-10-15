@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -48,6 +49,100 @@ func freePort(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return port
+}
+
+// containsArg melaporkan apakah args memuat nilai persis want.
+func containsArg(args []string, want string) bool {
+	for _, a := range args {
+		if a == want {
+			return true
+		}
+	}
+	return false
+}
+
+// hasArgPrefix melaporkan apakah ada arg yang diawali prefix.
+func hasArgPrefix(args []string, prefix string) bool {
+	for _, a := range args {
+		if strings.HasPrefix(a, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestInstallDBArgsWindows(t *testing.T) {
+	args := installDBArgs("windows", `C:\app\mariadb`, `C:\app\mariadb\data`, "3307", "rahasia")
+	if !containsArg(args, "--datadir="+`C:\app\mariadb\data`) {
+		t.Fatalf("datadir hilang: %v", args)
+	}
+	if !containsArg(args, "--port=3307") {
+		t.Fatalf("port hilang: %v", args)
+	}
+	if !containsArg(args, "--password=rahasia") {
+		t.Fatalf("password hilang: %v", args)
+	}
+	// Windows tidak mengenal opsi Unix.
+	if hasArgPrefix(args, "--basedir=") {
+		t.Fatalf("Windows tak boleh memakai --basedir: %v", args)
+	}
+	if hasArgPrefix(args, "--auth-root-authentication-method") {
+		t.Fatalf("Windows tak boleh memakai opsi auth Unix: %v", args)
+	}
+
+	// Tanpa sandi root (mis. bila sudah tersimpan), --password tidak ditambahkan.
+	args = installDBArgs("windows", "", "", "3307", "")
+	if hasArgPrefix(args, "--password=") {
+		t.Fatalf("tak seharusnya ada --password kosong: %v", args)
+	}
+}
+
+func TestInstallDBArgsUnix(t *testing.T) {
+	args := installDBArgs("linux", "/opt/mariadb", "/opt/mariadb/data", "3307", "")
+	if !containsArg(args, "--basedir=/opt/mariadb") {
+		t.Fatalf("basedir hilang: %v", args)
+	}
+	if !containsArg(args, "--datadir=/opt/mariadb/data") {
+		t.Fatalf("datadir hilang: %v", args)
+	}
+	if !containsArg(args, "--auth-root-authentication-method=normal") {
+		t.Fatalf("opsi auth Unix hilang: %v", args)
+	}
+	if !containsArg(args, "--skip-test-db") {
+		t.Fatalf("--skip-test-db hilang: %v", args)
+	}
+	// Unix tidak mengenal --port/--password pada skrip install-db.
+	if hasArgPrefix(args, "--port=") || hasArgPrefix(args, "--password=") {
+		t.Fatalf("Unix tak boleh memakai --port/--password: %v", args)
+	}
+}
+
+func TestRootArgsWithPassword(t *testing.T) {
+	dataDir := t.TempDir()
+	m := New(t.TempDir(), dataDir, "simarc", "simarc", "pw", "3307")
+	if err := os.WriteFile(m.rootPasswordFile(), []byte("S3cret\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	args := m.rootArgs()
+	for _, want := range []string{"--protocol=TCP", "-h127.0.0.1", "-P3307", "-uroot", "-pS3cret"} {
+		if !containsArg(args, want) {
+			t.Fatalf("rootArgs kurang %q: %v", want, args)
+		}
+	}
+	if hasArgPrefix(args, "--skip-password") {
+		t.Fatalf("tak seharusnya --skip-password: %v", args)
+	}
+}
+
+func TestRootArgsWithoutPassword(t *testing.T) {
+	m := New(t.TempDir(), t.TempDir(), "simarc", "simarc", "pw", "3307")
+	args := m.rootArgs()
+	if !containsArg(args, "--skip-password") {
+		t.Fatalf("tanpa sandi tersimpan harus memakai --skip-password: %v", args)
+	}
+	if hasArgPrefix(args, "-p") {
+		t.Fatalf("tak seharusnya ada sandi: %v", args)
+	}
 }
 
 func TestDiscoverViaEnv(t *testing.T) {

@@ -56,8 +56,11 @@ SRC="$TMP/mariadb-${VER}-winx64"
 echo "==> Memangkas ke berkas runtime minimal..."
 MIN="$TMP/min"
 mkdir -p "$MIN/bin" "$MIN/lib" "$MIN/share"
-# Biner inti: server (mariadbd+server.dll), pembuat datadir, klien, admin, dump.
+# Biner inti: server (mariadbd + mysqld shim + server.dll), pembuat datadir,
+# klien, admin, dump. mariadb-install-db.exe memanggil "mysqld.exe" saat
+# bootstrap, jadi KEDUA shim harus ada.
 cp "$SRC"/bin/mariadbd.exe \
+   "$SRC"/bin/mysqld.exe \
    "$SRC"/bin/server.dll \
    "$SRC"/bin/mariadb-install-db.exe \
    "$SRC"/bin/mariadb.exe \

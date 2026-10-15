@@ -220,11 +220,22 @@ func (m *Manager) Stop() {
 	}
 	m.owned = false
 
-	// Graceful: minta server menutup diri.
-	admin := exec.Command(m.bin("mariadb-admin"),
-		"--protocol=TCP", "-h127.0.0.1", "-P"+m.Port,
-		"-u"+m.User, "-p"+m.Pass, "shutdown")
-	_ = admin.Run()
+	// Graceful: minta server menutup diri. Dipakai akun root karena selalu
+	// memiliki hak SHUTDOWN; bila gagal (mis. sandi root tak terbaca), coba
+	// akun aplikasi, lalu sebagai jalan terakhir paksa mati.
+	shutdown := func(args []string) bool {
+		admin := exec.Command(m.bin("mariadb-admin"), args...)
+		admin.Dir = m.BaseDir
+		return admin.Run() == nil
+	}
+	if !shutdown(append(m.rootArgs(), "shutdown")) {
+		if m.User != "" {
+			_ = shutdown([]string{
+				"--protocol=TCP", "-h127.0.0.1", "-P" + m.Port,
+				"-u" + m.User, "-p" + m.Pass, "shutdown",
+			})
+		}
+	}
 
 	// Beri kesempatan proses berhenti sendiri.
 	select {
@@ -291,21 +302,8 @@ func (m *Manager) ensureDataDir(ctx context.Context) (bool, error) {
 		}
 	}
 
-	var args []string
-	if runtime.GOOS == "windows" {
-		args = []string{"--datadir=" + m.DataDir, "--port=" + m.Port}
-		if rootPw != "" {
-			args = append(args, "--password="+rootPw)
-		}
-	} else {
-		args = []string{
-			"--basedir=" + m.BaseDir,
-			"--datadir=" + m.DataDir,
-			"--auth-root-authentication-method=normal",
-			"--skip-test-db",
-		}
-	}
-	install := exec.CommandContext(ctx, m.bin("mariadb-install-db"), args...)
+	install := exec.CommandContext(ctx, m.bin("mariadb-install-db"),
+		installDBArgs(runtime.GOOS, m.BaseDir, m.DataDir, m.Port, rootPw)...)
 	install.Dir = m.BaseDir
 	out, err := install.CombinedOutput()
 	if err != nil {
@@ -320,6 +318,29 @@ func (m *Manager) ensureDataDir(ctx context.Context) (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+// installDBArgs menyusun argumen untuk program inisialisasi datadir. Dipisah
+// sebagai fungsi murni agar perbedaan Windows/Unix dapat diuji tanpa menjalankan
+// Windows.
+//
+// Windows (mariadb-install-db.exe) hanya mengenal --datadir/--port/--password;
+// basedir disimpulkan dari lokasi biner. Unix (skrip mariadb-install-db) justru
+// memakai --basedir dan tidak mengenal --port/--password.
+func installDBArgs(goos, baseDir, dataDir, port, rootPw string) []string {
+	if goos == "windows" {
+		args := []string{"--datadir=" + dataDir, "--port=" + port}
+		if rootPw != "" {
+			args = append(args, "--password="+rootPw)
+		}
+		return args
+	}
+	return []string{
+		"--basedir=" + baseDir,
+		"--datadir=" + dataDir,
+		"--auth-root-authentication-method=normal",
+		"--skip-test-db",
+	}
 }
 
 // rootPasswordFile menyimpan sandi root instance portabel (per datadir).
@@ -419,17 +440,11 @@ func (m *Manager) bootstrap(ctx context.Context) error {
 			"GRANT ALL PRIVILEGES ON `%[1]s`.* TO '%[2]s'@'127.0.0.1';"+
 			"GRANT ALL PRIVILEGES ON `%[1]s`.* TO '%[2]s'@'localhost';"+
 			"GRANT SHUTDOWN ON *.* TO '%[2]s'@'127.0.0.1';"+
+			"GRANT SHUTDOWN ON *.* TO '%[2]s'@'localhost';"+
 			"FLUSH PRIVILEGES;",
 		m.Name, m.User, m.Pass)
 
-	args := []string{"--protocol=TCP", "-h127.0.0.1", "-P" + m.Port, "-uroot"}
-	if pw, ok := m.readRootPassword(); ok {
-		// -p<sandi> (tanpa spasi) agar tidak dipisah sebagai argumen lain.
-		args = append(args, "-p"+pw)
-	} else {
-		args = append(args, "--skip-password")
-	}
-	args = append(args, "-e", sql)
+	args := append(m.rootArgs(), "-e", sql)
 
 	client := exec.CommandContext(ctx, m.bin("mariadb"), args...)
 	client.Dir = m.BaseDir
@@ -438,6 +453,22 @@ func (m *Manager) bootstrap(ctx context.Context) error {
 		return fmt.Errorf("%v: %s", err, firstLines(out, 400))
 	}
 	return nil
+}
+
+// rootArgs mengembalikan argumen koneksi klien sebagai root instance portabel.
+//
+// Root dipakai untuk tugas administratif (bootstrap, shutdown) karena selalu
+// memiliki hak penuh; sandi root dibaca dari datadir (Windows) atau dikosongkan
+// (Unix, root tanpa sandi). Koneksi memakai TCP ke 127.0.0.1 agar tunduk pada
+// akun root@localhost/root@127.0.0.1 yang dibuat mariadb-install-db.
+func (m *Manager) rootArgs() []string {
+	args := []string{"--protocol=TCP", "-h127.0.0.1", "-P" + m.Port, "-uroot"}
+	if pw, ok := m.readRootPassword(); ok {
+		// -p<sandi> (tanpa spasi) agar tidak dipisah sebagai argumen lain.
+		return append(args, "-p"+pw)
+	}
+	// Tanpa sandi root tersimpan: pakai koneksi tanpa sandi (Unix, root kosong).
+	return append(args, "--skip-password")
 }
 
 // firstLines memendekkan keluaran perintah untuk pesan kesalahan.
