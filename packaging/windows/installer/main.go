@@ -130,13 +130,14 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	_ = cmd.Run()
+	psErr := cmd.Run()
 
 	// PowerShell pada beberapa lingkungan (mis. Wine tanpa PowerShell fungsional)
 	// dapat mengembalikan exit code 0 tanpa benar-benar mengeksekusi skrip.
-	// Jika instalasi tidak ditemukan, coba pasang langsung secara native via Go.
+	// Jika proses gagal ATAU instalasi tidak ditemukan, pasang langsung via Go.
 	installDir := resolveInstallDir()
-	if _, err := os.Stat(filepath.Join(installDir, "run.bat")); err != nil {
+	_, appErr := os.Stat(filepath.Join(installDir, "run.bat"))
+	if psErr != nil || appErr != nil {
 		fmt.Println("[INFO] PowerShell tidak menyelesaikan instalasi, menjalankan pemasangan langsung...")
 		if err := nativeInstall(tmp, installDir, mode, hub); err != nil {
 			fail("Instalasi langsung gagal: %v", err)
