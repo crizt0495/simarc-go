@@ -148,14 +148,16 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 			_ = zenity.Error("Instalasi gagal: "+err.Error(), zenity.Title("SIMARC"))
 			os.Exit(1)
 		}
-		_ = verifyInstall(installDir, modeStr)
+		if err := verifyInstall(installDir, modeStr); err != nil {
+			_ = zenity.Error("Verifikasi gagal: "+err.Error(), zenity.Title("SIMARC"))
+			os.Exit(1)
+		}
+		_ = createShortcuts(installDir, filepath.Join(installDir, "run.bat"), filepath.Join(installDir, "simarc.ico"), noShortcut)
+		_ = zenity.Info("SIMARC berhasil diinstal.", zenity.Title("Instalasi Selesai"))
 		return
 	}
 
-	installErr := nativeInstallWithProgress(tmp, installDir, modeStr, hubStr, prog)
-	if installErr == nil {
-		installErr = verifyInstall(installDir, modeStr)
-	}
+	installErr := nativeInstallWithProgress(tmp, installDir, modeStr, hubStr, prog, noShortcut)
 	_ = prog.Complete()
 	_ = prog.Close()
 
@@ -176,18 +178,29 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 }
 
 // nativeInstallWithProgress menjalankan nativeInstall sambil memperbarui progres.
-func nativeInstallWithProgress(tmp, installDir, mode, hub string, prog zenity.ProgressDialog) error {
+func nativeInstallWithProgress(tmp, installDir, mode, hub string, prog zenity.ProgressDialog, noShortcut bool) error {
 	_ = prog.Text("Menyiapkan folder instalasi...")
 	_ = prog.Value(5)
 
 	_ = prog.Text("Menyalin aplikasi & menyiapkan konfigurasi...")
 	_ = prog.Value(30)
 
-	err := nativeInstall(tmp, installDir, mode, hub)
+	if err := nativeInstall(tmp, installDir, mode, hub); err != nil {
+		return err
+	}
 
-	_ = prog.Text("Menyelesaikan...")
+	_ = prog.Text("Verifikasi berkas...")
+	_ = prog.Value(70)
+	if err := verifyInstall(installDir, mode); err != nil {
+		return err
+	}
+
+	_ = prog.Text("Membuat shortcut...")
 	_ = prog.Value(90)
-	return err
+	_ = createShortcuts(installDir, filepath.Join(installDir, "run.bat"), filepath.Join(installDir, "simarc.ico"), noShortcut)
+
+	_ = prog.Value(100)
+	return nil
 }
 
 // launchInstalled membuka SIMARC yang sudah terpasang (run.bat) tanpa jendela
@@ -254,6 +267,11 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 	}
 	if err := verifyInstall(installDir, mode); err != nil {
 		fail("Verifikasi instalasi gagal: %v", err)
+	}
+
+	// Pastikan shortcut Start Menu + Desktop selalu ada (idempoten).
+	if err := createShortcuts(installDir, filepath.Join(installDir, "run.bat"), filepath.Join(installDir, "simarc.ico"), noShortcut); err != nil {
+		fmt.Println("[WARN] Gagal membuat shortcut:", err)
 	}
 
 	fmt.Println()
