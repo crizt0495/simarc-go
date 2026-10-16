@@ -44,6 +44,16 @@ hub=http://192.168.1.86:8080
 #SYNC_HUB_DB_PASS=
 #SYNC_HUB_DB_TLS=preferred
 #
+# Hub CLOUD (mis. Aiven MySQL): isi host/port/nama database/user/password dari
+# konsol penyedia, dan set TLS ke "required" (Aiven memakai CA sendiri, jadi
+# verifikasi sertifikat penuh "true" akan gagal).
+#SYNC_HUB_DB_HOST=mysql-xxxx-aivencloud.com
+#SYNC_HUB_DB_PORT=19160
+#SYNC_HUB_DB_NAME=simarc_hub
+#SYNC_HUB_DB_USER=avnadmin
+#SYNC_HUB_DB_PASS=
+#SYNC_HUB_DB_TLS=required
+#
 # Bawaan yang biasanya tidak perlu diubah:
 #   SYNC_ENABLED=true                (otomatis; isi "false" untuk mematikan)
 #   SYNC_NODE_ID=<nama-komputer>     (otomatis & unik; isi hanya bila perlu label khusus)

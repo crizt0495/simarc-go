@@ -5,6 +5,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -171,8 +172,7 @@ func Init() (*gin.Engine, error) {
 		if err := database.Migrate(); err != nil {
 			log.Printf("[WARN] Migration error: %v", err)
 		} else {
-			// SeedIfNeeded never overwrites existing users/passwords.
-			database.SeedIfNeeded()
+			seedBaseline()
 		}
 	}
 	middleware.InitSession()
@@ -199,6 +199,59 @@ func Init() (*gin.Engine, error) {
 	router = r
 	initialized = true
 	return router, nil
+}
+
+// seedBaseline initialises a brand-new local database, choosing between two
+// very different situations:
+//
+//   - First node (hub empty or unreachable): seed the default roles/admin/
+//     location so the app works.
+//   - Later node (hub already populated): pull the hub's baseline instead of
+//     seeding, because seeding local rows (new random UUIDs) would be pushed to
+//     the hub and duplicate the roles/users/locations on every computer.
+func seedBaseline() {
+	syncCfg := config.LoadSync()
+	if syncCfg.Active() && !database.HasUsers() {
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		has, err := syncdb.HubHasUsers(ctx, syncCfg)
+		cancel()
+		switch {
+		case err != nil:
+			log.Printf("[sync] periksa hub gagal (%v) — memakai seed lokal", err)
+		case has:
+			log.Println("[sync] hub sudah berisi data — menarik baseline dari hub (seed lokal dilewati)")
+			if !pullBaseline(syncCfg) {
+				// Rare: the hub has data but the pull failed. Seed locally so
+				// the app stays usable; a recoverable duplicate set may appear.
+				log.Println("[sync] tarik baseline gagal — memakai seed lokal sebagai cadangan")
+			}
+		}
+	}
+	database.SeedIfNeeded()
+}
+
+// pullBaseline copies the hub's rows into the empty local database right after
+// install, without the archive-file pass (files sync on the next scheduled run).
+// It reports whether the database pull succeeded.
+func pullBaseline(cfg config.SyncConfig) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+
+	eng, err := syncdb.Open(ctx, cfg, log.Printf)
+	if err != nil {
+		log.Printf("[sync] buka hub untuk baseline gagal: %v", err)
+		return false
+	}
+	defer eng.Close()
+
+	res, err := eng.Run(ctx)
+	if err != nil {
+		log.Printf("[sync] tarik baseline gagal: %v", err)
+		return false
+	}
+	log.Printf("[sync] baseline selesai: %d baris ditarik, %d baris didorong (tabel gagal %d)",
+		res.Pulled, res.Pushed, res.Errors)
+	return true
 }
 
 // buildTemplates parses page templates either from embedded FS (Vercel) or disk.

@@ -32,6 +32,22 @@ func SeedIfNeeded() {
 	seedLokasiRakA()
 }
 
+// HasUsers reports whether the local database already holds at least one user.
+// It lets a freshly installed computer decide between seeding its own baseline
+// (first node, hub still empty) and pulling the baseline from a hub that is
+// already in use — seeding when the hub already has data would create duplicate
+// roles, users and locations that then propagate to every other computer.
+func HasUsers() bool {
+	if DB == nil {
+		return false
+	}
+	var n int64
+	if err := DB.Model(&models.User{}).Count(&n).Error; err != nil {
+		return false
+	}
+	return n > 0
+}
+
 func seedRoles() {
 	var count int64
 	DB.Model(&models.Role{}).Count(&count)

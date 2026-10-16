@@ -240,25 +240,33 @@ Yang **tidak** disinkronkan secara sengaja:
 
 ---
 
-## 9. Hub yang sudah disiapkan (komputer server kantor)
+## 9. Hub yang dipakai sekarang: database cloud (Aiven) + berkas LAN
 
-Komputer ini sudah disiapkan sebagai **hub** LAN:
+Supaya tidak bergantung pada satu komputer kantor yang harus selalu menyala,
+titik temu **baris database** dipindahkan ke **Aiven MySQL** (cloud), sedangkan
+**berkas arsip** tetap lewat aplikasi hub LAN (port `8080`).
 
-- **Host hub**: `192.168.1.86` (port `3306`)
-- **Database hub**: `simarc`
-- **User khusus sinkronisasi**: `simarc_sync` (hanya boleh dari jaringan
-  `192.168.1.%`, hanya database `simarc`)
-- **TLS**: `preferred`
+### Database hub — Aiven MySQL
 
-Password user `simarc_sync` **tidak ditulis di dokumen ini** (agar tidak ikut
-tersimpan di Git). Password disimpan di file khusus hanya-baca root di server,
-dan dicetak saat penyiapan. Bila lupa, buat ulang dengan:
+- **Host**: `mysql-1d4b6727-christwnto-b045.b.aivencloud.com` (port `19160`)
+- **Database**: `simarc_hub` (dipisah dari `defaultdb` yang dipakai backup
+  offsite agar tidak bentrok)
+- **User**: `avnadmin`
+- **TLS**: `required` (Aiven memakai CA sendiri, jadi verifikasi penuh `true`
+  akan gagal; `required` = selalu TLS tanpa verifikasi sertifikat)
 
-```bash
-NEWPASS=$(openssl rand -hex 16)
-mysql -u chris -p -e "ALTER USER 'simarc_sync'@'192.168.1.%' IDENTIFIED BY '${NEWPASS}';"
-echo "Password baru: ${NEWPASS}"
-```
+Skema/tabel TIDAK ditulis di repo: dibuat sekali dari dump komputer yang sudah
+berisi data (`mysqldump --no-data`), lalu tiap komputer mengisi barisnya lewat
+sinkronisasi. Aiven MySQL 8 menyalakan `sql_require_primary_key`, dan semua
+tabel SIMARC memang sudah punya PRIMARY KEY.
+
+### Berkas arsip — aplikasi hub LAN
+
+Aiven hanya MySQL, tidak bisa melayani berkas. Berkas arsip (PDF/gambar di
+`storage/app/uploads`) tetap dikirim lewat aplikasi SIMARC di komputer hub LAN
+(`http://192.168.1.86:8080`), sehingga komputer harus berada di WiFi/LAN yang
+sama agar berkas ikut tersinkron. Bila kelak berkas ingin ikut cloud penuh,
+perlu server aplikasi (VPS) yang menunjuk ke database Aiven yang sama.
 
 ### Isi ini di `.env` setiap komputer lain
 
@@ -267,35 +275,62 @@ SYNC_ENABLED=true
 SYNC_NODE_ID=komputer-nama-unik        # WAJIB berbeda tiap komputer
 SYNC_INTERVAL_MINUTES=15
 
-SYNC_HUB_DB_HOST=192.168.1.86
-SYNC_HUB_DB_PORT=3306
-SYNC_HUB_DB_NAME=simarc
-SYNC_HUB_DB_USER=simarc_sync
-SYNC_HUB_DB_PASS=<password simarc_sync>
-SYNC_HUB_DB_TLS=preferred
+# Database hub: Aiven (cloud)
+SYNC_HUB_DB_HOST=mysql-1d4b6727-christwnto-b045.b.aivencloud.com
+SYNC_HUB_DB_PORT=19160
+SYNC_HUB_DB_NAME=simarc_hub
+SYNC_HUB_DB_USER=avnadmin
+SYNC_HUB_DB_PASS=<password avnadmin>
+SYNC_HUB_DB_TLS=required
 
-# Berkas arsip (uploads) — aplikasi hub di port 8080
+# Berkas arsip (uploads) — aplikasi hub LAN di port 8080
 SYNC_FILES_ENABLED=true
 SYNC_HUB_URL=http://192.168.1.86:8080
 SYNC_HUB_TOKEN=<token dari server>
 ```
 
-Setelah itu buka **Pengaturan → Sinkronisasi → Sinkronkan Sekarang**.
+### Seed otomatis aman untuk komputer baru
 
-### Catatan pemeliharaan hub
+Saat aplikasi menyala pada database yang **masih kosong**, ia memeriksa hub:
 
-- MariaDB di komputer ini kini mendengarkan di `0.0.0.0:3306`
-  (`bind-address` di `/etc/mysql/mariadb.conf.d/50-server.cnf`). Salinan
-  pengaturan lama: `50-server.cnf.simarc.bak`. Untuk menutup kembali ke LAN,
-  kembalikan `bind-address = 127.0.0.1` lalu
-  `sudo systemctl restart mariadb`.
-- Karena alamat LAN bisa berubah (DHCP), sebaiknya **set IP statis** atau
-  **reservasi DHCP** untuk komputer hub (`192.168.1.86`) agar alamat di `.env`
-  komputer lain tetap benar.
-- Hub **tidak perlu** menjalankan sinkronisasi (datanya sudah menjadi titik
-  temu). Cukup MySQL-nya hidup dan terjangkau.
-- **Berkas arsip**: hub harus menjalankan aplikasi SIMARC (port `8080`) agar
-  komputer lain bisa menyalin berkas. Token bersama disimpan di `.env` hub
-  sebagai `SYNC_HUB_TOKEN` (juga tercatat di `/root/simarc-sync-hub.txt`).
-  Bila firewall aktif, buka port `8080` untuk LAN
-  (mis. `sudo ufw allow from 192.168.1.0/24 to any port 8080`).
+- Hub **masih kosong** (komputer pertama) → aplikasi menyemai peran/admin/lokasi
+  bawaan secara lokal; komputer itu menjadi sumber data.
+- Hub **sudah berisi** (komputer ke-2 dan seterusnya) → aplikasi **tidak**
+  menyemai; ia menarik peran, pengguna, izin, dan seluruh data dari hub. Ini
+  mencegah peran/admin ganda yang tadinya bisa muncul di tiap komputer.
+
+Karena itu, akun admin dan daftar peran di semua komputer mengikuti data hub —
+jangan mengubah nama pengguna admin di satu komputer secara terpisah.
+
+### Catatan pemeliharaan hub Aiven
+
+- **Filter IP**: bila Aiven diberi batas IP, tambahkan alamat publik tiap kantor
+  (atau matikan filter) agar semua komputer bisa menyambung.
+- **Batas koneksi**: sinkronisasi memakai satu koneksi singkat tiap 15 menit,
+  jadi aman untuk belasan komputer.
+- `defaultdb` **tetap** dipakai fitur backup offsite (dump penuh). Jangan
+  mengarahkan sinkronisasi ke `defaultdb`.
+- Bila lupa password `avnadmin`, reset lewat konsol Aiven lalu perbarui
+  `SYNC_HUB_DB_PASS` (dan `OFFSITE_DB_PASS`) di `.env` semua komputer.
+
+### Bila ingin kembali ke hub LAN (alternatif tanpa cloud)
+
+Arahkan `SYNC_HUB_DB_*` ke MySQL komputer kantor (mis. `192.168.1.86:3306`,
+database `simarc`, user `simarc_sync`, TLS `preferred`) dan `SYNC_HUB_URL` ke
+`http://192.168.1.86:8080`. Komputer hub tidak perlu ikut menyinkron, tetapi
+mengaktifkan `SYNC_HUB_DB_*` di hub (seperti sekarang) juga tidak masalah.
+
+Setelah itu buka **Pengaturan → Sinkronisasi → Sinkronkan Sekarang** untuk
+menjalankan sinkronisasi sekali secara manual; selanjutnya berjalan otomatis
+tiap `SYNC_INTERVAL_MINUTES` (default 15 menit).
+
+### Catatan berkas hub LAN (komputer ini)
+
+- Aplikasi SIMARC di komputer ini (port `8080`) menjadi sumber berkas arsip.
+  Token bersama disimpan di `.env` sebagai `SYNC_HUB_TOKEN`.
+- Bila firewall aktif, buka port `8080` untuk LAN:
+  `sudo ufw allow from 192.168.1.0/24 to any port 8080`.
+- Sebaiknya **set IP statis / reservasi DHCP** untuk `192.168.1.86` agar
+  `SYNC_HUB_URL` di komputer lain tetap benar.
+- Komputer ini juga ikut menyinkron ke hub Aiven (`SYNC_NODE_ID=server-hub`),
+  sehingga data yang diubah di sini ikut naik ke cloud.
