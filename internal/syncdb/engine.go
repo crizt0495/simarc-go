@@ -78,8 +78,18 @@ func OpenWithDSN(ctx context.Context, localDSN, hubDSN string, cfg config.SyncCo
 		hub.Close()
 		return nil, fmt.Errorf("set foreign_key_checks hub: %w", err)
 	}
+	// Kedua sisi harus mematikannya. Baris tiba dengan urutan induk/anak yang
+	// bisa tertukar dalam satu delta, sehingga node baru yang menarik data hub
+	// bisa kena galat foreign key pada tabel anak (mis. arsip sebelum
+	// kode_klasifikasi). Sesi ini terpisah dari koneksi aplikasi, jadi aman.
+	if _, err := local.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS=0"); err != nil {
+		local.Close()
+		hub.Close()
+		return nil, fmt.Errorf("set foreign_key_checks lokal: %w", err)
+	}
 
 	if err := ensureLocalSyncTables(ctx, local); err != nil {
+
 		local.Close()
 		hub.Close()
 		return nil, err
