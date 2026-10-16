@@ -4,7 +4,7 @@ Panduan ini dipakai untuk membuktikan `SIMARC-Setup.exe` berjalan **tanpa error*
 di komputer Windows sungguhan (bukan Wine).
 
 File yang diuji: `SIMARC-Setup.exe`
-SHA-256: `6349bb1b47b25f04694ed77c5c17babdb3a9ddffce0c2c27421e6251f7b3a484`
+SHA-256: `69684284efaa16bfe3015490aa5868cf8478c1573e077385ebd2bb55e9a189c0`
 
 ---
 
@@ -32,6 +32,11 @@ Yang **seharusnya** tidak muncul: tidak ada jendela CMD hitam. Ini installer GUI
 ---
 
 ## 2. Wizard yang harus Anda lihat
+
+> **Pemasangan massal (diam-diam):** bila berkas `simarc-install.txt` diletakkan
+> **di folder yang sama** dengan `SIMARC-Setup.exe`, wizard **tidak muncul** —
+> installer langsung memakai mode + alamat hub dari berkas itu (mode `offline`,
+> hub database Aiven, berkas LAN). Inilah cara pemasangan di banyak komputer.
 
 1. **Dialog pilih mode**:
    - Judul: `SIMARC Installer`
@@ -68,10 +73,17 @@ Centang **Private networks** → **Allow access**.
 3. Klik shortcut **SIMARC**.
 4. Browser otomatis terbuka ke `http://127.0.0.1:8080`
    → harus mengarah ke halaman **Direktori Arsip - SIMARC** (`/viewer`).
-5. Login pertama:
+5. Login:
    - username: `admin`
    - password: `admin`
    - *(ganti password setelah login)*
+
+   > **Penting (hub cloud):** pada instalasi **pertama** di tiap komputer,
+   > aplikasi memeriksa hub. Bila hub sudah berisi (komputer ke-2 dst.), data
+   > pengguna & peran **ditarik dari hub** — jadi username/password mengikuti
+   > data hub, bukan seed bawaan. Selama admin hub belum pernah diganti,
+   > login tetap `admin` / `admin`. Jangan mengubah nama pengguna admin di satu
+   > komputer saja, karena bisa bentrok dengan hub.
 
 Komponen yang seharusnya ada di `%LocalAppData%\SIMARC`:
 ```
@@ -97,12 +109,16 @@ Tujuan: komputer lain bisa melihat arsip **walau komputer server mati**.
 
 Caranya bukan mode klien (mode klien tergantung server), melainkan:
 
-1. Pasang `SIMARC-Setup.exe` yang sama di komputer kedua.
-   Pilih mode **Offline (Mandiri)**.
-2. Setiap komputer punya database & aplikasinya sendiri → mandiri.
-3. Untuk **menyatukan data**, pakai fitur **sync hub** (lihat `docs/OFFLINE-SYNC.md`):
-   isi `SYNC_HUB_DB_HOST`, `SYNC_HUB_URL`, `SYNC_HUB_TOKEN` di
-   `.env` masing-masing. Hub hanya dibutuhkan **saat sinkronisasi**, tidak saat melihat.
+1. Salin **dua berkas** ke komputer kedua: `SIMARC-Setup.exe` **dan**
+   `simarc-install.txt` (yang sudah berisi alamat hub Aiven + token berkas).
+   Pilih/berlaku mode **Offline (Mandiri)** — installer otomatis karena
+   `simarc-install.txt` ada di sebelahnya.
+2. Setiap komputer punya database & aplikasinya sendiri → tetap mandiri.
+3. Saat pertama dijalankan, aplikasi **menarik seluruh data dari hub Aiven**
+   (peran, pengguna, izin, arsip) — lihat `docs/OFFLINE-SYNC.md`. Hub hanya
+   dibutuhkan **saat sinkronisasi**, bukan saat membuka arsip. Berkas arsip
+   ditarik dari aplikasi hub LAN (`SYNC_HUB_URL`) saat komputer berada di LAN
+   yang sama.
 
 ---
 

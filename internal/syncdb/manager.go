@@ -173,6 +173,14 @@ func startScheduler() {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			if _, err := Mgr.RunNow(ctx); err != nil {
 				log.Printf("[sync] terjadwal: %v", err)
+				// Retry sooner than a full interval after a failure (e.g. a
+				// transient DNS lookup timeout), but still leave a gap so a
+				// persistently unreachable hub is not hammered every tick.
+				retry := 2 * time.Minute
+				if retry > interval {
+					retry = interval
+				}
+				lastScheduled = time.Now().Add(retry - interval)
 			}
 			cancel()
 		}

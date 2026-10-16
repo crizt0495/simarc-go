@@ -582,12 +582,26 @@ func orderKey(name string) int {
 }
 
 func ping(ctx context.Context, db *sql.DB, label string) error {
-	cctx, cancel := context.WithTimeout(ctx, 12*time.Second)
-	defer cancel()
-	if err := db.PingContext(cctx); err != nil {
-		return fmt.Errorf("hubungkan database %s: %w", label, err)
+	// A generous per-attempt timeout absorbs slow DNS/cold-cache lookups (a
+	// cloud hub hostname may take several seconds to resolve), and a second
+	// attempt absorbs a single transient resolution failure. Both are common on
+	// office networks, and a failed sync would otherwise wait a whole interval.
+	var lastErr error
+	for attempt := 0; attempt < 2; attempt++ {
+		cctx, cancel := context.WithTimeout(ctx, 25*time.Second)
+		err := db.PingContext(cctx)
+		cancel()
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("hubungkan database %s: %w", label, lastErr)
+		case <-time.After(2 * time.Second):
+		}
 	}
-	return nil
+	return fmt.Errorf("hubungkan database %s: %w", label, lastErr)
 }
 
 func openPool(dsn string) (*sql.DB, error) {
@@ -598,7 +612,7 @@ func dsn(host, port, name, user, pass, tls string) string {
 	// Normalize the friendly UI values ("required", "disabled", ...) onto the
 	// exact modes go-sql-driver understands; see config.NormalizeMySQLTLS.
 	return fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&readTimeout=180s&writeTimeout=180s&tls=%s",
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true&loc=Local&timeout=30s&readTimeout=180s&writeTimeout=180s&tls=%s",
 		user, pass, host, port, name, config.NormalizeMySQLTLS(tls))
 }
 

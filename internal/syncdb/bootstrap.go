@@ -24,7 +24,7 @@ func HubHasUsers(ctx context.Context, cfg config.SyncConfig) (bool, error) {
 	}
 	defer db.Close()
 
-	cctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	cctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var n int64

@@ -212,7 +212,7 @@ func Init() (*gin.Engine, error) {
 func seedBaseline() {
 	syncCfg := config.LoadSync()
 	if syncCfg.Active() && !database.HasUsers() {
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
 		has, err := syncdb.HubHasUsers(ctx, syncCfg)
 		cancel()
 		switch {
