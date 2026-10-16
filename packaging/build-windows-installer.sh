@@ -77,6 +77,7 @@ build_installer() {
   local arch="$1" out="$2"
   local bdir; bdir="$(mktemp -d /tmp/opencode/simarc-inst-XXXXXX)"
   cp -f packaging/windows/installer/go.mod   "$bdir/"
+  cp -f packaging/windows/installer/go.sum   "$bdir/"
   cp -f packaging/windows/installer/*.go     "$bdir/"
   # Windows icon resource (.syso) so the installer .exe carries the SIMARC icon.
   if [ -f "packaging/windows/installer/rsrc_windows_${arch}.syso" ]; then

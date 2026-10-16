@@ -19,6 +19,7 @@ package main
 import (
 	"archive/zip"
 	"embed"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -28,6 +29,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/ncruces/zenity"
 )
 
 //go:embed all:payload
@@ -72,29 +75,13 @@ func main() {
 	}
 
 	// Jalur non-interaktif (deployment massal / otomatisasi): tetap pakai konsol.
-	// Jalur interaktif default: jendela instalasi grafis yang menarik.
+	// Jalur interaktif default: zenity GUI wizard murni Go (tanpa PowerShell/WinForms).
 	useGUI := !*quiet && !*cli
 	if *gui && !*quiet {
 		useGUI = true
 	}
 	if useGUI {
-		if err := runGUI(tmp, ps1, mode, hub, *noShortcut); err == nil {
-			// Jangan menganggap exit code 0 sebagai sukses: verifikasi hasil nyata.
-			if _, statErr := os.Stat(filepath.Join(resolveInstallDir(), "run.bat")); statErr == nil {
-				return
-			}
-		}
-		// GUI/PowerShell tidak tersedia atau tidak menjalankan skrip (Wine). Jangan
-		// gagal diam-diam: pakai pemasangan Go dan verifikasi semua artefak.
-		if mode == "" || mode == "auto" {
-			mode = "offline"
-		}
-		if err := nativeInstall(tmp, resolveInstallDir(), mode, hub); err != nil {
-			fatalGUI("Instalasi gagal: %v", err)
-		}
-		if err := verifyInstall(resolveInstallDir(), mode); err != nil {
-			fatalGUI("Verifikasi instalasi gagal: %v", err)
-		}
+		runZenityGUI(tmp, mode, hub, *noShortcut)
 		return
 	}
 
@@ -102,23 +89,118 @@ func main() {
 	runConsole(tmp, ps1, mode, hub, *quiet, *noShortcut)
 }
 
-// runGUI menampilkan jendela instalasi grafis modern lalu menjalankan pemasangan.
-func runGUI(tmp, ps1, mode, hub string, noShortcut bool) error {
-	guiScript := filepath.Join(tmp, "SIMARC-Installer-GUI.ps1")
-	if _, err := os.Stat(guiScript); err != nil {
-		return err
+// runZenityGUI menampilkan wizard instalasi menggunakan dialog native (zenity).
+func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
+	modeStr := strings.ToLower(strings.TrimSpace(mode))
+	hubStr := strings.TrimSpace(hub)
+
+	// 1. Pilih mode instalasi (hanya bila belum ditentukan lewat flag/config).
+	if modeStr == "" || modeStr == "auto" {
+		chosen, err := zenity.List(
+			"Pilih mode instalasi SIMARC:",
+			[]string{"Offline (Mandiri)", "Klien Jaringan"},
+			zenity.Title("SIMARC Installer"),
+			zenity.RadioList(),
+			zenity.DefaultItems("Offline (Mandiri)"),
+		)
+		if err != nil {
+			if errors.Is(err, zenity.ErrCanceled) {
+				return // dibatalkan pengguna
+			}
+			modeStr = "offline" // fallback jika dialog gagal
+		} else {
+			if strings.HasPrefix(chosen, "Klien") {
+				modeStr = "client"
+			} else {
+				modeStr = "offline"
+			}
+		}
 	}
-	args := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", guiScript, "-SetupScript", ps1}
-	if mode != "" {
-		args = append(args, "-Mode", mode)
+
+	// 2. Mode klien: minta alamat hub.
+	if modeStr == "client" && hubStr == "" {
+		entered, err := zenity.Entry(
+			"Masukkan alamat server HUB (contoh: http://192.168.1.86:8080):",
+			zenity.Title("SIMARC Installer"),
+			zenity.EntryText("http://192.168.1.86:8080"),
+		)
+		if err != nil {
+			if errors.Is(err, zenity.ErrCanceled) {
+				return
+			}
+			hubStr = "http://192.168.1.86:8080"
+		} else {
+			hubStr = strings.TrimSpace(entered)
+		}
 	}
-	if hub != "" {
-		args = append(args, "-Hub", hub)
+
+	installDir := resolveInstallDir()
+
+	// 3. Jalankan pemasangan sambil menampilkan dialog progres.
+	prog, err := zenity.Progress(
+		zenity.Title("Menginstal SIMARC..."),
+		zenity.MaxValue(100),
+		zenity.NoCancel(),
+	)
+	if err != nil {
+		// Dialog progres tidak tersedia: jalankan tanpa GUI lalu beri tahu.
+		if err := nativeInstall(tmp, installDir, modeStr, hubStr); err != nil {
+			_ = zenity.Error("Instalasi gagal: "+err.Error(), zenity.Title("SIMARC"))
+			os.Exit(1)
+		}
+		_ = verifyInstall(installDir, modeStr)
+		return
 	}
-	if noShortcut {
-		args = append(args, "-NoDesktopShortcut")
+
+	installErr := nativeInstallWithProgress(tmp, installDir, modeStr, hubStr, prog)
+	if installErr == nil {
+		installErr = verifyInstall(installDir, modeStr)
 	}
-	return exec.Command("powershell.exe", args...).Run()
+	_ = prog.Complete()
+	_ = prog.Close()
+
+	if installErr != nil {
+		_ = zenity.Error("Instalasi gagal: "+installErr.Error(), zenity.Title("SIMARC - Kesalahan"))
+		os.Exit(1)
+	}
+
+	// 4. Selesai. Tawarkan membuka aplikasi.
+	openNow := zenity.Question("SIMARC berhasil diinstal.\n\nBuka SIMARC sekarang?",
+		zenity.Title("Instalasi Selesai"),
+		zenity.OKLabel("Buka SIMARC"),
+		zenity.CancelLabel("Nanti"),
+	) == nil
+	if openNow {
+		launchInstalled(installDir)
+	}
+}
+
+// nativeInstallWithProgress menjalankan nativeInstall sambil memperbarui progres.
+func nativeInstallWithProgress(tmp, installDir, mode, hub string, prog zenity.ProgressDialog) error {
+	_ = prog.Text("Menyiapkan folder instalasi...")
+	_ = prog.Value(5)
+
+	_ = prog.Text("Menyalin aplikasi & menyiapkan konfigurasi...")
+	_ = prog.Value(30)
+
+	err := nativeInstall(tmp, installDir, mode, hub)
+
+	_ = prog.Text("Menyelesaikan...")
+	_ = prog.Value(90)
+	return err
+}
+
+// launchInstalled membuka SIMARC yang sudah terpasang (run.bat) tanpa jendela
+// konsol yang menganggu.
+func launchInstalled(installDir string) {
+	bat := filepath.Join(installDir, "run.bat")
+	if _, err := os.Stat(bat); err != nil {
+		return
+	}
+	cmd := exec.Command("cmd", "/C", "start", "", "/MIN", bat)
+	cmd.Dir = installDir
+	setHiddenWindow(cmd)
+	_ = cmd.Start()
 }
 
 // runConsole menjalankan pemasangan tanpa antarmuka grafis.
@@ -129,7 +211,7 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 		fmt.Println("============================================================")
 	}
 
-	args := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1}
+	args := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", ps1}
 	if quiet {
 		args = append(args, "-Quiet")
 	}
@@ -147,6 +229,7 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 	psRan := false
 	if _, err := exec.LookPath("powershell.exe"); err == nil {
 		cmd := exec.Command("powershell.exe", args...)
+		setHiddenWindow(cmd)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -218,12 +301,18 @@ func resolveInstallDir() string {
 // lalu keluar dengan kode 1. Aman dipanggil dari biner bersubsidi windowsgui.
 func fatalGUI(format string, a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
-	// MessageBox native via PowerShell (tersedia di semua Windows).
-	_ = exec.Command("powershell.exe", "-NoProfile", "-Command",
-		fmt.Sprintf("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('%s','SIMARC - Kesalahan','OK','Error')",
-			strings.ReplaceAll(msg, "'", "''"))).Run()
+	_ = zenithMessageBox(msg) // show native dialog via zenity if available, else console
 	fmt.Fprintln(os.Stderr, "[ERR] "+msg)
 	os.Exit(1)
+}
+
+// zenithMessageBox shows a simple error dialog using zenity (fallback to console).
+func zenithMessageBox(msg string) error {
+	if zenity.IsAvailable() {
+		return zenity.Error(msg, zenity.Title("SIMARC - Kesalahan"))
+	}
+	// If zenity not available (unlikely on Windows), just print.
+	return nil
 }
 
 // extract menyalin seluruh isi FS (di bawah root) ke direktori tujuan.
@@ -279,22 +368,33 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 		d := filepath.Join(destDir, item)
 		if fi, err := os.Stat(s); err == nil {
 			if fi.IsDir() {
-				_ = copyDir(s, d)
+				err = copyDir(s, d)
 			} else {
-				_ = copyFile(s, d)
+				err = copyFile(s, d)
 			}
+			if err != nil {
+				return fmt.Errorf("menyalin %s: %w", item, err)
+			}
+		} else if !os.IsNotExist(err) {
+			return fmt.Errorf("memeriksa %s: %w", item, err)
 		}
 	}
 
 	// 2. Siapkan direktori runtime
 	for _, sub := range []string{"tmp", filepath.Join("storage", "app", "uploads"), filepath.Join("public", "storage")} {
-		_ = os.MkdirAll(filepath.Join(destDir, sub), 0o755)
+		if err := os.MkdirAll(filepath.Join(destDir, sub), 0o755); err != nil {
+			return fmt.Errorf("membuat folder %s: %w", sub, err)
+		}
 	}
 
 	// 3. Salin server binary ke tmp/simarc-server.exe
 	binAmd := filepath.Join(srcDir, "dist", "simarc-server-windows-amd64.exe")
 	if _, err := os.Stat(binAmd); err == nil {
-		_ = copyFile(binAmd, filepath.Join(destDir, "tmp", "simarc-server.exe"))
+		if err := copyFile(binAmd, filepath.Join(destDir, "tmp", "simarc-server.exe")); err != nil {
+			return fmt.Errorf("menyalin server: %w", err)
+		}
+	} else {
+		return fmt.Errorf("biner server Windows tidak ditemukan")
 	}
 
 	// 4. Siapkan .env bila belum ada (mode-aware) — konfigurasi milik komputer
@@ -302,7 +402,10 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 	envDest := filepath.Join(destDir, ".env")
 	if _, err := os.Stat(envDest); os.IsNotExist(err) {
 		envEx := filepath.Join(srcDir, ".env.example")
-		data, _ := os.ReadFile(envEx)
+		data, err := os.ReadFile(envEx)
+		if err != nil {
+			return fmt.Errorf("membaca .env.example: %w", err)
+		}
 		content := string(data)
 
 		chosen := strings.ToLower(strings.TrimSpace(mode))
@@ -345,7 +448,9 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 		default: // local
 			fmt.Println("[OK]   Mode SERVER LOKAL (butuh MySQL/MariaDB lokal).")
 		}
-		_ = os.WriteFile(envDest, []byte(content), 0o644)
+		if err := os.WriteFile(envDest, []byte(content), 0o644); err != nil {
+			return fmt.Errorf("menulis .env: %w", err)
+		}
 	}
 
 	// 5. Ekstrak bundel MariaDB portabel jika ada
@@ -355,7 +460,9 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 	if _, err := os.Stat(zipMaria); err == nil {
 		if _, err := os.Stat(mariadbdExe); os.IsNotExist(err) {
 			fmt.Println("[INFO] Mengekstrak database portabel...")
-			_ = unzip(zipMaria, mariadbDest)
+			if err := unzip(zipMaria, mariadbDest); err != nil {
+				return fmt.Errorf("mengekstrak database portabel: %w", err)
+			}
 		}
 	}
 
