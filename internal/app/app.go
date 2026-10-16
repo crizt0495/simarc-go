@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -85,19 +86,26 @@ func serveStaticFile(dir string, cacheControl string) gin.HandlerFunc {
 		if cacheControl != "" {
 			c.Header("Cache-Control", cacheControl)
 		}
+		// Normalise the request path to a slash-separated, traversal-free
+		// relative path. This is critical on Windows: embed paths must always
+		// use forward slashes, and the guard below must not compare an
+		// OS-separator path against a slash-separated prefix (which used to
+		// 403 every asset, breaking all CSS/JS/images on Windows installs).
+		rel := strings.TrimPrefix(path.Clean("/"+file), "/")
+		if rel == "" || rel == "." {
+			c.Status(http.StatusNotFound)
+			return
+		}
 		// Try embedded FS first (Vercel), then disk (local)
-		embedPath := filepath.Join(dir, file)
+		embedPath := path.Join(dir, rel)
 		if f, err := arsippro.Embedded.Open(embedPath); err == nil {
 			f.Close()
 			c.FileFromFS(embedPath, http.FS(arsippro.Embedded))
 			return
 		}
-		// Fallback to disk
-		target := filepath.Join(dir, file)
-		if !strings.HasPrefix(target, dir+string(filepath.Separator)) {
-			c.AbortWithStatus(http.StatusForbidden)
-			return
-		}
+		// Fallback to disk. rel has no ".." segments after path.Clean, so the
+		// target always stays inside dir.
+		target := filepath.Join(dir, filepath.FromSlash(rel))
 		if _, err := os.Stat(target); os.IsNotExist(err) {
 			c.Status(http.StatusNotFound)
 			return
