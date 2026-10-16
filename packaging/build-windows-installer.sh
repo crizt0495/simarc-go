@@ -29,11 +29,11 @@ mkdir -p "$PAY/web" "$PAY/docs" "$PAY/dist" "$PAY/packaging"
 
 # ── 1) Biner server Windows (ke folder kerja — TIDAK mengotori dist/) ───────
 echo "==> Build biner server Windows amd64..."
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -buildvcs=false -ldflags="-s -w" \
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" \
   -o "$PAY/dist/simarc-server-windows-amd64.exe" ./cmd/server
 if [ "${SIMARC_BUILD_ARM64:-0}" = "1" ]; then
   echo "==> Build biner server Windows arm64..."
-  GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -buildvcs=false -ldflags="-s -w" \
+  GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" \
     -o "$PAY/dist/simarc-server-windows-arm64.exe" ./cmd/server
 fi
 
