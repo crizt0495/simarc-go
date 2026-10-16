@@ -54,3 +54,6 @@ SIMARC.app
 # ── Screenshots / captures (local artifacts) ──
 Screenshot_*.png
 screen*.png
+
+# Konfigurasi lokal berisi rahasia (password DB / token)
+simarc-install.txt
