@@ -254,23 +254,14 @@ func migrateAutoIncToUUID() error {
 // openDDLConn opens a dedicated connection to the configured database with
 // generous socket timeouts, used for the one-time ALTER-heavy UUID conversion.
 func openDDLConn() (*gorm.DB, error) {
-	tlsMode := config.App.DBTLS
-	if tlsMode == "" {
-		tlsMode = "preferred"
-	}
+	// Normalized so UI/.env values like "required" or "disabled" never reach the
+	// driver as an unknown TLS config name. DATABASE_URL is parsed in
+	// config.Load() into the DB_* fields, so it is not re-read here.
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s&readTimeout=300s&writeTimeout=300s&multiStatements=true&interpolateParams=true&tls=%s",
-		config.App.DBUser, config.App.DBPass, config.App.DBHost, config.App.DBPort, config.App.DBName, tlsMode,
+		config.App.DBUser, config.App.DBPass, config.App.DBHost, config.App.DBPort, config.App.DBName,
+		config.NormalizeMySQLTLS(config.App.DBTLS),
 	)
-	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		cleanURL := strings.TrimPrefix(strings.TrimPrefix(dbURL, "mysql://"), "postgresql://")
-		if !strings.Contains(cleanURL, "?") {
-			cleanURL += "?readTimeout=300s&writeTimeout=300s"
-		} else {
-			cleanURL += "&readTimeout=300s&writeTimeout=300s"
-		}
-		dsn = cleanURL
-	}
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Error)})
 }
 

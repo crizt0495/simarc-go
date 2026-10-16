@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"strings"
 	"time"
 
 	"arsippro/internal/config"
@@ -32,43 +30,24 @@ func Connect() error {
 // openDB opens a GORM MySQL connection from raw parameters with sane pooling defaults.
 // DSN format: user:pass@tcp(host:port)/db?charset=utf8mb4&parseTime=True&loc=Asia%2FJakarta
 func openDB(host, port, name, user, pass string) (*gorm.DB, error) {
-	// TLS mode for the MySQL connection (go-sql-driver values):
-	//   preferred  – use TLS when the server supports it, fall back to plain
-	//   skip-verify– always TLS, skip certificate verification (Aiven self-signed CA)
-	//   true       – always TLS with full certificate verification
-	//   false      – never TLS
+	// TLS mode for the MySQL connection. The values written by the settings UI
+	// and .env files ("required", "disabled", ...) are normalized to what
+	// go-sql-driver actually accepts (preferred/skip-verify/true/false).
+	//   preferred   – use TLS when the server supports it, fall back to plain
+	//   skip-verify – always TLS, skip certificate verification (Aiven self-signed CA)
+	//   true        – always TLS with full certificate verification
+	//   false       – never TLS
 	// "preferred" is the safe default: it works against cloud providers that
 	// REQUIRE TLS (e.g. Aiven) as well as local MariaDB/MySQL without TLS.
-	// Previously this was hardcoded to "true", which broke every connection
-	// whose certificate was not signed by a system-trusted CA.
-	tlsMode := config.App.DBTLS
-	if tlsMode == "" {
-		tlsMode = "preferred"
-	}
+	//
+	// DATABASE_URL is parsed once in config.Load() into the DB_* fields, so the
+	// connection is always built from sanitized parts — never from a raw URL
+	// that may carry driver-unknown params such as ssl-mode=REQUIRED.
+	tlsMode := config.NormalizeMySQLTLS(config.App.DBTLS)
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s&readTimeout=20s&writeTimeout=20s&multiStatements=true&interpolateParams=true&tls=%s",
 		user, pass, host, port, name, tlsMode,
 	)
-
-	// Support DATABASE_URL if user prefers connection-string style.
-	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		// Accept both mysql:// scheme and raw DSN (mysql:// from PlanetScale, Aiven, etc.).
-		cleanURL := dbURL
-		// Strip mysql:// and postgres:// prefixes if any (legacy configs).
-		cleanURL = strings.TrimPrefix(cleanURL, "mysql://")
-		cleanURL = strings.TrimPrefix(cleanURL, "postgresql://")
-		// mysql://user:pass@host:port/db?params → DSN is already in correct form after stripping scheme.
-		dsn = cleanURL
-		// Respect an explicit tls= parameter; otherwise apply the configured mode.
-		if !strings.Contains(dsn, "tls=") {
-			if strings.Contains(dsn, "?") {
-				dsn += "&tls=" + tlsMode
-			} else {
-				dsn += "?tls=" + tlsMode
-			}
-		}
-		log.Printf("Connecting to database with DATABASE_URL")
-	}
 
 	logLevel := logger.Error
 

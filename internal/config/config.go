@@ -54,16 +54,11 @@ func Load() {
 	dbPass := getEnv("DB_PASSWORD", "")
 	dbTLS := getEnv("DB_TLS", "")
 
-	// Support DATABASE_URL for cloud convenience (mysql://user:pass@host:port/db).
+	// Support DATABASE_URL for cloud convenience, e.g.
+	//   mysql://avnadmin:pw@host:19160/defaultdb?ssl-mode=REQUIRED
+	// Everything is parsed into the DB_* fields below; the connector never sees
+	// the raw URL, so driver-unknown params like ssl-mode cannot break it.
 	if dbURL := getEnv("DATABASE_URL", ""); dbURL != "" {
-		// Strip scheme prefix; the rest is a valid MySQL DSN.
-		cleanURL := dbURL
-		cleanURL = strings.TrimPrefix(cleanURL, "mysql://")
-		cleanURL = strings.TrimPrefix(cleanURL, "postgresql://")
-		// We pass through to the connector; if the user supplies a full URL we use it as-is.
-		log.Printf("DATABASE_URL detected")
-		// Keep parser for backward-compat (could extract host/port) but defaults above stand.
-		_ = cleanURL
 		if parsed, err := url.Parse(dbURL); err == nil {
 			if h := parsed.Hostname(); h != "" {
 				dbHost = h
@@ -81,7 +76,17 @@ func Load() {
 			if idx := strings.Index(dbName, "?"); idx != -1 {
 				dbName = dbName[:idx]
 			}
+			// TLS: accept the driver param (tls=) and the MySQL CLI / Aiven
+			// spelling (ssl-mode=REQUIRED|VERIFY_CA|VERIFY_IDENTITY|DISABLED).
+			// NormalizeMySQLTLS maps either onto a mode the driver understands.
+			if t := parsed.Query().Get("tls"); t != "" {
+				dbTLS = t
+			} else if mode := parsed.Query().Get("ssl-mode"); mode != "" {
+				dbTLS = mode
+			}
 			log.Printf("DATABASE_URL parsed — host=%s port=%s db=%s", dbHost, dbPort, dbName)
+		} else {
+			log.Printf("DATABASE_URL tidak dapat diurai, memakai DB_*: %v", err)
 		}
 	}
 

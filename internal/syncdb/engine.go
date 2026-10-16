@@ -595,12 +595,11 @@ func openPool(dsn string) (*sql.DB, error) {
 }
 
 func dsn(host, port, name, user, pass, tls string) string {
-	if tls == "" {
-		tls = "preferred"
-	}
+	// Normalize the friendly UI values ("required", "disabled", ...) onto the
+	// exact modes go-sql-driver understands; see config.NormalizeMySQLTLS.
 	return fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&readTimeout=180s&writeTimeout=180s&tls=%s",
-		user, pass, host, port, name, tls)
+		user, pass, host, port, name, config.NormalizeMySQLTLS(tls))
 }
 
 // dsnFromApp builds the DSN for the local database from the application config.
