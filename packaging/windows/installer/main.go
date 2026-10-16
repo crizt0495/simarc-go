@@ -239,7 +239,11 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 	}
 
 	installDir := resolveInstallDir()
-	psRan := false
+	if mode == "" || mode == "auto" {
+		mode = "offline"
+	}
+
+	installed := false
 	if _, err := exec.LookPath("powershell.exe"); err == nil {
 		cmd := exec.Command("powershell.exe", args...)
 		setHiddenWindow(cmd)
@@ -249,24 +253,27 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 		psErr := cmd.Run()
 		_, appErr := os.Stat(filepath.Join(installDir, "run.bat"))
 		if psErr == nil && appErr == nil {
-			psRan = true
+			// PowerShell pada beberapa lingkungan (mis. Wine tanpa PowerShell
+			// fungsional, atau execution policy yang menghalangi) dapat
+			// mengembalikan exit code 0 tanpa benar-benar memasang lengkap.
+			// Karena itu hasilnya TETAP diverifikasi; bila belum lengkap,
+			// pemasangan diselesaikan langsung (murni Go) yang idempoten.
+			if verr := verifyInstall(installDir, mode); verr == nil {
+				installed = true
+			} else {
+				fmt.Printf("[INFO] Hasil PowerShell belum lengkap (%v); menyelesaikan dengan pemasangan langsung...\n", verr)
+			}
 		}
 	}
 
-	// PowerShell pada beberapa lingkungan (mis. Wine tanpa PowerShell fungsional)
-	// dapat mengembalikan exit code 0 tanpa benar-benar mengeksekusi skrip.
-	// Bila proses gagal ATAU instalasi tidak ditemukan, pasang langsung via Go.
-	if !psRan {
-		fmt.Println("[INFO] PowerShell tidak menyelesaikan instalasi, menjalankan pemasangan langsung...")
-		if mode == "" || mode == "auto" {
-			mode = "offline"
-		}
+	if !installed {
+		fmt.Println("[INFO] Menjalankan pemasangan langsung (tanpa PowerShell)...")
 		if err := nativeInstall(tmp, installDir, mode, hub); err != nil {
 			fail("Instalasi langsung gagal: %v", err)
 		}
-	}
-	if err := verifyInstall(installDir, mode); err != nil {
-		fail("Verifikasi instalasi gagal: %v", err)
+		if err := verifyInstall(installDir, mode); err != nil {
+			fail("Verifikasi instalasi gagal: %v", err)
+		}
 	}
 
 	// Pastikan shortcut Start Menu + Desktop selalu ada (idempoten).
@@ -294,7 +301,11 @@ func verifyInstall(installDir, mode string) error {
 			return fmt.Errorf("file wajib tidak ada atau kosong: %s", rel)
 		}
 	}
-	if strings.EqualFold(mode, "offline") {
+	// Komponen database portabel wajib ada bila mode offline, ATAU bila .env
+	// komputer ini memang mengaktifkan database tertanam (SIMARC_EMBEDDED_DB).
+	// Memakai .env sebagai sumber kebenaran membuat verifikasi tetap tepat
+	// walau mode tidak ditentukan eksplisit (mis. dipasang lewat skrip lain).
+	if strings.EqualFold(mode, "offline") || envEmbeddedDB(installDir) {
 		for _, rel := range []string{"mariadb/bin/mariadbd.exe", "mariadb/bin/mariadb-install-db.exe"} {
 			fi, err := os.Stat(filepath.Join(installDir, filepath.FromSlash(rel)))
 			if err != nil || fi.IsDir() || fi.Size() == 0 {
@@ -303,6 +314,27 @@ func verifyInstall(installDir, mode string) error {
 		}
 	}
 	return nil
+}
+
+// envEmbeddedDB melaporkan apakah .env pada folder instalasi mengaktifkan
+// database portabel (SIMARC_EMBEDDED_DB=1/true).
+func envEmbeddedDB(installDir string) bool {
+	data, err := os.ReadFile(filepath.Join(installDir, ".env"))
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		l := strings.TrimSpace(line)
+		if l == "" || strings.HasPrefix(l, "#") {
+			continue
+		}
+		if strings.HasPrefix(l, "SIMARC_EMBEDDED_DB=") {
+			v := strings.TrimSpace(strings.TrimPrefix(l, "SIMARC_EMBEDDED_DB="))
+			v = strings.Trim(v, "\"'")
+			return v == "1" || strings.EqualFold(v, "true")
+		}
+	}
+	return false
 }
 
 func resolveInstallDir() string {
