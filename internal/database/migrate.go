@@ -290,7 +290,8 @@ func Migrate() error {
 	// wrongly forced it to BIGINT AUTO_INCREMENT, which breaks activity
 	// logging. Repair it whenever an integer type is detected.
 	ensureActivityLogIDColumn()
-
+	ensurePermissionColumns()
+	ensurePermissionRoleIdColumn()
 	// Fast path: already migrated to the current schema version — skip all
 	// heavy checks/updates (they would otherwise run on every serverless
 	// cold start and dominate request latency).
@@ -791,4 +792,66 @@ func dropJenisLokasiColumnIfUnused() {
 	} else {
 		log.Println("[MIGRASI] Kolom jenis_lokasi sudah tidak ada, dilewati")
 	}
+}
+
+// ensurePermissionColumns adds columns that were introduced to the permissions
+// table after the first release (label, description, menu_identifier) but are
+// missing on databases created by older builds. Without them the sync engine
+// cannot upsert permissions rows into a hub that requires them (NOT NULL
+// without default), which surfaced as "Field 'label' doesn't have a default
+// value" on nodes created from an older schema.
+func ensurePermissionColumns() {
+	if !tableExists("permissions") {
+		return
+	}
+	cols := []struct {
+		name string
+		ddl  string
+	}{
+		{"label", "VARCHAR(255) NOT NULL DEFAULT ''"},
+		{"description", "VARCHAR(255) NULL"},
+		{"menu_identifier", "VARCHAR(255) NULL"},
+	}
+	for _, c := range cols {
+		if columnExists("permissions", c.name) {
+			continue
+		}
+		if err := DB.Exec("ALTER TABLE permissions ADD COLUMN " + c.name + " " + c.ddl).Error; err != nil {
+			log.Println("[MIGRASI] Gagal menambah kolom", c.name, "ke permissions:", err)
+		} else {
+			log.Println("[MIGRASI] Menambah kolom", c.name, "ke tabel permissions")
+		}
+	}
+}
+
+// ensurePermissionRoleIdColumn adds the surrogate `id` column to permission_role
+// on databases created by older builds, which used a composite (role_id,
+// permission_id) primary key. The current schema uses a single UUID `id` so
+// rows can be upserted consistently across nodes. Existing rows are backfilled
+// with fresh UUIDs.
+func ensurePermissionRoleIdColumn() {
+	if !tableExists("permission_role") {
+		return
+	}
+	if columnExists("permission_role", "id") {
+		return
+	}
+	if err := DB.Exec("ALTER TABLE permission_role ADD COLUMN id VARCHAR(36) NULL").Error; err != nil {
+		log.Println("[MIGRASI] Gagal menambah kolom id ke permission_role:", err)
+		return
+	}
+	DB.Exec("UPDATE permission_role SET id = UUID() WHERE id IS NULL")
+	if err := DB.Exec("ALTER TABLE permission_role DROP PRIMARY KEY").Error; err != nil {
+		log.Println("[MIGRASI] Gagal menghapus PK lama permission_role:", err)
+		return
+	}
+	if err := DB.Exec("ALTER TABLE permission_role ADD PRIMARY KEY (id)").Error; err != nil {
+		log.Println("[MIGRASI] Gagal menambah PK id ke permission_role:", err)
+		return
+	}
+	if err := DB.Exec("ALTER TABLE permission_role MODIFY COLUMN id VARCHAR(36) NOT NULL").Error; err != nil {
+		log.Println("[MIGRASI] Gagal mengubah id permission_role menjadi NOT NULL:", err)
+		return
+	}
+	log.Println("[MIGRASI] Menambah kolom id ke tabel permission_role")
 }

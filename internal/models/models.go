@@ -46,13 +46,23 @@ type Role struct {
 // ── PERMISSION ────────────────────────────────────────────────────────────────
 
 type Permission struct {
-	ID        string         `gorm:"type:char(36);primaryKey" json:"id"`
-	Name      string         `gorm:"size:100;not null;unique" json:"name"`
-	Module    string         `gorm:"size:100" json:"module"`
-	IsActive  bool           `gorm:"default:true" json:"is_active"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	ID             string         `gorm:"type:char(36);primaryKey" json:"id"`
+	Name           string         `gorm:"size:100;not null;unique" json:"name"`
+	Label          string         `gorm:"size:255;not null" json:"label"`
+	Module         string         `gorm:"size:100" json:"module"`
+	Description    string         `gorm:"size:255" json:"description"`
+	MenuIdentifier string         `gorm:"size:255" json:"menu_identifier"`
+	IsActive       bool           `gorm:"default:true;not null" json:"is_active"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+}
+
+// ── PERMISSION ROLE (pivot) ───────────────────────────────────────────────────
+type PermissionRole struct {
+	ID           string `gorm:"type:char(36);primaryKey" json:"id"`
+	PermissionID string `gorm:"type:char(36);not null" json:"permission_id"`
+	RoleID       string `gorm:"type:char(36);not null" json:"role_id"`
 }
 
 // ── UNIT KERJA ────────────────────────────────────────────────────────────────
