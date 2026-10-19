@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -291,7 +292,6 @@ func Migrate() error {
 	// logging. Repair it whenever an integer type is detected.
 	ensureActivityLogIDColumn()
 	ensurePermissionColumns()
-	ensurePermissionRoleIdColumn()
 	// Fast path: already migrated to the current schema version — skip all
 	// heavy checks/updates (they would otherwise run on every serverless
 	// cold start and dominate request latency).
@@ -337,6 +337,7 @@ func Migrate() error {
 		err := DB.AutoMigrate(
 			&models.Role{},
 			&models.Permission{},
+			&models.PermissionRole{},
 			&models.UnitKerja{},
 			&models.User{},
 			&models.KodeKlasifikasi{},
@@ -387,6 +388,10 @@ func Migrate() error {
 	} else {
 		log.Println("[MIGRASI] Tabel sudah ada, melewati AutoMigrate")
 	}
+
+	// Repair legacy permission_role tables (composite PK -> surrogate id) AFTER
+	// AutoMigrate so the table exists. Idempotent: no-op when id already exists.
+	ensurePermissionRoleIdColumn()
 
 	log.Println("[MIGRASI] Menjalankan post-migration tasks...")
 
@@ -828,30 +833,68 @@ func ensurePermissionColumns() {
 // on databases created by older builds, which used a composite (role_id,
 // permission_id) primary key. The current schema uses a single UUID `id` so
 // rows can be upserted consistently across nodes. Existing rows are backfilled
-// with fresh UUIDs.
+// with fresh UUIDs. The repair runs on a single connection with foreign key
+// checks disabled, because dropping the old primary key can otherwise be
+// blocked by foreign key constraints (and a pooled connection would not keep
+// the SET FOREIGN_KEY_CHECKS session setting).
 func ensurePermissionRoleIdColumn() {
 	if !tableExists("permission_role") {
 		return
 	}
-	if columnExists("permission_role", "id") {
+	conn, err := DB.DB()
+	if err != nil {
+		log.Println("[MIGRASI] Gagal membuka koneksi untuk permission_role:", err)
 		return
 	}
-	if err := DB.Exec("ALTER TABLE permission_role ADD COLUMN id VARCHAR(36) NULL").Error; err != nil {
-		log.Println("[MIGRASI] Gagal menambah kolom id ke permission_role:", err)
+	// Use a single connection so session-level SETs persist across statements.
+	sqlConn, err := conn.Conn(context.Background())
+	if err != nil {
+		log.Println("[MIGRASI] Gagal membuka koneksi untuk permission_role:", err)
 		return
 	}
-	DB.Exec("UPDATE permission_role SET id = UUID() WHERE id IS NULL")
-	if err := DB.Exec("ALTER TABLE permission_role DROP PRIMARY KEY").Error; err != nil {
+	defer sqlConn.Close()
+
+	run := func(q string, args ...any) error {
+		_, err := sqlConn.ExecContext(context.Background(), q, args...)
+		return err
+	}
+	query := func(q string, dest any) {
+		row := sqlConn.QueryRowContext(context.Background(), q)
+		_ = row.Scan(dest)
+	}
+
+	if !columnExists("permission_role", "id") {
+		if err := run("ALTER TABLE permission_role ADD COLUMN id VARCHAR(36) NULL"); err != nil {
+			log.Println("[MIGRASI] Gagal menambah kolom id ke permission_role:", err)
+			return
+		}
+	}
+	run("UPDATE permission_role SET id = UUID() WHERE id IS NULL")
+
+	var pkCol string
+	query("SELECT column_name FROM information_schema.key_column_usage WHERE table_schema = DATABASE() AND table_name = 'permission_role' AND constraint_name = 'PRIMARY' LIMIT 1", &pkCol)
+	if pkCol == "id" {
+		run("ALTER TABLE permission_role MODIFY COLUMN id VARCHAR(36) NOT NULL")
+		return
+	}
+
+	run("SET FOREIGN_KEY_CHECKS=0")
+	if err := run("ALTER TABLE permission_role DROP PRIMARY KEY"); err != nil {
+		run("SET FOREIGN_KEY_CHECKS=1")
 		log.Println("[MIGRASI] Gagal menghapus PK lama permission_role:", err)
 		return
 	}
-	if err := DB.Exec("ALTER TABLE permission_role ADD PRIMARY KEY (id)").Error; err != nil {
+	if err := run("ALTER TABLE permission_role ADD PRIMARY KEY (id)"); err != nil {
+		run("SET FOREIGN_KEY_CHECKS=1")
 		log.Println("[MIGRASI] Gagal menambah PK id ke permission_role:", err)
 		return
 	}
-	if err := DB.Exec("ALTER TABLE permission_role MODIFY COLUMN id VARCHAR(36) NOT NULL").Error; err != nil {
+	run("SET FOREIGN_KEY_CHECKS=1")
+	if err := run("ALTER TABLE permission_role MODIFY COLUMN id VARCHAR(36) NOT NULL"); err != nil {
 		log.Println("[MIGRASI] Gagal mengubah id permission_role menjadi NOT NULL:", err)
 		return
 	}
+	run("DELETE FROM sync_keys WHERE table_name = 'permission_role'")
+	run("DELETE FROM sync_state WHERE table_name = 'permission_role'")
 	log.Println("[MIGRASI] Menambah kolom id ke tabel permission_role")
 }
