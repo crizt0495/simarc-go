@@ -770,10 +770,9 @@ func (h *ArsipHandler) Update(c *gin.Context) {
 			arsip.TanggalRetensiAkhir = &t
 		}
 	}
+	arsip.NomorSPM = c.PostForm("nomor_spm")
 	if v := c.PostForm("nilai_anggaran"); v != "" {
 		if f, err := strconv.ParseFloat(strings.ReplaceAll(v, ",", ""), 64); err == nil {
-
-			arsip.NomorSPM = c.PostForm("nomor_spm")
 			arsip.NilaiAnggaran = &f
 		}
 	}

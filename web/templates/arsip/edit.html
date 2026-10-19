@@ -454,6 +454,33 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(toggleSatuanLainnya, 100);
     }
 
+    // ── Nilai Anggaran mask (rupiah) ──
+    // Tampilkan nilai yang tersimpan dari input hidden ke field berformat
+    // (sebelumnya field ini kosong di halaman edit), lalu jaga keduanya sinkron.
+    if (nilaiAnggaran && nilaiAnggaranMask) {
+        function formatterRupiah(num) {
+            return 'Rp ' + Number(num).toLocaleString('id-ID');
+        }
+        var initialNilai = (nilaiAnggaran.value || '').trim();
+        if (initialNilai !== '') {
+            var initialNum = Number(String(initialNilai).replace(/[^0-9.eE+-]/g, ''));
+            if (!isNaN(initialNum)) {
+                nilaiAnggaranMask.value = formatterRupiah(initialNum);
+            }
+        }
+        nilaiAnggaranMask.addEventListener('input', function() {
+            var digits = this.value.replace(/[^0-9]/g, '');
+            if (digits === '') {
+                this.value = '';
+                nilaiAnggaran.value = '';
+                return;
+            }
+            var num = parseInt(digits, 10);
+            this.value = formatterRupiah(num);
+            nilaiAnggaran.value = String(num);
+        });
+    }
+
     // ── Unsaved Changes Warning ──
     (function() {
         var form = document.getElementById('editForm');
