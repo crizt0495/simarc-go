@@ -601,8 +601,11 @@ func (h *ArsipHandler) Show(c *gin.Context) {
 	var fileSize int64
 	if fileExists {
 		fullPath := arsip.FilePath
-		if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-			fullPath = "storage/" + fullPath
+		if !filepath.IsAbs(fullPath) {
+			slashPath := filepath.ToSlash(fullPath)
+			if !strings.HasPrefix(slashPath, "storage/") && !strings.HasPrefix(slashPath, "/tmp/") {
+				fullPath = filepath.Join("storage", fullPath)
+			}
 		}
 		if info, err := os.Stat(fullPath); err == nil {
 			fileSize = info.Size()
@@ -870,8 +873,11 @@ func (h *ArsipHandler) Download(c *gin.Context) {
 	}
 
 	fullPath := arsip.FilePath
-	if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-		fullPath = "storage/" + fullPath
+	if !filepath.IsAbs(fullPath) {
+		slashPath := filepath.ToSlash(fullPath)
+		if !strings.HasPrefix(slashPath, "storage/") && !strings.HasPrefix(slashPath, "/tmp/") {
+			fullPath = filepath.Join("storage", fullPath)
+		}
 	}
 	file, err := os.Open(fullPath)
 	if err != nil {
@@ -916,8 +922,11 @@ func (h *ArsipHandler) View(c *gin.Context) {
 		contentType = "image/png"
 	}
 	fullPath := arsip.FilePath
-	if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-		fullPath = "storage/" + fullPath
+	if !filepath.IsAbs(fullPath) {
+		slashPath := filepath.ToSlash(fullPath)
+		if !strings.HasPrefix(slashPath, "storage/") && !strings.HasPrefix(slashPath, "/tmp/") {
+			fullPath = filepath.Join("storage", fullPath)
+		}
 	}
 	c.Header("Content-Type", contentType)
 	c.Header("Content-Disposition", "inline; filename="+filepath.Base(fullPath))
@@ -931,8 +940,11 @@ func (h *ArsipHandler) CheckFile(c *gin.Context) {
 		return
 	}
 	fullPath := arsip.FilePath
-	if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-		fullPath = "storage/" + fullPath
+	if !filepath.IsAbs(fullPath) {
+		slashPath := filepath.ToSlash(fullPath)
+		if !strings.HasPrefix(slashPath, "storage/") && !strings.HasPrefix(slashPath, "/tmp/") {
+			fullPath = filepath.Join("storage", fullPath)
+		}
 	}
 	_, err := os.Stat(fullPath)
 	c.JSON(http.StatusOK, gin.H{"exists": err == nil, "path": fullPath})
@@ -1651,8 +1663,11 @@ func (h *ArsipHandler) DownloadVersion(c *gin.Context) {
 		return
 	}
 	fullPath := v.FilePath
-	if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-		fullPath = "storage/" + fullPath
+	if !filepath.IsAbs(fullPath) {
+		slashPath := filepath.ToSlash(fullPath)
+		if !strings.HasPrefix(slashPath, "storage/") && !strings.HasPrefix(slashPath, "/tmp/") {
+			fullPath = filepath.Join("storage", fullPath)
+		}
 	}
 	c.Header("Content-Disposition", "attachment; filename="+filepath.Base(fullPath))
 	c.File(fullPath)
@@ -1665,8 +1680,11 @@ func (h *ArsipHandler) CheckVersionFile(c *gin.Context) {
 		return
 	}
 	fullPath := v.FilePath
-	if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-		fullPath = "storage/" + fullPath
+	if !filepath.IsAbs(fullPath) {
+		slashPath := filepath.ToSlash(fullPath)
+		if !strings.HasPrefix(slashPath, "storage/") && !strings.HasPrefix(slashPath, "/tmp/") {
+			fullPath = filepath.Join("storage", fullPath)
+		}
 	}
 	_, err := os.Stat(fullPath)
 	c.JSON(http.StatusOK, gin.H{"exists": err == nil, "path": fullPath})
