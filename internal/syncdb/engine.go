@@ -572,7 +572,7 @@ func orderKey(name string) int {
 		return 1
 	case "arsip_versions", "pemberkasan", "permission_role", "qr_codes",
 		"jadwal_retensi", "jadwal_retensi_arsip", "peminjaman_arsips",
-		"pemusnahan_arsip", "berita_acara":
+		"pemusnahan_arsip":
 		return 2
 	}
 	if appendTables[name] {

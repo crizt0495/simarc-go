@@ -13,7 +13,7 @@
     <ul class="dropdown-menu topbar-menu">
       <li><a class="dropdown-item {{if eq .CurrentPath "/arsip"}}active{{end}}" href="/arsip"><i class="bi bi-file-earmark-text"></i> Daftar Arsip</a></li>
       <li><a class="dropdown-item {{if eq .CurrentPath "/pemberkasan"}}active{{end}}" href="/pemberkasan"><i class="bi bi-folder-plus"></i> Pemberkasan</a></li>
-      <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/arsip/pemindahan"}}active{{end}}" href="/arsip/pemindahan"><i class="bi bi-map"></i> Pemindahan Arsip</a></li>
+
       <li><a class="dropdown-item {{if hasPrefix .CurrentPath "/pemusnahan"}}active{{end}}" href="/pemusnahan"><i class="bi bi-trash"></i> Pemusnahan Arsip</a></li>
     </ul>
   </div>

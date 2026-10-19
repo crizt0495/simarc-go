@@ -4,7 +4,7 @@ Panduan ini dipakai untuk membuktikan `SIMARC-Setup.exe` berjalan **tanpa error*
 di komputer Windows sungguhan (bukan Wine).
 
 File yang diuji: `SIMARC-Setup.exe`
-SHA-256: `080d74b02532be9bd7abd54425594b6ab63a4fa94bccae6f863cd86f7bad25ac`
+SHA-256: `9fb384ac65e8da84722e3e82ac988c393278b42108a6a035f4d903d1a5a0c758`
 
 ---
 

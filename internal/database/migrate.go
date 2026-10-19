@@ -112,7 +112,7 @@ func dropFksIfExist(table string, names []string) {
 // no targeted table still uses an AUTO_INCREMENT primary key, and unfinished
 // steps are retried on the next boot after a partial failure.
 func migrateAutoIncToUUID() error {
-	targets := []string{"jenis_arsip", "berita_acara_items", "pemusnahan_arsip_items", "blockchain_audits"}
+	targets := []string{"jenis_arsip", "pemusnahan_arsip_items", "blockchain_audits"}
 	if !tableExists("jenis_arsip") {
 		return nil
 	}
@@ -132,7 +132,7 @@ func migrateAutoIncToUUID() error {
 		return nil
 	}
 
-	log.Println("[MIGRASI] Mengonversi tabel BIGINT AUTO_INCREMENT ke kunci UUID: jenis_arsip, berita_acara_items, pemusnahan_arsip_items, blockchain_audits")
+	log.Println("[MIGRASI] Mengonversi tabel BIGINT AUTO_INCREMENT ke kunci UUID: jenis_arsip, pemusnahan_arsip_items, blockchain_audits")
 
 	// Heavy ALTERs on a live database can exceed the application's 20s socket
 	// read timeout. When booting against the configured database (production),
@@ -378,8 +378,6 @@ func Migrate() error {
 			&models.WorkflowExecution{},
 			&models.SearchLog{},
 
-			&models.BeritaAcara{},
-			&models.BeritaAcaraItem{},
 		)
 		if err != nil {
 			return err

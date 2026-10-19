@@ -952,56 +952,6 @@ type WorkflowExecution struct {
 
 func (WorkflowExecution) TableName() string { return "workflow_executions" }
 
-// ── BERITA ACARA PEMINDAHAN ────────────────────────────────────────────────────
-
-type BeritaAcara struct {
-	ID                  string            `gorm:"type:char(36);primaryKey" json:"id"`
-	NomorBA             string            `gorm:"column:nomor_ba;size:100;not null" json:"nomor_ba"`
-	Tanggal             time.Time         `gorm:"column:tanggal" json:"tanggal"`
-	Tempat              string            `gorm:"column:tempat;size:255" json:"tempat"`
-	PihakPertamaNama    string            `gorm:"column:pihak_pertama_nama;size:255;not null" json:"pihak_pertama_nama"`
-	PihakPertamaNIP     string            `gorm:"column:pihak_pertama_nip;size:100" json:"pihak_pertama_nip"`
-	PihakPertamaJabatan string            `gorm:"column:pihak_pertama_jabatan;size:255" json:"pihak_pertama_jabatan"`
-	PihakPertamaUnit    string            `gorm:"column:pihak_pertama_unit;size:255" json:"pihak_pertama_unit"`
-	PihakKeduaNama      string            `gorm:"column:pihak_kedua_nama;size:255;not null" json:"pihak_kedua_nama"`
-	PihakKeduaNIP       string            `gorm:"column:pihak_kedua_nip;size:100" json:"pihak_kedua_nip"`
-	PihakKeduaJabatan   string            `gorm:"column:pihak_kedua_jabatan;size:255" json:"pihak_kedua_jabatan"`
-	PihakKeduaUnit      string            `gorm:"column:pihak_kedua_unit;size:255" json:"pihak_kedua_unit"`
-	LokasiAsalID        *string           `gorm:"column:lokasi_asal_id;type:char(36)" json:"lokasi_asal_id"`
-	LokasiTujuanID      *string           `gorm:"column:lokasi_tujuan_id;type:char(36)" json:"lokasi_tujuan_id"`
-	Catatan             string            `gorm:"type:text" json:"catatan"`
-	CreatedBy           string            `gorm:"column:created_by;type:char(36)" json:"created_by"`
-	CreatedAt           time.Time         `json:"created_at"`
-	UpdatedAt           time.Time         `json:"updated_at"`
-	DeletedAt           gorm.DeletedAt    `gorm:"index" json:"deleted_at"`
-	Items               []BeritaAcaraItem `gorm:"foreignKey:BeritaAcaraID" json:"items,omitempty"`
-	LokasiAsal          *LokasiArsip      `gorm:"foreignKey:LokasiAsalID" json:"lokasi_asal,omitempty"`
-	LokasiTujuan        *LokasiArsip      `gorm:"foreignKey:LokasiTujuanID" json:"lokasi_tujuan,omitempty"`
-	Creator             *User             `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
-}
-
-func (BeritaAcara) TableName() string { return "berita_acara" }
-
-type BeritaAcaraItem struct {
-	ID            string       `gorm:"type:char(36);primaryKey" json:"id"`
-	BeritaAcaraID string       `gorm:"column:berita_acara_id;type:char(36);not null;index" json:"berita_acara_id"`
-	ArsipID       string       `gorm:"column:arsip_id;type:char(36);not null" json:"arsip_id"`
-	CreatedAt     time.Time    `json:"created_at"`
-	BeritaAcara   *BeritaAcara `gorm:"foreignKey:BeritaAcaraID" json:"berita_acara,omitempty"`
-	Arsip         *Arsip       `gorm:"foreignKey:ArsipID" json:"arsip,omitempty"`
-}
-
-func (BeritaAcaraItem) TableName() string { return "berita_acara_items" }
-
-// BeforeCreate supplies a UUID for new rows (see Arsip.BeforeCreate).
-func (b *BeritaAcaraItem) BeforeCreate(tx *gorm.DB) error {
-	if b.ID == "" {
-		b.ID = uuid.New().String()
-	}
-	return nil
-}
-
-// ── SEARCH LOG ────────────────────────────────────────────────────────────────
 
 type SearchLog struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`

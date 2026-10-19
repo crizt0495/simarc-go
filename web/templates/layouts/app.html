@@ -436,7 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
     'view': 'Detail',
     'history': 'Riwayat',
     'versions': 'Versi',
-    'pemindahan': 'Pemindahan',
     'settings': 'Pengaturan',
     'statistik': 'Statistik',
     'aktivitas': 'Log Aktivitas',
@@ -476,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   function isKnown(p) {
-    var known = ['/dashboard','/arsip','/pemberkasan','/arsip/pemindahan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/blockchain','/ocr','/profil','/retention'];
+    var known = ['/dashboard','/arsip','/pemberkasan','/pemusnahan','/peminjaman','/unit-kerja','/lokasi-arsip','/users','/kode-klasifikasi','/jenis-arsip','/search','/laporan','/monitoring/retensi','/jadwal-retensi','/roles','/pengaturan','/backup','/blockchain','/ocr','/profil','/retention'];
     return known.indexOf(p) !== -1;
   }
   bc.innerHTML = html;
@@ -671,9 +670,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </a>
         <a href="/pemberkasan" class="mobile-more-item">
           <i class="bi bi-folder-plus"></i><span>Pemberkasan</span>
-        </a>
-        <a href="/arsip/pemindahan" class="mobile-more-item">
-          <i class="bi bi-map"></i><span>Pemindahan</span>
         </a>
         <a href="/pemusnahan" class="mobile-more-item">
           <i class="bi bi-trash"></i><span>Pemusnahan</span>
