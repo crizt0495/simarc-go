@@ -827,6 +827,18 @@ document.addEventListener('touchstart', function() {}, { passive: true });
   });
 })();
 </script>
+<script>
+// ── PWA: registrasi Service Worker (untuk install di Android/Chrome) ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').then(function (reg) {
+      console.log('[PWA] Service Worker terdaftar:', reg.scope);
+    }).catch(function (err) {
+      console.warn('[PWA] Service Worker gagal:', err);
+    });
+  });
+}
+</script>
 </body>
 </html>
 {{end}}

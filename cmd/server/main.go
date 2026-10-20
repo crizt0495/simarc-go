@@ -6,10 +6,16 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
@@ -335,14 +341,28 @@ func main() {
 	addr := ":" + port
 	lanIP := getLANIP()
 
+	// HTTPS (opsional): diperlukan agar PWA bisa di-install di Android
+	// (Chrome Android menolak install PWA pada HTTP non-localhost).
+	// Aktifkan dengan APP_HTTPS=true. Sertifikat bisa disediakan lewat
+	// APP_CERT_FILE/APP_KEY_FILE; bila tidak ada, dibuat self-signed otomatis.
+	// Catatan: self-signed tidak dipercaya Android tanpa instalasi manual —
+	// untuk produksi gunakan reverse proxy (Caddy/nginx) dengan Let's Encrypt
+	// atau tunnel (Cloudflare/ngrok) yang memberi HTTPS terpercaya.
+	useHTTPS := strings.EqualFold(strings.TrimSpace(os.Getenv("APP_HTTPS")), "true") ||
+		strings.EqualFold(strings.TrimSpace(os.Getenv("APP_HTTPS")), "1")
+	certFile := strings.TrimSpace(os.Getenv("APP_CERT_FILE"))
+	keyFile := strings.TrimSpace(os.Getenv("APP_KEY_FILE"))
+
 	var appCmd *exec.Cmd
 	if config.IsVercel() {
 		log.Printf("Vercel deployment detected, listening on :%s", port)
 	} else {
+		scheme := "http"
+		if useHTTPS {
+			scheme = "https"
+		}
 		printBanner(port, lanIP)
-		// Open the local app window on the loopback address (most reliable);
-		// client machines still use the LAN URL shown in the banner.
-		appCmd = openBrowser(fmt.Sprintf("http://127.0.0.1:%s", port))
+		appCmd = openBrowser(fmt.Sprintf("%s://127.0.0.1:%s", scheme, port))
 	}
 
 	srv := &http.Server{
@@ -351,9 +371,23 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("SIMARC starting on %s (LAN: http://%s:%s)", addr, lanIP, port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+		if useHTTPS {
+			if certFile == "" || keyFile == "" {
+				cf, kf, err := ensureSelfSignedCert()
+				if err != nil {
+					log.Fatalf("Gagal membuat sertifikat TLS: %v", err)
+				}
+				certFile, keyFile = cf, kf
+			}
+			log.Printf("SIMARC starting on %s (HTTPS, LAN: https://%s:%s)", addr, lanIP, port)
+			if err := srv.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Server error: %v", err)
+			}
+		} else {
+			log.Printf("SIMARC starting on %s (LAN: http://%s:%s)", addr, lanIP, port)
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Server error: %v", err)
+			}
 		}
 	}()
 
@@ -485,4 +519,78 @@ func autoUpdateCheck(localPort string) {
 	for range ticker.C {
 		check()
 	}
+}
+
+// ensureSelfSignedCert generates a self-signed TLS certificate (cert.pem +
+// key.pem) in the project root when none is provided. It is intended for
+// development and LAN testing only — production deployments should use a
+// trusted certificate (Let's Encrypt / reverse proxy).
+func ensureSelfSignedCert() (string, string, error) {
+	certFile := "cert.pem"
+	keyFile := "key.pem"
+
+	// Reuse an existing pair if present.
+	if _, err := os.Stat(certFile); err == nil {
+		if _, err := os.Stat(keyFile); err == nil {
+			return certFile, keyFile, nil
+		}
+	}
+
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", err
+	}
+
+	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return "", "", err
+	}
+
+	tmpl := x509.Certificate{
+		SerialNumber: serial,
+		Subject: pkix.Name{
+			Organization: []string{"SIMARC (self-signed)"},
+			CommonName:   "SIMARC Local",
+		},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(365 * 24 * time.Hour),
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		DNSNames:              []string{"localhost"},
+		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, &tmpl, &priv.PublicKey, priv)
+	if err != nil {
+		return "", "", err
+	}
+
+	certOut, err := os.Create(certFile)
+	if err != nil {
+		return "", "", err
+	}
+	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
+		certOut.Close()
+		return "", "", err
+	}
+	certOut.Close()
+
+	keyOut, err := os.Create(keyFile)
+	if err != nil {
+		return "", "", err
+	}
+	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		keyOut.Close()
+		return "", "", err
+	}
+	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
+		keyOut.Close()
+		return "", "", err
+	}
+	keyOut.Close()
+
+	log.Printf("[HTTPS] Sertifikat self-signed dibuat: %s, %s", certFile, keyFile)
+	return certFile, keyFile, nil
 }
