@@ -319,6 +319,39 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // ── Toggle "Lainnya" menu (vanilla, andal di WebView/Android) ──
+  // ── Toggle "Lainnya" menu (vanilla, andal di WebView/Android) ──
+  var moreBtn = document.getElementById('mobileMoreBtn');
+  var moreMenu = document.getElementById('mobileMoreMenu');
+  if (moreBtn && moreMenu) {
+    moreBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var isOpen = moreMenu.classList.contains('show');
+      if (isOpen) {
+        moreMenu.classList.remove('show');
+        moreBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        moreMenu.classList.add('show');
+        moreBtn.setAttribute('aria-expanded', 'true');
+      }
+    });
+    // Tutup menu saat klik di luar
+    document.addEventListener('click', function (e) {
+      if (moreMenu.classList.contains('show') && !moreMenu.contains(e.target) && e.target !== moreBtn) {
+        moreMenu.classList.remove('show');
+        moreBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    // Tutup menu saat item diklik (navigasi)
+    moreMenu.querySelectorAll('.mobile-more-item').forEach(function (item) {
+      item.addEventListener('click', function () {
+        moreMenu.classList.remove('show');
+        moreBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
 });
 
 /* ── Theme ── */
@@ -652,13 +685,13 @@ document.addEventListener('DOMContentLoaded', function() {
     <i class="bi bi-graph-up"></i>
     <span>Laporan</span>
   </a>
-  <button type="button" class="mobile-bottom-nav-item" id="mobileMoreBtn" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
+  <button type="button" class="mobile-bottom-nav-item" id="mobileMoreBtn" aria-expanded="false">
     <i class="bi bi-grid"></i>
     <span>Lainnya</span>
   </button>
 
-  <!-- More Menu (dropdown dengan SEMUA fitur dari sidebar) -->
-  <div class="dropdown-menu mobile-more-menu" aria-labelledby="mobileMoreBtn">
+  <!-- More Menu (panel slide-up, tanpa Bootstrap dropdown agar andal di WebView/Android) -->
+  <div class="mobile-more-menu" id="mobileMoreMenu">
     <div class="mobile-more-section">
       <div class="mobile-more-section-title">Manajemen Arsip</div>
       <div class="mobile-more-grid">
