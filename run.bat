@@ -10,6 +10,15 @@ REM    ke server pusat (tanpa server/database lokal, tanpa perlu Go).
 REM ===========================================================================
 cd /d "%~dp0"
 
+REM -- Terapkan pembaruan otomatis (jika ada) -------------------------------
+REM  Klien yang menerima pembaruan dari hub menyimpan binary baru sebagai
+REM  tmp\simarc-server.exe.new. Tukar di sini sebelum server dijalankan.
+if exist "tmp\simarc-server.exe.new" (
+    if exist "tmp\simarc-server.exe" del /f /q "tmp\simarc-server.exe" >nul 2>&1
+    move /y "tmp\simarc-server.exe.new" "tmp\simarc-server.exe" >nul 2>&1
+    echo [OK]    Pembaruan otomatis diterapkan.
+)
+
 REM -- Baca konfigurasi dari .env --
 set "SIMARC_SERVER_URL="
 set "SIMARC_WINDOW="

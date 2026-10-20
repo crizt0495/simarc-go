@@ -6,7 +6,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -22,6 +24,7 @@ import (
 	"arsippro/internal/app"
 	"arsippro/internal/config"
 	"arsippro/internal/embeddeddb"
+	"arsippro/internal/handlers"
 )
 
 // isVirtualIface reports whether the interface is a known virtual, container,
@@ -354,6 +357,11 @@ func main() {
 		}
 	}()
 
+	// Auto-update: periodically check the hub for a newer binary and download
+	// it to tmp/simarc-server.exe.new. It is applied on the next restart by
+	// run.bat, so the running process is never replaced while in use.
+	go autoUpdateCheck(port)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
@@ -378,4 +386,103 @@ func main() {
 	}
 
 	log.Println("Server exited gracefully.")
+}
+
+// autoUpdateCheck periodically asks the hub whether a newer application binary
+// is available. When one is, it is downloaded into tmp/simarc-server.exe.new and
+// a small marker file is written; run.bat swaps it in on the next start, so the
+// running process is never replaced while in use. The check is best-effort: any
+// error (hub unreachable, offline, no token) is logged and retried later.
+func autoUpdateCheck(localPort string) {
+	// Give the server time to finish booting.
+	time.Sleep(30 * time.Second)
+
+	cfg := config.LoadSync()
+	if !cfg.FilesReady() {
+		log.Printf("[update] auto-update dinonaktifkan (SYNC_HUB_URL/TOKEN kosong)")
+		return
+	}
+	hub := cfg.HubURL
+	token := cfg.HubToken
+	localVersion := handlers.AppVersion()
+
+	// Resolve the binary path the same way the rest of the app does.
+	exe, err := os.Executable()
+	if err != nil {
+		log.Printf("[update] tidak bisa menentukan path binary: %v", err)
+		return
+	}
+	dir := filepath.Dir(exe)
+	if filepath.Base(dir) == "tmp" {
+		dir = filepath.Dir(dir)
+	}
+	newPath := filepath.Join(dir, "tmp", "simarc-server.exe.new")
+	markerPath := filepath.Join(dir, "tmp", "update-pending")
+
+	ticker := time.NewTicker(30 * time.Minute)
+	defer ticker.Stop()
+
+	check := func() {
+		// 1. Ask the hub for its version.
+		req, err := http.NewRequest(http.MethodGet, hub+"/api/update/version", nil)
+		if err != nil {
+			return
+		}
+		req.Header.Set("X-Sync-Token", token)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Printf("[update] hub tidak terjangkau: %v", err)
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return
+		}
+		var info struct {
+			Version string `json:"version"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+			return
+		}
+		if info.Version == "" || info.Version == localVersion {
+			return
+		}
+		log.Printf("[update] versi baru tersedia: %s (lokal: %s) — mengunduh...", info.Version, localVersion)
+
+		// 2. Download the new binary.
+		dreq, err := http.NewRequest(http.MethodGet, hub+"/api/update/binary", nil)
+		if err != nil {
+			return
+		}
+		dreq.Header.Set("X-Sync-Token", token)
+		dresp, err := http.DefaultClient.Do(dreq)
+		if err != nil {
+			log.Printf("[update] gagal mengunduh: %v", err)
+			return
+		}
+		defer dresp.Body.Close()
+		if dresp.StatusCode != http.StatusOK {
+			log.Printf("[update] unduhan gagal: HTTP %d", dresp.StatusCode)
+			return
+		}
+		f, err := os.Create(newPath)
+		if err != nil {
+			log.Printf("[update] gagal membuat file .new: %v", err)
+			return
+		}
+		if _, err := io.Copy(f, dresp.Body); err != nil {
+			f.Close()
+			os.Remove(newPath)
+			log.Printf("[update] gagal menyimpan binary: %v", err)
+			return
+		}
+		f.Close()
+		_ = os.WriteFile(markerPath, []byte(info.Version), 0o644)
+		log.Printf("[update] pembaruan %s diunduh. Restart aplikasi untuk menerapkan (run.bat akan menukar binary otomatis).", info.Version)
+	}
+
+	check()
+	for range ticker.C {
+		check()
+	}
 }

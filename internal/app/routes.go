@@ -113,6 +113,13 @@ func registerRoutes(r *gin.Engine) {
 		auth.GET("/api/sync/status", handlers.SyncStatus)
 		auth.POST("/api/sync/run", handlers.SyncRun)
 
+		// ── Auto-update (kode) ─────────────────────────────────────────────
+		// Hub menyediakan versi & binary terbaru; klien mengunduh dan menerapkannya
+		// pada restart berikutnya (lihat run.bat). Tanpa login agar klien yang baru
+		// terpasang bisa mengecek pembaruan sebelum login.
+		r.GET("/api/update/version", handlers.UpdateVersion)
+		r.GET("/api/update/binary", handlers.UpdateBinary)
+
 		// ═══════════════════════════════════════════
 		// ARSIP (Manajemen Arsip)
 		// ═══════════════════════════════════════════
