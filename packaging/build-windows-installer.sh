@@ -29,7 +29,7 @@ mkdir -p "$PAY/web" "$PAY/docs" "$PAY/dist" "$PAY/packaging"
 
 # ── 1) Biner server Windows (ke folder kerja — TIDAK mengotori dist/) ───────
 echo "==> Build biner server Windows amd64..."
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w -X arsippro/internal/handlers.buildVersion=$VERSION_CLEAN" \
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -a -trimpath -buildvcs=false -ldflags="-s -w -X arsippro/internal/handlers.buildVersion=$VERSION_CLEAN" \
   -o "$PAY/dist/simarc-server-windows-amd64.exe" ./cmd/server
 if [ "${SIMARC_BUILD_ARM64:-0}" = "1" ]; then
   echo "==> Build biner server Windows arm64..."

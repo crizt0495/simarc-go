@@ -96,6 +96,7 @@ type Status struct {
 	HubDatabase     string       `json:"hub_database"`
 	IntervalMinutes int          `json:"interval_minutes"`
 	Running         bool         `json:"running"`
+	PendingChanges  int          `json:"pending_changes"`
 	Recent          []RunSummary `json:"recent"`
 }
 
@@ -120,10 +121,55 @@ func (m *Manager) Status(ctx context.Context) Status {
 	if err := ensureLocalSyncTables(ctx, db); err != nil {
 		return st
 	}
+	st.PendingChanges = pendingChanges(ctx, db, cfg.NodeID)
 	if runs, err := RecentRuns(ctx, db, 10); err == nil {
 		st.Recent = runs
 	}
 	return st
+}
+
+// pendingChanges counts rows across all syncable tables that have changed
+// since the last successful push watermark. Returns 0 on any error so the
+// status endpoint never fails because of this best-effort count.
+func pendingChanges(ctx context.Context, db *sql.DB, node string) int {
+	if db == nil || node == "" {
+		return 0
+	}
+	tables, err := loadTables(ctx, db)
+	if err != nil {
+		return 0
+	}
+	total := 0
+	for name, ti := range tables {
+		strat, ok := strategyFor(ti)
+		if !ok {
+			continue
+		}
+		_ = strat
+		wm, err := getWatermark(ctx, db, node, name, "push")
+		if err != nil {
+			continue
+		}
+		// Build the change-time expression.
+		var expr string
+		switch {
+		case ti.HasUpdatedAt && ti.HasCreatedAt:
+			expr = "COALESCE(`updated_at`, `created_at`)"
+		case ti.HasUpdatedAt:
+			expr = "`updated_at`"
+		case ti.HasCreatedAt:
+			expr = "`created_at`"
+		default:
+			// No timestamp column: cannot determine pending rows cheaply.
+			continue
+		}
+		var n int
+		q := "SELECT COUNT(*) FROM `" + name + "` WHERE " + expr + " > ?"
+		if err := db.QueryRowContext(ctx, q, wm).Scan(&n); err == nil {
+			total += n
+		}
+	}
+	return total
 }
 
 // localSQL returns the *sql.DB behind the primary GORM connection, if open.
@@ -140,6 +186,10 @@ func localSQL() *sql.DB {
 
 // lastScheduled tracks the previous scheduler tick to enforce the interval.
 var lastScheduled time.Time
+
+// consecutiveFailures tracks how many scheduled runs in a row have failed, used
+// for exponential backoff on the retry delay.
+var consecutiveFailures int
 
 // schedulerOnce guarantees a single background scheduler even when the settings
 // page is saved repeatedly.
@@ -172,15 +222,24 @@ func startScheduler() {
 			lastScheduled = time.Now()
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			if _, err := Mgr.RunNow(ctx); err != nil {
-				log.Printf("[sync] terjadwal: %v", err)
-				// Retry sooner than a full interval after a failure (e.g. a
-				// transient DNS lookup timeout), but still leave a gap so a
-				// persistently unreachable hub is not hammered every tick.
-				retry := 2 * time.Minute
+				consecutiveFailures++
+				log.Printf("[sync] terjadwal: %v (kegagalan ke-%d)", err, consecutiveFailures)
+				// Exponential backoff: 2^failures minutes, capped at the
+				// configured interval. A persistently unreachable hub is not
+				// hammered every tick, but transient failures recover quickly.
+				retry := time.Duration(1<<uint(consecutiveFailures)) * time.Minute
 				if retry > interval {
 					retry = interval
 				}
+				if retry < 2*time.Minute {
+					retry = 2 * time.Minute
+				}
 				lastScheduled = time.Now().Add(retry - interval)
+			} else {
+				if consecutiveFailures > 0 {
+					log.Printf("[sync] terhubung kembali setelah %d kegagalan", consecutiveFailures)
+				}
+				consecutiveFailures = 0
 			}
 			cancel()
 		}
