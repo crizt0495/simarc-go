@@ -94,6 +94,20 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 	modeStr := strings.ToLower(strings.TrimSpace(mode))
 	hubStr := strings.TrimSpace(hub)
 
+	// Auto-config dari simarc-install.txt (bila ada): lewati dialog.
+	cfg := readInstallConfig(tmp)
+	if modeStr == "" || modeStr == "auto" {
+		if m := strings.ToLower(strings.TrimSpace(cfg["MODE"])); m != "" {
+			modeStr = m
+		}
+	}
+	if hubStr == "" && cfg["HUB"] != "" {
+		hubStr = strings.TrimSpace(cfg["HUB"])
+	}
+	if hubStr == "" && cfg["SYNC_HUB_URL"] != "" {
+		hubStr = strings.TrimSpace(cfg["SYNC_HUB_URL"])
+	}
+
 	// 1. Pilih mode instalasi (hanya bila belum ditentukan lewat flag/config).
 	if modeStr == "" || modeStr == "auto" {
 		chosen, err := zenity.List(
@@ -391,6 +405,47 @@ func extract(fsys embed.FS, root, dest string) error {
 	})
 }
 
+// extractZip mengekstrak berkas .zip ke direktori tujuan.
+func extractZip(zipPath, dest string) error {
+	r, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	if err := os.MkdirAll(dest, 0o755); err != nil {
+		return err
+	}
+	for _, f := range r.File {
+		target := filepath.Join(dest, filepath.FromSlash(f.Name))
+		if f.FileInfo().IsDir() {
+			if err := os.MkdirAll(target, 0o755); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return err
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		out, err := os.Create(target)
+		if err != nil {
+			rc.Close()
+			return err
+		}
+		if _, err := io.Copy(out, rc); err != nil {
+			out.Close()
+			rc.Close()
+			return err
+		}
+		out.Close()
+		rc.Close()
+	}
+	return nil
+}
+
 func fail(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stderr, "[ERR]  "+format+"\n", a...)
 	pause()
@@ -427,6 +482,18 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 			}
 		} else if !os.IsNotExist(err) {
 			return fmt.Errorf("memeriksa %s: %w", item, err)
+		}
+	}
+
+	// 1b. Ekstrak MariaDB portabel (bila ada bundel) — diperlukan untuk mode
+	//     offline mandiri. Hanya diekstrak bila mariadbd.exe belum ada (update
+	//     tidak menimpa database yang sudah terpasang).
+	if _, err := os.Stat(filepath.Join(srcDir, "mariadb-winx64.zip")); err == nil {
+		dbDir := filepath.Join(destDir, "mariadb")
+		if _, err := os.Stat(filepath.Join(dbDir, "bin", "mariadbd.exe")); os.IsNotExist(err) {
+			if err := extractZip(filepath.Join(srcDir, "mariadb-winx64.zip"), dbDir); err != nil {
+				return fmt.Errorf("mengekstrak MariaDB: %w", err)
+			}
 		}
 	}
 
