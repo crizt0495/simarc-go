@@ -49,6 +49,16 @@ cp -f packaging/windows/Uninstall-SIMARC.bat "$PAY/"
 cp -f packaging/windows/Uninstall-SIMARC.ps1 "$PAY/"
 cp -f packaging/windows/README-WINDOWS.md    "$PAY/README-WINDOWS.md"
 cp -f packaging/windows/simarc-install.txt.example "$PAY/simarc-install.txt.example"
+# Embed real config (simarc-install.txt) into payload if available, so the
+# installer alone is enough for mass deployment (no separate txt file needed).
+# Look in simarc-go root first, then the parent project folder.
+if [ -f "simarc-install.txt" ]; then
+    cp -f "simarc-install.txt" "$PAY/simarc-install.txt"
+    echo "  [embed] simarc-install.txt dari simarc-go/ disertakan."
+elif [ -f "../simarc-install.txt" ]; then
+    cp -f "../simarc-install.txt" "$PAY/simarc-install.txt"
+    echo "  [embed] simarc-install.txt dari ../ (parent) disertakan."
+fi
 cp -f packaging/windows/simarc.ico           "$PAY/simarc.ico"
 cp -f packaging/install-desktop.ps1          "$PAY/packaging/"
 cp -f packaging/uninstall-desktop.ps1        "$PAY/packaging/"

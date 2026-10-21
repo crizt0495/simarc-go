@@ -244,7 +244,16 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 		}
 		tr.Pulled = len(pulledRows)
 	}
-	return setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax))
+	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
+		return err
+	}
+	// Advance the push watermark so rows just pulled are not re-pushed on the
+	// next run (avoids a full re-push after the initial baseline pull).
+	pushWm, _ := getWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push")
+	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push", advance(pushWm, pullMax)); err != nil {
+		e.logf("[sync] gagal memajukan watermark push %s: %v", ti.Name, err)
+	}
+	return nil
 }
 
 // syncKeyedTable merges a hard-delete table (no deleted_at). Rows travel as
@@ -319,6 +328,11 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 	}
 	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
 		return err
+	}
+	// Advance the push watermark so pulled rows are not re-pushed on the next run.
+	pushWm, _ := getWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push")
+	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push", advance(pushWm, pullMax)); err != nil {
+		e.logf("[sync] gagal memajukan watermark push %s: %v", ti.Name, err)
 	}
 
 	if n, err := applyTombstones(ctx, e.local, ti); err != nil {
@@ -396,9 +410,13 @@ func readDelta(ctx context.Context, db *sql.DB, ti *tableInfo, since time.Time) 
 		return nil, time.Time{}, err
 	}
 	tsIdx := -1
+	createdIdx := -1
 	for i, c := range colNames {
 		if tsCol != "" && strings.EqualFold(c, tsCol) {
 			tsIdx = i
+		}
+		if strings.EqualFold(c, "created_at") {
+			createdIdx = i
 		}
 	}
 
@@ -413,10 +431,25 @@ func readDelta(ctx context.Context, db *sql.DB, ti *tableInfo, since time.Time) 
 		if err := rows.Scan(ptrs...); err != nil {
 			return nil, time.Time{}, err
 		}
+		// Use COALESCE(updated_at, created_at) so append-only tables whose
+		// updated_at is NULL still report a usable change time (otherwise the
+		// watermark never advances and every row stays "pending" forever).
+		var t time.Time
+		ok := false
 		if tsIdx >= 0 {
-			if t, ok := asTime(vals[tsIdx]); ok && t.After(maxTs) {
-				maxTs = t
+			if v, vok := asTime(vals[tsIdx]); vok {
+				t = v
+				ok = true
 			}
+		}
+		if !ok && createdIdx >= 0 {
+			if v, vok := asTime(vals[createdIdx]); vok {
+				t = v
+				ok = true
+			}
+		}
+		if ok && t.After(maxTs) {
+			maxTs = t
 		}
 		out = append(out, vals)
 	}
