@@ -191,7 +191,7 @@ func (h *DisposalHandler) Index(c *gin.Context) {
 		TotalEligible     int64  `gorm:"column:total"`
 	}
 	var stats []ClassStat
-	database.DB.Raw(`SELECT kk.id as kk_id, kk.kode_klasifikasi as kode, kk.nama_klasifikasi as nama,
+	database.DB.Raw(database.AdaptSQL(`SELECT kk.id as kk_id, kk.kode_klasifikasi as kode, kk.nama_klasifikasi as nama,
 		COUNT(a.id) as total FROM kode_klasifikasi kk
 		LEFT JOIN arsip a ON a.kode_klasifikasi_id = kk.id AND a.deleted_at IS NULL
 		AND a.status_arsip NOT IN ('musnah','siap_penyusutan','permanen')
@@ -201,7 +201,7 @@ func (h *DisposalHandler) Index(c *gin.Context) {
 		AND a.tanggal_dibuat IS NOT NULL
 		AND DATE_ADD(a.tanggal_dibuat, INTERVAL (kk.retensi_aktif + kk.retensi_inaktif) YEAR) < CURDATE()
 		WHERE kk.is_active = 1 GROUP BY kk.id, kk.kode_klasifikasi, kk.nama_klasifikasi
-		HAVING total > 0 ORDER BY total DESC`).Scan(&stats)
+		HAVING total > 0 ORDER BY total DESC`)).Scan(&stats)
 	Render(c, 200, "disposal/index.html", gin.H{
 		"title": "Smart Disposal", "pageTitle": "Smart Disposal - Berdasarkan Klasifikasi",
 		"klasifikasiList": klasifikasiList, "stats": stats,
@@ -225,7 +225,7 @@ func (h *DisposalHandler) ShowByClassification(c *gin.Context) {
 	var total int64
 	db := database.DB.Model(&models.Arsip{}).
 		Where("arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen')").
-		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Where(database.AdaptSQL("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()")).
 		Where("arsip.tanggal_dibuat IS NOT NULL").
 		Where("kode_klasifikasi.id = ?", kk.ID)
 	db.Count(&total)
@@ -262,7 +262,7 @@ func (h *DisposalHandler) ListArchivesForDisposal(c *gin.Context) {
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id").
 		Where("arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen')").
-		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Where(database.AdaptSQL("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()")).
 		Where("arsip.tanggal_dibuat IS NOT NULL").
 		Where("kode_klasifikasi.id = ?", c.Param("kodeKlasifikasi")).
 		Order("arsip.tanggal_dibuat ASC").Find(&arsipList)
@@ -351,7 +351,7 @@ func (h *DisposalHandler) AutoCreateSchedules(c *gin.Context) {
 		Where("status_arsip NOT IN ('musnah','siap_penyusutan','permanen')").
 		Where("kode_klasifikasi_id IS NOT NULL").
 		Where("tanggal_dibuat IS NOT NULL").
-		Where("DATE_ADD(tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").Find(&eligible)
+		Where(database.AdaptSQL("DATE_ADD(tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()")).Find(&eligible)
 	count := 0
 	for _, a := range eligible {
 		var existing models.DisposalSchedule
@@ -496,7 +496,7 @@ func (h *LaporanExportHandler) RetensiPDF(c *gin.Context) {
 	var list []models.Arsip
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id AND kode_klasifikasi.is_active = 1").
-		Where("arsip.tanggal_dibuat IS NOT NULL AND arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen') AND DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Where(database.AdaptSQL("arsip.tanggal_dibuat IS NOT NULL AND arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen') AND DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()")).
 		Order("arsip.tanggal_dibuat").Find(&list)
 	headers := []string{"No", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Tgl Perolehan", "Retensi Berakhir", "Status"}
 	rows := [][]string{}
@@ -522,7 +522,7 @@ func (h *LaporanExportHandler) RetensiExcel(c *gin.Context) {
 	var list []models.Arsip
 	database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").
 		Joins("INNER JOIN kode_klasifikasi ON kode_klasifikasi.id = arsip.kode_klasifikasi_id AND kode_klasifikasi.is_active = 1").
-		Where("arsip.tanggal_dibuat IS NOT NULL AND arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen') AND DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()").
+		Where(database.AdaptSQL("arsip.tanggal_dibuat IS NOT NULL AND arsip.status_arsip NOT IN ('musnah','siap_penyusutan','permanen') AND DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()")).
 		Order("arsip.tanggal_dibuat").Find(&list)
 	rows := [][]string{}
 	for i, a := range list {
@@ -1044,7 +1044,7 @@ func (h *LaporanExportHandler) LokasiIndex(c *gin.Context) {
 		offset := (page - 1) * perPage
 
 		var arsipList []models.Arsip
-		db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Offset(offset).Limit(perPage).Find(&arsipList)
+		db.Order(database.SQLNumericSuffix("arsip.nomor_arsip") + " ASC").Offset(offset).Limit(perPage).Find(&arsipList)
 
 		firstItem := offset + 1
 		lastItem := offset + len(arsipList)
@@ -1099,7 +1099,7 @@ func (h *LaporanExportHandler) LokasiPDF(c *gin.Context) {
 		}
 		var arsipList []models.Arsip
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip").
-			Where("lokasi_arsip_id = ?", lokasiID).Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Find(&arsipList)
+			Where("lokasi_arsip_id = ?", lokasiID).Order(database.SQLNumericSuffix("arsip.nomor_arsip") + " ASC").Find(&arsipList)
 		headers = []string{"No", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Unit Kerja", "Tanggal Arsip", "Status", "Lokasi"}
 		for i, a := range arsipList {
 			status := a.StatusArsip
@@ -1159,7 +1159,7 @@ func (h *LaporanExportHandler) LokasiExcel(c *gin.Context) {
 		// Export per lokasi
 		var arsipList []models.Arsip
 		database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").Preload("LokasiArsip").
-			Where("lokasi_arsip_id = ?", lokasiID).Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) ASC").Find(&arsipList)
+			Where("lokasi_arsip_id = ?", lokasiID).Order(database.SQLNumericSuffix("arsip.nomor_arsip") + " ASC").Find(&arsipList)
 		headers = []string{"No", "Nomor Arsip", "Nama Arsip", "Uraian", "Kode Klasifikasi", "Unit Kerja", "Tanggal Arsip", "Status", "Lokasi"}
 		for i, a := range arsipList {
 			status := a.StatusArsip
@@ -1283,7 +1283,7 @@ func (h *LaporanExportHandler) Digital(c *gin.Context) {
 
 	var tahunList []int
 	database.DB.Model(&models.Arsip{}).
-		Select("DISTINCT EXTRACT(YEAR FROM tanggal_dibuat) as yr").
+		Select(database.AdaptSQL("DISTINCT EXTRACT(YEAR FROM tanggal_dibuat) as yr")).
 		Where("tanggal_dibuat IS NOT NULL AND deleted_at IS NULL").
 		Order("yr DESC").
 		Pluck("yr", &tahunList)
@@ -1331,7 +1331,7 @@ func (h *LaporanExportHandler) Pemberkasan(c *gin.Context) {
 		db = db.Where("status_berkas = ?", v)
 	}
 	if v := c.Query("tahun"); v != "" {
-		db = db.Where("EXTRACT(YEAR FROM tahun) = ?", v)
+		db = db.Where(database.AdaptSQL("EXTRACT(YEAR FROM tahun) = ?"), v)
 	}
 
 	hasFilters := c.Query("unit_kerja_id") != "" || c.Query("status_berkas") != "" || c.Query("tahun") != ""
@@ -2451,7 +2451,7 @@ func (h *PengaturanAdvancedHandler) SystemInfo(c *gin.Context) {
 
 	// Ambil versi database
 	var dbVersion string
-	database.DB.Raw("SELECT VERSION()").Scan(&dbVersion)
+	database.DB.Raw(database.AdaptSQL("SELECT VERSION()")).Scan(&dbVersion)
 
 	// Hitung statistik
 	var totalArsip, totalUsers, totalUnitKerja, totalRoles, totalPermissions int64
@@ -2862,11 +2862,11 @@ func DashboardChampion(c *gin.Context) {
 		Month string `gorm:"column:month"`
 		Total int64  `gorm:"column:total"`
 	}
-	database.DB.Raw(`
+	database.DB.Raw(database.AdaptSQL(`
 		SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
 		FROM arsip WHERE deleted_at IS NULL
 		GROUP BY month ORDER BY month ASC LIMIT 12
-	`).Scan(&monthlyStats)
+	`)).Scan(&monthlyStats)
 
 	supervisionSvc := &services.ArchivalSupervisionService{}
 	leaderboard := supervisionSvc.GetLeaderboard()

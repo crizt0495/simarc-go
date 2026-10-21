@@ -27,12 +27,26 @@ type Manager struct {
 // Mgr is the process-wide sync manager.
 var Mgr = &Manager{}
 
+// baselineRunning menandai tarik-baseline pertama (instalasi baru) sedang
+// berjalan. Scheduler normal tidak boleh ikut menyinkronkan tabel yang sama
+// secara bersamaan.
+var baselineRunning atomic.Bool
+
+// MarkBaselineRunning dipakai proses bootstrap awal agar scheduler menunggu.
+func MarkBaselineRunning(v bool) { baselineRunning.Store(v) }
+
+// BaselineRunning melaporkan apakah tarik-baseline awal masih berjalan.
+func BaselineRunning() bool { return baselineRunning.Load() }
+
 // Running reports whether a sync is currently in progress.
 func (m *Manager) Running() bool { return m.running.Load() }
 
 // RunNow performs one synchronisation using the current settings. It refuses to
 // run concurrently with another sync.
 func (m *Manager) RunNow(ctx context.Context) (Result, error) {
+	if baselineRunning.Load() {
+		return Result{}, ErrBusy
+	}
 	if !m.running.CompareAndSwap(false, true) {
 		return Result{}, ErrBusy
 	}
@@ -118,7 +132,7 @@ func (m *Manager) Status(ctx context.Context) Status {
 	if db == nil {
 		return st
 	}
-	if err := ensureLocalSyncTables(ctx, db); err != nil {
+	if err := ensureLocalSyncTables(ctx, db, database.Driver()); err != nil {
 		return st
 	}
 	st.PendingChanges = pendingChanges(ctx, db, cfg.NodeID)
@@ -135,7 +149,7 @@ func pendingChanges(ctx context.Context, db *sql.DB, node string) int {
 	if db == nil || node == "" {
 		return 0
 	}
-	tables, err := loadTables(ctx, db)
+	tables, err := loadTables(ctx, db, database.Driver())
 	if err != nil {
 		return 0
 	}
@@ -216,7 +230,7 @@ func startScheduler() {
 			if !lastScheduled.IsZero() && time.Since(lastScheduled) < interval {
 				continue
 			}
-			if Mgr.Running() {
+			if Mgr.Running() || baselineRunning.Load() {
 				continue
 			}
 			lastScheduled = time.Now()

@@ -10,7 +10,54 @@ import (
 // ensureLocalSyncTables creates the bookkeeping tables on the local database.
 // They are created lazily (not part of the main schema migration) so enabling
 // sync needs no schema-version bump.
-func ensureLocalSyncTables(ctx context.Context, db *sql.DB) error {
+func ensureLocalSyncTables(ctx context.Context, db *sql.DB, driver string) error {
+	if driver == driverSQLite {
+		stmts := []string{
+			`CREATE TABLE IF NOT EXISTS sync_state (
+				node_id TEXT NOT NULL,
+				table_name TEXT NOT NULL,
+				direction TEXT NOT NULL,
+				watermark DATETIME NULL,
+				updated_at DATETIME NULL,
+				PRIMARY KEY (node_id, table_name, direction)
+			)`,
+			`CREATE TABLE IF NOT EXISTS sync_runs (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				node_id TEXT NOT NULL,
+				started_at DATETIME NOT NULL,
+				finished_at DATETIME NOT NULL,
+				status TEXT NOT NULL,
+				pushed INTEGER NOT NULL DEFAULT 0,
+				pulled INTEGER NOT NULL DEFAULT 0,
+				tables_ok INTEGER NOT NULL DEFAULT 0,
+				tables_failed INTEGER NOT NULL DEFAULT 0,
+				detail TEXT NULL
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_sync_runs_started ON sync_runs (started_at)`,
+			`CREATE TABLE IF NOT EXISTS sync_keys (
+				table_name TEXT NOT NULL,
+				key_hash TEXT NOT NULL,
+				key_json TEXT NOT NULL,
+				PRIMARY KEY (table_name, key_hash)
+			)`,
+			`CREATE TABLE IF NOT EXISTS sync_tombstones (
+				table_name TEXT NOT NULL,
+				key_hash TEXT NOT NULL,
+				key_json TEXT NOT NULL,
+				deleted_at DATETIME NOT NULL,
+				updated_at DATETIME NOT NULL,
+				PRIMARY KEY (table_name, key_hash)
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_sync_tomb_updated ON sync_tombstones (updated_at)`,
+		}
+		for _, q := range stmts {
+			if _, err := db.ExecContext(ctx, q); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	_, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS sync_state (
 		node_id VARCHAR(64) NOT NULL,
 		table_name VARCHAR(64) NOT NULL,
@@ -70,37 +117,50 @@ func ensureLocalSyncTables(ctx context.Context, db *sql.DB) error {
 // getWatermark returns the stored watermark for (node, table, direction).
 // A missing row yields the zero time, which means "copy everything".
 func getWatermark(ctx context.Context, db *sql.DB, node, table, dir string) (time.Time, error) {
-	var wm sql.NullTime
+	var raw any
 	err := db.QueryRowContext(ctx,
 		`SELECT watermark FROM sync_state WHERE node_id=? AND table_name=? AND direction=?`,
-		node, table, dir).Scan(&wm)
+		node, table, dir).Scan(&raw)
 	if err == sql.ErrNoRows {
 		return time.Time{}, nil
 	}
 	if err != nil {
 		return time.Time{}, err
 	}
-	if !wm.Valid {
+	if raw == nil {
 		return time.Time{}, nil
 	}
-	return wm.Time, nil
+	if t, ok := asTime(raw); ok {
+		return t, nil
+	}
+	return time.Time{}, nil
 }
 
 // setWatermark upserts the watermark for (node, table, direction).
-func setWatermark(ctx context.Context, db *sql.DB, node, table, dir string, wm time.Time) error {
+func setWatermark(ctx context.Context, db *sql.DB, driver, node, table, dir string, wm time.Time) error {
 	if wm.IsZero() {
 		return nil
 	}
-	_, err := db.ExecContext(ctx, `
-		INSERT INTO sync_state (node_id, table_name, direction, watermark, updated_at)
-		VALUES (?,?,?,?,?)
-		ON DUPLICATE KEY UPDATE watermark=VALUES(watermark), updated_at=VALUES(updated_at)`,
-		node, table, dir, wm, time.Now())
+	var err error
+	if driver == driverSQLite {
+		_, err = db.ExecContext(ctx, `
+			INSERT INTO sync_state (node_id, table_name, direction, watermark, updated_at)
+			VALUES (?,?,?,?,?)
+			ON CONFLICT (node_id, table_name, direction)
+			DO UPDATE SET watermark=excluded.watermark, updated_at=excluded.updated_at`,
+			node, table, dir, wm, time.Now())
+	} else {
+		_, err = db.ExecContext(ctx, `
+			INSERT INTO sync_state (node_id, table_name, direction, watermark, updated_at)
+			VALUES (?,?,?,?,?)
+			ON DUPLICATE KEY UPDATE watermark=VALUES(watermark), updated_at=VALUES(updated_at)`,
+			node, table, dir, wm, time.Now())
+	}
 	return err
 }
 
 // recordRun stores a run summary and trims history to the newest 50 rows.
-func recordRun(ctx context.Context, db *sql.DB, res Result) error {
+func recordRun(ctx context.Context, db *sql.DB, driver string, res Result) error {
 	detail, _ := json.Marshal(res.Tables)
 	ok, failed := 0, 0
 	for _, t := range res.Tables {
@@ -117,9 +177,15 @@ func recordRun(ctx context.Context, db *sql.DB, res Result) error {
 		res.Pushed, res.Pulled, ok, failed, string(detail)); err != nil {
 		return err
 	}
-	_, _ = db.ExecContext(ctx, `DELETE FROM sync_runs WHERE id NOT IN (
-		SELECT id FROM (SELECT id FROM sync_runs ORDER BY id DESC LIMIT 50) keep
-	)`)
+	if driver == driverSQLite {
+		_, _ = db.ExecContext(ctx, `DELETE FROM sync_runs WHERE id NOT IN (
+			SELECT id FROM sync_runs ORDER BY id DESC LIMIT 50
+		)`)
+	} else {
+		_, _ = db.ExecContext(ctx, `DELETE FROM sync_runs WHERE id NOT IN (
+			SELECT id FROM (SELECT id FROM sync_runs ORDER BY id DESC LIMIT 50) keep
+		)`)
+	}
 	return nil
 }
 
@@ -152,9 +218,16 @@ func RecentRuns(ctx context.Context, db *sql.DB, limit int) ([]RunSummary, error
 	for rows.Next() {
 		var r RunSummary
 		var detail sql.NullString
-		if err := rows.Scan(&r.NodeID, &r.StartedAt, &r.FinishedAt, &r.Status,
+		var started, finished any
+		if err := rows.Scan(&r.NodeID, &started, &finished, &r.Status,
 			&r.Pushed, &r.Pulled, &r.TablesOK, &r.TablesFail, &detail); err != nil {
 			return nil, err
+		}
+		if t, ok := asTime(started); ok {
+			r.StartedAt = t
+		}
+		if t, ok := asTime(finished); ok {
+			r.FinishedAt = t
 		}
 		if detail.Valid && detail.String != "" {
 			_ = json.Unmarshal([]byte(detail.String), &r.Tables)

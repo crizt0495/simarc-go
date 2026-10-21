@@ -407,7 +407,7 @@ func pemusnahanKategoriQuery() *gorm.DB {
 // konsisten antara dashboard dan halaman pemusnahan.
 func pemusnahanExpiredQuery() *gorm.DB {
 	return pemusnahanKategoriQuery().
-		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()")
+		Where(database.AdaptSQL("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) < CURDATE()"))
 }
 
 // pemusnahanBerjalanQuery arsip berkategori musnah yang masa retensinya
@@ -415,7 +415,7 @@ func pemusnahanExpiredQuery() *gorm.DB {
 // "Retensi Masih Berjalan".
 func pemusnahanBerjalanQuery() *gorm.DB {
 	return pemusnahanKategoriQuery().
-		Where("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) >= CURDATE()")
+		Where(database.AdaptSQL("DATE_ADD(arsip.tanggal_dibuat, INTERVAL (kode_klasifikasi.retensi_aktif + kode_klasifikasi.retensi_inaktif) YEAR) >= CURDATE()"))
 }
 
 // getExpiredArsipForPemusnahanOpt mengambil daftar arsip siap dimusnahkan.

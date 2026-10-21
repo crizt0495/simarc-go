@@ -101,9 +101,9 @@ func (h *LaporanHandler) Index(c *gin.Context) {
 		Total int64  `gorm:"column:total"`
 	}
 	var perBulan []MonthlyStat
-	database.DB.Raw(`SELECT TO_CHAR(tanggal_dibuat, 'YYYY-MM') as month, COUNT(*) as total
+	database.DB.Raw(database.AdaptSQL(`SELECT TO_CHAR(tanggal_dibuat, 'YYYY-MM') as month, COUNT(*) as total
 		FROM arsip WHERE deleted_at IS NULL AND EXTRACT(YEAR FROM tanggal_dibuat) = ?
-		GROUP BY month ORDER BY month`, time.Now().Year()).Scan(&perBulan)
+		GROUP BY month ORDER BY month`), time.Now().Year()).Scan(&perBulan)
 
 	Render(c, 200, "laporan/index.html", gin.H{
 		"title": "Laporan - SIMARC", "pageTitle": "Laporan & Statistik",
@@ -137,7 +137,7 @@ func applyLaporanArsipFilters(db *gorm.DB, c *gin.Context) *gorm.DB {
 	}
 
 	if v := c.Query("tahun"); v != "" {
-		db = db.Where("EXTRACT(YEAR FROM tanggal_dibuat) = ?", v)
+		db = db.Where(database.AdaptSQL("EXTRACT(YEAR FROM tanggal_dibuat) = ?"), v)
 	}
 
 	retensi := c.Query("retensi_filter")
@@ -238,7 +238,7 @@ func (h *LaporanHandler) Arsip(c *gin.Context) {
 
 	var tahunList []int
 	database.DB.Model(&models.Arsip{}).
-		Select("DISTINCT EXTRACT(YEAR FROM tanggal_dibuat) as yr").
+		Select(database.AdaptSQL("DISTINCT EXTRACT(YEAR FROM tanggal_dibuat) as yr")).
 		Where("tanggal_dibuat IS NOT NULL AND deleted_at IS NULL").
 		Order("yr DESC").
 		Pluck("yr", &tahunList)
@@ -533,7 +533,7 @@ func (h *BlockchainHandler) Index(c *gin.Context) {
 	db.Order("block_number DESC").Limit(perPage).Offset(offset).Find(&records)
 
 	var todayCount int64
-	database.DB.Model(&models.BlockchainAudit{}).Where("DATE(created_at) = CURDATE()").Count(&todayCount)
+	database.DB.Model(&models.BlockchainAudit{}).Where(database.AdaptSQL("DATE(created_at) = CURDATE()")).Count(&todayCount)
 
 	// Enrich records with entity names and user names
 	arsipIDs := []string{}

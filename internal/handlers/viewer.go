@@ -111,7 +111,7 @@ func (h *ArsipHandler) ViewerIndex(c *gin.Context) {
 	}
 	switch sortBy {
 	case "nomor_arsip":
-		db = db.Order("(CAST(REGEXP_REPLACE(arsip.nomor_arsip, '[^0-9]', '') AS UNSIGNED)) " + sortOrder)
+		db = db.Order(database.SQLNumericSuffix("arsip.nomor_arsip") + " " + sortOrder)
 	case "nama_arsip":
 		db = db.Order("arsip.nama_arsip " + sortOrder)
 	case "tanggal_dibuat":

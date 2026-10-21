@@ -20,6 +20,11 @@ type Config struct {
 	DBName      string
 	DBUser      string
 	DBPass      string
+	// DBDriver memilih mesin database lokal: "mysql" (default, kompatibel
+	// dengan instalasi lama) atau "sqlite" (mode offline-first desktop).
+	DBDriver string
+	// DBPath adalah lokasi berkas SQLite (dipakai bila DB_DRIVER=sqlite).
+	DBPath string
 	// DBTLS controls the MySQL TLS mode: true, false, skip-verify, preferred.
 	// Empty means "preferred" (see internal/database.openDB).
 	DBTLS      string
@@ -53,6 +58,10 @@ func Load() {
 	dbUser := getEnv("DB_USERNAME", "avnadmin")
 	dbPass := getEnv("DB_PASSWORD", "")
 	dbTLS := getEnv("DB_TLS", "")
+	// Mesin database lokal. Default "mysql" agar instalasi lama (MariaDB
+	// portabel) tetap berjalan tanpa perubahan; installer baru memakai SQLite.
+	dbDriver := strings.ToLower(strings.TrimSpace(getEnv("DB_DRIVER", "mysql")))
+	dbPath := strings.TrimSpace(getEnv("DB_PATH", "storage/simarc.db"))
 
 	// Support DATABASE_URL for cloud convenience, e.g.
 	//   mysql://avnadmin:pw@host:19160/defaultdb?ssl-mode=REQUIRED
@@ -101,6 +110,8 @@ func Load() {
 		DBUser:      dbUser,
 		DBPass:      dbPass,
 		DBTLS:       dbTLS,
+		DBDriver:    dbDriver,
+		DBPath:      dbPath,
 
 		SessionKey:        getEnv("SESSION_KEY", ""),
 		AppDebug:          getEnv("APP_DEBUG", "false"),

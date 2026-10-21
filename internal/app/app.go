@@ -224,36 +224,76 @@ func Init() (*gin.Engine, error) {
 //   - Later node (hub already populated): pull the hub's baseline instead of
 //     seeding, because seeding local rows (new random UUIDs) would be pushed to
 //     the hub and duplicate the roles/users/locations on every computer.
+//
+// Offline-first: the local database is always the working copy. The app never
+// waits for the hub to be reachable — if the hub cannot be reached the local
+// seed is used and the background scheduler synchronises once it is back.
 func seedBaseline() {
 	syncCfg := config.LoadSync()
 	if syncCfg.Active() && !database.HasUsers() {
-		// Instalasi PERTAMA: memeriksa hub + menarik baseline bisa memakan
-		// waktu lama (puluhan ribu baris). Jangan menahan server — jendela
-		// aplikasi harus langsung terbuka. Data disiapkan di latar belakang
-		// sementara server menampilkan halaman "Menyiapkan data".
-		go func() {
-			defer ready.Store(true)
-			ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
-			has, err := syncdb.HubHasUsers(ctx, syncCfg)
-			cancel()
-			switch {
-			case err != nil:
-				log.Printf("[sync] periksa hub gagal (%v) — memakai seed lokal", err)
-			case has:
-				log.Println("[sync] hub sudah berisi data — menarik baseline dari hub (seed lokal dilewati)")
-				if !pullBaseline(syncCfg) {
-					// Rare: the hub has data but the pull failed. Seed locally so
-					// the app stays usable; a recoverable duplicate set may appear.
-					log.Println("[sync] tarik baseline gagal — memakai seed lokal sebagai cadangan")
-				}
-			}
-			database.SeedIfNeeded()
-			log.Println("[sync] data awal siap — aplikasi dapat digunakan")
-		}()
+		// Jangan tahan server: login dibuka begitu data pengguna tersedia.
+		go bootstrapFromHub(syncCfg)
 		return
 	}
 	database.SeedIfNeeded()
 	ready.Store(true)
+}
+
+// bootstrapFromHub mengisi database lokal yang masih kosong.
+//
+// Bila hub berisi data, baseline ditarik di latar belakang. Halaman login
+// dibuka lebih awal — begitu tabel pengguna terisi — sehingga pengguna tidak
+// perlu menunggu seluruh arsip (puluhan ribu baris) selesai ditarik. Sisa tabel
+// (arsip, berkas, log) menyusul di latar belakang dan tetap disinkronkan oleh
+// scheduler bila tarikan terputus.
+func bootstrapFromHub(syncCfg config.SyncConfig) {
+	defer ready.Store(true)
+
+	// Cek hub dengan batas singkat: instalasi harus tetap bisa dipakai saat
+	// internet/WiFi mati.
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	has, err := syncdb.HubHasUsers(ctx, syncCfg)
+	cancel()
+	if err != nil {
+		log.Printf("[sync] hub tidak terjangkau (%v) — aplikasi langsung memakai data lokal", err)
+		database.SeedIfNeeded()
+		return
+	}
+	if !has {
+		log.Println("[sync] hub masih kosong — memakai data awal lokal")
+		database.SeedIfNeeded()
+		return
+	}
+
+	syncdb.MarkBaselineRunning(true)
+	defer syncdb.MarkBaselineRunning(false)
+	log.Println("[sync] hub berisi data — menarik baseline; login dibuka setelah data pengguna tersedia")
+
+	// Buka aplikasi begitu tabel users sudah terisi dari hub, tanpa menunggu
+	// seluruh tabel selesai.
+	stop := make(chan struct{})
+	go func() {
+		t := time.NewTicker(500 * time.Millisecond)
+		defer t.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-t.C:
+				if database.HasUsers() {
+					ready.Store(true)
+				}
+			}
+		}
+	}()
+
+	ok := pullBaseline(syncCfg)
+	close(stop)
+	if !ok {
+		log.Println("[sync] tarik baseline gagal — memakai data lokal sebagai cadangan")
+	}
+	database.SeedIfNeeded()
+	log.Println("[sync] data awal siap — aplikasi dapat digunakan")
 }
 
 // readinessGuard menampilkan halaman "Menyiapkan data SIMARC" selama data awal
@@ -316,9 +356,9 @@ const preparingHTML = `<!doctype html>
   <div class="spin"></div>
   <h1>SIMARC</h1>
   <div class="sub">Sistem Informasi Manajemen Arsip Record Center</div>
-  <p><b>Sedang menyiapkan data SIMARC&hellip;</b></p>
-  <p>Pada instalasi pertama, data dari server pusat dapat memerlukan beberapa menit.</p>
-  <p>Halaman ini akan terbuka otomatis setelah selesai.</p>
+  <p><b>Sedang menyiapkan aplikasi SIMARC&hellip;</b></p>
+  <p>Data disimpan di komputer ini, jadi aplikasi tetap bisa dipakai tanpa server.</p>
+  <p>Bila jaringan tersedia, sinkronisasi berjalan otomatis di latar belakang.</p>
 </div></body></html>`
 
 // pullBaseline copies the hub's rows into the empty local database right after

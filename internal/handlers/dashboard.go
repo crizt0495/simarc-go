@@ -112,13 +112,13 @@ func Dashboard(c *gin.Context) {
 		Total int64  `gorm:"column:total"`
 	}
 	var monthlyStats []MonthlyStat
-	database.DB.Raw(`
+	database.DB.Raw(database.AdaptSQL(`
 		SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as total
 		FROM arsip
 		WHERE deleted_at IS NULL
 		  AND status_arsip != 'permanen'
 		GROUP BY month ORDER BY month ASC LIMIT 12
-	`).Scan(&monthlyStats)
+	`)).Scan(&monthlyStats)
 
 	digitalPercent := 0.0
 	if stats.Total > 0 {
@@ -210,18 +210,18 @@ func Dashboard(c *gin.Context) {
 	}
 
 	data := gin.H{
-		"title":               "Dashboard - SIMARC",
-		"pageTitle":           "Dashboard",
-		"Stats":               stats,
-		"SiapMusnah":          siapMusnah,
-		"ArsipPerUnit":        arsipPerUnit,
-		"PemberkasanCount":    pemberkasanCount,
-		"LokasiStats":         lokasiStats,
-		"BlockchainCount":     blockchainCount,
-		"RecentActivities":    recentActivities,
-		"MonthlyStats":        monthlyStats,
-		"DigitalPercent":      digitalPercent,
-		"DigitalFileStats":    digitalFileStats,
+		"title":            "Dashboard - SIMARC",
+		"pageTitle":        "Dashboard",
+		"Stats":            stats,
+		"SiapMusnah":       siapMusnah,
+		"ArsipPerUnit":     arsipPerUnit,
+		"PemberkasanCount": pemberkasanCount,
+		"LokasiStats":      lokasiStats,
+		"BlockchainCount":  blockchainCount,
+		"RecentActivities": recentActivities,
+		"MonthlyStats":     monthlyStats,
+		"DigitalPercent":   digitalPercent,
+		"DigitalFileStats": digitalFileStats,
 		"Intelligence": gin.H{
 			"Forecast": forecastList,
 		},
@@ -328,13 +328,13 @@ func DashboardAPI(c *gin.Context) {
 		Total int64  `json:"total"`
 	}
 	var monthlyStats []MonthlyStat
-	database.DB.Raw(`
+	database.DB.Raw(database.AdaptSQL(`
 		SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as total
 		FROM arsip
 		WHERE deleted_at IS NULL
 		  AND status_arsip != 'permanen'
 		GROUP BY month ORDER BY month ASC LIMIT 12
-	`).Scan(&monthlyStats)
+	`)).Scan(&monthlyStats)
 
 	// Lokasi distribution
 	type LokasiStat struct {

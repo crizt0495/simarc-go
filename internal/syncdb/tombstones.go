@@ -123,10 +123,29 @@ func loadShadowKeys(ctx context.Context, db *sql.DB, table string) (map[string]s
 	return out, rows.Err()
 }
 
+// upsertTombstone writes one tombstone using the destination dialect.
+func upsertTombstone(ctx context.Context, db *sql.DB, driver, table, hash, keyJSON string, deletedAt, updatedAt time.Time) error {
+	if driver == driverSQLite {
+		_, err := db.ExecContext(ctx, `
+			INSERT INTO sync_tombstones (table_name, key_hash, key_json, deleted_at, updated_at)
+			VALUES (?,?,?,?,?)
+			ON CONFLICT (table_name, key_hash)
+			DO UPDATE SET deleted_at=excluded.deleted_at, updated_at=excluded.updated_at`,
+			table, hash, keyJSON, deletedAt, updatedAt)
+		return err
+	}
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO sync_tombstones (table_name, key_hash, key_json, deleted_at, updated_at)
+		VALUES (?,?,?,?,?)
+		ON DUPLICATE KEY UPDATE deleted_at=VALUES(deleted_at), updated_at=VALUES(updated_at)`,
+		table, hash, keyJSON, deletedAt, updatedAt)
+	return err
+}
+
 // detectDeletes compares the current primary keys against the stored snapshot
 // and writes a tombstone for every key that disappeared on this node. It then
 // refreshes the snapshot. Returns the number of newly detected deletions.
-func detectDeletes(ctx context.Context, db *sql.DB, ti *tableInfo) (int, error) {
+func detectDeletes(ctx context.Context, db *sql.DB, driver string, ti *tableInfo) (int, error) {
 	cur, err := currentKeys(ctx, db, ti)
 	if err != nil {
 		return 0, err
@@ -142,11 +161,7 @@ func detectDeletes(ctx context.Context, db *sql.DB, ti *tableInfo) (int, error) 
 		if _, ok := cur[h]; ok {
 			continue
 		}
-		if _, err := db.ExecContext(ctx, `
-			INSERT INTO sync_tombstones (table_name, key_hash, key_json, deleted_at, updated_at)
-			VALUES (?,?,?,?,?)
-			ON DUPLICATE KEY UPDATE deleted_at=VALUES(deleted_at), updated_at=VALUES(updated_at)`,
-			ti.Name, h, j, now, now); err != nil {
+		if err := upsertTombstone(ctx, db, driver, ti.Name, h, j, now, now); err != nil {
 			return 0, err
 		}
 		deleted++
@@ -196,7 +211,7 @@ func refreshShadow(ctx context.Context, db *sql.DB, table string, keys map[strin
 
 // copyTombstones synchronises locally known tombstones for one table to a
 // remote database (used to send this run's fresh deletions to the hub).
-func copyTombstones(ctx context.Context, src, dst *sql.DB, table string) error {
+func copyTombstones(ctx context.Context, src, dst *sql.DB, table, srcDriver, dstDriver string) error {
 	rows, err := src.QueryContext(ctx,
 		`SELECT key_hash, key_json, deleted_at, updated_at
 		 FROM sync_tombstones WHERE table_name = ?`, table)
@@ -210,11 +225,8 @@ func copyTombstones(ctx context.Context, src, dst *sql.DB, table string) error {
 		if err := rows.Scan(&h, &j, &deletedAt, &updatedAt); err != nil {
 			return err
 		}
-		if _, err := dst.ExecContext(ctx, `
-			INSERT INTO sync_tombstones (table_name, key_hash, key_json, deleted_at, updated_at)
-			VALUES (?,?,?,?,?)
-			ON DUPLICATE KEY UPDATE deleted_at=VALUES(deleted_at), updated_at=VALUES(updated_at)`,
-			table, h, j, deletedAt, updatedAt); err != nil {
+		_ = srcDriver
+		if err := upsertTombstone(ctx, dst, dstDriver, table, h, j, deletedAt, updatedAt); err != nil {
 			return err
 		}
 	}

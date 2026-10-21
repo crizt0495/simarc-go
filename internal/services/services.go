@@ -32,7 +32,7 @@ type ArsipService struct{}
 
 func (s *ArsipService) GenerateNomorArsip() string {
 	var last models.Arsip
-	database.DB.Unscoped().Order("(CAST(REGEXP_REPLACE(nomor_arsip, '[^0-9]', '') AS UNSIGNED)) DESC").First(&last)
+	database.DB.Unscoped().Order(database.SQLNumericSuffix("nomor_arsip") + " DESC").First(&last)
 	if last.NomorArsip == "" {
 		return "1"
 	}
@@ -460,7 +460,7 @@ type ArsipNumberService struct{}
 
 func (s *ArsipNumberService) Generate(db *gorm.DB) string {
 	var last models.Arsip
-	db.Unscoped().Order("(CAST(REGEXP_REPLACE(nomor_arsip, '[^0-9]', '') AS UNSIGNED)) DESC").First(&last)
+	db.Unscoped().Order(database.SQLNumericSuffix("nomor_arsip") + " DESC").First(&last)
 	if last.NomorArsip == "" {
 		return "1"
 	}
@@ -542,8 +542,8 @@ func (s *AnalyticsService) GetArsipGrowth(months int) []map[string]interface{} {
 		Total int64  `gorm:"column:total"`
 	}
 	var rows []Row
-	database.DB.Raw(`SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
-		FROM arsip WHERE deleted_at IS NULL GROUP BY month ORDER BY month DESC LIMIT ?`, months).Scan(&rows)
+	database.DB.Raw(database.AdaptSQL(`SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
+		FROM arsip WHERE deleted_at IS NULL GROUP BY month ORDER BY month DESC LIMIT ?`), months).Scan(&rows)
 	result := make([]map[string]interface{}, len(rows))
 	for i, r := range rows {
 		result[i] = map[string]interface{}{"month": r.Month, "total": r.Total}
@@ -812,8 +812,8 @@ func (s *DataScienceService) GetGrowthTrend(months int) []map[string]interface{}
 		Total int64  `gorm:"column:total"`
 	}
 	var rows []Row
-	database.DB.Raw(`SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
-		FROM arsip WHERE deleted_at IS NULL GROUP BY month ORDER BY month DESC LIMIT ?`, months).Scan(&rows)
+	database.DB.Raw(database.AdaptSQL(`SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) as total
+		FROM arsip WHERE deleted_at IS NULL GROUP BY month ORDER BY month DESC LIMIT ?`), months).Scan(&rows)
 	result := make([]map[string]interface{}, len(rows))
 	for i, r := range rows {
 		result[i] = map[string]interface{}{"month": r.Month, "total": r.Total}

@@ -7,6 +7,14 @@ import (
 	"strings"
 )
 
+// driverMySQL / driverSQLite menandai dialek mesin database. Database lokal
+// bisa MySQL (instalasi lama / server) atau SQLite (desktop offline-first),
+// sedangkan hub selalu MySQL.
+const (
+	driverMySQL  = "mysql"
+	driverSQLite = "sqlite"
+)
+
 // strategy is how a table is merged between nodes.
 type strategy int
 
@@ -141,7 +149,11 @@ func strategyFor(t *tableInfo) (strategy, bool) {
 }
 
 // loadTables introspects every base table in the given database.
-func loadTables(ctx context.Context, db *sql.DB) (map[string]*tableInfo, error) {
+func loadTables(ctx context.Context, db *sql.DB, driver string) (map[string]*tableInfo, error) {
+	if driver == driverSQLite {
+		return loadTablesSQLite(ctx, db)
+	}
+
 	var schema string
 	if err := db.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&schema); err != nil {
 		return nil, err
@@ -179,7 +191,101 @@ func loadTables(ctx context.Context, db *sql.DB) (map[string]*tableInfo, error) 
 	return out, nil
 }
 
-// loadTable introspects a single table.
+// loadTablesSQLite membaca daftar tabel dan kolom dari katalog SQLite.
+func loadTablesSQLite(ctx context.Context, db *sql.DB) (map[string]*tableInfo, error) {
+	rows, err := db.QueryContext(ctx,
+		`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for rows.Next() {
+		var n string
+		if err := rows.Scan(&n); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		names = append(names, n)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]*tableInfo, len(names))
+	for _, name := range names {
+		ti, err := loadTableSQLite(ctx, db, name)
+		if err != nil {
+			return nil, fmt.Errorf("tabel %s: %w", name, err)
+		}
+		out[name] = ti
+	}
+	return out, nil
+}
+
+// loadTableSQLite membaca satu tabel lewat PRAGMA table_info.
+func loadTableSQLite(ctx context.Context, db *sql.DB, name string) (*tableInfo, error) {
+	ti := &tableInfo{Name: name}
+
+	rows, err := db.QueryContext(ctx, "PRAGMA table_info(`"+name+"`)")
+	if err != nil {
+		return nil, err
+	}
+	type pkCol struct {
+		pos int
+		col string
+	}
+	var pks []pkCol
+	for rows.Next() {
+		var cid, notNull, pk int
+		var col, typ string
+		var dflt sql.NullString
+		if err := rows.Scan(&cid, &col, &typ, &notNull, &dflt, &pk); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ti.Columns = append(ti.Columns, col)
+		if pk > 0 {
+			pks = append(pks, pkCol{pos: pk, col: col})
+		}
+		switch col {
+		case "created_at":
+			ti.HasCreatedAt = true
+		case "updated_at":
+			ti.HasUpdatedAt = true
+		case "deleted_at":
+			ti.HasDeletedAt = true
+		}
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Urutan kolom primer mengikuti posisi pk pada PRAGMA.
+	for i := 1; i <= len(pks); i++ {
+		for _, p := range pks {
+			if p.pos == i {
+				ti.PK = append(ti.PK, p.col)
+			}
+		}
+	}
+
+	var ddl string
+	if err := db.QueryRowContext(ctx,
+		`SELECT COALESCE(sql,'') FROM sqlite_master WHERE type='table' AND name=?`, name).Scan(&ddl); err == nil {
+		if strings.Contains(strings.ToUpper(ddl), "AUTOINCREMENT") {
+			ti.AutoIncrement = true
+		}
+	}
+
+	if len(ti.Columns) == 0 {
+		return nil, fmt.Errorf("tabel %s tidak punya kolom yang bisa disalin", name)
+	}
+	return ti, nil
+}
+
+// loadTable introspects a single table (MySQL).
 func loadTable(ctx context.Context, db *sql.DB, schema, name string) (*tableInfo, error) {
 	ti := &tableInfo{Name: name}
 
@@ -245,8 +351,16 @@ func loadTable(ctx context.Context, db *sql.DB, schema, name string) (*tableInfo
 }
 
 // tableExistsIn reports whether a table exists in the given database.
-func tableExistsIn(ctx context.Context, db *sql.DB, table string) (bool, error) {
+func tableExistsIn(ctx context.Context, db *sql.DB, driver, table string) (bool, error) {
 	var n int64
+	if driver == driverSQLite {
+		err := db.QueryRowContext(ctx,
+			`SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name=?`, table).Scan(&n)
+		if err != nil {
+			return false, err
+		}
+		return n > 0, nil
+	}
 	err := db.QueryRowContext(ctx, `
 		SELECT COUNT(1) FROM information_schema.tables
 		WHERE table_schema = DATABASE() AND table_name = ?`, table).Scan(&n)
@@ -256,8 +370,9 @@ func tableExistsIn(ctx context.Context, db *sql.DB, table string) (bool, error) 
 	return n > 0, nil
 }
 
-// createTableLike copies a table's DDL from src to dst when dst lacks it. Both
-// connections must point at MySQL/MariaDB databases.
+// createTableLike copies a table's DDL from src to dst when dst lacks it.
+// Hanya dipakai untuk hub MySQL; database lokal SQLite tidak bisa menjadi
+// sumber DDL MySQL.
 func createTableLike(ctx context.Context, src, dst *sql.DB, table string) error {
 	var name, ddl string
 	if err := src.QueryRowContext(ctx, "SHOW CREATE TABLE `"+table+"`").Scan(&name, &ddl); err != nil {

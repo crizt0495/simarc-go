@@ -272,6 +272,12 @@ func openDDLConn() (*gorm.DB, error) {
 // Optimized for MySQL: ensures critical performance indexes that AutoMigrate
 // alone does not create, and avoids destructive schema changes.
 func Migrate() error {
+	// Database lokal SQLite (mode offline-first desktop) memakai jalur sendiri:
+	// semua tabel dibuat dari model, tanpa perbaikan skema legacy MySQL.
+	if IsSQLite() {
+		return migrateSQLite()
+	}
+
 	// Quiet GORM SQL logging for migration step (we explicitly log meaningful events).
 	DB.Logger = logger.Default.LogMode(logger.Error)
 
@@ -334,51 +340,7 @@ func Migrate() error {
 	// Cek apakah tabel roles sudah ada untuk skip AutoMigrate.
 	if !tableExists("roles") {
 		log.Println("[MIGRASI] Database baru, menjalankan migrasi penuh...")
-		err := DB.AutoMigrate(
-			&models.Role{},
-			&models.Permission{},
-			&models.PermissionRole{},
-			&models.UnitKerja{},
-			&models.User{},
-			&models.KodeKlasifikasi{},
-			&models.LokasiArsip{},
-			&models.JenisArsip{},
-			&models.Pemberkasan{},
-			&models.Arsip{},
-			&models.ArsipVersion{},
-			&models.PemusnahanArsip{},
-
-			&models.JadwalRetensi{},
-			&models.JadwalRetensiArsip{},
-			&models.LoginLog{},
-			&models.ActivityLog{},
-			&models.AuditLog{},
-			&models.OcrTempImage{},
-			&models.BlockchainAudit{},
-			&models.PeminjamanArsip{},
-			&models.RetentionSchedule{},
-
-			&models.SavedSearch{},
-			&models.BackupLog{},
-			&models.Notification{},
-
-			&models.ComplianceScore{},
-			&models.LeaderboardStat{},
-			&models.NotificationPreference{},
-			&models.NotificationTemplate{},
-			&models.RetentionNotification{},
-			&models.Tenant{},
-			&models.DestructionApproval{},
-			&models.ComplianceRisk{},
-			&models.AiCategorization{},
-
-			&models.Webhook{},
-			&models.WebhookLog{},
-			&models.Workflow{},
-			&models.WorkflowExecution{},
-			&models.SearchLog{},
-
-		)
+		err := DB.AutoMigrate(allModels()...)
 		if err != nil {
 			return err
 		}

@@ -2,12 +2,20 @@ package database
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"sync"
 	"time"
 
 	"arsippro/internal/config"
 
+	gosqlite "github.com/glebarez/go-sqlite"
+	sqlitedrv "github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -15,9 +23,31 @@ import (
 
 var DB *gorm.DB
 
+// Driver returns the active local database dialect ("mysql" atau "sqlite").
+// Dipakai untuk menyesuaikan SQL yang memakai fungsi khas MySQL.
+func Driver() string {
+	if strings.EqualFold(strings.TrimSpace(config.App.DBDriver), "sqlite") {
+		return "sqlite"
+	}
+	return "mysql"
+}
+
+// IsSQLite reports whether the local database runs on SQLite (offline-first
+// desktop mode).
+func IsSQLite() bool { return Driver() == "sqlite" }
+
 // Connect opens the database connection using the current application config.
 // Connection pool is tuned for Vercel serverless (short-lived workers).
 func Connect() error {
+	if IsSQLite() {
+		db, err := openSQLite(config.App.DBPath)
+		if err != nil {
+			return err
+		}
+		DB = db
+		log.Printf("Database SQLite terhubung: %s", config.App.DBPath)
+		return nil
+	}
 	db, err := openDB(config.App.DBHost, config.App.DBPort, config.App.DBName, config.App.DBUser, config.App.DBPass)
 	if err != nil {
 		return err
@@ -25,6 +55,100 @@ func Connect() error {
 	DB = db
 	log.Println("Database connected successfully")
 	return nil
+}
+
+var sqliteFuncsOnce sync.Once
+
+// registerSQLiteFunctions menambahkan fungsi yang biasa dipakai SQL gaya
+// MySQL (REGEXP_REPLACE/REGEXP) tetapi tidak tersedia bawaan di SQLite.
+func registerSQLiteFunctions() {
+	sqliteFuncsOnce.Do(func() {
+		_ = gosqlite.RegisterDeterministicScalarFunction("REGEXP_REPLACE", 3,
+			func(_ *gosqlite.FunctionContext, args []driver.Value) (driver.Value, error) {
+				if len(args) != 3 {
+					return nil, nil
+				}
+				src, pattern, repl := sqliteText(args[0]), sqliteText(args[1]), sqliteText(args[2])
+				re, err := regexp.Compile(pattern)
+				if err != nil {
+					return src, nil
+				}
+				return re.ReplaceAllString(src, repl), nil
+			})
+		_ = gosqlite.RegisterDeterministicScalarFunction("REGEXP", 2,
+			func(_ *gosqlite.FunctionContext, args []driver.Value) (driver.Value, error) {
+				if len(args) != 2 {
+					return int64(0), nil
+				}
+				re, err := regexp.Compile(sqliteText(args[1]))
+				if err != nil {
+					return int64(0), nil
+				}
+				if re.MatchString(sqliteText(args[0])) {
+					return int64(1), nil
+				}
+				return int64(0), nil
+			})
+		_ = gosqlite.RegisterDeterministicScalarFunction("CURDATE", 0,
+			func(_ *gosqlite.FunctionContext, _ []driver.Value) (driver.Value, error) {
+				return time.Now().Format("2006-01-02"), nil
+			})
+	})
+}
+
+func sqliteText(v driver.Value) string {
+	switch x := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return x
+	case []byte:
+		return string(x)
+	case time.Time:
+		return x.Format("2006-01-02 15:04:05")
+	default:
+		return fmt.Sprint(x)
+	}
+}
+
+// openSQLite membuka database lokal SQLite (mode offline-first desktop).
+// Pure-Go driver: tidak butuh CGO dan bisa di-cross-compile untuk Windows.
+func openSQLite(path string) (*gorm.DB, error) {
+	if strings.TrimSpace(path) == "" {
+		path = "storage/simarc.db"
+	}
+	if dir := filepath.Dir(path); dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, fmt.Errorf("buat folder database: %w", err)
+		}
+	}
+	registerSQLiteFunctions()
+	dsn := path
+	if !strings.HasPrefix(dsn, "file:") {
+		dsn = "file:" + filepath.ToSlash(dsn)
+	}
+	sep := "?"
+	if strings.Contains(dsn, "?") {
+		sep = "&"
+	}
+	dsn += sep + "_pragma=busy_timeout(15000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(1)"
+
+	gormDB, err := gorm.Open(sqlitedrv.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Error),
+	})
+	if err != nil {
+		return nil, err
+	}
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		return nil, err
+	}
+	// Satu koneksi penulis menghindari "database is locked" pada SQLite;
+	// beban kerja desktop tidak membutuhkan paralelisme tulis.
+	sqlDB.SetMaxOpenConns(1)
+	sqlDB.SetMaxIdleConns(1)
+	sqlDB.SetConnMaxLifetime(0)
+	return gormDB, nil
 }
 
 // openDB opens a GORM MySQL connection from raw parameters with sane pooling defaults.
@@ -224,12 +348,19 @@ func GetInfo() Info {
 		return info
 	}
 	var version string
-	if err := DB.Raw("SELECT VERSION()").Scan(&version).Error; err == nil {
-		info.Version = version
-	}
-	// MySQL: DATABASE() returns the current database schema name.
 	var tables int64
-	DB.Raw("SELECT COUNT(1) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'").Scan(&tables)
+	if IsSQLite() {
+		if err := DB.Raw("SELECT sqlite_version()").Scan(&version).Error; err == nil {
+			info.Version = version
+		}
+		DB.Raw("SELECT COUNT(1) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").Scan(&tables)
+	} else {
+		if err := DB.Raw("SELECT VERSION()").Scan(&version).Error; err == nil {
+			info.Version = version
+		}
+		// MySQL: DATABASE() returns the current database schema name.
+		DB.Raw("SELECT COUNT(1) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'").Scan(&tables)
+	}
 	info.Tables = tables
 	return info
 }

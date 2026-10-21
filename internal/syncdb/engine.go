@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"arsippro/internal/config"
+	"arsippro/internal/database"
 
+	_ "github.com/glebarez/go-sqlite"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -24,33 +27,46 @@ var epoch = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 // directions: local edits are pushed to the hub, and changes made on other
 // computers (already merged into the hub) are pulled down.
 type Engine struct {
-	cfg    config.SyncConfig
-	local  *sql.DB
-	hub    *sql.DB
-	logf   func(string, ...any)
-	tables map[string]*tableInfo
+	cfg         config.SyncConfig
+	local       *sql.DB
+	hub         *sql.DB
+	localDriver string
+	logf        func(string, ...any)
+	tables      map[string]*tableInfo
 }
 
 // Open builds an Engine using the application's local database and the hub
-// configured in cfg.
+// configured in cfg. Database lokal bisa MySQL (instalasi lama) atau SQLite
+// (desktop offline-first); hub selalu MySQL.
 func Open(ctx context.Context, cfg config.SyncConfig, logf func(string, ...any)) (*Engine, error) {
 	if !cfg.HubReady() {
 		return nil, fmt.Errorf("hub database belum dikonfigurasi (SYNC_HUB_DB_HOST/NAME/USER)")
 	}
-	return OpenWithDSN(ctx, dsnFromApp(),
-		dsn(cfg.HubDBHost, cfg.HubDBPort, cfg.HubDBName, cfg.HubDBUser, cfg.HubDBPass, cfg.HubDBTLS),
-		cfg, logf)
+	hubDSN := dsn(cfg.HubDBHost, cfg.HubDBPort, cfg.HubDBName, cfg.HubDBUser, cfg.HubDBPass, cfg.HubDBTLS)
+	if database.IsSQLite() {
+		local, err := openSQLitePool(config.App.DBPath)
+		if err != nil {
+			return nil, fmt.Errorf("buka database lokal SQLite: %w", err)
+		}
+		return newEngine(ctx, local, driverSQLite, hubDSN, cfg, logf)
+	}
+	return OpenWithDSN(ctx, dsnFromApp(), hubDSN, cfg, logf)
 }
 
-// OpenWithDSN builds an Engine from explicit DSNs. It is used by Open and by
-// the CLI/tests that need to point at specific databases.
+// OpenWithDSN builds an Engine from explicit MySQL DSNs (CLI/tests).
 func OpenWithDSN(ctx context.Context, localDSN, hubDSN string, cfg config.SyncConfig, logf func(string, ...any)) (*Engine, error) {
-	if logf == nil {
-		logf = func(string, ...any) {}
-	}
 	local, err := openPool(localDSN)
 	if err != nil {
 		return nil, fmt.Errorf("buka database lokal: %w", err)
+	}
+	return newEngine(ctx, local, driverMySQL, hubDSN, cfg, logf)
+}
+
+// newEngine wires an opened local connection to the hub and prepares the sync
+// bookkeeping/schema metadata.
+func newEngine(ctx context.Context, local *sql.DB, localDriver, hubDSN string, cfg config.SyncConfig, logf func(string, ...any)) (*Engine, error) {
+	if logf == nil {
+		logf = func(string, ...any) {}
 	}
 	hub, err := openPool(hubDSN)
 	if err != nil {
@@ -58,8 +74,8 @@ func OpenWithDSN(ctx context.Context, localDSN, hubDSN string, cfg config.SyncCo
 		return nil, fmt.Errorf("buka database hub: %w", err)
 	}
 
-	// A single connection per side keeps the session-level
-	// SET FOREIGN_KEY_CHECKS=0 in effect for the whole run.
+	// A single connection per side keeps session settings in effect and avoids
+	// SQLite write contention.
 	local.SetMaxOpenConns(1)
 	hub.SetMaxOpenConns(1)
 
@@ -80,29 +96,36 @@ func OpenWithDSN(ctx context.Context, localDSN, hubDSN string, cfg config.SyncCo
 	}
 	// Kedua sisi harus mematikannya. Baris tiba dengan urutan induk/anak yang
 	// bisa tertukar dalam satu delta, sehingga node baru yang menarik data hub
-	// bisa kena galat foreign key pada tabel anak (mis. arsip sebelum
-	// kode_klasifikasi). Sesi ini terpisah dari koneksi aplikasi, jadi aman.
-	if _, err := local.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS=0"); err != nil {
-		local.Close()
-		hub.Close()
-		return nil, fmt.Errorf("set foreign_key_checks lokal: %w", err)
+	// bisa kena galat foreign key pada tabel anak. Sesi ini terpisah dari
+	// koneksi aplikasi, jadi aman.
+	if localDriver == driverSQLite {
+		if _, err := local.ExecContext(ctx, "PRAGMA foreign_keys=OFF"); err != nil {
+			local.Close()
+			hub.Close()
+			return nil, fmt.Errorf("set foreign_keys lokal: %w", err)
+		}
+	} else {
+		if _, err := local.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS=0"); err != nil {
+			local.Close()
+			hub.Close()
+			return nil, fmt.Errorf("set foreign_key_checks lokal: %w", err)
+		}
 	}
 
-	if err := ensureLocalSyncTables(ctx, local); err != nil {
-
+	if err := ensureLocalSyncTables(ctx, local, localDriver); err != nil {
 		local.Close()
 		hub.Close()
 		return nil, err
 	}
 
-	tables, err := loadTables(ctx, local)
+	tables, err := loadTables(ctx, local, localDriver)
 	if err != nil {
 		local.Close()
 		hub.Close()
 		return nil, err
 	}
 
-	return &Engine{cfg: cfg, local: local, hub: hub, logf: logf, tables: tables}, nil
+	return &Engine{cfg: cfg, local: local, hub: hub, localDriver: localDriver, logf: logf, tables: tables}, nil
 }
 
 // Close releases both connections.
@@ -192,7 +215,7 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 	}
 
 	res.FinishedAt = time.Now()
-	if err := recordRun(ctx, e.local, res); err != nil {
+	if err := recordRun(ctx, e.local, e.localDriver, res); err != nil {
 		e.logf("[sync] gagal mencatat riwayat: %v", err)
 	}
 	return res, nil
@@ -200,11 +223,14 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 
 // syncTable pushes local changes to the hub and pulls remote changes back.
 func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, tr *TableResult) error {
-	exists, err := tableExistsIn(ctx, e.hub, ti.Name)
+	exists, err := tableExistsIn(ctx, e.hub, driverMySQL, ti.Name)
 	if err != nil {
 		return err
 	}
 	if !exists {
+		if e.localDriver == driverSQLite {
+			return fmt.Errorf("tabel %s belum ada di hub; jalankan migrasi hub terlebih dahulu", ti.Name)
+		}
 		if err := createTableLike(ctx, e.local, e.hub, ti.Name); err != nil {
 			return fmt.Errorf("buat tabel di hub: %w", err)
 		}
@@ -220,12 +246,12 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 		return fmt.Errorf("baca perubahan lokal: %w", err)
 	}
 	if len(pushedRows) > 0 {
-		if err := upsertRows(ctx, e.hub, ti, strat, pushedRows, e.cfg.BatchSize); err != nil {
+		if err := upsertRows(ctx, e.hub, driverMySQL, ti, strat, pushedRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke hub: %w", err)
 		}
 		tr.Pushed = len(pushedRows)
 	}
-	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push", advance(pushSince, pushMax)); err != nil {
+	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "push", advance(pushSince, pushMax)); err != nil {
 		return err
 	}
 
@@ -239,18 +265,18 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 		return fmt.Errorf("baca perubahan hub: %w", err)
 	}
 	if len(pulledRows) > 0 {
-		if err := upsertRows(ctx, e.local, ti, strat, pulledRows, e.cfg.BatchSize); err != nil {
+		if err := upsertRows(ctx, e.local, e.localDriver, ti, strat, pulledRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke lokal: %w", err)
 		}
 		tr.Pulled = len(pulledRows)
 	}
-	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
+	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
 		return err
 	}
 	// Advance the push watermark so rows just pulled are not re-pushed on the
 	// next run (avoids a full re-push after the initial baseline pull).
 	pushWm, _ := getWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push")
-	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push", advance(pushWm, pullMax)); err != nil {
+	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "push", advance(pushWm, pullMax)); err != nil {
 		e.logf("[sync] gagal memajukan watermark push %s: %v", ti.Name, err)
 	}
 	return nil
@@ -265,25 +291,28 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 //  3. pulls hub rows back and applies local tombstones (a row re-created after
 //     its tombstone survives).
 func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableResult) error {
-	exists, err := tableExistsIn(ctx, e.hub, ti.Name)
+	exists, err := tableExistsIn(ctx, e.hub, driverMySQL, ti.Name)
 	if err != nil {
 		return err
 	}
 	if !exists {
+		if e.localDriver == driverSQLite {
+			return fmt.Errorf("tabel %s belum ada di hub; jalankan migrasi hub terlebih dahulu", ti.Name)
+		}
 		if err := createTableLike(ctx, e.local, e.hub, ti.Name); err != nil {
 			return fmt.Errorf("buat tabel di hub: %w", err)
 		}
 	}
 
 	// 1. Destroyed rows this side become tombstones.
-	if n, err := detectDeletes(ctx, e.local, ti); err != nil {
+	if n, err := detectDeletes(ctx, e.local, e.localDriver, ti); err != nil {
 		return fmt.Errorf("deteksi penghapusan: %w", err)
 	} else if n > 0 {
 		e.logf("[sync] %s: %d penghapusan permanen terdeteksi", ti.Name, n)
 	}
 
 	// 2. Send tombstones to the hub and apply them there.
-	if err := copyTombstones(ctx, e.local, e.hub, ti.Name); err != nil {
+	if err := copyTombstones(ctx, e.local, e.hub, ti.Name, e.localDriver, driverMySQL); err != nil {
 		return fmt.Errorf("kirim tombstone ke hub: %w", err)
 	}
 	if n, err := applyTombstones(ctx, e.hub, ti); err != nil {
@@ -302,12 +331,12 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 		return fmt.Errorf("baca perubahan lokal: %w", err)
 	}
 	if len(pushedRows) > 0 {
-		if err := upsertRows(ctx, e.hub, ti, stratKeyed, pushedRows, e.cfg.BatchSize); err != nil {
+		if err := upsertRows(ctx, e.hub, driverMySQL, ti, stratKeyed, pushedRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke hub: %w", err)
 		}
 		tr.Pushed = len(pushedRows)
 	}
-	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push", advance(pushSince, pushMax)); err != nil {
+	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "push", advance(pushSince, pushMax)); err != nil {
 		return err
 	}
 
@@ -321,17 +350,17 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 		return fmt.Errorf("baca perubahan hub: %w", err)
 	}
 	if len(pulledRows) > 0 {
-		if err := upsertRows(ctx, e.local, ti, stratKeyed, pulledRows, e.cfg.BatchSize); err != nil {
+		if err := upsertRows(ctx, e.local, e.localDriver, ti, stratKeyed, pulledRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke lokal: %w", err)
 		}
 		tr.Pulled = len(pulledRows)
 	}
-	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
+	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
 		return err
 	}
 	// Advance the push watermark so pulled rows are not re-pushed on the next run.
 	pushWm, _ := getWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push")
-	if err := setWatermark(ctx, e.local, e.cfg.NodeID, ti.Name, "push", advance(pushWm, pullMax)); err != nil {
+	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "push", advance(pushWm, pullMax)); err != nil {
 		e.logf("[sync] gagal memajukan watermark push %s: %v", ti.Name, err)
 	}
 
@@ -457,7 +486,7 @@ func readDelta(ctx context.Context, db *sql.DB, ti *tableInfo, since time.Time) 
 }
 
 // upsertRows writes rows into dst in batches using the strategy's conflict rule.
-func upsertRows(ctx context.Context, dst *sql.DB, ti *tableInfo, strat strategy, rows [][]any, batchSize int) error {
+func upsertRows(ctx context.Context, dst *sql.DB, driver string, ti *tableInfo, strat strategy, rows [][]any, batchSize int) error {
 	ncol := len(ti.Columns)
 	if ncol == 0 {
 		return nil
@@ -470,7 +499,7 @@ func upsertRows(ctx context.Context, dst *sql.DB, ti *tableInfo, strat strategy,
 		batch = 1
 	}
 
-	prefix, suffix := insertParts(ti, strat)
+	prefix, suffix := insertParts(driver, ti, strat)
 	rowPlaceholder := "(" + strings.TrimSuffix(strings.Repeat("?,", ncol), ",") + ")"
 
 	for start := 0; start < len(rows); start += batch {
@@ -497,17 +526,40 @@ func upsertRows(ctx context.Context, dst *sql.DB, ti *tableInfo, strat strategy,
 	return nil
 }
 
-// insertParts returns the (prefix, ON DUPLICATE KEY suffix) for a strategy.
-func insertParts(ti *tableInfo, strat strategy) (string, string) {
+// insertParts returns the INSERT prefix and dialect-specific conflict suffix.
+func insertParts(driver string, ti *tableInfo, strat strategy) (string, string) {
 	cols := quotedColumns(ti)
 	prefix := "INSERT INTO `" + ti.Name + "` (" + cols + ") VALUES "
+	pk := ti.PK
+	if len(pk) == 0 {
+		pk = []string{ti.Columns[0]}
+	}
+	pkList := quotedColumnsList(pk)
 
-	// Append-only: a duplicate key is a no-op (never overwrite history).
-	if strat == stratAppend || len(ti.PK) == 0 {
-		pk := ti.PK
-		if len(pk) == 0 {
-			pk = []string{ti.Columns[0]}
+	if driver == driverSQLite {
+		// Append-only: duplicate primary keys never overwrite history.
+		if strat == stratAppend {
+			return prefix, " ON CONFLICT (" + pkList + ") DO NOTHING"
 		}
+		var assigns []string
+		for _, c := range ti.Columns {
+			if isPK(ti.PK, c) {
+				continue
+			}
+			assigns = append(assigns, "`"+c+"`=excluded.`"+c+"`")
+		}
+		if len(assigns) == 0 {
+			return prefix, " ON CONFLICT (" + pkList + ") DO NOTHING"
+		}
+		cond := ""
+		if ti.HasUpdatedAt {
+			cond = " WHERE excluded.`updated_at` >= IFNULL(`" + ti.Name + "`.`updated_at`,'1970-01-01 00:00:00.000')"
+		}
+		return prefix, " ON CONFLICT (" + pkList + ") DO UPDATE SET " + strings.Join(assigns, ",") + cond
+	}
+
+	// MySQL/MariaDB.
+	if strat == stratAppend || len(ti.PK) == 0 {
 		assigns := make([]string, 0, len(pk))
 		for _, c := range pk {
 			assigns = append(assigns, "`"+c+"`=`"+c+"`")
@@ -515,7 +567,6 @@ func insertParts(ti *tableInfo, strat strategy) (string, string) {
 		return prefix, " ON DUPLICATE KEY UPDATE " + strings.Join(assigns, ",")
 	}
 
-	// Tables with updated_at use last-write-wins; others overwrite.
 	var assigns []string
 	if ti.HasUpdatedAt {
 		cond := "VALUES(`updated_at`) >= IFNULL(`updated_at`,'1970-01-01 00:00:00.000')"
@@ -525,7 +576,6 @@ func insertParts(ti *tableInfo, strat strategy) (string, string) {
 			}
 			assigns = append(assigns, "`"+c+"`=IF("+cond+",VALUES(`"+c+"`),`"+c+"`)")
 		}
-		// Assign updated_at last so the conditions above read the previous value.
 		assigns = append(assigns, "`updated_at`=IF("+cond+",VALUES(`updated_at`),`updated_at`)")
 	} else {
 		for _, c := range ti.Columns {
@@ -536,10 +586,17 @@ func insertParts(ti *tableInfo, strat strategy) (string, string) {
 		}
 	}
 	if len(assigns) == 0 {
-		// Only primary-key columns: a duplicate is a no-op.
 		assigns = []string{"`" + ti.PK[0] + "`=`" + ti.PK[0] + "`"}
 	}
 	return prefix, " ON DUPLICATE KEY UPDATE " + strings.Join(assigns, ",")
+}
+
+func quotedColumnsList(cols []string) string {
+	parts := make([]string, len(cols))
+	for i, c := range cols {
+		parts[i] = "`" + c + "`"
+	}
+	return strings.Join(parts, ",")
 }
 
 // ── small helpers ─────────────────────────────────────────────────────────────
@@ -572,19 +629,31 @@ func strategyName(s strategy) string {
 	}
 }
 
+// timeLayouts covers MySQL DATETIME values and the RFC3339-like text that the
+// pure-Go SQLite driver stores for time columns.
+var timeLayouts = []string{
+	"2006-01-02 15:04:05.999999999-07:00",
+	"2006-01-02 15:04:05.999999999",
+	"2006-01-02 15:04:05.999999",
+	"2006-01-02 15:04:05",
+	"2006-01-02T15:04:05.999999999-07:00",
+	time.RFC3339Nano,
+	time.RFC3339,
+}
+
 // asTime coerces a scanned value into a time.Time.
 func asTime(v any) (time.Time, bool) {
 	switch t := v.(type) {
 	case time.Time:
 		return t, true
 	case []byte:
-		for _, layout := range []string{"2006-01-02 15:04:05.999999", "2006-01-02 15:04:05", time.RFC3339} {
+		for _, layout := range timeLayouts {
 			if parsed, err := time.ParseInLocation(layout, string(t), time.Local); err == nil {
 				return parsed, true
 			}
 		}
 	case string:
-		for _, layout := range []string{"2006-01-02 15:04:05.999999", "2006-01-02 15:04:05", time.RFC3339} {
+		for _, layout := range timeLayouts {
 			if parsed, err := time.ParseInLocation(layout, t, time.Local); err == nil {
 				return parsed, true
 			}
@@ -639,6 +708,17 @@ func ping(ctx context.Context, db *sql.DB, label string) error {
 
 func openPool(dsn string) (*sql.DB, error) {
 	return sql.Open("mysql", dsn)
+}
+
+// openSQLitePool membuka database lokal SQLite untuk mesin sinkronisasi.
+// Koneksi terpisah dari GORM tetapi menunjuk berkas yang sama (WAL).
+func openSQLitePool(path string) (*sql.DB, error) {
+	if strings.TrimSpace(path) == "" {
+		path = "storage/simarc.db"
+	}
+	dsn := "file:" + filepath.ToSlash(path) +
+		"?_pragma=busy_timeout(15000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(0)"
+	return sql.Open("sqlite", dsn)
 }
 
 func dsn(host, port, name, user, pass, tls string) string {
