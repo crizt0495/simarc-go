@@ -186,6 +186,9 @@ jobs:
   macos:
     name: macOS installer
     needs: verify
+    # Non-blocking: a macOS toolchain hiccup must not hold the Windows/Linux
+    # installers hostage; the release still publishes whatever succeeded.
+    continue-on-error: true
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -267,7 +270,13 @@ jobs:
   # ── Release, only for tags ─────────────────────────────────────────────────
   release:
     name: Publish release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Publish when the required platform jobs are OK regardless of cancelled
+    # or continue-on-error jobs (macOS is optional — see its job config).
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') &&
+      !cancelled() &&
+      needs.linux.result == 'success' &&
+      needs.windows.result == 'success'
     needs: [linux, macos, windows]
     runs-on: ubuntu-latest
     permissions:
