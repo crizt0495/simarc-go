@@ -208,6 +208,23 @@ membaca `.env` dari direktori data per pengguna
 (`~/.local/share/simarc` di Linux). Rinciannya ada di
 [`desktop/README.md`](desktop/README.md).
 
+## 📴 Mode Offline-First (arsip tetap jalan tanpa jaringan)
+
+Pada versi desktop tersedia **mode offline-first**: setiap PC memiliki database
+SQLite lokal sebagai primer sehingga input arsip, pemberkasan, pemusnahan,
+peminjaman, dll. **tetap berjalan walau WiFi/server pusat mati**. Ketika
+koneksi pulih, mesin sinkronisasi di belakang mengirim perubahan lokal ke
+database pusat (`DB_*` = database pusat) dan menarik data pusat — termasuk isi
+lampiran hingga batas 12 MB per file — dengan penyelesaian konflik
+last-write-wins + tombstone hapus.
+
+Aktifkan dengan `DB_MODE=local` pada `.env` desktop. Status dan tombol
+**sinkron sekarang** tersedia lewat badge di kanan atas. Detail arsitektur,
+daftar konfigurasi, aturan konflik, dan keterbatasan:
+[`docs/offline-first.md`](docs/offline-first.md).
+
+> Versi web (`cmd/server`, Vercel) tidak terpengaruh — tetap MySQL langsung.
+
 ## 📁 Struktur Direktori
 
 ```
