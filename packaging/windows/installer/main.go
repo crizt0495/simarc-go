@@ -25,6 +25,7 @@ import (
 	"io"
 	"io/fs"
 	"math/rand"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -701,6 +702,15 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 			hasDB = true
 		}
 
+		// Pilih port aplikasi yang benar-benar bebas. Bila 8080 sudah dipakai
+		// program lain di komputer ini, instalasi tetap berhasil (mis. 8081)
+		// alih-alih gagal dengan "port already in use".
+		appPort := pickFreePort(8080)
+		appURL := fmt.Sprintf("http://localhost:%d", appPort)
+		if appPort != 8080 {
+			fmt.Printf("[INFO] Port 8080 sedang dipakai program lain; SIMARC memakai port %d.\n", appPort)
+		}
+
 		switch chosen {
 		case "offline":
 			if hasDB {
@@ -713,6 +723,8 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 					"DB_USERNAME":        "simarc",
 					"DB_PASSWORD":        pw,
 					"SIMARC_EMBEDDED_DB": "1",
+					"APP_PORT":           fmt.Sprintf("%d", appPort),
+					"APP_URL":            appURL,
 				})
 				content = applySyncEnv(content, srcDir)
 				fmt.Println("[OK]   Mode OFFLINE MANDIRI: database lokal otomatis (port 3307).")
@@ -724,6 +736,10 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 			content = setEnvKeys(content, map[string]string{"SIMARC_SERVER_URL": hubURL})
 			fmt.Println("[OK]   Mode KLIEN ke " + hubURL)
 		default: // local
+			content = setEnvKeys(content, map[string]string{
+				"APP_PORT": fmt.Sprintf("%d", appPort),
+				"APP_URL":  appURL,
+			})
 			fmt.Println("[OK]   Mode SERVER LOKAL (butuh MySQL/MariaDB lokal).")
 		}
 		if err := os.WriteFile(envDest, []byte(content), 0o644); err != nil {
@@ -861,6 +877,21 @@ func readInstallConfig(srcDir string) map[string]string {
 		}
 	}
 	return out
+}
+
+// pickFreePort mengembalikan port TCP yang bebas dipakai, mulai dari preferred.
+// Dipakai saat membuat .env baru agar instalasi tidak gagal hanya karena port
+// 8080 sudah dipakai program lain di komputer pengguna.
+func pickFreePort(preferred int) int {
+	for p := preferred; p < preferred+20; p++ {
+		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p))
+		if err != nil {
+			continue
+		}
+		_ = ln.Close()
+		return p
+	}
+	return preferred
 }
 
 // randomPassword menghasilkan sandi acak alfanumerik sepanjang n karakter.

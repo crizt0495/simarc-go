@@ -348,8 +348,18 @@ func main() {
 		}),
 	}
 
-	ln, err := net.Listen("tcp", addr)
+	ln, err := listenWithRetry(addr, 20)
 	if err != nil {
+		// Port dipakai, tetapi kemungkinan besar oleh SIMARC yang SUDAH
+		// berjalan (mis. pengguna mengklik shortcut lagi). Dalam hal ini
+		// jangan tampilkan galat — cukup buka jendela aplikasi yang ada.
+		if existing := existingSimarcURL(port); existing != "" {
+			log.Printf("[OK] SIMARC sudah berjalan - membuka jendela aplikasi.")
+			if _, ok := openAppWindow(existing); !ok {
+				openDefaultBrowser(existing)
+			}
+			os.Exit(exitAlreadyRunning)
+		}
 		log.Fatalf("Gagal membuka port %s: %v (ubah APP_PORT di .env bila port dipakai program lain)", port, err)
 	}
 
@@ -443,6 +453,55 @@ func main() {
 	}
 
 	log.Println("Server exited gracefully.")
+}
+
+// exitAlreadyRunning dipakai server saat port sudah dipakai oleh instance
+// SIMARC lain. run.bat memakai kode ini agar tidak menganggapnya kegagalan dan
+// tidak mematikan database portabel milik instance yang sedang berjalan.
+const exitAlreadyRunning = 75
+
+// existingSimarcURL mengembalikan URL SIMARC yang sudah berjalan di port ini
+// (bila /ping merespons), atau string kosong bila port dipakai program lain.
+func existingSimarcURL(port string) string {
+	base := "http://127.0.0.1:" + port
+	c := &http.Client{Timeout: 3 * time.Second}
+	resp, err := c.Get(base + "/ping")
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	text := string(body)
+	// Saat masih menyiapkan data, /ping menjawab halaman splash SIMARC;
+	// setelah siap menjawab {"status":"ok"}. Keduanya menandakan SIMARC.
+	if !strings.Contains(text, "SIMARC") && !strings.Contains(text, `"status"`) {
+		return ""
+	}
+	return base
+}
+
+// listenWithRetry membuka port TCP dengan beberapa percobaan. Ini menangani
+// kasus peluncuran ulang tepat setelah aplikasi ditutup: Windows kadang belum
+// melepaskan port lama sehingga percobaan pertama gagal ("Only one usage of
+// each socket address..."). Total tunggu ± (attempts-1) × 500 ms.
+func listenWithRetry(addr string, attempts int) (net.Listener, error) {
+	var err error
+	for i := 0; i < attempts; i++ {
+		if i > 0 {
+			time.Sleep(500 * time.Millisecond)
+		}
+		var ln net.Listener
+		if ln, err = net.Listen("tcp", addr); err == nil {
+			if i > 0 {
+				log.Printf("Port %s berhasil dibuka setelah %d percobaan.", addr, i+1)
+			}
+			return ln, nil
+		}
+	}
+	return nil, err
 }
 
 // autoUpdateCheck periodically asks the hub whether a newer application binary

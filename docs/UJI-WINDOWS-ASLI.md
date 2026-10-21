@@ -4,7 +4,7 @@ Panduan ini dipakai untuk membuktikan `SIMARC-Setup.exe` berjalan **tanpa error*
 di komputer Windows sungguhan (bukan Wine).
 
 File yang diuji: `SIMARC-Setup.exe`
-SHA-256: `a8805dd1ea097e97056c8e861bca2d6a7480b06580717e8526c80479142cd438`
+SHA-256: `efea81307468cdc39be360f010b37ca4ac884b49661846fc7f43da02ef4521b1`
 
 ---
 
@@ -84,7 +84,9 @@ Centang **Private networks** → **Allow access**.
 1. Cek **Desktop** → ada shortcut **SIMARC**.
 2. Cek **Start Menu** → ada **SIMARC**.
 3. Klik shortcut **SIMARC**.
-4. Jendela browser otomatis terbuka ke `http://127.0.0.1:8080`.
+4. Jendela browser otomatis terbuka ke `http://127.0.0.1:8080`
+   (bila port 8080 sudah dipakai program lain, installer otomatis memakai
+   port bebas berikutnya — lihat `APP_PORT` di `.env`).
    Bila baru instalasi pertama: tampil **“Sedang menyiapkan data SIMARC…”**
    (jangan ditutup — akan berganti sendiri). Setelah siap: halaman **login**,
    lalu masuk dan buka **Direktori Arsip** (`/viewer`).
@@ -129,10 +131,9 @@ Tujuan: komputer lain bisa melihat arsip **walau komputer server mati**.
 
 Caranya bukan mode klien (mode klien tergantung server), melainkan:
 
-1. Salin **dua berkas** ke komputer kedua: `SIMARC-Setup.exe` **dan**
-   `simarc-install.txt` (yang sudah berisi alamat hub Aiven + token berkas).
-   Pilih/berlaku mode **Offline (Mandiri)** — installer otomatis karena
-   `simarc-install.txt` ada di sebelahnya.
+1. Cukup salin **satu berkas** `SIMARC-Setup.exe` ke komputer kedua.
+   Konfigurasi hub sudah **tertanam di dalam installer** (tidak perlu
+   `simarc-install.txt`). Installer otomatis memakai mode **Offline (Mandiri)**.
 2. Setiap komputer punya database & aplikasinya sendiri → tetap mandiri.
 3. Saat pertama dijalankan, aplikasi **menarik seluruh data dari hub Aiven**
    (peran, pengguna, izin, arsip) — lihat `docs/OFFLINE-SYNC.md`. Hub hanya
@@ -152,6 +153,16 @@ Caranya bukan mode klien (mode klien tergantung server), melainkan:
 ---
 
 ## 7. Kalau ada error — kirim ini ke saya
+
+### “Gagal membuka port 8080 … Only one usage of each socket address”
+
+Penyebab paling umum: shortcut SIMARC diklik lagi padahal aplikasi sudah
+berjalan. Build terbaru **tidak** lagi menampilkan galat itu — klik kedua
+hanya membuka jendela aplikasi yang sudah ada. Bila pesan ini tetap muncul,
+kemungkinan **program lain** memakai port tersebut; buka `.env` di
+`%LocalAppData%\SIMARC`, ubah `APP_PORT` (mis. `8081`) dan `APP_URL`
+sesuai, lalu jalankan ulang. Pada instalasi **baru**, installer memilih
+port bebas secara otomatis.
 
 Sertakan **satu pesan** berisi:
 
@@ -194,7 +205,9 @@ Sertakan **satu pesan** berisi:
 - [ ] Shortcut Desktop + Start Menu ada.
 - [ ] Browser terbuka ke `Direktori Arsip - SIMARC`.
 - [ ] Login `admin` / `admin` berhasil.
-- [ ] `netstat` menunjukkan port `8080` dan `3307`.
+- [ ] `netstat` menunjukkan port aplikasi (biasanya `8080`) dan `3307`.
+- [ ] Klik shortcut **lagi** saat aplikasi sudah berjalan → jendela terbuka,
+      **tanpa** galat “port 8080 sudah dipakai”.
 - [ ] Update tidak menghapus `storage` & `.env`.
 
 Kalau semua kotak tercentang → instalasi **terbukti tanpa error di Windows asli**.

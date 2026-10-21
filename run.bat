@@ -22,6 +22,7 @@ if exist "tmp\simarc-server.exe.new" (
 REM -- Baca konfigurasi dari .env --
 set "SIMARC_SERVER_URL="
 set "SIMARC_WINDOW="
+set "APP_PORT=8080"
 if exist .env for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do call :readenv "%%A" "%%B"
 
 REM -- Bersihkan nilai (kutip & spasi) ---------------------------------------
@@ -32,6 +33,7 @@ REM  run.bat selalu menentukan mode dengan benar.
 if not "%SIMARC_SERVER_URL%"=="" set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL:"=%"
 if not "%SIMARC_SERVER_URL%"=="" set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL: =%"
 if not "%SIMARC_WINDOW%"==""     set "SIMARC_WINDOW=%SIMARC_WINDOW:"=%"
+if not "%APP_PORT%"==""          set "APP_PORT=%APP_PORT:"=%"
 
 echo.
 echo   ============================================
@@ -42,6 +44,23 @@ echo.
 if not "%SIMARC_SERVER_URL%"=="" goto client
 
 REM ============ MODE SERVER LOKAL ============
+REM Bila SIMARC SUDAH berjalan di port ini (mis. pengguna mengklik shortcut
+REM lagi saat aplikasi sudah hidup), jangan jalankan server kedua — cukup
+REM buka jendela aplikasinya. Tanpa ini muncul galat "port 8080 sudah dipakai".
+set "ALREADY_RUNNING="
+if exist "%SystemRoot%\System32\curl.exe" (
+    "%SystemRoot%\System32\curl.exe" -s --max-time 2 "http://127.0.0.1:%APP_PORT%/ping" | findstr /I /C:"SIMARC" /C:"status" >nul 2>&1
+    if not errorlevel 1 set "ALREADY_RUNNING=1"
+) else (
+    netstat -ano 2>nul | findstr /C:":%APP_PORT% " | findstr /I "LISTENING" >nul 2>&1
+    if not errorlevel 1 set "ALREADY_RUNNING=1"
+)
+if defined ALREADY_RUNNING (
+    echo [OK]    SIMARC sudah berjalan - membuka jendela aplikasi.
+    set "SIMARC_SERVER_URL=http://127.0.0.1:%APP_PORT%"
+    goto client
+)
+
 set "EXE=tmp\simarc-server.exe"
 
 REM Pilih binary rilis sesuai arsitektur (bila tersedia).
@@ -91,13 +110,21 @@ set SIMARC_APP_WINDOW=1
 "%EXE%"
 set "EXITCODE=%ERRORLEVEL%"
 
+REM Kode 75 = port sudah dipakai instance SIMARC yang berjalan (server sudah
+REM membuka jendela aplikasinya). Bukan kegagalan; jangan sentuh database.
+if "%EXITCODE%"=="75" (
+    echo [OK]    SIMARC sudah berjalan - jendela aplikasi dibuka.
+    exit /b 0
+)
+
 REM Hentikan database portabel (bila aplikasi tidak sempat menutupnya sendiri).
 if exist "%CD%\mariadb\data\mysqld.pid" goto stopdb
 
 if %EXITCODE% neq 0 (
     echo.
     echo [ERROR] Server keluar dengan kode %EXITCODE%.
-    echo         Lihat pesan di atas. Jika port 8080 sudah dipakai, ubah APP_PORT di .env.
+    echo         Lihat pesan di atas. Bila port %APP_PORT% dipakai program lain,
+    echo         tutup program tersebut atau ubah APP_PORT di .env.
     echo         Tekan sembarang tombol untuk menutup...
     pause >nul
     exit /b %EXITCODE%
@@ -139,4 +166,5 @@ REM ============ subrutin ============
 :readenv
 if /i "%~1"=="SIMARC_SERVER_URL" set "SIMARC_SERVER_URL=%~2"
 if /i "%~1"=="SIMARC_WINDOW"     set "SIMARC_WINDOW=%~2"
+if /i "%~1"=="APP_PORT"          set "APP_PORT=%~2"
 exit /b 0
