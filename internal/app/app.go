@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -65,7 +66,9 @@ func listEmbeddedFiles(dirs ...string) []string {
 		}
 		for _, entry := range entries {
 			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".html") {
-				result = append(result, filepath.Join(dir, entry.Name()))
+				// io/fs memakai pemisah "/" — filepath.Join menghasilkan "\" di
+				// Windows dan membuat pattern ParseFS tidak pernah cocok.
+				result = append(result, path.Join(dir, entry.Name()))
 			}
 		}
 	}
@@ -85,7 +88,8 @@ func serveStaticFile(dir string, cacheControl string) gin.HandlerFunc {
 			c.Header("Cache-Control", cacheControl)
 		}
 		// Try embedded FS first (Vercel), then disk (local)
-		embedPath := filepath.Join(dir, file)
+		// FS embed selalu dipisah "/" — jangan filepath.Join (Jendela: "\").
+		embedPath := path.Join(dir, file)
 		if f, err := arsippro.Embedded.Open(embedPath); err == nil {
 			f.Close()
 			c.FileFromFS(embedPath, http.FS(arsippro.Embedded))
