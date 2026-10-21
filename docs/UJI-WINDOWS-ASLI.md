@@ -4,7 +4,7 @@ Panduan ini dipakai untuk membuktikan `SIMARC-Setup.exe` berjalan **tanpa error*
 di komputer Windows sungguhan (bukan Wine).
 
 File yang diuji: `SIMARC-Setup.exe`
-SHA-256: `631131ed207e4b2349c1dd5d18a6398a245a43b9cc7fe1b6e1beea9ffbdfc642`
+SHA-256: `a8805dd1ea097e97056c8e861bca2d6a7480b06580717e8526c80479142cd438`
 
 ---
 
@@ -34,15 +34,27 @@ Yang **seharusnya** tidak muncul: tidak ada jendela CMD hitam. Ini installer GUI
 ## 2. Yang terjadi saat klik-dua-kali
 
 **Konfigurasi sudah tertanam di dalam `SIMARC-Setup.exe`**, jadi pemasangan
-berjalan **otomatis tanpa satu pun dialog**:
+berjalan **otomatis tanpa pertanyaan** — tetapi tetap menampilkan jendela GUI
+khas installer Windows (bukan CMD):
 
-1. Aplikasi disalin ke `%LocalAppData%\SIMARC`.
-2. MariaDB portabel diekstrak (mode offline mandiri, port database 3307).
-3. `.env` dibuat lengkap: mode offline + sinkronisasi Aiven (`simarc-hub`) +
+1. Jendela **“SIMARC - Progres Instalasi”** tampil selama pemasangan.
+2. Aplikasi disalin ke `%LocalAppData%\SIMARC`.
+3. MariaDB portabel diekstrak (mode offline mandiri, port database 3307).
+4. `.env` dibuat lengkap: mode offline + sinkronisasi Aiven (`simarc-hub`) +
    simpul (`SYNC_NODE_ID`) otomatis.
-4. Shortcut Desktop + Start Menu dibuat.
-5. Aplikasi **langsung dijalankan** (jendela server terbuka). Login
-   `admin` / `admin`, lalu buka `http://127.0.0.1:8080`.
+5. Shortcut Desktop + Start Menu dibuat.
+6. Aplikasi **langsung dijalankan** — jendela SIMARC terbuka sendiri dan
+   menampilkan halaman **“Sedang menyiapkan data SIMARC…”**, lalu berpindah
+   otomatis ke halaman login (tanpa perlu ditutup/dibuka ulang).
+7. Dialog **“SIMARC - Instalasi Selesai”** muncul sebagai konfirmasi.
+   Login `admin` / `admin`.
+
+> **Instalasi pertama** menarik data awal (baseline) dari hub. Jendela aplikasi
+> sudah terbuka sejak awal; halaman “menyiapkan data” akan berganti sendiri ke
+> login begitu selesai (bisa beberapa menit tergantung kecepatan internet).
+>
+> Untuk **deployment massal** (tanpa jendela sama sekali), jalankan:
+> `SIMARC-Setup.exe -quiet`
 
 > **Instalasi ulang / update di atas aplikasi yang sedang berjalan juga aman.**
 > Installer otomatis menghentikan SIMARC lebih dulu (melepas kunci berkas),
@@ -72,8 +84,10 @@ Centang **Private networks** → **Allow access**.
 1. Cek **Desktop** → ada shortcut **SIMARC**.
 2. Cek **Start Menu** → ada **SIMARC**.
 3. Klik shortcut **SIMARC**.
-4. Browser otomatis terbuka ke `http://127.0.0.1:8080`
-   → harus mengarah ke halaman **Direktori Arsip - SIMARC** (`/viewer`).
+4. Jendela browser otomatis terbuka ke `http://127.0.0.1:8080`.
+   Bila baru instalasi pertama: tampil **“Sedang menyiapkan data SIMARC…”**
+   (jangan ditutup — akan berganti sendiri). Setelah siap: halaman **login**,
+   lalu masuk dan buka **Direktori Arsip** (`/viewer`).
 5. **Cek tampilan (CSS)** — halaman harus tampil **rapi ber-gaya**: ada warna,
    logo, dan tombol/tombol berwarna, bukan teks polos di latar putih.
    Uji cepat bila tampak polos: buka `http://127.0.0.1:8080/css/enterprise.min.css`

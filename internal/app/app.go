@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"arsippro"
@@ -32,6 +33,11 @@ import (
 var (
 	router      *gin.Engine
 	initialized bool
+	// ready menandai data awal (seed / tarik baseline dari hub) sudah selesai.
+	// Selama false, server tetap melayani tetapi menampilkan halaman
+	// "menyiapkan data" agar jendela aplikasi langsung terbuka (tidak terlihat
+	// seperti gagal dibuka) walau sinkronisasi awal masih berjalan.
+	ready atomic.Bool
 )
 
 // getProjectRoot determines the project root directory by looking at the
@@ -197,6 +203,7 @@ func Init() (*gin.Engine, error) {
 	r.Use(gin.Recovery())
 	r.MaxMultipartMemory = 32 << 20 // 32 MB
 	r.Use(securityHeaders())
+	r.Use(readinessGuard())
 
 	buildTemplates(r)
 
@@ -220,23 +227,99 @@ func Init() (*gin.Engine, error) {
 func seedBaseline() {
 	syncCfg := config.LoadSync()
 	if syncCfg.Active() && !database.HasUsers() {
-		ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
-		has, err := syncdb.HubHasUsers(ctx, syncCfg)
-		cancel()
-		switch {
-		case err != nil:
-			log.Printf("[sync] periksa hub gagal (%v) — memakai seed lokal", err)
-		case has:
-			log.Println("[sync] hub sudah berisi data — menarik baseline dari hub (seed lokal dilewati)")
-			if !pullBaseline(syncCfg) {
-				// Rare: the hub has data but the pull failed. Seed locally so
-				// the app stays usable; a recoverable duplicate set may appear.
-				log.Println("[sync] tarik baseline gagal — memakai seed lokal sebagai cadangan")
+		// Instalasi PERTAMA: memeriksa hub + menarik baseline bisa memakan
+		// waktu lama (puluhan ribu baris). Jangan menahan server — jendela
+		// aplikasi harus langsung terbuka. Data disiapkan di latar belakang
+		// sementara server menampilkan halaman "Menyiapkan data".
+		go func() {
+			defer ready.Store(true)
+			ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
+			has, err := syncdb.HubHasUsers(ctx, syncCfg)
+			cancel()
+			switch {
+			case err != nil:
+				log.Printf("[sync] periksa hub gagal (%v) — memakai seed lokal", err)
+			case has:
+				log.Println("[sync] hub sudah berisi data — menarik baseline dari hub (seed lokal dilewati)")
+				if !pullBaseline(syncCfg) {
+					// Rare: the hub has data but the pull failed. Seed locally so
+					// the app stays usable; a recoverable duplicate set may appear.
+					log.Println("[sync] tarik baseline gagal — memakai seed lokal sebagai cadangan")
+				}
 			}
-		}
+			database.SeedIfNeeded()
+			log.Println("[sync] data awal siap — aplikasi dapat digunakan")
+		}()
+		return
 	}
 	database.SeedIfNeeded()
+	ready.Store(true)
 }
+
+// readinessGuard menampilkan halaman "Menyiapkan data SIMARC" selama data awal
+// (seed lokal atau tarik baseline dari hub) belum selesai. Halaman memuat ulang
+// dirinya sendiri setiap 3 detik sehingga pengguna otomatis masuk ke aplikasi
+// begitu data siap — tanpa perlu menutup dan membuka ulang.
+func readinessGuard() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if ready.Load() {
+			c.Next()
+			return
+		}
+		// Aset statis tetap boleh dimuat agar halaman tidak terlihat rusak.
+		if strings.HasPrefix(c.Request.URL.Path, "/css/") ||
+			strings.HasPrefix(c.Request.URL.Path, "/js/") ||
+			strings.HasPrefix(c.Request.URL.Path, "/images/") ||
+			strings.HasPrefix(c.Request.URL.Path, "/vendor/") ||
+			c.Request.URL.Path == "/favicon.ico" {
+			c.Next()
+			return
+		}
+		servePreparing(c.Writer, c.Request)
+		c.Abort()
+	}
+}
+
+// PreparingHandler mengembalikan handler yang selalu menampilkan halaman
+// "Menyiapkan data SIMARC". Dipakai cmd/server sebelum router aplikasi siap
+// (mis. saat database portabel diinisialisasi pada instalasi pertama).
+func PreparingHandler() http.Handler {
+	return http.HandlerFunc(servePreparing)
+}
+
+func servePreparing(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Retry-After", "3")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(preparingHTML))
+}
+
+const preparingHTML = `<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="3">
+<title>SIMARC - Menyiapkan data</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+       font-family:Segoe UI,system-ui,Arial,sans-serif;background:#f1f5f9;color:#0f172a}
+  .box{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:40px 48px;
+       box-shadow:0 10px 30px rgba(15,23,42,.08);text-align:center;max-width:520px}
+  h1{margin:0 0 8px;font-size:22px;letter-spacing:.5px}
+  .sub{color:#64748b;font-size:14px;margin-bottom:22px}
+  .spin{width:42px;height:42px;margin:0 auto 20px;border:4px solid #dbeafe;
+        border-top-color:#2563eb;border-radius:50%;animation:s 1s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  p{margin:6px 0;font-size:14px;color:#475569}
+</style></head>
+<body><div class="box">
+  <div class="spin"></div>
+  <h1>SIMARC</h1>
+  <div class="sub">Sistem Informasi Manajemen Arsip Record Center</div>
+  <p><b>Sedang menyiapkan data SIMARC&hellip;</b></p>
+  <p>Pada instalasi pertama, data dari server pusat dapat memerlukan beberapa menit.</p>
+  <p>Halaman ini akan terbuka otomatis setelah selesai.</p>
+</div></body></html>`
 
 // pullBaseline copies the hub's rows into the empty local database right after
 // install, without the archive-file pass (files sync on the next scheduled run).

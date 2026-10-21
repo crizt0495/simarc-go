@@ -167,29 +167,17 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 
 	installDir := resolveInstallDir()
 
-	// 3a. Jalur SENYAP (otomatis): tanpa dialog progres, tanpa konfirmasi.
-	//     Pemasangan diverifikasi, lalu aplikasi langsung dijalankan.
-	if autoInstall {
-		if err := nativeInstall(tmp, installDir, modeStr, hubStr); err != nil {
-			failGUI("Instalasi gagal: " + err.Error())
-		}
-		if err := verifyInstall(installDir, modeStr); err != nil {
-			failGUI("Verifikasi gagal: " + err.Error())
-		}
-		_ = createShortcuts(installDir, filepath.Join(installDir, "run.bat"), filepath.Join(installDir, "simarc.ico"), noShortcut)
-		logInstall("Pemasangan selesai (otomatis, tanpa dialog); aplikasi dijalankan.")
-		launchInstalled(installDir)
-		return
-	}
-
-	// 3. Jalankan pemasangan sambil menampilkan dialog progres.
+	// 3. Jalankan pemasangan sambil menampilkan jendela progres bergaya
+	//    Windows (judul, bilah progres, dan teks status). Jendela ini TIDAK
+	//    menuntut klik apa pun; hanya `-quiet` (deployment massal) yang
+	//    benar-benar tanpa jendela.
 	prog, err := zenity.Progress(
-		zenity.Title("Menginstal SIMARC..."),
+		zenity.Title("SIMARC - Progres Instalasi"),
 		zenity.MaxValue(100),
 		zenity.NoCancel(),
 	)
 	if err != nil {
-		// Dialog progres tidak tersedia: jalankan tanpa GUI lalu beri tahu.
+		// Jendela progres tidak tersedia: jalankan tanpa GUI lalu beri tahu.
 		if err := nativeInstall(tmp, installDir, modeStr, hubStr); err != nil {
 			failGUI("Instalasi gagal: " + err.Error())
 		}
@@ -197,7 +185,7 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 			failGUI("Verifikasi gagal: " + err.Error())
 		}
 		_ = createShortcuts(installDir, filepath.Join(installDir, "run.bat"), filepath.Join(installDir, "simarc.ico"), noShortcut)
-		_ = zenity.Info("SIMARC berhasil diinstal.", zenity.Title("Instalasi Selesai"))
+		_ = zenity.Info("SIMARC berhasil diinstal.", zenity.Title("SIMARC - Instalasi Selesai"))
 		return
 	}
 
@@ -209,19 +197,34 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 		failGUI("Instalasi gagal: " + installErr.Error())
 	}
 
+	// Konfigurasi otomatis (tertanam): tidak ada pertanyaan, tetapi pengguna
+	// tetap melihat jendela progres + pemberitahuan selesai seperti installer
+	// Windows pada umumnya. Aplikasi langsung dijalankan.
+	if autoInstall {
+		logInstall("Pemasangan selesai (otomatis); aplikasi dijalankan.")
+		launchInstalled(installDir)
+		_ = zenity.Info(
+			"SIMARC berhasil diinstal dan sedang dijalankan.\n\n"+
+				"Buka kapan saja dari menu Start → SIMARC\n"+
+				"atau ikon SIMARC di Desktop.",
+			zenity.Title("SIMARC - Instalasi Selesai"),
+		)
+		return
+	}
+
 	// Aplikasi sempat berjalan sebelum update? Jalankan ulang otomatis agar
 	// pengguna kembali bekerja tanpa perlu membuka manual.
 	if appWasRunning {
 		logInstall("Pemasangan selesai; aplikasi dijalankan ulang otomatis.")
 		launchInstalled(installDir)
-		_ = zenity.Info("SIMARC berhasil diperbarui dan dijalankan kembali.", zenity.Title("Instalasi Selesai"))
+		_ = zenity.Info("SIMARC berhasil diperbarui dan dijalankan kembali.", zenity.Title("SIMARC - Instalasi Selesai"))
 		return
 	}
 	logInstall("Pemasangan selesai (OK).")
 
 	// 4. Selesai. Tawarkan membuka aplikasi.
 	openNow := zenity.Question("SIMARC berhasil diinstal.\n\nBuka SIMARC sekarang?",
-		zenity.Title("Instalasi Selesai"),
+		zenity.Title("SIMARC - Instalasi Selesai"),
 		zenity.OKLabel("Buka SIMARC"),
 		zenity.CancelLabel("Nanti"),
 	) == nil
@@ -256,17 +259,23 @@ func nativeInstallWithProgress(tmp, installDir, mode, hub string, prog zenity.Pr
 	return nil
 }
 
-// launchInstalled membuka SIMARC yang sudah terpasang (run.bat) tanpa jendela
-// konsol yang menganggu.
+// launchInstalled membuka SIMARC yang sudah terpasang (run.bat) TANPA jendela
+// konsol sama sekali (tidak ada CMD yang berkedip / muncul di taskbar).
+// run.bat tetap dipakai agar logika database portabel & auto-update berjalan.
 func launchInstalled(installDir string) {
 	bat := filepath.Join(installDir, "run.bat")
 	if _, err := os.Stat(bat); err != nil {
+		logInstall("[WARN] run.bat tidak ditemukan; aplikasi tidak dijalankan otomatis.")
 		return
 	}
-	cmd := exec.Command("cmd", "/C", "start", "", "/MIN", bat)
+	cmd := exec.Command("cmd", "/C", bat)
 	cmd.Dir = installDir
-	setHiddenWindow(cmd)
-	_ = cmd.Start()
+	setHiddenWindow(cmd) // sembunyikan total (SW_HIDE + CREATE_NO_WINDOW)
+	if err := cmd.Start(); err != nil {
+		logInstall("[WARN] Gagal menjalankan aplikasi: %v", err)
+		return
+	}
+	_ = cmd.Process.Release()
 }
 
 // runConsole menjalankan pemasangan tanpa antarmuka grafis.
@@ -314,9 +323,15 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 			// PowerShell pada beberapa lingkungan (mis. Wine tanpa PowerShell
 			// fungsional, atau execution policy yang menghalangi) dapat
 			// mengembalikan exit code 0 tanpa benar-benar memasang lengkap.
-			// Karena itu hasilnya TETAP diverifikasi; bila belum lengkap,
-			// pemasangan diselesaikan langsung (murni Go) yang idempoten.
-			if verr := verifyInstall(installDir, mode); verr == nil {
+			// Khusus skrip PS1, penyalinan memakai -ErrorAction SilentlyContinue
+			// sehingga berkas yang terkunci bisa GAGAL TANPA PESAN dan versi
+			// lama tertinggal. Karena itu hasilnya tetap diverifikasi,
+			// termasuk membandingkan binary server dengan paket ini.
+			verr := verifyInstall(installDir, mode)
+			if verr == nil && !serverBinaryMatches(tmp, installDir) {
+				verr = errors.New("binary server terpasang bukan dari paket ini (salinan PowerShell gagal diam-diam)")
+			}
+			if verr == nil {
 				installed = true
 			} else {
 				fmt.Printf("[INFO] Hasil PowerShell belum lengkap (%v); menyelesaikan dengan pemasangan langsung...\n", verr)
@@ -580,6 +595,24 @@ func stopRunningApp(installDir string) bool {
 	time.Sleep(1 * time.Second)
 	logInstall("Aplikasi yang berjalan dihentikan sebelum instalasi (update di atas sesi aktif).")
 	return true
+}
+
+// serverBinaryMatches memastikan binary server yang terpasang benar-benar
+// berasal dari paket ini (ukurannya sama). Ini menangkap kasus salinan
+// PowerShell yang gagal diam-diam (-ErrorAction SilentlyContinue) sehingga
+// versi lama tetap tertinggal padahal instalasi dilaporkan berhasil.
+func serverBinaryMatches(srcDir, installDir string) bool {
+	src := filepath.Join(srcDir, "dist", "simarc-server-windows-amd64.exe")
+	dst := filepath.Join(installDir, "tmp", "simarc-server.exe")
+	si, err := os.Stat(src)
+	if err != nil {
+		return true // tidak bisa dibandingkan: jangan menghalangi instalasi
+	}
+	di, err := os.Stat(dst)
+	if err != nil {
+		return false
+	}
+	return si.Size() == di.Size()
 }
 
 // nativeInstall menyalin file dan mengatur .env secara mandiri (murni Go)

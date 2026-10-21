@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -309,6 +310,82 @@ func main() {
 		return
 	}
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = config.App.AppPort
+	}
+	addr := ":" + port
+	lanIP := getLANIP()
+
+	// HTTPS (opsional): diperlukan agar PWA bisa di-install di Android
+	// (Chrome Android menolak install PWA pada HTTP non-localhost).
+	// Aktifkan dengan APP_HTTPS=true. Sertifikat bisa disediakan lewat
+	// APP_CERT_FILE/APP_KEY_FILE; bila tidak ada, dibuat self-signed otomatis.
+	// Catatan: self-signed tidak dipercaya Android tanpa instalasi manual —
+	// untuk produksi gunakan reverse proxy (Caddy/nginx) dengan Let's Encrypt
+	// atau tunnel (Cloudflare/ngrok) yang memberi HTTPS terpercaya.
+	useHTTPS := strings.EqualFold(strings.TrimSpace(os.Getenv("APP_HTTPS")), "true") ||
+		strings.EqualFold(strings.TrimSpace(os.Getenv("APP_HTTPS")), "1")
+	certFile := strings.TrimSpace(os.Getenv("APP_CERT_FILE"))
+	keyFile := strings.TrimSpace(os.Getenv("APP_KEY_FILE"))
+
+	// ── Port & jendela aplikasi dibuka LEBIH DULU ────────────────────────────
+	// Inisialisasi database portabel (instalasi pertama) dan sinkronisasi awal
+	// dapat memerlukan puluhan detik sampai beberapa menit. Karena itu port
+	// dibuka dan jendela aplikasi ditampilkan lebih dulu, dengan halaman
+	// "Menyiapkan data SIMARC" sampai aplikasi benar-benar siap. Tanpa ini
+	// pengguna melihat layar kosong / "site can't be reached" dan mengira
+	// aplikasi tidak terbuka.
+	// Nilai disimpan dalam struct agar tipe konkretnya konsisten
+	// (http.HandlerFunc vs *gin.Engine tidak boleh bergantian di atomic.Value).
+	type handlerBox struct{ h http.Handler }
+	var handler atomic.Value
+	handler.Store(handlerBox{app.PreparingHandler()})
+	srv := &http.Server{
+		Addr: addr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			handler.Load().(handlerBox).h.ServeHTTP(w, req)
+		}),
+	}
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("Gagal membuka port %s: %v (ubah APP_PORT di .env bila port dipakai program lain)", port, err)
+	}
+
+	var appCmd *exec.Cmd
+	if config.IsVercel() {
+		log.Printf("Vercel deployment detected, listening on :%s", port)
+	} else {
+		scheme := "http"
+		if useHTTPS {
+			scheme = "https"
+		}
+		printBanner(port, lanIP)
+		appCmd = openBrowser(fmt.Sprintf("%s://127.0.0.1:%s", scheme, port))
+	}
+
+	go func() {
+		if useHTTPS {
+			if certFile == "" || keyFile == "" {
+				cf, kf, err := ensureSelfSignedCert()
+				if err != nil {
+					log.Fatalf("Gagal membuat sertifikat TLS: %v", err)
+				}
+				certFile, keyFile = cf, kf
+			}
+			log.Printf("SIMARC starting on %s (HTTPS, LAN: https://%s:%s)", addr, lanIP, port)
+			if err := srv.ServeTLS(ln, certFile, keyFile); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Server error: %v", err)
+			}
+		} else {
+			log.Printf("SIMARC starting on %s (LAN: http://%s:%s)", addr, lanIP, port)
+			if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Server error: %v", err)
+			}
+		}
+	}()
+
 	// ── Database portabel (mode offline mandiri) ─────────────────────────────
 	// Bila installer desktop menyertakan MariaDB portabel di samping aplikasi,
 	// jalankan sebagai database lokal komputer ini supaya tetap bisa dipakai
@@ -333,63 +410,9 @@ func main() {
 		}
 		log.Fatalf("Gagal menginisialisasi aplikasi: %v", err)
 	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = config.App.AppPort
-	}
-	addr := ":" + port
-	lanIP := getLANIP()
-
-	// HTTPS (opsional): diperlukan agar PWA bisa di-install di Android
-	// (Chrome Android menolak install PWA pada HTTP non-localhost).
-	// Aktifkan dengan APP_HTTPS=true. Sertifikat bisa disediakan lewat
-	// APP_CERT_FILE/APP_KEY_FILE; bila tidak ada, dibuat self-signed otomatis.
-	// Catatan: self-signed tidak dipercaya Android tanpa instalasi manual —
-	// untuk produksi gunakan reverse proxy (Caddy/nginx) dengan Let's Encrypt
-	// atau tunnel (Cloudflare/ngrok) yang memberi HTTPS terpercaya.
-	useHTTPS := strings.EqualFold(strings.TrimSpace(os.Getenv("APP_HTTPS")), "true") ||
-		strings.EqualFold(strings.TrimSpace(os.Getenv("APP_HTTPS")), "1")
-	certFile := strings.TrimSpace(os.Getenv("APP_CERT_FILE"))
-	keyFile := strings.TrimSpace(os.Getenv("APP_KEY_FILE"))
-
-	var appCmd *exec.Cmd
-	if config.IsVercel() {
-		log.Printf("Vercel deployment detected, listening on :%s", port)
-	} else {
-		scheme := "http"
-		if useHTTPS {
-			scheme = "https"
-		}
-		printBanner(port, lanIP)
-		appCmd = openBrowser(fmt.Sprintf("%s://127.0.0.1:%s", scheme, port))
-	}
-
-	srv := &http.Server{
-		Addr:    addr,
-		Handler: r,
-	}
-
-	go func() {
-		if useHTTPS {
-			if certFile == "" || keyFile == "" {
-				cf, kf, err := ensureSelfSignedCert()
-				if err != nil {
-					log.Fatalf("Gagal membuat sertifikat TLS: %v", err)
-				}
-				certFile, keyFile = cf, kf
-			}
-			log.Printf("SIMARC starting on %s (HTTPS, LAN: https://%s:%s)", addr, lanIP, port)
-			if err := srv.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
-				log.Fatalf("Server error: %v", err)
-			}
-		} else {
-			log.Printf("SIMARC starting on %s (LAN: http://%s:%s)", addr, lanIP, port)
-			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.Fatalf("Server error: %v", err)
-			}
-		}
-	}()
+	// Aplikasi siap: ganti halaman splash dengan router sebenarnya. Halaman
+	// "Menyiapkan data" tetap tampil dari dalam app sampai baseline selesai.
+	handler.Store(handlerBox{r})
 
 	// Auto-update: periodically check the hub for a newer binary and download
 	// it to tmp/simarc-server.exe.new. It is applied on the next restart by
