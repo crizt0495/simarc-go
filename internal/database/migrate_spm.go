@@ -19,7 +19,7 @@ func extractSPMNumber(text string) string {
 	// Pattern: SPM (possibly with dots like S.P.M.) followed by optional separators,
 	// optional "No." prefix, then capture alphanumeric identifier
 	re := regexp.MustCompile(`(?i)(?:S\.?P\.?M\.?)[\s:.-]*(?:No(?:mor)?\.?\s*:?\s*)?([A-Za-z]{0,3}[\s-]?\d[\d\-/,A-Za-z.]{0,})`)
-	
+
 	match := re.FindStringSubmatch(normalized)
 	if len(match) < 2 {
 		return ""

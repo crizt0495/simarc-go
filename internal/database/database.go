@@ -104,6 +104,52 @@ func openDB(host, port, name, user, pass string) (*gorm.DB, error) {
 	return gormDB, nil
 }
 
+// OpenMySQL membuka koneksi MySQL ke parameter yang diberikan tanpa
+// mengubah koneksi live aplikasi dan TANPA mendaftar hook outbox — dipakai
+// mesin sinkronisasi offline-first untuk meraih database pusat.
+func OpenMySQL(host, port, name, user, pass, tlsMode string) (*gorm.DB, func(), error) {
+	if tlsMode == "" {
+		tlsMode = "preferred"
+	}
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s&readTimeout=20s&writeTimeout=20s&interpolateParams=true&tls=%s",
+		user, pass, host, port, name, tlsMode,
+	)
+	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Error),
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if sqlDB, err := gormDB.DB(); err == nil {
+		sqlDB.SetMaxOpenConns(4)
+		sqlDB.SetMaxIdleConns(2)
+		sqlDB.SetConnMaxLifetime(10 * time.Minute)
+	}
+	closer := func() {
+		if sqlDB, err := gormDB.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
+	}
+	return gormDB, closer, nil
+}
+
+// PingRemote mencoba menyambung MySQL pusat (timeout 2 detik) untuk status online/offline.
+func PingRemote(host, port, name, user, pass, tlsMode string) error {
+	db, closer, err := OpenMySQL(host, port, name, user, pass, tlsMode)
+	if err != nil {
+		return err
+	}
+	defer closer()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.PingContext(ctx)
+}
+
 // TestConnection tries to open and ping a database with the given parameters
 // without changing the live connection. Returns nil on success.
 func TestConnection(host, port, name, user, pass string) error {

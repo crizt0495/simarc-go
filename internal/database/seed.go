@@ -101,8 +101,18 @@ func seedAdmin() {
 //   - dedupe baris kode_jenis ganda (pertahanan DB lama)
 //   - index unik idx_jenis_arsip_kode membuat insert ganda gagal di level DB
 func seedJenisArsip() {
-	DB.Exec(`DELETE d1 FROM jenis_arsip d1 JOIN jenis_arsip d2
-	         ON d1.kode_jenis = d2.kode_jenis AND d1.id > d2.id`)
+	// Dedupe kode_jenis ganda — versi portable GORM (MySQL & SQLite):
+	// pertahankan baris pertama (id terkecil), hapus duplikat sisanya.
+	var all []models.JenisArsip
+	DB.Order("id ASC").Find(&all)
+	byKode := map[string]bool{}
+	for _, r := range all {
+		if byKode[r.KodeJenis] {
+			DB.Unscoped().Delete(&models.JenisArsip{}, r.ID)
+			continue
+		}
+		byKode[r.KodeJenis] = true
+	}
 
 	defs := []struct{ Kode, Nama, Ket string }{
 		{"SPJ", "Surat Pertanggungjawaban (SPJ)", "Dokumen pertanggungjawaban keuangan/kegiatan"},
@@ -138,10 +148,10 @@ func upsertLokasi(namaLokasi, deskripsi string) {
 	result := DB.Where("nama_lokasi = ?", namaLokasi).First(&existing)
 	if result.Error != nil {
 		DB.Create(&models.LokasiArsip{
-			ID:          uuid.New().String(),
-			NamaLokasi:  namaLokasi,
-			Deskripsi:   deskripsi,
-			IsActive:    true,
+			ID:         uuid.New().String(),
+			NamaLokasi: namaLokasi,
+			Deskripsi:  deskripsi,
+			IsActive:   true,
 		})
 		log.Printf("[SEED] Lokasi arsip \"%s\" dibuat dengan deskripsi \"%s\"", namaLokasi, deskripsi)
 	} else {

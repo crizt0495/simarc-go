@@ -22,7 +22,7 @@ import (
 // the stored version matches — critical for Vercel serverless where new
 // instances start constantly and a full migration per cold start made every
 // request slow.
-const SchemaVersion = "2026.09.22-01"
+const SchemaVersion = "2026.10.22-01"
 
 // tableExists returns true when a table exists in the current database.
 func tableExists(name string) bool {
@@ -223,6 +223,10 @@ func Migrate() error {
 	// Ensure activity_logs.id has AUTO_INCREMENT so GORM can create log
 	// records without specifying the id column.
 	ensureActivityLogAutoIncrement()
+
+	// Offline-first sync support: kolom/kolom BLOB + uuid untuk mesin
+	// sinkronisasi desktop (DB_MODE=local) yang membaca/menulis pusat.
+	ensureSyncColumns()
 
 	// Record the completed schema version so subsequent boots take the fast path.
 	markSchemaVersion()
@@ -618,4 +622,3 @@ func dropJenisLokasiColumnIfUnused() {
 		log.Println("[MIGRASI] Kolom jenis_lokasi sudah tidak ada, dilewati")
 	}
 }
-
