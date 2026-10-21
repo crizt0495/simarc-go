@@ -262,9 +262,16 @@ jobs:
                  Where-Object { $_.Name -notlike '*setup*' } | Select-Object -First 1
           if (-not $exe) { throw 'SIMARC.exe was not produced' }
           Write-Host "found $($exe.FullName) ($([math]::Round($exe.Length/1MB,1)) MB)"
-          # The NSIS standalone installer must exist too.
-          $setup = Get-ChildItem -Path build/bin -Filter '*setup*.exe' -Recurse | Select-Object -First 1
-          if (-not $setup) { throw 'NSIS setup installer was not produced' }
+          # The NSIS standalone installer must exist too. Wails outputs
+          # "<ProjectName>-<ARCH>-installer.exe" (its bundled project.nsi).
+          $setup = Get-ChildItem -Path build/bin -Filter '*installer*.exe' -Recurse | Select-Object -First 1
+          if (-not $setup) {
+            $setup = Get-ChildItem -Path build/bin -Filter '*setup*.exe' -Recurse | Select-Object -First 1
+          }
+          if (-not $setup) {
+            Get-ChildItem -Path build/bin -Recurse | ForEach-Object { Write-Host $_.FullName }
+            throw 'NSIS installer was not produced (tried *installer*.exe and *setup*.exe)'
+          }
           Write-Host "found installer $($setup.FullName) ($([math]::Round($setup.Length/1MB,1)) MB)"
           # A PE binary, not a Go archive: this is the mistake that made an
           # earlier Linux build produce '!<arch>' instead of an executable.
