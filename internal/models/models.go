@@ -145,6 +145,7 @@ func (LokasiArsip) TableName() string { return "lokasi_arsips" }
 
 type JenisArsip struct {
 	ID         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	UUID       string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
 	KodeJenis  string    `gorm:"size:50;uniqueIndex:idx_jenis_arsip_kode" json:"kode_jenis"`
 	NamaJenis  string    `gorm:"size:255;not null" json:"nama_jenis"`
 	Keterangan string    `gorm:"type:text" json:"keterangan"`
@@ -153,6 +154,14 @@ type JenisArsip struct {
 }
 
 func (JenisArsip) TableName() string { return "jenis_arsip" }
+
+// BeforeCreate mengisi UUID identitas sinkron (offline-first).
+func (j *JenisArsip) BeforeCreate(tx *gorm.DB) error {
+	if j.UUID == "" {
+		j.UUID = uuid.New().String()
+	}
+	return nil
+}
 
 // ── PEMBERKASAN ───────────────────────────────────────────────────────────────
 
@@ -203,6 +212,10 @@ type Arsip struct {
 	StatusReview        bool             `gorm:"default:false" json:"status_review"`
 	FilePath            string           `gorm:"type:text" json:"file_path"`
 	FileName            string           `gorm:"column:file_name;size:255" json:"file_name"`
+	// FileContent menyimpan isi lampiran (offline-first sync) sehingga lampiran
+	// bisa berpindah antar perangkat tanpa berbagi disk. Nilai NULL berarti
+	// lampiran hanya ada di disk mesin asal (atau melewati batas ukuran).
+	FileContent         []byte           `gorm:"type:longblob;column:file_content" json:"-"`
 	OcrText             string           `gorm:"column:ocr_text;type:text" json:"ocr_text"`
 	OcrFullText         string           `gorm:"column:ocr_full_text;type:longtext" json:"ocr_full_text"`
 	Tags                string           `gorm:"type:text" json:"tags"`
@@ -211,7 +224,7 @@ type Arsip struct {
 	GoogleDriveFileID   string           `gorm:"size:255" json:"google_drive_file_id"`
 	GoogleDriveURL      string           `gorm:"type:text" json:"google_drive_url"`
 	CreatedAt           time.Time        `json:"created_at"`
-	UpdatedAt           time.Time        `json:"updated_at"`
+	UpdatedAt           time.Time        `gorm:"index" json:"updated_at"`
 	DeletedAt           gorm.DeletedAt   `gorm:"index" json:"deleted_at"`
 	KodeKlasifikasi     *KodeKlasifikasi `gorm:"foreignKey:KodeKlasifikasiID" json:"kategori,omitempty"`
 	UnitKerja           *UnitKerja       `gorm:"foreignKey:UnitKerjaID" json:"unit_kerja,omitempty"`
@@ -316,6 +329,7 @@ func (PemusnahanArsip) TableName() string { return "pemusnahan_arsip" }
 
 type PemusnahanItem struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	UUID         string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
 	PemusnahanID string    `gorm:"type:char(36);not null" json:"pemusnahan_id"`
 	ArsipID      string    `gorm:"type:char(36);not null" json:"arsip_id"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -323,6 +337,14 @@ type PemusnahanItem struct {
 }
 
 func (PemusnahanItem) TableName() string { return "pemusnahan_arsip_items" }
+
+// BeforeCreate mengisi UUID identitas sinkron (offline-first).
+func (p *PemusnahanItem) BeforeCreate(tx *gorm.DB) error {
+	if p.UUID == "" {
+		p.UUID = uuid.New().String()
+	}
+	return nil
+}
 
 // ── JADWAL RETENSI ────────────────────────────────────────────────────────────
 
@@ -1077,14 +1099,22 @@ func (BeritaAcara) TableName() string { return "berita_acara" }
 
 type BeritaAcaraItem struct {
 	ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	UUID          string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
 	BeritaAcaraID string    `gorm:"column:berita_acara_id;type:char(36);not null;index" json:"berita_acara_id"`
 	ArsipID       string    `gorm:"column:arsip_id;type:char(36);not null" json:"arsip_id"`
 	CreatedAt     time.Time `json:"created_at"`
-	BeritaAcara   *BeritaAcara `gorm:"foreignKey:BeritaAcaraID" json:"berita_acara,omitempty"`
-	Arsip         *Arsip       `gorm:"foreignKey:ArsipID" json:"arsip,omitempty"`
+	Arsip         *Arsip    `gorm:"foreignKey:ArsipID" json:"arsip,omitempty"`
 }
 
 func (BeritaAcaraItem) TableName() string { return "berita_acara_items" }
+
+// BeforeCreate mengisi UUID identitas sinkron (offline-first).
+func (b *BeritaAcaraItem) BeforeCreate(tx *gorm.DB) error {
+	if b.UUID == "" {
+		b.UUID = uuid.New().String()
+	}
+	return nil
+}
 
 // ── SEARCH LOG ────────────────────────────────────────────────────────────────
 
