@@ -1,16 +1,6 @@
 {{define "dashboard/index.html"}}{{template "layouts/app.html" .}}{{end}}
 {{define "content"}}
 
-{{if not .BlockchainIntegrity.IsValid}}
-<div class="alert alert-danger" style="border-radius:var(--r-lg)">
-  <i class="bi bi-shield-slash-fill" style="font-size:20px"></i>
-  <div>
-    <strong>DARURAT KEAMANAN: Integritas data terancam!</strong><br>
-    <span>Sistem mendeteksi manipulasi pada {{.BlockchainIntegrity.InvalidBlocks}} data.</span>
-  </div>
-  <a href="/blockchain" class="btn btn-danger btn-sm" style="margin-left:auto;flex-shrink:0">Periksa</a>
-</div>
-{{end}}
 
 <div class="page-header dashboard-header">
   <div>

@@ -125,12 +125,6 @@ func Dashboard(c *gin.Context) {
 		digitalPercent = float64(stats.WithFile) / float64(stats.Total) * 100
 	}
 
-	verifyResult := (&services.BlockchainAuditService{}).VerifyChain()
-	blockchainIntegrity := gin.H{
-		"IsValid":       verifyResult["is_valid"],
-		"InvalidBlocks": verifyResult["invalid_blocks"],
-	}
-
 	digitalFileStats := gin.H{
 		"WithDigitalFile":    stats.WithFile,
 		"WithoutDigitalFile": stats.WithoutFile,
@@ -227,7 +221,6 @@ func Dashboard(c *gin.Context) {
 		"RecentActivities":    recentActivities,
 		"MonthlyStats":        monthlyStats,
 		"DigitalPercent":      digitalPercent,
-		"BlockchainIntegrity": blockchainIntegrity,
 		"DigitalFileStats":    digitalFileStats,
 		"Intelligence": gin.H{
 			"Forecast": forecastList,
