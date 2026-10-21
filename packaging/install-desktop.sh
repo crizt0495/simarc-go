@@ -12,6 +12,11 @@
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Skrip ini ada di packaging/, sedangkan run-desktop.sh ada di folder induk
+# aplikasi. Deteksi otomatis agar shortcut mengarah ke launcher yang benar.
+if [[ ! -f "$APP_DIR/run-desktop.sh" && -f "$APP_DIR/../run-desktop.sh" ]]; then
+    APP_DIR="$(cd "$APP_DIR/.." && pwd)"
+fi
 IMAGES="$APP_DIR/web/static/images"
 
 if [[ ! -x "$APP_DIR/run.sh" ]]; then
