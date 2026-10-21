@@ -68,12 +68,34 @@ if errorlevel 1 (
 )
 
 :runserver
+if not exist "%EXE%" (
+    echo [FAIL] Binary tidak ditemukan: %EXE%
+    echo         Jalankan installer ulang atau sediakan %DISTEXE%.
+    pause
+    exit /b 1
+)
+if not exist ".env" (
+    echo [FAIL] Berkas .env tidak ditemukan di %CD%
+    echo         Pastikan instalasi lengkap. Jalankan installer ulang.
+    pause
+    exit /b 1
+)
 echo [OK]    Menjalankan server. Tutup jendela aplikasi untuk berhenti.
 set SIMARC_APP_WINDOW=1
 "%EXE%"
+set "EXITCODE=%ERRORLEVEL%"
 
 REM Hentikan database portabel (bila aplikasi tidak sempat menutupnya sendiri).
 if exist "%CD%\mariadb\data\mysqld.pid" goto stopdb
+
+if %EXITCODE% neq 0 (
+    echo.
+    echo [ERROR] Server keluar dengan kode %EXITCODE%.
+    echo         Lihat pesan di atas. Jika port 8080 sudah dipakai, ubah APP_PORT di .env.
+    echo         Tekan sembarang tombol untuk menutup...
+    pause >nul
+    exit /b %EXITCODE%
+)
 exit /b 0
 
 :stopdb
