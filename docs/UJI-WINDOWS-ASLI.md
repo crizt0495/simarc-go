@@ -4,7 +4,7 @@ Panduan ini dipakai untuk membuktikan `SIMARC-Setup.exe` berjalan **tanpa error*
 di komputer Windows sungguhan (bukan Wine).
 
 File yang diuji: `SIMARC-Setup.exe`
-SHA-256: `ab2c1e25657e9dbd2e06c06f6bbbbbe18a1172b6e54d5bffc0b524252c24543b`
+SHA-256: `631131ed207e4b2349c1dd5d18a6398a245a43b9cc7fe1b6e1beea9ffbdfc642`
 
 ---
 
@@ -31,31 +31,32 @@ Yang **seharusnya** tidak muncul: tidak ada jendela CMD hitam. Ini installer GUI
 
 ---
 
-## 2. Wizard yang harus Anda lihat
+## 2. Yang terjadi saat klik-dua-kali
 
-> **Pemasangan massal (diam-diam):** bila berkas `simarc-install.txt` diletakkan
-> **di folder yang sama** dengan `SIMARC-Setup.exe`, wizard **tidak muncul** —
-> installer langsung memakai mode + alamat hub dari berkas itu (mode `offline`,
-> hub database Aiven, berkas LAN). Inilah cara pemasangan di banyak komputer.
+**Konfigurasi sudah tertanam di dalam `SIMARC-Setup.exe`**, jadi pemasangan
+berjalan **otomatis tanpa satu pun dialog**:
 
-1. **Dialog pilih mode**:
-   - Judul: `SIMARC Installer`
-   - Pertanyaan: `Pilih mode instalasi SIMARC:`
-   - Pilihan: **Offline (Mandiri)** *(terpilih)* dan **Klien Jaringan**
-   - → untuk komputer mandiri, biarkan **Offline (Mandiri)**, klik OK.
+1. Aplikasi disalin ke `%LocalAppData%\SIMARC`.
+2. MariaDB portabel diekstrak (mode offline mandiri, port database 3307).
+3. `.env` dibuat lengkap: mode offline + sinkronisasi Aiven (`simarc-hub`) +
+   simpul (`SYNC_NODE_ID`) otomatis.
+4. Shortcut Desktop + Start Menu dibuat.
+5. Aplikasi **langsung dijalankan** (jendela server terbuka). Login
+   `admin` / `admin`, lalu buka `http://127.0.0.1:8080`.
 
-   *(Jika Anda memilih Klien Jaringan, akan muncul kotak alamat HUB.)*
+> **Instalasi ulang / update di atas aplikasi yang sedang berjalan juga aman.**
+> Installer otomatis menghentikan SIMARC lebih dulu (melepas kunci berkas),
+> memasang versi baru, lalu menjalankan kembali aplikasi — `.env` dan
+> `storage\` (data pengguna) tidak pernah ditimpa.
 
-2. **Dialog progres**: `Menginstal SIMARC...` — tunggu 1–3 menit.
+### Bila ada masalah
+Setiap langkah instalasi dicatat di:
 
-3. **Dialog selesai**:
-   - `SIMARC berhasil diinstal.` → `Buka SIMARC sekarang?`
-   - Tombol: **Buka SIMARC** / **Nanti**.
+```
+%LocalAppData%\SIMARC\install.log
+```
 
-Jika ada kesalahan, justru inilah yang muncul: dialog `SIMARC - Kesalahan`
-berisi teks errornya. **Screenshot dialog itu dan kirim ke saya.**
-
----
+Kirim berkas itu (dan screenshot dialog error bila muncul) untuk diagnosis.
 
 ## 3. Firewall (hanya sekali)
 

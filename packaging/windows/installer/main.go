@@ -29,12 +29,20 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ncruces/zenity"
 )
 
 //go:embed all:payload
 var payload embed.FS
+
+// appWasRunning mencatat apakah SIMARC sedang berjalan saat instalasi dimulai.
+// Bila ya, aplikasi dijalankan ulang otomatis setelah pemasangan selesai.
+var appWasRunning bool
+
+// quietMode: instalasi massal tanpa interaksi (tidak menunggu tombol Enter).
+var quietMode bool
 
 func main() {
 	quiet := flag.Bool("quiet", false, "jalankan tanpa interaksi (tanpa jendela GUI)")
@@ -108,6 +116,15 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 		hubStr = strings.TrimSpace(cfg["SYNC_HUB_URL"])
 	}
 
+	// Instalasi OTOMATIS (tanpa dialog sama sekali): mode/hub berasal dari
+	// simarc-install.txt yang tertanam di exe, atau dari flag baris-perintah.
+	// Dipakai untuk mass-deployment — jendela instalasi tidak pernah menuntut
+	// klik pengguna, termasuk dialog penutup.
+	cfgMode := strings.ToLower(strings.TrimSpace(cfg["MODE"]))
+	autoInstall := (cfgMode != "" && cfgMode != "auto") ||
+		cfg["HUB"] != "" || cfg["SYNC_HUB_URL"] != "" ||
+		(mode != "" && mode != "auto") || hub != ""
+
 	// 1. Pilih mode instalasi (hanya bila belum ditentukan lewat flag/config).
 	if modeStr == "" || modeStr == "auto" {
 		chosen, err := zenity.List(
@@ -150,6 +167,21 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 
 	installDir := resolveInstallDir()
 
+	// 3a. Jalur SENYAP (otomatis): tanpa dialog progres, tanpa konfirmasi.
+	//     Pemasangan diverifikasi, lalu aplikasi langsung dijalankan.
+	if autoInstall {
+		if err := nativeInstall(tmp, installDir, modeStr, hubStr); err != nil {
+			failGUI("Instalasi gagal: " + err.Error())
+		}
+		if err := verifyInstall(installDir, modeStr); err != nil {
+			failGUI("Verifikasi gagal: " + err.Error())
+		}
+		_ = createShortcuts(installDir, filepath.Join(installDir, "run.bat"), filepath.Join(installDir, "simarc.ico"), noShortcut)
+		logInstall("Pemasangan selesai (otomatis, tanpa dialog); aplikasi dijalankan.")
+		launchInstalled(installDir)
+		return
+	}
+
 	// 3. Jalankan pemasangan sambil menampilkan dialog progres.
 	prog, err := zenity.Progress(
 		zenity.Title("Menginstal SIMARC..."),
@@ -159,12 +191,10 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 	if err != nil {
 		// Dialog progres tidak tersedia: jalankan tanpa GUI lalu beri tahu.
 		if err := nativeInstall(tmp, installDir, modeStr, hubStr); err != nil {
-			_ = zenity.Error("Instalasi gagal: "+err.Error(), zenity.Title("SIMARC"))
-			os.Exit(1)
+			failGUI("Instalasi gagal: " + err.Error())
 		}
 		if err := verifyInstall(installDir, modeStr); err != nil {
-			_ = zenity.Error("Verifikasi gagal: "+err.Error(), zenity.Title("SIMARC"))
-			os.Exit(1)
+			failGUI("Verifikasi gagal: " + err.Error())
 		}
 		_ = createShortcuts(installDir, filepath.Join(installDir, "run.bat"), filepath.Join(installDir, "simarc.ico"), noShortcut)
 		_ = zenity.Info("SIMARC berhasil diinstal.", zenity.Title("Instalasi Selesai"))
@@ -176,9 +206,18 @@ func runZenityGUI(tmp, mode, hub string, noShortcut bool) {
 	_ = prog.Close()
 
 	if installErr != nil {
-		_ = zenity.Error("Instalasi gagal: "+installErr.Error(), zenity.Title("SIMARC - Kesalahan"))
-		os.Exit(1)
+		failGUI("Instalasi gagal: " + installErr.Error())
 	}
+
+	// Aplikasi sempat berjalan sebelum update? Jalankan ulang otomatis agar
+	// pengguna kembali bekerja tanpa perlu membuka manual.
+	if appWasRunning {
+		logInstall("Pemasangan selesai; aplikasi dijalankan ulang otomatis.")
+		launchInstalled(installDir)
+		_ = zenity.Info("SIMARC berhasil diperbarui dan dijalankan kembali.", zenity.Title("Instalasi Selesai"))
+		return
+	}
+	logInstall("Pemasangan selesai (OK).")
 
 	// 4. Selesai. Tawarkan membuka aplikasi.
 	openNow := zenity.Question("SIMARC berhasil diinstal.\n\nBuka SIMARC sekarang?",
@@ -253,9 +292,14 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 	}
 
 	installDir := resolveInstallDir()
+	quietMode = quiet
+	// Hentikan SIMARC yang sedang berjalan agar binary & database tidak
+	// terkunci saat instalasi/upgrade (wajib untuk install ulang mulus).
+	stopRunningApp(installDir)
 	if mode == "" || mode == "auto" {
 		mode = "offline"
 	}
+	logInstall("Mulai pemasangan (konsol) ke %s (mode=%s).", installDir, mode)
 
 	installed := false
 	if _, err := exec.LookPath("powershell.exe"); err == nil {
@@ -299,6 +343,12 @@ func runConsole(tmp, ps1, mode, hub string, quiet, noShortcut bool) {
 	fmt.Println("[OK] Instalasi/update SIMARC selesai.")
 	fmt.Println("     Buka dari menu Start -> SIMARC (atau shortcut Desktop).")
 	fmt.Println("     Catatan: .env dan storage\\ dipertahankan pada setiap update.")
+	logInstall("Pemasangan selesai (OK).")
+	// Aplikasi berjalan sebelum instalasi? Nyalakan kembali otomatis.
+	if appWasRunning {
+		fmt.Println("[OK]   Aplikasi sebelumnya berjalan - dijalankan ulang otomatis.")
+		launchInstalled(installDir)
+	}
 	fmt.Println()
 	pause()
 }
@@ -367,6 +417,17 @@ func fatalGUI(format string, a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
 	_ = zenithMessageBox(msg) // show native dialog via zenity if available, else console
 	fmt.Fprintln(os.Stderr, "[ERR] "+msg)
+	logInstall("[ERR] %s", msg)
+	os.Exit(1)
+}
+
+// failGUI memperlihatkan kesalahan instalasi ke pengguna (dialog), sekaligus
+// mencatatnya ke stderr dan install.log agar mudah didiagnosis dari jarak jauh,
+// lalu keluar dengan kode 1.
+func failGUI(msg string) {
+	_ = zenithMessageBox(msg)
+	fmt.Fprintln(os.Stderr, "[ERR] "+msg)
+	logInstall("[ERR] %s", msg)
 	os.Exit(1)
 }
 
@@ -447,21 +508,88 @@ func extractZip(zipPath, dest string) error {
 }
 
 func fail(format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, "[ERR]  "+format+"\n", a...)
+	msg := fmt.Sprintf(format, a...)
+	fmt.Fprintln(os.Stderr, "[ERR]  "+msg)
+	logInstall("[ERR] %s", msg)
 	pause()
 	os.Exit(1)
 }
 
 func pause() {
+	if quietMode { // mass-deployment: jangan pernah menunggu input
+		return
+	}
 	if fi, err := os.Stdin.Stat(); err == nil && (fi.Mode()&os.ModeCharDevice) != 0 {
 		fmt.Print("Tekan Enter untuk menutup...")
 		fmt.Scanln()
 	}
 }
 
+// logInstall menulis jejak instalasi ke <folder instal>\install.log agar
+// kegagalan di komputer pengguna dapat diperiksa dari jarak jauh (biner ini
+// ber-subsystem windowsgui sehingga keluaran konsol tidak selalu terlihat).
+func logInstall(format string, a ...interface{}) {
+	dir := resolveInstallDir()
+	_ = os.MkdirAll(dir, 0o755)
+	f, err := os.OpenFile(filepath.Join(dir, "install.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	_, _ = fmt.Fprintf(f, "%s %s\n", time.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, a...))
+}
+
+// appRunning memeriksa apakah server SIMARC masih berjalan (tasklist).
+// Bila tasklist tidak tersedia di sistem, dianggap tidak berjalan.
+func appRunning() bool {
+	out, err := exec.Command("tasklist", "/FI", "IMAGENAME eq simarc-server.exe").Output()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(string(out)), "simarc-server.exe")
+}
+
+// stopRunningApp menghentikan SIMARC yang sedang berjalan SEBELUM instalasi /
+// update, agar binary (tmp\simarc-server.exe) dan database portabel tidak
+// terkunci — tanpa ini, install ulang di atas aplikasi yang hidup GAGAL.
+// Mengembalikan true bila ternyata ada proses yang dihentikan.
+func stopRunningApp(installDir string) bool {
+	wasRunning := appRunning()
+
+	// 1) Matikan database portabel lewat pid-file (sama seperti run.bat).
+	if data, err := os.ReadFile(filepath.Join(installDir, "mariadb", "data", "mysqld.pid")); err == nil {
+		if pid := strings.TrimSpace(string(data)); pid != "" && pid != "0" {
+			_ = exec.Command("taskkill", "/PID", pid, "/T", "/F").Run()
+		}
+	}
+	// 2) Matikan server beserta seluruh proses anaknya (termasuk mariadbd
+	//    yang dikandungnya). Bila tidak berjalan, abaikan saja.
+	_ = exec.Command("taskkill", "/IM", "simarc-server.exe", "/T", "/F").Run()
+
+	if !wasRunning {
+		return false
+	}
+	appWasRunning = true
+	// 3) Tunggu sampai benar-benar berhenti lalu beri waktu OS melepas kunci.
+	for i := 0; i < 20; i++ {
+		if !appRunning() {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	time.Sleep(1 * time.Second)
+	logInstall("Aplikasi yang berjalan dihentikan sebelum instalasi (update di atas sesi aktif).")
+	return true
+}
+
 // nativeInstall menyalin file dan mengatur .env secara mandiri (murni Go)
 // apabila PowerShell tidak tersedia atau gagal dijalankan.
 func nativeInstall(srcDir, destDir, mode, hub string) error {
+	// Hentikan SIMARC yang sedang berjalan lebih dulu: binary & database
+	// portabel harus bebas kunci agar install ulang / update selalu mulus.
+	stopRunningApp(destDir)
+	logInstall("Mulai pemasangan ke %s (mode=%s).", destDir, mode)
+
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return err
 	}
@@ -627,7 +755,22 @@ func unzip(src, dest string) error {
 	return nil
 }
 
+// copyFile menyalin satu berkas, dengan percobaan ulang bila berkas tujuan
+// masih terkunci sementara (antivirus / sisa proses lama). 5 x 400 ms.
 func copyFile(src, dst string) error {
+	var err error
+	for attempt := 0; attempt < 5; attempt++ {
+		if attempt > 0 {
+			time.Sleep(400 * time.Millisecond)
+		}
+		if err = copyFileOnce(src, dst); err == nil {
+			return nil
+		}
+	}
+	return err
+}
+
+func copyFileOnce(src, dst string) error {
 	in, err := os.ReadFile(src)
 	if err != nil {
 		return err

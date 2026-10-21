@@ -23,9 +23,15 @@ REM -- Baca konfigurasi dari .env --
 set "SIMARC_SERVER_URL="
 set "SIMARC_WINDOW="
 if exist .env for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do call :readenv "%%A" "%%B"
-set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL:"=%"
-set "SIMARC_WINDOW=%SIMARC_WINDOW:"=%"
-set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL: =%"
+
+REM -- Bersihkan nilai (kutip & spasi) ---------------------------------------
+REM  Pembersihan DIJAGA kondisi non-kosong. Substitusi %VAR:"=% terhadap nilai
+REM  kosong terbukti merusak variabel pada sebagian implementasi cmd (nilai
+REM  jadi "=\"), yang membuat server salah masuk mode klien. Dijaga begini,
+REM  run.bat selalu menentukan mode dengan benar.
+if not "%SIMARC_SERVER_URL%"=="" set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL:"=%"
+if not "%SIMARC_SERVER_URL%"=="" set "SIMARC_SERVER_URL=%SIMARC_SERVER_URL: =%"
+if not "%SIMARC_WINDOW%"==""     set "SIMARC_WINDOW=%SIMARC_WINDOW:"=%"
 
 echo.
 echo   ============================================
