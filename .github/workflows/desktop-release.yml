@@ -242,18 +242,34 @@ jobs:
       # installer step.
       - name: Ensure NSIS is available
         run: |
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+          $nsisDir = 'C:\Program Files (x86)\NSIS'
+          if (-not (Test-Path "$nsisDir\makensis.exe")) {
             choco install nsis -y --no-progress
-          } else {
-            Write-Host "makensis already present: $((Get-Command makensis).Source)"
           }
+          if (-not (Test-Path "$nsisDir\makensis.exe")) {
+            throw "makensis.exe was not installed to $nsisDir"
+          }
+          # choco updates the machine PATH in the registry, but steps that are
+          # already running keep the PATH snapshot taken at job start — so
+          # publish the directory through GITHUB_PATH for later steps.
+          Add-Content $env:GITHUB_PATH $nsisDir
+          Write-Host "makensis available at $nsisDir"
 
       - name: Install the Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
 
       - name: Build the NSIS installer
         working-directory: desktop
-        run: wails build -tags "desktop" -skipbindings -nsis -platform windows/amd64
+        shell: pwsh
+        # production is implied by non-debug wails builds; explicit is fine.
+        run: |
+          $mk = Get-Command makensis -ErrorAction SilentlyContinue
+          if (-not $mk) {
+            throw 'makensis is NOT on PATH — wails would skip the NSIS installer silently'
+          }
+          Write-Host "makensis in PATH: $($mk.Source)"
+          wails build -tags "desktop production" -skipbindings -nsis -platform windows/amd64
+          Get-ChildItem -Path build/bin -Recurse | ForEach-Object { Write-Host "BIN: $($_.FullName) ($($_.Length) bytes)" }
 
       - name: Verify the installer
         working-directory: desktop
