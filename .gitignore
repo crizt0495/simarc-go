@@ -63,3 +63,10 @@ test-results/
 
 # Backup dump SQL lokal (~143 MB) — jangan pernah di-commit/push
 simarc-*.sql
+
+# Wails rest-build artifacts (ter-generate tiap build)
+desktop/build/windows/info.json
+desktop/build/windows/wails.exe.manifest
+desktop/SIMARC-res.syso
+desktop/build/gitkeep
+frontend/dist/.gitkeep
