@@ -4,13 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"html/template"
 	"strings"
 	"time"
 
@@ -261,14 +261,14 @@ func (h *ArsipHandler) Index(c *gin.Context) {
 		"FilterEndDate":          c.Query("end_date"),
 		"FilterBerkasDigital":    c.Query("status_berkas_digital"),
 
-		"FilterNilaiMin":         c.Query("nilai_min"),
-		"FilterNilaiMax":         c.Query("nilai_max"),
-		"FilterPemberkasanID":    c.Query("pemberkasan_id"),
-		"FilterSortBy":           c.Query("sort_by"),
-		"FilterSortOrder":        c.Query("sort_order"),
-		"AuthUser":               user,
-		"HasFilters":             hasFilters,
-		"FilterSearch":           c.Query("search"),
+		"FilterNilaiMin":      c.Query("nilai_min"),
+		"FilterNilaiMax":      c.Query("nilai_max"),
+		"FilterPemberkasanID": c.Query("pemberkasan_id"),
+		"FilterSortBy":        c.Query("sort_by"),
+		"FilterSortOrder":     c.Query("sort_order"),
+		"AuthUser":            user,
+		"HasFilters":          hasFilters,
+		"FilterSearch":        c.Query("search"),
 	})
 }
 
@@ -321,20 +321,20 @@ func validasiFileUpload(c *gin.Context) (string, bool) {
 	if err != nil {
 		return "", true // file opsional, tidak wajib
 	}
-	
+
 	// Validasi ukuran file (maks 32MB)
 	const maxSize int64 = 32 * 1024 * 1024
 	if file.Size > maxSize {
 		return fmt.Sprintf("Ukuran file terlalu besar (%.1f MB). Maksimal 32 MB.", float64(file.Size)/(1024*1024)), false
 	}
-	
+
 	// Validasi tipe file
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	allowedExt := map[string]bool{".pdf": true, ".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".tiff": true, ".tif": true, ".bmp": true}
 	if !allowedExt[ext] {
 		return fmt.Sprintf("Tipe file %s tidak diizinkan. Hanya: PDF, JPG, PNG, GIF, TIFF", ext), false
 	}
-	
+
 	return "", true
 }
 
@@ -361,23 +361,23 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 		middleware.SetFlash(c, "error", "Nama arsip, kode klasifikasi, dan unit kerja wajib diisi.")
 		c.Redirect(http.StatusFound, createURL)
 
-	// Validasi No. SPM wajib untuk kategori SPJ
-	if c.PostForm("nomor_spm") == "" {
-		// Cek apakah jenis arsip yang dipilih memiliki kode SPJ
-		var selectedJenis models.JenisArsip
-		if v := c.PostForm("jenis_arsip_id"); v != "" {
-			if id, err := strconv.ParseUint(v, 10, 64); err == nil {
-				if database.DB.First(&selectedJenis, id).Error == nil && selectedJenis.KodeJenis == "SPJ" {
-					middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
-					c.Redirect(http.StatusFound, createURL)
-					return
+		// Validasi No. SPM wajib untuk kategori SPJ
+		if c.PostForm("nomor_spm") == "" {
+			// Cek apakah jenis arsip yang dipilih memiliki kode SPJ
+			var selectedJenis models.JenisArsip
+			if v := c.PostForm("jenis_arsip_id"); v != "" {
+				if id, err := strconv.ParseUint(v, 10, 64); err == nil {
+					if database.DB.First(&selectedJenis, id).Error == nil && selectedJenis.KodeJenis == "SPJ" {
+						middleware.SetFlash(c, "error", "Nomor SPM wajib diisi untuk arsip SPJ.")
+						c.Redirect(http.StatusFound, createURL)
+						return
+					}
 				}
 			}
 		}
-	}
 		return
 	}
-	
+
 	// Validasi file upload
 	if msg, ok := validasiFileUpload(c); !ok {
 		middleware.SetFlash(c, "error", "Upload gagal: "+msg)
@@ -487,6 +487,9 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 			return
 		}
 		arsip.FilePath = dst
+		// Offline-first: kemas isi lampiran ke BLOB (asli, sebelum thumbnail)
+		// agar ikut tersinkron lintas PC.
+		attachFileContent(&arsip, dst)
 	}
 
 	// Process file (image/PDF)
@@ -513,11 +516,11 @@ func (h *ArsipHandler) Store(c *gin.Context) {
 		arsip.ID = uuid.New().String()
 	}
 
-if err := database.DB.Transaction(func(tx *gorm.DB) error {
+	if err := database.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&arsip).Error; err != nil {
 			return err
 		}
-		
+
 		// Log activity — failure here must NOT block arsip creation.
 		actLog := models.ActivityLog{
 			UserID:      &user.ID,
@@ -530,7 +533,7 @@ if err := database.DB.Transaction(func(tx *gorm.DB) error {
 			// Activity log failure is non-fatal — arsip was already saved.
 			log.Printf("[WARN] Gagal log aktivitas untuk arsip %s: %v", arsip.ID, err)
 		}
-		
+
 		// Note: blockchain audit isn't part of logActivity if we bypass it, but logActivity internally uses global DB.
 		// So we will just use the tx instead of calling logActivity.
 		return nil
@@ -540,7 +543,7 @@ if err := database.DB.Transaction(func(tx *gorm.DB) error {
 		c.Redirect(http.StatusFound, createURL)
 		return
 	}
-	
+
 	// Record audit block on the blockchain (after transaction committed)
 	_ = (&services.BlockchainAuditService{}).RecordAudit("arsip", arsip.ID, "create", "Menambah arsip: "+arsip.NamaArsip, user.ID, c.ClientIP(), c.GetHeader("User-Agent"))
 
@@ -790,7 +793,7 @@ func (h *ArsipHandler) Update(c *gin.Context) {
 	if v := c.PostForm("nilai_anggaran"); v != "" {
 		if f, err := strconv.ParseFloat(strings.ReplaceAll(v, ",", ""), 64); err == nil {
 
-	arsip.NomorSPM = c.PostForm("nomor_spm")
+			arsip.NomorSPM = c.PostForm("nomor_spm")
 			arsip.NilaiAnggaran = &f
 		}
 	}
@@ -826,6 +829,9 @@ func (h *ArsipHandler) Update(c *gin.Context) {
 			return
 		}
 		arsip.FilePath = dst
+		// Offline-first: kemas isi lampiran ke BLOB (asli, sebelum thumbnail)
+		// agar ikut tersinkron lintas PC.
+		attachFileContent(&arsip, dst)
 	}
 	// Process file (image/PDF)
 	fileSvc := &services.FileProcessingService{}
@@ -886,20 +892,10 @@ func (h *ArsipHandler) Download(c *gin.Context) {
 		c.String(http.StatusNotFound, "File tidak ditemukan")
 		return
 	}
-
-	fullPath := arsip.FilePath
-	if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-		fullPath = "storage/" + fullPath
-	}
-	file, err := os.Open(fullPath)
-	if err != nil {
-		c.String(http.StatusNotFound, "File tidak ditemukan di server")
+	if serveArsipFile(c, &arsip, true) {
 		return
 	}
-	defer file.Close()
-
-	c.Header("Content-Disposition", "attachment; filename="+filepath.Base(fullPath))
-	io.Copy(c.Writer, file)
+	c.String(http.StatusNotFound, "File tidak ditemukan di server")
 }
 
 func logActivity(userID, action, desc, modelType, modelID, ipAddress, userAgent string) {
@@ -917,29 +913,89 @@ func logActivity(userID, action, desc, modelType, modelID, ipAddress, userAgent 
 	_ = (&services.BlockchainAuditService{}).RecordAudit(modelType, modelID, action, desc, userID, ipAddress, userAgent)
 }
 
+// ── LAMPIRAN SEBAGAI BLOB (offline-first sync) ───────────────────────────────
+// Ditulis ulang bagi mode DB_MODE=local: isi lampiran ikut tersinkron antar
+// perangkat lewat kolom arsip.file_content; penyajian tetap dari disk dan
+// jatuh ke BLOB hanya saat file disk tidak ada (mis. baris hasil pull).
+
+// attachFileContent membaca isi lampiran ke arsip.FileContent bila ukurannya
+// dalam batas SYNC_FILE_MAX_BYTES. File melebihi batas tetap disimpan lokal
+// (metadata ikut sync, isi tidak).
+func attachFileContent(arsip *models.Arsip, path string) {
+	maxBytes := config.App.SyncFileMaxBytes
+	if maxBytes <= 0 {
+		return
+	}
+	info, err := os.Stat(path)
+	if err != nil || info.Size() == 0 || info.Size() > maxBytes {
+		return
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	arsip.FileContent = b
+}
+
+// inferContentType perkiraan content-type dari ekstensi file lampiran.
+func inferContentType(path string) string {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".pdf":
+		return "application/pdf"
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+// resolveArsipPath menerapkan aturan pengerjaan path yang sama dengan
+// handler download/view lama: relatif diprefixkan "storage/" kecuali sudah
+// memakai prefix storage/ atau /tmp/.
+func resolveArsipPath(fp string) string {
+	if !filepath.IsAbs(fp) && !strings.HasPrefix(fp, "storage/") && !strings.HasPrefix(fp, "/tmp/") {
+		return "storage/" + fp
+	}
+	return fp
+}
+
+// serveArsipFile menyajikan lampiran: dari disk bila ada, lain dari BLOB
+// (hasil sync dari PC lain). Return false bila keduanya tidak tersedia.
+func serveArsipFile(c *gin.Context, arsip *models.Arsip, attachment bool) bool {
+	fullPath := resolveArsipPath(arsip.FilePath)
+	name := filepath.Base(fullPath)
+	contentType := inferContentType(fullPath)
+	disposition := "inline"
+	if attachment {
+		disposition = "attachment"
+	}
+	if file, err := os.Open(fullPath); err == nil {
+		defer file.Close()
+		c.Header("Content-Type", contentType)
+		c.Header("Content-Disposition", disposition+"; filename="+name)
+		io.Copy(c.Writer, file)
+		return true
+	}
+	if len(arsip.FileContent) > 0 {
+		c.Data(http.StatusOK, contentType, arsip.FileContent)
+		return true
+	}
+	return false
+}
+
 func (h *ArsipHandler) View(c *gin.Context) {
 	var arsip models.Arsip
 	if err := database.DB.First(&arsip, "id = ?", c.Param("id")).Error; err != nil || arsip.FilePath == "" {
 		Render404(c)
 		return
 	}
-	ext := strings.ToLower(filepath.Ext(arsip.FilePath))
-	contentType := "application/octet-stream"
-	switch ext {
-	case ".pdf":
-		contentType = "application/pdf"
-	case ".jpg", ".jpeg":
-		contentType = "image/jpeg"
-	case ".png":
-		contentType = "image/png"
+	if serveArsipFile(c, &arsip, false) {
+		return
 	}
-	fullPath := arsip.FilePath
-	if !filepath.IsAbs(fullPath) && !strings.HasPrefix(fullPath, "storage/") && !strings.HasPrefix(fullPath, "/tmp/") {
-		fullPath = "storage/" + fullPath
-	}
-	c.Header("Content-Type", contentType)
-	c.Header("Content-Disposition", "inline; filename="+filepath.Base(fullPath))
-	c.File(fullPath)
+	// Perilaku lama: serahkan ke c.File (keluaran error bawaan bila hilang).
+	c.File(resolveArsipPath(arsip.FilePath))
 }
 
 func (h *ArsipHandler) CheckFile(c *gin.Context) {
@@ -953,7 +1009,15 @@ func (h *ArsipHandler) CheckFile(c *gin.Context) {
 		fullPath = "storage/" + fullPath
 	}
 	_, err := os.Stat(fullPath)
-	c.JSON(http.StatusOK, gin.H{"exists": err == nil, "path": fullPath})
+	exists := err == nil
+	serving := "disk"
+	if !exists && len(arsip.FileContent) > 0 {
+		// Isi tersedia di BLOB (baris hasil sinkronisasi dari PC lain) —
+		// lampiran tetap bisa dibuka/download.
+		exists = true
+		serving = "blob"
+	}
+	c.JSON(http.StatusOK, gin.H{"exists": exists, "path": fullPath, "serving": serving})
 }
 
 func (h *ArsipHandler) ShowMoveLocationForm(c *gin.Context) {
@@ -976,8 +1040,8 @@ func (h *ArsipHandler) ShowMoveLocationForm(c *gin.Context) {
 					loc = a.LokasiArsip.NamaLokasi
 				}
 				archives = append(archives, gin.H{
-					"nomor_arsip":     a.NomorArsip,
-					"nama_arsip":      a.NamaArsip,
+					"nomor_arsip":      a.NomorArsip,
+					"nama_arsip":       a.NamaArsip,
 					"current_location": loc,
 				})
 			}
@@ -1075,7 +1139,9 @@ func (h *ArsipHandler) MoveLocation(c *gin.Context) {
 
 	blockNumber++
 	ids := make([]string, len(arsipList))
-	for i, a := range arsipList { ids[i] = a.ID + ":" + a.NomorArsip }
+	for i, a := range arsipList {
+		ids[i] = a.ID + ":" + a.NomorArsip
+	}
 	detail := fmt.Sprintf("Pindah %d arsip ke %s. IDs: [%s]%s", len(arsipList), lokasi.NamaLokasi, strings.Join(ids, ","),
 		map[bool]string{true: " — " + catatan, false: ""}[catatan != ""])
 	// Truncate detail if too long for blockchain
@@ -1098,7 +1164,7 @@ func (h *ArsipHandler) MoveLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": fmt.Sprintf("%d arsip berhasil dipindahkan ke %s", len(arsipIDs), lokasi.NamaLokasi),
-		"data": gin.H{"arsip_ids": arsipIDs, "lokasi_tujuan": lokasi.NamaLokasi},
+		"data":    gin.H{"arsip_ids": arsipIDs, "lokasi_tujuan": lokasi.NamaLokasi},
 	})
 }
 
@@ -1153,11 +1219,11 @@ func (h *ArsipHandler) PemindahanIndex(c *gin.Context) {
 		"MutasiLogs":     mutasiLogs,
 		"TempatDefault":  "Kantor",
 		"Total":          totalLogs, "Page": page, "PerPage": perPage,
-		"TotalPages":     totalPages, "StartIndex": offset + 1,
-		"FirstItem":      offset + 1,
-		"LastItem":       offset + len(mutasiLogs),
-		"Pagination":     BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
-		"HasPages":       totalPages > 1,
+		"TotalPages": totalPages, "StartIndex": offset + 1,
+		"FirstItem":  offset + 1,
+		"LastItem":   offset + len(mutasiLogs),
+		"Pagination": BuildPagination(page, totalPages, removePageParam(c.Request.URL.RawQuery)),
+		"HasPages":   totalPages > 1,
 	})
 }
 
@@ -1224,13 +1290,22 @@ func (h *ArsipHandler) PemindahanSearchJSON(c *gin.Context) {
 }
 
 func unitSafe(u *models.UnitKerja) string {
-	if u != nil { return u.NamaUnit }; return ""
+	if u != nil {
+		return u.NamaUnit
+	}
+	return ""
 }
 func lokasiSafe(l *models.LokasiArsip) string {
-	if l != nil { return l.NamaLokasi }; return ""
+	if l != nil {
+		return l.NamaLokasi
+	}
+	return ""
 }
 func kkSafe(k *models.KodeKlasifikasi) string {
-	if k != nil { return k.KodeKlasifikasi }; return ""
+	if k != nil {
+		return k.KodeKlasifikasi
+	}
+	return ""
 }
 
 func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
@@ -1380,8 +1455,8 @@ func (h *ArsipHandler) PemindahanStore(c *gin.Context) {
 
 	// Siapkan response termasuk lokasi asal untuk BA
 	responseData := gin.H{
-		"arsip_ids":     toMove,
-		"lokasi_tujuan": lokasi.NamaLokasi,
+		"arsip_ids":        toMove,
+		"lokasi_tujuan":    lokasi.NamaLokasi,
 		"lokasi_tujuan_id": lokasiID,
 	}
 	if lokasiAsalID != "" {
@@ -1702,9 +1777,9 @@ func (h *ArsipHandler) ShowBerkaskanFormJSON(c *gin.Context) {
 		"success": true,
 		"data": gin.H{
 			"arsip": gin.H{
-				"id": arsip.ID,
+				"id":          arsip.ID,
 				"nomor_arsip": arsip.NomorArsip,
-				"nama_arsip": arsip.NamaArsip,
+				"nama_arsip":  arsip.NamaArsip,
 			},
 			"pemberkasanOptions": pemberkasanOpts,
 		},
@@ -1897,9 +1972,9 @@ func (h *ArsipHandler) ExportSearch(c *gin.Context) {
 	}
 
 	if format == "pdf" {
-		exportPDF(c, "Export-Arsip-" + time.Now().Format("2006-01-02"), "Hasil Pencarian Arsip", headers, rows)
+		exportPDF(c, "Export-Arsip-"+time.Now().Format("2006-01-02"), "Hasil Pencarian Arsip", headers, rows)
 	} else {
-		exportXLSX(c, "Export-Arsip-" + time.Now().Format("2006-01-02"), headers, rows)
+		exportXLSX(c, "Export-Arsip-"+time.Now().Format("2006-01-02"), headers, rows)
 	}
 }
 
@@ -2027,7 +2102,7 @@ func (h *ArsipHandler) ImportExcel(c *gin.Context) {
 			Uraian:      getCell(row, 5),
 			StatusArsip: "aktif",
 		}
-		
+
 		// Kolom 3: Kode Klasifikasi
 		if kkCode := getCell(row, 2); kkCode != "" {
 			var kk models.KodeKlasifikasi

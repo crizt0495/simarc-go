@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 )
 
@@ -23,9 +25,19 @@ type Config struct {
 	DBPass      string
 	// DBTLS controls the MySQL TLS mode: true, false, skip-verify, preferred.
 	// Empty means "preferred" (see internal/database.openDB).
-	DBTLS      string
-	SessionKey string
-	AppDebug   string
+	DBTLS string
+	// DBMode memilih lapisan storage: "mysql" (server/Vercel, perilaku lama)
+	// atau "local" (desktop offline-first: SQLite primer + sync ke MySQL pusat).
+	DBMode string
+	// Offline-first sync (hanya aktif saat DBMode=local)
+	SyncEnabled       bool
+	SyncInterval      int    // detik antar siklus sync
+	SyncPullFileBlobs bool   // ikut menarik isi lampiran saat pull
+	SyncFileMaxBytes  int64  // batas ukuran lampiran yang dikemas ke BLOB
+	SyncClientID      string // identitas node; WIFI untuk penggabungan riwayat
+	LocalSQLitePath   string // lokasi file SQLite lokal
+	SessionKey        string
+	AppDebug          string
 	// Institution header for PDF documents
 	AppInstitution    string
 	AppInstitutionSub string
@@ -96,6 +108,14 @@ func Load() {
 		DBPass:      dbPass,
 		DBTLS:       dbTLS,
 
+		DBMode:            strings.ToLower(getEnv("DB_MODE", "mysql")),
+		SyncEnabled:       getEnv("SYNC_ENABLED", "1") == "1",
+		SyncInterval:      envInt("SYNC_INTERVAL_SECS", 60),
+		SyncPullFileBlobs: getEnv("SYNC_PULL_FILE_BLOBS", "1") == "1",
+		SyncFileMaxBytes:  int64(envInt("SYNC_FILE_MAX_BYTES", 12582912)),
+		SyncClientID:      getEnv("SYNC_CLIENT_ID", ""),
+		LocalSQLitePath:   getEnv("SQLITE_PATH", ""),
+
 		SessionKey:        getEnv("SESSION_KEY", ""),
 		AppDebug:          getEnv("APP_DEBUG", "false"),
 		AppInstitution:    getEnv("APP_INSTITUTION", "PEMERINTAH KOTA PROBOLINGGO"),
@@ -160,6 +180,47 @@ func getEnv(key, fallback string) string {
 	}
 	return fallback
 }
+
+// envInt membaca env integer dengan fallback aman.
+func envInt(key string, fallback int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return fallback
+}
+
+// LocalDBPath mengembalikan lokasi file SQLite lokal. Default:
+// <DataDir>/simarc-local.db. Path ini menjadi database primer desktop
+// saat DB_MODE=local.
+func LocalDBPath() string {
+	if App.LocalSQLitePath != "" {
+		return App.LocalSQLitePath
+	}
+	if dd := DataDir(); dd != "" {
+		if err := os.MkdirAll(dd, 0755); err == nil {
+			return filepath.Join(dd, "simarc-local.db")
+		}
+	}
+	return "simarc-local.db"
+}
+
+// EnsureSyncClientID memastikan SYNC_CLIENT_ID tersedia: bila kosong,
+// membuat UUID baru, menyimpannya ke .env (persisten antar restart), dan
+// mengisi config.App.SyncClientID. Dipanggil saat boot mode local.
+func EnsureSyncClientID() {
+	if App.SyncClientID == "" {
+		App.SyncClientID = uuid.New().String()
+		if err := UpdateEnv(map[string]string{"SYNC_CLIENT_ID": App.SyncClientID}); err != nil {
+			log.Printf("[SYNC] Gagal menyimpan SYNC_CLIENT_ID ke .env: %v", err)
+		}
+	}
+}
+
+// IsLocalMode true saat aplikasi berjalan dengan database primer SQLite
+// (desktop offline-first).
+func IsLocalMode() bool { return App.DBMode == "local" || App.DBMode == "sqlite" }
 
 // EnvFilePath returns the path to the writable .env file.
 // Prefers the per-user data directory (desktop installed app), falling back

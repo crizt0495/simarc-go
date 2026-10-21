@@ -52,6 +52,7 @@ func registerRoutes(r *gin.Engine) {
 	premiumAPIH := &handlers.PremiumAPIHandler{}
 	ocrAdvH := &handlers.OcrAdvancedHandler{}
 	supervisionH := &handlers.ArchivalSupervisionHandler{}
+	syncH := &handlers.SyncHandler{}
 
 	// Root redirect
 	r.GET("/", middleware.CSRF(), handlers.ShowLogin)
@@ -77,6 +78,12 @@ func registerRoutes(r *gin.Engine) {
 	auth.Use(middleware.Auth())
 	{
 		auth.POST("/logout", handlers.Logout)
+
+		// ═══════════════════════════════════════════
+		// SINKRONISASI OFFLINE-FIRST
+		// ═══════════════════════════════════════════
+		auth.GET("/api/sync/status", syncH.Status)
+		auth.POST("/api/sync/run", syncH.Run)
 
 		// ═══════════════════════════════════════════
 		// DASHBOARD

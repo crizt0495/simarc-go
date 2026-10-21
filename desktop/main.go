@@ -34,6 +34,7 @@ import (
 
 	"arsippro/internal/app"
 	"arsippro/internal/config"
+	"arsippro/internal/desksync"
 	"arsippro/internal/handlers"
 
 	"github.com/gin-gonic/gin"
@@ -146,6 +147,11 @@ func main() {
 			log.Println("[desktop] frontend DOM ready")
 		},
 		OnShutdown: func(ctx context.Context) {
+			// Hentikan mesin sinkronisasi offline-first agar siklus tidak
+			// menulis saat proses berakhir.
+			if engine := desksync.Default(); engine != nil {
+				engine.Stop()
+			}
 			log.Println("[desktop] wails shutdown")
 		},
 

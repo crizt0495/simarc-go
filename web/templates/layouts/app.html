@@ -192,6 +192,10 @@ html, body { overflow-x: hidden; }
   </div>
 
   <div class="navbar-right">
+    <!-- Badge status sinkronisasi offline-first (diisi oleh sync-badge.js;
+         tersembunyi otomatis saat mode sinkronisasi tidak aktif) -->
+    <span id="syncStatusSlot"></span>
+
     <button class="nav-icon-btn" id="themeToggle" title="Toggle Dark Mode">
       <i class="bi bi-moon" id="themeIcon"></i>
     </button>
@@ -283,6 +287,7 @@ html, body { overflow-x: hidden; }
 <script src="/vendor/select2/select2.min.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/lazy-load.js" defer></script>
 <script src="/js/sidebar.js?v={{.AssetVersion}}" defer></script>
+<script src="/js/sync-badge.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/modal-manager.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/arsip-download.js?v={{.AssetVersion}}" defer></script>
 <script src="/js/ui-animations.js?v={{.AssetVersion}}" defer></script>

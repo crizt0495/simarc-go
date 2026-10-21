@@ -19,6 +19,7 @@ import (
 	"arsippro"
 	"arsippro/internal/config"
 	"arsippro/internal/database"
+	"arsippro/internal/desksync"
 	"arsippro/internal/handlers"
 	"arsippro/internal/middleware"
 	"arsippro/internal/services"
@@ -144,7 +145,24 @@ func Init() (*gin.Engine, error) {
 	}
 	log.Printf("Project root: %s", rootDir)
 
-	if err := database.Connect(); err != nil {
+	if config.IsLocalMode() {
+		// ── OFFLINE-FIRST (desktop) ────────────────────────────────────────
+		// SQLite lokal menjadi database primer: seluruh fitur aplikasi bekerja
+		// meski server pusat/WiFi mati. Kredensial DB_* dari .env kini berarti
+		// "database pusat" yang disinkron oleh mesin desksync di belakang.
+		localPath := config.LocalDBPath()
+		if err := database.ConnectSQLite(localPath); err != nil {
+			log.Printf("[ERROR] Gagal membuka database lokal %s: %v", localPath, err)
+			return nil, err
+		}
+		if err := database.MigrateLocal(); err != nil {
+			log.Printf("[WARN] Migrasi lokal: %v", err)
+		}
+		// Seed bootstrap (roles/admin/lokasi/jenis) TIDAK tercatat di outbox —
+		// tidak akan ter-push ke pusat.
+		database.SeedLocalBootstrap()
+		config.EnsureSyncClientID()
+	} else if err := database.Connect(); err != nil {
 		log.Printf("[WARN] Database tidak dapat dihubungkan: %v", err)
 		log.Printf("[WARN] Server tetap berjalan; halaman akan menampilkan error 503 hingga koneksi database pulih.")
 	} else {
@@ -157,6 +175,20 @@ func Init() (*gin.Engine, error) {
 	}
 	middleware.InitSession()
 	services.InitQueue(3, services.ProcessJob)
+
+	// Mesin sinkronisasi offline-first (hanya mode local & SYNC_ENABLED=1).
+	// Siklus pertama dijalankan langsung agar akun & katalog pusat segera
+	// tersedia, tanpa menunggu interval.
+	if database.IsSQLite && config.App.SyncEnabled {
+		engine := desksync.FromConfig()
+		desksync.SetDefault(engine)
+		go func() {
+			if err := engine.BootstrapSync(120 * time.Second); err != nil {
+				log.Printf("[SYNC] Sinkronisasi awal: %v", err)
+			}
+			engine.Start()
+		}()
+	}
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -344,6 +376,16 @@ func recoveryGuard(r *gin.Engine) {
 			return
 		}
 		lastAttempt = time.Now()
+		if config.IsLocalMode() {
+			// Mode offline-first: database lokal SQLite selalu tersedia; bila
+			// gagal dibuka sesaat di cold start, coba lagi di sini.
+			if err := database.ConnectSQLite(config.LocalDBPath()); err == nil {
+				log.Println("[INFO] Database lokal tersambung kembali (self-heal)")
+				database.MigrateLocal()
+				database.SeedLocalBootstrap()
+			}
+			return
+		}
 		if err := database.Connect(); err == nil {
 			log.Println("[INFO] Database tersambung kembali (self-heal)")
 			database.Migrate()

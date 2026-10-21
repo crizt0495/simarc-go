@@ -216,11 +216,18 @@ func (s *QrCodeService) GenerateForLokasi(lokasiID string) (*models.QrCode, erro
 type BlockchainAuditService struct{}
 
 func (s *BlockchainAuditService) RecordAudit(entityType, entityID, action string, data interface{}, userID string, ipAddress, userAgent string) error {
+	return s.RecordAuditOn(database.DB, entityType, entityID, action, data, userID, ipAddress, userAgent)
+}
+
+// RecordAuditOn menulis blok audit ke rantai pada koneksi `db` yang diberikan.
+// Mesin sinkronisasi offline-first memakai ini untuk menggabungkan jejak
+// perubahan klien ke rantai di database pusat.
+func (s *BlockchainAuditService) RecordAuditOn(db *gorm.DB, entityType, entityID, action string, data interface{}, userID string, ipAddress, userAgent string) error {
 	dataBytes, _ := json.Marshal(data)
 	details := string(dataBytes)
-	
+
 	var prev models.BlockchainAudit
-	database.DB.Order("block_number DESC").First(&prev)
+	db.Order("block_number DESC").First(&prev)
 
 	blockNumber := uint64(1)
 	if prev.BlockNumber > 0 {
@@ -252,7 +259,7 @@ func (s *BlockchainAuditService) RecordAudit(entityType, entityID, action string
 		UserAgent:    userAgent,
 		IsValid:      true,
 	}
-	return database.DB.Create(&audit).Error
+	return db.Create(&audit).Error
 }
 
 
