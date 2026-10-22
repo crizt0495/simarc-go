@@ -380,9 +380,62 @@ database `simarc`, user `simarc_sync`, TLS `preferred`) dan `SYNC_HUB_URL` ke
 `http://192.168.1.86:8080`. Komputer hub tidak perlu ikut menyinkron, tetapi
 mengaktifkan `SYNC_HUB_DB_*` di hub (seperti sekarang) juga tidak masalah.
 
-Setelah itu buka **Pengaturan → Sinkronisasi → Sinkronkan Sekarang** untuk
-menjalankan sinkronisasi sekali secara manual; selanjutnya berjalan otomatis
-tiap `SYNC_INTERVAL_MINUTES` (default 15 menit).
+---
+
+## 10. Mode Offline-First untuk komputer client
+
+Karena klien memakai **database kecil (SQLite) per PC** dan sinkronisasi berjalan
+di latar belakang, tidak ada **sama sekali** kata "menunggu server" di klien:
+
+- **Buka aplikasi → langsung bisa dipakai.** Aplikasi membuka jendela segera
+  setelah database lokal siap (dengan seed awal: admin, lokasi, jenis arsip).
+  Sinkronisasi ke hub berjalan di latar belakang tanpa menahan jendela.
+- **Server/WiFi mati → tetap bisa input arsip.** Semua input baru (arsip,
+  klasifikasi, unit kerja) ditulis ke database SQLite lokal. Statusnya tetap
+  tersedia, browsing arsip lokal tetap cepat, dan unggah berkas disimpan secara
+  lokal.
+- **Server/WiFi kembali hidup → otomatis menyatu.** Setiap
+  `SYNC_INTERVAL_MINUTES` (default 15 menit) aplikasi mencoba sinkronisasi ke
+  hub: dorong perubahan lokal, tarik perubahan komputer lain, dan perbarui
+  `updated_at`. Ini berjalan di latar belakang tanpa perlu klik tombol.
+- **Sinkron manual kapan saja:** buka **Pengaturan → Sinkronisasi →
+  Sinkronkan Sekarang** untuk memaksa penyatuan segera.
+
+Contoh `.env` untuk komputer client (SQLite, tanpa MySQL):
+
+```dotenv
+# Database lokal komputer ini (per-PC)
+DB_DRIVER=sqlite
+DB_PATH=storage/simarc.db
+
+# Aktifkan sinkronisasi otomatis ke hub
+SYNC_ENABLED=true
+SYNC_NODE_ID=komputer-front-office   # WAJIB berbeda tiap komputer
+SYNC_INTERVAL_MINUTES=15
+
+# Hub (sama untuk semua klien) — alamat aplikasi hub di LAN
+SYNC_HUB_URL=http://192.168.1.86:8080
+SYNC_HUB_TOKEN=<rahasia bersama>
+
+# Hub database (Aiven atau MySQL kantor) — titik temu data
+SYNC_HUB_DB_HOST=mysql-1d4b6727-christwnto-b045.b.aivencloud.com
+SYNC_HUB_DB_PORT=19160
+SYNC_HUB_DB_NAME=simarc_hub
+SYNC_HUB_DB_USER=avnadmin
+SYNC_HUB_DB_PASS=...
+SYNC_HUB_DB_TLS=required
+```
+
+### Berkas arsip (PDF/gambar) di mode offline-first
+
+Berkas disimpan di `storage/app/uploads` lokal terlebih dahulu, lalu disalin ke
+aplikasi hub (port `8080`) saat sinkromatrik berkas aktif dan hub terjangkau.
+Bila hub mati, berkas tetap tersimpan lokal dan tersalin saat hub kembali
+hidup.
+
+> Ringkas: komputer client = SQLite lokal + sinkron otomatis ke hub saat online.
+> Tidak ada tombol "hubungkan", tidak ada layar "menunggu server", dan aplikasi
+> selalu bisa dibuka.
 
 ### Catatan berkas hub LAN (komputer ini)
 
