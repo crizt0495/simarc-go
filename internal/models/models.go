@@ -65,6 +65,22 @@ type PermissionRole struct {
 	RoleID       string `gorm:"type:char(36);not null" json:"role_id"`
 }
 
+// BeforeCreate memberi UUID bila kolom id belum diisi. Relasi many2many
+// Role.Permissions memakai model ini sebagai tabel penghubung, jadi setiap
+// baris pivot wajib punya id sendiri: primary key harus UUID agar baris bisa
+// disinkronkan antar komputer tanpa bentrok.
+func (pr *PermissionRole) BeforeCreate(tx *gorm.DB) error {
+	if pr.ID == "" {
+		pr.ID = uuid.New().String()
+	}
+	return nil
+}
+
+// TableName mengunci nama tabel penghubung pada bentuk jamak-tunggal
+// "permission_role". Tanpa ini GORM menamainya "permission_roles" dan tabel
+// itu terpisah dari tabel yang dipakai server MySQL serta hub.
+func (PermissionRole) TableName() string { return "permission_role" }
+
 // ── UNIT KERJA ────────────────────────────────────────────────────────────────
 
 type UnitKerja struct {

@@ -856,5 +856,8 @@ func ensurePermissionRoleIdColumn() {
 	}
 	run("DELETE FROM sync_keys WHERE table_name = 'permission_role'")
 	run("DELETE FROM sync_state WHERE table_name = 'permission_role'")
+	// Tombstone dengan bentuk kunci lama (komposit) kini tidak bisa
+	// ditafsirkan dan hanya mengkerjakan data yang sah — buang.
+	run("DELETE FROM sync_tombstones WHERE table_name = 'permission_role'")
 	log.Println("[MIGRASI] Menambah kolom id ke tabel permission_role")
 }

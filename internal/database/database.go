@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"arsippro/internal/config"
+	"arsippro/internal/models"
 
 	gosqlite "github.com/glebarez/go-sqlite"
 	sqlitedrv "github.com/glebarez/sqlite"
@@ -45,6 +46,7 @@ func Connect() error {
 			return err
 		}
 		DB = db
+		setupJoinTables(db)
 		log.Printf("Database SQLite terhubung: %s", config.App.DBPath)
 		return nil
 	}
@@ -53,8 +55,24 @@ func Connect() error {
 		return err
 	}
 	DB = db
+	setupJoinTables(db)
 	log.Println("Database connected successfully")
 	return nil
+}
+
+// setupJoinTables mendaftarkan model tabel penghubung untuk relasi
+// many2many.
+//
+// Tanpa ini GORM memakai tabel penghubung anonim yang hanya punya dua kolom
+// (role_id, permission_id) dan primary key komposit. Model PermissionRole
+// memakai UUID `id` sebagai primary key — bentuk yang dipakai server MySQL dan
+// hub — supaya baris pivot bisa disinkronkan antar komputer. Dengan model
+// yang terdaftar, GORM memakai kolom `id` (dan hook BeforeCreate) saat menulis
+// tabel penghubung.
+func setupJoinTables(db *gorm.DB) {
+	if err := db.SetupJoinTable(&models.Role{}, "Permissions", &models.PermissionRole{}); err != nil {
+		log.Println("[MIGRASI] Gagal mendaftarkan tabel penghubung permission_role:", err)
+	}
 }
 
 var sqliteFuncsOnce sync.Once

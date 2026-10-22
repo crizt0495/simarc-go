@@ -148,6 +148,21 @@ func strategyFor(t *tableInfo) (strategy, bool) {
 	return stratKeyed, true
 }
 
+// loadTableFor loads the shape of a single table from the given database,
+// resolving the schema name automatically. It is used to inspect the *hub's*
+// own table definition, which can differ from the local one (for example when
+// a client still runs an older schema).
+func loadTableFor(ctx context.Context, db *sql.DB, driver, name string) (*tableInfo, error) {
+	if driver == driverSQLite {
+		return loadTableSQLite(ctx, db, name)
+	}
+	var schema string
+	if err := db.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&schema); err != nil {
+		return nil, err
+	}
+	return loadTable(ctx, db, schema, name)
+}
+
 // loadTables introspects every base table in the given database.
 func loadTables(ctx context.Context, db *sql.DB, driver string) (map[string]*tableInfo, error) {
 	if driver == driverSQLite {

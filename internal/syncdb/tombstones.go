@@ -104,23 +104,33 @@ func currentKeys(ctx context.Context, db *sql.DB, ti *tableInfo) (map[string]str
 	return out, rows.Err()
 }
 
-// loadShadowKeys returns the key snapshot stored for a table in sync_keys.
-func loadShadowKeys(ctx context.Context, db *sql.DB, table string) (map[string]string, error) {
+// pkSignature returns a stable signature of a table's primary-key columns.
+// It changes when the PK shape changes (e.g. a composite key becoming a UUID
+// `id`), which invalidates any previous key snapshot.
+func pkSignature(ti *tableInfo) string {
+	return strings.Join(ti.PK, ",")
+}
+
+// loadShadowKeys returns the key snapshot stored for a table in sync_keys
+// along with the PK signature it was captured under ("" when absent).
+func loadShadowKeys(ctx context.Context, db *sql.DB, table string) (map[string]string, string, error) {
 	rows, err := db.QueryContext(ctx,
-		`SELECT key_hash, key_json FROM sync_keys WHERE table_name = ?`, table)
+		`SELECT key_hash, key_json, COALESCE(pk_sig,'') FROM sync_keys WHERE table_name = ?`, table)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer rows.Close()
 	out := make(map[string]string)
+	sig := ""
 	for rows.Next() {
-		var h, j string
-		if err := rows.Scan(&h, &j); err != nil {
-			return nil, err
+		var h, j, s string
+		if err := rows.Scan(&h, &j, &s); err != nil {
+			return nil, "", err
 		}
 		out[h] = j
+		sig = s
 	}
-	return out, rows.Err()
+	return out, sig, rows.Err()
 }
 
 // upsertTombstone writes one tombstone using the destination dialect.
@@ -150,9 +160,37 @@ func detectDeletes(ctx context.Context, db *sql.DB, driver string, ti *tableInfo
 	if err != nil {
 		return 0, err
 	}
-	prev, err := loadShadowKeys(ctx, db, ti.Name)
+	prev, prevSig, err := loadShadowKeys(ctx, db, ti.Name)
 	if err != nil {
 		return 0, err
+	}
+
+	// Bila bentuk primary key berubah (mis. PK komposit lama menjadi UUID
+	// `id`), snapshot lama TIDAK BISA dibandingkan: setiap kunci lama akan
+	// tampak "hilang" sehingga menghasilkan tombstone palsu yang lalu menyebar
+	// ke node lain dan menghapus baris yang masih sah. Saat itu terjadi, buang
+	// snapshot lama DAN tombstone lama untuk tabel ini, lalu mulai dari nol.
+	sig := pkSignature(ti)
+	if len(prev) > 0 && prevSig != "" && prevSig != sig {
+		if _, err := db.ExecContext(ctx, `DELETE FROM sync_keys WHERE table_name = ?`, ti.Name); err != nil {
+			return 0, err
+		}
+		if _, err := db.ExecContext(ctx, `DELETE FROM sync_tombstones WHERE table_name = ?`, ti.Name); err != nil {
+			return 0, err
+		}
+		prev = map[string]string{}
+	}
+
+	// Snapshot entries whose key has a different number of values than the
+	// current primary key come from a different PK shape (e.g. the old
+	// composite role_id+permission_id key). They must NOT become tombstones:
+	// the tombstone would travel to the hub and delete rows that are still
+	// valid there. Drop them and start the snapshot from the current shape.
+	for h, j := range prev {
+		vals, err := unmarshalKey(j)
+		if err != nil || len(vals) != len(ti.PK) {
+			delete(prev, h)
+		}
 	}
 
 	now := time.Now()
@@ -171,7 +209,7 @@ func detectDeletes(ctx context.Context, db *sql.DB, driver string, ti *tableInfo
 	if _, err := db.ExecContext(ctx, `DELETE FROM sync_keys WHERE table_name = ?`, ti.Name); err != nil {
 		return 0, err
 	}
-	if err := refreshShadow(ctx, db, ti.Name, cur); err != nil {
+	if err := refreshShadow(ctx, db, ti.Name, sig, cur); err != nil {
 		return 0, err
 	}
 	return deleted, nil
@@ -179,12 +217,12 @@ func detectDeletes(ctx context.Context, db *sql.DB, driver string, ti *tableInfo
 
 // refreshShadow rewrites the key snapshot for one table using chunked multi-row
 // INSERTs (a per-key insert over the pool's single connection is too slow).
-func refreshShadow(ctx context.Context, db *sql.DB, table string, keys map[string]string) error {
-	const perStmt = 500 // 3 placeholders each; stays far under MySQL's 65k limit
-	cols := 3
+func refreshShadow(ctx context.Context, db *sql.DB, table, pkSig string, keys map[string]string) error {
+	const perStmt = 500 // 4 placeholders each; stays far under MySQL's 65k limit
+	cols := 4
 	rows := make([][]any, 0, len(keys))
 	for h, j := range keys {
-		rows = append(rows, []any{table, h, j})
+		rows = append(rows, []any{table, h, j, pkSig})
 	}
 	for start := 0; start < len(rows); start += perStmt {
 		end := start + perStmt
@@ -193,13 +231,13 @@ func refreshShadow(ctx context.Context, db *sql.DB, table string, keys map[strin
 		}
 		chunk := rows[start:end]
 		var b strings.Builder
-		b.WriteString("INSERT INTO sync_keys (table_name, key_hash, key_json) VALUES ")
+		b.WriteString("INSERT INTO sync_keys (table_name, key_hash, key_json, pk_sig) VALUES ")
 		args := make([]any, 0, len(chunk)*cols)
 		for i, r := range chunk {
 			if i > 0 {
 				b.WriteString(",")
 			}
-			b.WriteString("(?,?,?)")
+			b.WriteString("(?,?,?,?)")
 			args = append(args, r...)
 		}
 		if _, err := db.ExecContext(ctx, b.String(), args...); err != nil {
@@ -211,7 +249,12 @@ func refreshShadow(ctx context.Context, db *sql.DB, table string, keys map[strin
 
 // copyTombstones synchronises locally known tombstones for one table to a
 // remote database (used to send this run's fresh deletions to the hub).
-func copyTombstones(ctx context.Context, src, dst *sql.DB, table, srcDriver, dstDriver string) error {
+//
+// keyCount, when greater than zero, restricts the copy to tombstones whose key
+// has exactly that many values. It protects the hub from a node whose local
+// schema still uses an outdated primary-key shape: those tombstones refer to
+// rows the hub does not even know about.
+func copyTombstones(ctx context.Context, src, dst *sql.DB, table, srcDriver, dstDriver string, keyCount int) error {
 	rows, err := src.QueryContext(ctx,
 		`SELECT key_hash, key_json, deleted_at, updated_at
 		 FROM sync_tombstones WHERE table_name = ?`, table)
@@ -225,12 +268,71 @@ func copyTombstones(ctx context.Context, src, dst *sql.DB, table, srcDriver, dst
 		if err := rows.Scan(&h, &j, &deletedAt, &updatedAt); err != nil {
 			return err
 		}
+		if keyCount > 0 {
+			vals, verr := unmarshalKey(j)
+			if verr != nil || len(vals) != keyCount {
+				continue
+			}
+		}
 		_ = srcDriver
 		if err := upsertTombstone(ctx, dst, dstDriver, table, h, j, deletedAt, updatedAt); err != nil {
 			return err
 		}
 	}
 	return rows.Err()
+}
+
+// purgeStaleTombstones removes tombstone rows whose key no longer matches the
+// current primary-key shape of the table they belong to.
+//
+// Such rows are leftovers from an older schema (for example permission_role
+// used to be keyed by role_id+permission_id and now uses a surrogate UUID
+// `id`). Keeping them is dangerous: as soon as a node with the old shape
+// applies them, valid rows are deleted — and they spread to every other node
+// through the hub.
+//
+// Returns the number of purged rows.
+func purgeStaleTombstones(ctx context.Context, db *sql.DB, driver string, tables map[string]*tableInfo) (int, error) {
+	if len(tables) == 0 {
+		return 0, nil
+	}
+	rows, err := db.QueryContext(ctx, `SELECT table_name, key_hash, key_json FROM sync_tombstones`)
+	if err != nil {
+		return 0, err
+	}
+	type stale struct {
+		table string
+		hash  string
+	}
+	var victims []stale
+	for rows.Next() {
+		var table, hash, keyJSON string
+		if err := rows.Scan(&table, &hash, &keyJSON); err != nil {
+			rows.Close()
+			return 0, err
+		}
+		ti, ok := tables[table]
+		if !ok || len(ti.PK) == 0 {
+			continue // unknown table: leave it alone
+		}
+		vals, verr := unmarshalKey(keyJSON)
+		if verr != nil || len(vals) != len(ti.PK) {
+			victims = append(victims, stale{table: table, hash: hash})
+		}
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	purged := 0
+	for _, v := range victims {
+		if _, err := db.ExecContext(ctx,
+			`DELETE FROM sync_tombstones WHERE table_name = ? AND key_hash = ?`, v.table, v.hash); err != nil {
+			return purged, err
+		}
+		purged++
+	}
+	return purged, nil
 }
 
 // applyTombstones deletes rows of a keyed table that have a tombstone, unless

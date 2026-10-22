@@ -227,6 +227,70 @@ Setelah perbaikan, klien baru menarik **seluruh** arsip dari hub.
 
 ---
 
+## 4c. Perbaikan penting: bentuk primary key `permission_role` & racun tombstone
+
+**Gejala:** hak akses (relasi role ↔ permission) hilang di hub, tabel
+`permission_role` kosong di server, dan setiap sinkronisasi "mengasaki" lagi
+baris yang sebenarnya masih sah. Tombstone lama juga terus berdatangan sendiri
+ke hub padahal tidak ada yang menghapus data.
+
+**Sebab (berantai):**
+
+1. Relasi `Role.Permissions` memakai `gorm:"many2many:permission_role;"`.
+   Tanpa model tabel penghubung yang terdaftar, GORM membuat tabel
+   `permission_role` dengan **primary key komposit** `(role_id, permission_id)`.
+2. Server MySQL dan hub memakai **UUID `id` sebagai primary key tunggal**
+   (hasil migrasi `ensurePermissionRoleIdColumn`).
+3. Akibatnya bentuk kunci berbeda antar node. Tombstone yang dibuat node
+   dengan bentuk lama berisi **2 nilai** (`role_id`, `permission_id`), dan
+   `applyTombstones` menerapkannya ke hub memakai **bentuk PK node itu juga** —
+   bukan bentuk PK hub. Semua 808 baris `permission_role` yang sah di hub
+   terhapus, dan tombstonerongganya ikut menyeberang ke semua node lain.
+
+**Perbaikan (4 lapis):**
+
+| Lapis | Tindakan | Lokasi |
+|---|---|---|
+| 1 | Tabel penghubung didaftarkan lewat `SetupJoinTable(&models.Role{}, "Permissions", &models.PermissionRole{})` sehingga GORM memakai model `PermissionRole` (UUID `id`) | `internal/database/database.go` |
+| 2 | `PermissionRole` punya `BeforeCreate` (isi UUID) dan `TableName()` agar tabel bernama `permission_role` (bukan jamak) | `internal/models/models.go` |
+| 3 | Migrasi SQLite rebuild `permission_role` ke bentuk kanonis (`id` PK + `created_at`/`updated_at`) bila masih komposit, lalu membuang `sync_keys`/`sync_tombstones`/`sync_state` lama | `internal/database/migrate_sqlite.go` |
+| 4 | Mesin sinkron jadi shape-aware: `detectDeletes` membuang entri snapshot yang jumlah nilainya ≠ jumlah kolom PK; `purgeStaleTombstones` menghapus tombstone yang bentuk kuncinya tak cocok dengan PK tabelnya (lokal **dan** hub, memakai skema masing-masing); `applyTombstones` ke hub memakai **bentuk PK hub sendiri**; `copyTombstones` hanya meneruskan tombstone yang panjang kuncinya cocok | `internal/syncdb/tombstones.go`, `internal/syncdb/engine.go` |
+
+**Bentuk kanonis `permission_role` (WAJIB sama di server, hub, dan semua klien):**
+
+```sql
+CREATE TABLE permission_role (
+  id            char(36) NOT NULL PRIMARY KEY,   -- UUID
+  permission_id char(36) NOT NULL,
+  role_id       char(36) NOT NULL,
+  created_at    datetime NULL,
+  updated_at    datetime NULL,
+  UNIQUE KEY (permission_id, role_id)
+);
+```
+
+> **Jangan** mengubah `permission_role` kembali ke primary key komposit.
+> Bentuk komposit membuat tombstone antar node tidak bisa dibandingkan dan
+> berulang kali menghapus hak akses yang sah.
+
+**Proteksi berlapis** sekarang ada di mesin sinkron, sehingga node dengan
+skema lama tidak lagi bisa merusak hub:
+
+- tombstone dengan jumlah kunci ≠ jumlah kolom PK tabel → dibuang otomatis
+  (sebelum tabel apa pun disinkronkan);
+- node yang skemanya beda tetap boleh menyalin baris, tetapi **tidak boleh**
+  meneruskan atau menerapkan tombstone dengan bentuk yang tidak cocok.
+
+**Klien yang sudah terpasang** diperbaiki otomatis: begitu aplikasi build
+terbaru dibuka, migrasi SQLite mengubah `permission_role` ke bentuk kanonis
+dan data diambil ulang dari hub pada sinkronisasi berikutnya.
+
+> Dampak: penginstal sebelum perbaikan ini bisa membuat klien dengan
+> `permission_role` kosong (hak akses tidak tampil). Pasang ulang dengan
+> `SIMARC-Setup.exe` terbaru bila menemui gejala ini.
+
+---
+
 ## 5. Batasan (v1) — penting
 
 1. **Empat tabel dulu tidak ikut karena PK `AUTO_INCREMENT`.** Beberapa node

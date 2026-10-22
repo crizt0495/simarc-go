@@ -1097,7 +1097,6 @@ func (h *ArsipHandler) MoveLocation(c *gin.Context) {
 	})
 }
 
-
 func (h *ArsipHandler) History(c *gin.Context) {
 	var arsip models.Arsip
 	if err := database.DB.Preload("KodeKlasifikasi").Preload("UnitKerja").First(&arsip, "id = ?", c.Param("id")).Error; err != nil {

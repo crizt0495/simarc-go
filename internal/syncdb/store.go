@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -38,6 +39,7 @@ func ensureLocalSyncTables(ctx context.Context, db *sql.DB, driver string) error
 				table_name TEXT NOT NULL,
 				key_hash TEXT NOT NULL,
 				key_json TEXT NOT NULL,
+				pk_sig TEXT NOT NULL DEFAULT '',
 				PRIMARY KEY (table_name, key_hash)
 			)`,
 			`CREATE TABLE IF NOT EXISTS sync_tombstones (
@@ -54,6 +56,14 @@ func ensureLocalSyncTables(ctx context.Context, db *sql.DB, driver string) error
 			if _, err := db.ExecContext(ctx, q); err != nil {
 				return err
 			}
+		}
+		// Basis data lama (sebelum pk_sig ada) perlu kolom ini; SQLite tidak
+		// punya "ADD COLUMN IF NOT EXISTS", jadi galat "duplicate column"
+		// diabaikan.
+		if _, aerr := db.ExecContext(ctx,
+			`ALTER TABLE sync_keys ADD COLUMN pk_sig TEXT NOT NULL DEFAULT ''`); aerr != nil &&
+			!strings.Contains(strings.ToLower(aerr.Error()), "duplicate") {
+			_ = aerr
 		}
 		return nil
 	}
@@ -93,10 +103,20 @@ func ensureLocalSyncTables(ctx context.Context, db *sql.DB, driver string) error
 		table_name VARCHAR(64) NOT NULL,
 		key_hash CHAR(64) NOT NULL,
 		key_json VARCHAR(1024) NOT NULL,
+		pk_sig VARCHAR(255) NOT NULL DEFAULT '',
 		PRIMARY KEY (table_name, key_hash)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
 	if err != nil {
 		return err
+	}
+	// Tabel lama (sebelum pk_sig ada) perlu kolom ini; MySQL tidak punya
+	// "ADD COLUMN IF NOT EXISTS", jadi galat "duplicate column" diabaikan.
+	if _, aerr := db.ExecContext(ctx,
+		`ALTER TABLE sync_keys ADD COLUMN pk_sig VARCHAR(255) NOT NULL DEFAULT ''`); aerr != nil &&
+		!strings.Contains(strings.ToLower(aerr.Error()), "duplicate") {
+		// Bukan galat fatal: sinkron tetap jalan tanpa proteksi bentuk PK.
+		// Tetap lanjut agar tidak memblokir aplikasi.
+		_ = aerr
 	}
 
 	// sync_tombstones records hard deletions of keyed-table rows. Unlike

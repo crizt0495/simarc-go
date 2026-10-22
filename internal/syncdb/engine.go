@@ -251,6 +251,26 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 			(orderKey(names[i]) == orderKey(names[j]) && names[i] < names[j])
 	})
 
+	// Tombstone yang bentuk primary key-nya sudah tidak cocok dengan tabelnya
+	// (skema lama) harus dibuang SEBELUM tabel apa pun disinkronkan. Kalau
+	// tidak, node yang masih memakai skema lama akan meneruskannya ke hub dan
+	// menghapus baris yang masih sah di sana.
+	if n, err := purgeStaleTombstones(ctx, e.local, e.localDriver, e.tables); err != nil {
+		e.logf("[sync] gagal membersihkan tombstone usang di lokal: %v", err)
+	} else if n > 0 {
+		e.logf("[sync] %d tombstone usang dibuang dari lokal", n)
+	}
+	// Di sisi hub, patokan bentuk primary key diambil dari skema hub sendiri,
+	// bukan dari node ini: node dengan skema lama tidak boleh menentukan
+	// mana tombstone yang "usang" di hub.
+	if hubTables, err := loadTables(ctx, e.hub, e.hubDriver); err != nil {
+		e.logf("[sync] gagal membaca skema hub untuk pembersihan tombstone: %v", err)
+	} else if n, err := purgeStaleTombstones(ctx, e.hub, e.hubDriver, hubTables); err != nil {
+		e.logf("[sync] gagal membersihkan tombstone usang di hub: %v", err)
+	} else if n > 0 {
+		e.logf("[sync] %d tombstone usang dibuang dari hub", n)
+	}
+
 	for _, name := range names {
 		ti := e.tables[name]
 		strat, ok := strategyFor(ti)
@@ -368,11 +388,26 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 		e.logf("[sync] %s: %d penghapusan permanen terdeteksi", ti.Name, n)
 	}
 
-	// 2. Send tombstones to the hub and apply them there.
-	if err := copyTombstones(ctx, e.local, e.hub, ti.Name, e.localDriver, e.hubDriver); err != nil {
-		return fmt.Errorf("kirim tombstone ke hub: %w", err)
+	// Bentuk primary key di hub bisa berbeda dari lokal bila node ini masih
+	// memakai skema lama (mis. permission_role: PK komposit lama vs UUID `id`).
+	// Tombstone harus mengikuti bentuk PK masing-masing sisi, kalau tidak
+	// tombstone lama bisa menghapus baris yang masih sah di hub.
+	hubTI, err := loadTableFor(ctx, e.hub, e.hubDriver, ti.Name)
+	if err != nil {
+		return fmt.Errorf("bentuk tabel %s di hub: %w", ti.Name, err)
 	}
-	if n, err := applyTombstones(ctx, e.hub, ti); err != nil {
+	if len(hubTI.PK) != len(ti.PK) {
+		e.logf("[sync] %s: bentuk PK lokal (%s) berbeda dari hub (%s) — propagasi tombstone dilewati",
+			ti.Name, strings.Join(ti.PK, "+"), strings.Join(hubTI.PK, "+"))
+	}
+
+	// 2. Send tombstones to the hub and apply them there.
+	if len(hubTI.PK) == len(ti.PK) {
+		if err := copyTombstones(ctx, e.local, e.hub, ti.Name, e.localDriver, e.hubDriver, len(hubTI.PK)); err != nil {
+			return fmt.Errorf("kirim tombstone ke hub: %w", err)
+		}
+	}
+	if n, err := applyTombstones(ctx, e.hub, hubTI); err != nil {
 		return fmt.Errorf("terapkan tombstone di hub: %w", err)
 	} else if n > 0 {
 		e.logf("[sync] %s: %d baris dihapus di hub oleh tombstone", ti.Name, n)
