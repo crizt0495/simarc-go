@@ -4,7 +4,12 @@ Panduan ini dipakai untuk membuktikan `SIMARC-Setup.exe` berjalan **tanpa error*
 di komputer Windows sungguhan (bukan Wine).
 
 File yang diuji: `SIMARC-Setup.exe`
-SHA-256: `efea81307468cdc39be360f010b37ca4ac884b49661846fc7f43da02ef4521b1`
+SHA-256: `851a5f319dd513c39ec0609d44e327be2d4706de5cb5e07ed792f976c8258cd4`
+
+> **Instalasi baru memakai database lokal SQLite** (`%LocalAppData%\SIMARC\storage\simarc.db`),
+> jadi tidak perlu MySQL/MariaDB sama sekali dan tetap bisa dipakai tanpa jaringan.
+> MariaDB portabel **hanya** diekstrak bila `.env` komputer itu memang memakai
+> MySQL (instalasi lama, `MODE=mysql` di `simarc-install.txt`).
 
 ---
 
@@ -39,7 +44,10 @@ khas installer Windows (bukan CMD):
 
 1. Jendela **“SIMARC - Progres Instalasi”** tampil selama pemasangan.
 2. Aplikasi disalin ke `%LocalAppData%\SIMARC`.
-3. MariaDB portabel diekstrak (mode offline mandiri, port database 3307).
+3. Database lokal **SQLite** disiapkan (tanpa MariaDB; berkasnya dibuat otomatis
+   di `storage\simarc.db` saat aplikasi pertama kali dijalankan). Bila `.env`
+   komputer ini memakai MySQL (instalasi lama), MariaDB portabel diekstrak
+   seperti sebelumnya (port database 3307).
 4. `.env` dibuat lengkap: mode offline + sinkronisasi Aiven (`simarc-hub`) +
    simpul (`SYNC_NODE_ID`) otomatis.
 5. Shortcut Desktop + Start Menu dibuat.
