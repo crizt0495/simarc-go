@@ -185,6 +185,10 @@ func Init() (*gin.Engine, error) {
 	} else {
 		if err := database.Migrate(); err != nil {
 			log.Printf("[WARN] Migration error: %v", err)
+			// Offline-first: jangan biarkan UI tertahan di halaman "Menyiapkan
+			// data" selamanya. Buka aplikasi; galat database akan tampil wajar
+			// bila memang ada masalah.
+			ready.Store(true)
 		} else {
 			seedBaseline()
 		}
@@ -225,37 +229,40 @@ func Init() (*gin.Engine, error) {
 //     seeding, because seeding local rows (new random UUIDs) would be pushed to
 //     the hub and duplicate the roles/users/locations on every computer.
 //
-// Offline-first: the local database is always the working copy. The app never
-// waits for the hub to be reachable — if the hub cannot be reached the local
-// seed is used and the background scheduler synchronises once it is back.
+// Offline-first: the local database is always the working copy. The app NEVER
+// waits for the hub — the window opens immediately (ready is set right away)
+// and ALL hub work (probe + baseline pull, or local seed) happens in the
+// background. When the hub is unreachable (WiFi/office server down) the user
+// still gets a fully usable app; there is no "menunggu server" state.
 func seedBaseline() {
+	// Buka aplikasi SEKARANG. Jangan tahan jendela untuk hub apa pun.
+	ready.Store(true)
+
 	syncCfg := config.LoadSync()
 	if syncCfg.Active() && !database.HasUsers() {
-		// Jangan tahan server: login dibuka begitu data pengguna tersedia.
+		// Instalasi baru + sinkron aktif: putuskan di latar belakang apakah
+		// menarik baseline hub atau memakai seed lokal (menghindari duplikat).
 		go bootstrapFromHub(syncCfg)
 		return
 	}
 	database.SeedIfNeeded()
-	ready.Store(true)
 }
 
 // bootstrapFromHub mengisi database lokal yang masih kosong.
 //
-// Bila hub berisi data, baseline ditarik di latar belakang. Halaman login
-// dibuka lebih awal — begitu tabel pengguna terisi — sehingga pengguna tidak
-// perlu menunggu seluruh arsip (puluhan ribu baris) selesai ditarik. Sisa tabel
-// (arsip, berkas, log) menyusul di latar belakang dan tetap disinkronkan oleh
-// scheduler bila tarikan terputus.
+// Aplikasi sudah terbuka sebelum fungsi ini berjalan (lihat seedBaseline). Bila
+// hub berisi data, baseline ditarik; bila hub kosong atau tidak terjangkau,
+// data lokal di-seed. Karena UI tidak menunggu, tidak ada jeda "menyiapkan
+// data" akibat hub yang lambat/mati.
 func bootstrapFromHub(syncCfg config.SyncConfig) {
-	defer ready.Store(true)
-
 	// Cek hub dengan batas singkat: instalasi harus tetap bisa dipakai saat
-	// internet/WiFi mati.
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	// internet/WiFi mati. Karena aplikasi tidak menunggu, batas ini hanya
+	// membatasi kerja latar belakang.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	has, err := syncdb.HubHasUsers(ctx, syncCfg)
 	cancel()
 	if err != nil {
-		log.Printf("[sync] hub tidak terjangkau (%v) — aplikasi langsung memakai data lokal", err)
+		log.Printf("[sync] hub tidak terjangkau (%v) — memakai data lokal; sinkron menyusul otomatis", err)
 		database.SeedIfNeeded()
 		return
 	}
@@ -267,33 +274,15 @@ func bootstrapFromHub(syncCfg config.SyncConfig) {
 
 	syncdb.MarkBaselineRunning(true)
 	defer syncdb.MarkBaselineRunning(false)
-	log.Println("[sync] hub berisi data — menarik baseline; login dibuka setelah data pengguna tersedia")
+	log.Println("[sync] hub berisi data — menarik baseline di latar belakang (aplikasi tetap dapat dipakai)")
 
-	// Buka aplikasi begitu tabel users sudah terisi dari hub, tanpa menunggu
-	// seluruh tabel selesai.
-	stop := make(chan struct{})
-	go func() {
-		t := time.NewTicker(500 * time.Millisecond)
-		defer t.Stop()
-		for {
-			select {
-			case <-stop:
-				return
-			case <-t.C:
-				if database.HasUsers() {
-					ready.Store(true)
-				}
-			}
-		}
-	}()
-
-	ok := pullBaseline(syncCfg)
-	close(stop)
-	if !ok {
+	if !pullBaseline(syncCfg) {
 		log.Println("[sync] tarik baseline gagal — memakai data lokal sebagai cadangan")
+		database.SeedIfNeeded()
+		return
 	}
 	database.SeedIfNeeded()
-	log.Println("[sync] data awal siap — aplikasi dapat digunakan")
+	log.Println("[sync] baseline latar belakang selesai — data hub sudah menyatu")
 }
 
 // readinessGuard menampilkan halaman "Menyiapkan data SIMARC" selama data awal
