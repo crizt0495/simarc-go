@@ -203,6 +203,30 @@ Yang **tidak** disinkronkan secara sengaja:
 
 ---
 
+## 4b. Perbaikan penting: kolom `DEFAULT_GENERATED` (data klien = 0)
+
+**Gejala:** komputer klien (SQLite) berhasil menarik tabel master (kode
+klasifikasi, user, unit kerja, dil.) tetapi **tabel `arsip` tetap 0** — sehingga
+terlihat "datanya 0".
+
+**Sebab:** saat membaca struktur tabel hub (MySQL 8 / Aiven),
+`information_schema.columns.EXTRA` untuk kolom PK `id char(36) DEFAULT (uuid())`
+bernilai **`DEFAULT_GENERATED`**. Kode lama memakai uji
+`strings.Contains(extra, "generated")` untuk membuang kolom *generated*, sehingga
+kolom PK `id` **ikut terbuang**. Akibatnya pemeriksaan kecocokan primary key
+(`restrictTablesToHub`) gagal dan **seluruh tabel `arsip` dilewati** dari
+sinkronisasi.
+
+**Perbaikan:** uji dipersempit ke **`virtual generated` / `stored generated`**
+saja (`isTrulyGeneratedColumn`). `DEFAULT_GENERATED` kini diperlakukan sebagai
+kolom biasa, jadi kolom `id` (dan kolom ber-DEFAULT lain) tetap ikut disalin.
+Setelah perbaikan, klien baru menarik **seluruh** arsip dari hub.
+
+> Dampak: penginstal sebelum perbaikan ini akan membuat klien dengan arsip
+> kosong. Pasang ulang dengan `SIMARC-Setup.exe` terbaru bila menemui gejala ini.
+
+---
+
 ## 5. Batasan (v1) — penting
 
 1. **Empat tabel dulu tidak ikut karena PK `AUTO_INCREMENT`.** Beberapa node

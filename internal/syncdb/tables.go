@@ -285,6 +285,22 @@ func loadTableSQLite(ctx context.Context, db *sql.DB, name string) (*tableInfo, 
 	return ti, nil
 }
 
+// isTrulyGeneratedColumn reports whether an information_schema `EXTRA` value
+// describes a column that is computed by MySQL and therefore cannot be inserted
+// explicitly (VIRTUAL GENERATED / STORED GENERATED).
+//
+// Kritis: nilai "DEFAULT_GENERATED" BUKAN kolom generated. Itu hanya penanda
+// kolom dengan ekspresi DEFAULT (mis. `id char(36) DEFAULT (uuid())`, lazim di
+// MySQL 8/Aiven). Kolom semacam itu tetap kolom biasa yang WAJIB ikut disalin.
+// Menyamakan "DEFAULT_GENERATED" dengan kolom generated membuat kolom PRIMARY
+// KEY seperti `id` terbuang, lalu seluruh tabel (mis. `arsip`) dilewati saat
+// sinkron sehingga komputer klien tidak pernah menerima datanya.
+func isTrulyGeneratedColumn(extra string) bool {
+	lower := strings.ToLower(extra)
+	return strings.Contains(lower, "virtual generated") ||
+		strings.Contains(lower, "stored generated")
+}
+
 // loadTable introspects a single table (MySQL).
 func loadTable(ctx context.Context, db *sql.DB, schema, name string) (*tableInfo, error) {
 	ti := &tableInfo{Name: name}
@@ -303,7 +319,7 @@ func loadTable(ctx context.Context, db *sql.DB, schema, name string) (*tableInfo
 			return nil, err
 		}
 		lower := strings.ToLower(extra)
-		if strings.Contains(lower, "generated") {
+		if isTrulyGeneratedColumn(extra) {
 			continue // generated columns cannot be inserted explicitly
 		}
 		ti.Columns = append(ti.Columns, col)
