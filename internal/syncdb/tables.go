@@ -372,10 +372,22 @@ func tableExistsIn(ctx context.Context, db *sql.DB, driver, table string) (bool,
 
 // createTableLike copies a table's DDL from a MySQL source to a MySQL
 // destination (hub selalu MySQL).
-func createTableLike(ctx context.Context, src, dst *sql.DB, table string) error {
-	var name, ddl string
-	if err := src.QueryRowContext(ctx, "SHOW CREATE TABLE `"+table+"`").Scan(&name, &ddl); err != nil {
-		return err
+func createTableLike(ctx context.Context, src *sql.DB, srcDriver string, dst *sql.DB, dstDriver string, table string) error {
+	if srcDriver != dstDriver {
+		return fmt.Errorf("penyamaan skema %s -> %s belum didukung; jalankan migrasi hub", srcDriver, dstDriver)
+	}
+	var ddl string
+	if srcDriver == driverSQLite {
+		err := src.QueryRowContext(ctx,
+			`SELECT sql FROM sqlite_master WHERE type='table' AND name=?`, table).Scan(&ddl)
+		if err != nil {
+			return err
+		}
+	} else {
+		var name string
+		if err := src.QueryRowContext(ctx, "SHOW CREATE TABLE `"+table+"`").Scan(&name, &ddl); err != nil {
+			return err
+		}
 	}
 	ddl = strings.Replace(ddl, "CREATE TABLE", "CREATE TABLE IF NOT EXISTS", 1)
 	_, err := dst.ExecContext(ctx, ddl)

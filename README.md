@@ -205,6 +205,21 @@ Layanan berjalan sebagai **pemilik folder aplikasi** (bisa diubah dengan
 mesin server. Bila binary belum ada, installer memakai `dist/` atau mem-build
 dari sumber (butuh Go).
 
+## 🗃️ Mode SQLite — desktop tanpa MySQL
+
+Tiap komputer bisa memakai **berkas SQLite sendiri** (`DB_DRIVER=sqlite`),
+tanpa memasang MySQL/MariaDB dan tanpa menjalankan MariaDB portabel:
+
+```dotenv
+DB_DRIVER=sqlite
+DB_PATH=storage/simarc.db
+```
+
+Aplikasi tetap jalan penuh saat jaringan mati; perubahan disinkronkan ke hub
+saat hub terjangkau. Rinciannya ada di `docs/OFFLINE-SYNC.md` §2b.
+
+---
+
 ## 🔧 File .env — SATU file untuk semua konfigurasi
 
 Semua pengaturan (database **dan** aplikasi) disimpan dalam satu file `.env`:

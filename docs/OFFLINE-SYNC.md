@@ -13,8 +13,8 @@ tersedia.
 
 | Peran | Apa yang dijalankan | Bisa offline? |
 |-------|---------------------|:-------------:|
-| **Komputer (node)** | Aplikasi SIMARC + **MySQL lokal sendiri** | ✅ Ya, penuh |
-| **Hub** (bisa salah satu komputer, atau cloud Aiven) | MySQL sebagai titik temu | ✅ (komputer lain tetap jalan, sekadar belum menyatu) |
+| **Komputer (node)** | Aplikasi SIMARC + **database lokal sendiri** (MySQL *atau* SQLite) | ✅ Ya, penuh |
+| **Hub** (bisa salah satu komputer, atau cloud Aiven) | MySQL *atau* SQLite sebagai titik temu | ✅ (komputer lain tetap jalan, sekadar belum menyatu) |
 
 Setiap komputer menulis ke database lokalnya sendiri. Saat hub **terjangkau**,
 mesin sinkronisasi menukar perubahan dua arah:
@@ -81,6 +81,61 @@ go run ./cmd/sync
 ```
 
 Atau lewat aplikasi: **Pengaturan → Sinkronisasi → Sinkronkan Sekarang**.
+
+---
+
+## 2b. Mode SQLite (tanpa MySQL sama sekali)
+
+Mode **SQLite** adalah.padanan MySQL untuk pemakaian desktop: tiap komputer
+memakai **satu berkas database** sendiri, jadi tidak perlu memasang
+MySQL/MariaDB dan tidak perlu menjalankan MariaDB portabel. Semua fitur
+(aplikasi, input arsip, unggah berkas) tetap jalan penuh saat jaringan mati;
+perubahan baru disinkronkan ke hub saat hub terjangkau.
+
+```dotenv
+# Tiap komputer: berkas database sendiri
+DB_DRIVER=sqlite
+DB_PATH=storage/simarc.db
+
+# Sinkronisasi tetap sama seperti biasa
+SYNC_ENABLED=true
+SYNC_NODE_ID=komputer-front-office
+SYNC_INTERVAL_MINUTES=15
+
+# Hub: MySQL (Aiven/kantor) — sama untuk semua komputer
+SYNC_HUB_DRIVER=mysql
+SYNC_HUB_DB_HOST=...
+SYNC_HUB_DB_NAME=simarc
+SYNC_HUB_DB_USER=simarc
+SYNC_HUB_DB_PASS=...
+```
+
+Yang perlu diketahui:
+
+- **Driver SQLite murni Go** (`glebarez/sqlite`) — tanpa CGO, jadi bisa
+  di-build untuk Windows dan Linux tanpa toolchain tambahan.
+- **Mode SQLite otomatis melewati MariaDB portabel** yang biasa dipakai
+  installer "offline mandiri"; tidak ada proses database tambahan yang jalan.
+- **Skema tabel dibuat dari model GORM** — sama dengan MySQL, termasuk tabel
+  yang belum ada di hub. Bila sebuah tabel belum ada di hub, node SQLite
+  membuat ulang skemanya dari model sehingga kolomnya identik dengan
+  instalasi MySQL (`id char(36)`, foreign key, indeks).
+- **Waktu disimpan sebagai teks** berformat `2006-01-02 15:04:05.999999999-07:00`.
+  Perbandingan "terbaru menang" memakai urutan leksikografis, jadi **semua
+  komputer sebaiknya memakai zona waktu yang sama** (WIB) dan NTP aktif.
+- **Hub boleh juga SQLite** bila instalasi tanpa server database:
+
+  ```dotenv
+  SYNC_HUB_DRIVER=sqlite
+  SYNC_HUB_DB_PATH=D:/simarc/simarc-hub.db
+  ```
+
+  Handy untuk instalasi kecil (satu komputer jadi titik temu) dan untuk
+  pengujian tanpa jaringan.
+
+> Beralih dari MySQL ke SQLite **tidak** memindahkan data lama. Cara paling
+> aman: pakai SQLite sebagai database baru, lalu biarkan sinkronisasi menarik
+> data dari hub (jalankan "Sinkronkan Sekarang" sekali dengan hub terjangkau).
 
 ---
 
@@ -176,6 +231,11 @@ Yang **tidak** disinkronkan secara sengaja:
    dilewati, dan sub-folder pada `SYNC_FILES_EXCLUDE` (default
    `ocr-temp,imports,restore`) tidak pernah disalin. Baris database tetap aman
    walau berkas belum tersalin karena hanya menyimpan *lokasi* berkas.
+4. **Mode SQLite** menyimpan waktu sebagai teks dan membandingkan secara
+   leksikografis. Semua komputer sebaiknya memakai **zona waktu yang sama**
+   (WIB) dan NTP aktif; komputer dengan zona waktu berbeda bisa memilih
+   "pemenang" yang keliru bila selisih jamnya besar. MySQL tidak punya
+   batasan ini karena waktu disimpan sebagai `DATETIME` asli.
 
 ---
 

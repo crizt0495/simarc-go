@@ -952,7 +952,6 @@ type WorkflowExecution struct {
 
 func (WorkflowExecution) TableName() string { return "workflow_executions" }
 
-
 type SearchLog struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID       *string   `gorm:"type:char(36);index" json:"user_id"`

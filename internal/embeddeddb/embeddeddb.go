@@ -118,9 +118,15 @@ func New(baseDir, dataDir, database, user, pass, port string) *Manager {
 
 // Enabled melaporkan apakah pengelolaan database portabel diaktifkan. Secara
 // default aktif bila biner ditemukan; setel SIMARC_EMBEDDED_DB=0 untuk mematikan.
+//
+// Mode SQLite (DB_DRIVER=sqlite) memakai berkas lokal sehingga MariaDB
+// portabel tidak perlu dijalankan sama sekali.
 func Enabled() bool {
 	switch strings.ToLower(strings.TrimSpace(os.Getenv("SIMARC_EMBEDDED_DB"))) {
 	case "0", "false", "no", "off":
+		return false
+	}
+	if strings.ToLower(strings.TrimSpace(os.Getenv("DB_DRIVER"))) == "sqlite" {
 		return false
 	}
 	_, ok := Discover()

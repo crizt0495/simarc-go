@@ -2,6 +2,7 @@ package syncdb
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sync"
 
@@ -26,6 +27,82 @@ type hubTools struct {
 	schemaFailed bool
 }
 
+// ensureMissingHubTables membuat tabel yang siap disinkronkan tapi belum ada di
+// hub, sebelum pembatasan kolom (restrictTablesToHub) berjalan. Tanpa tahap ini
+// hub yang baru (belum punya tabel apa pun) membuat semua tabel dilewati.
+//
+//   - dialek sama (MySQL->MySQL atau SQLite->SQLite): DDL disalin apa adanya
+//     sehingga kolom persis sama dengan sisi lokal.
+//   - dialek berbeda (SQLite lokal -> MySQL hub): DDL teks tidak bisa disalin
+//     mentah (tipe kolom berbeda), jadi skema dibuat dari model GORM per tabel.
+//
+// Tabel tanpa model GORM yang dikenal dibiarkan hilang; dilewati dengan log.
+func ensureMissingHubTables(ctx context.Context, local *sql.DB, localDriver string, hub *sql.DB, hubDriver, hubDSN string, tables map[string]*tableInfo, logf func(string, ...any)) error {
+	hubTables, err := loadTables(ctx, hub, hubDriver)
+	if err != nil {
+		return err
+	}
+	var missing []string
+	for name := range tables {
+		if _, ok := hubTables[name]; !ok {
+			missing = append(missing, name)
+		}
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+
+	created := 0
+	for _, name := range missing {
+		if localDriver == hubDriver {
+			err := createTableLike(ctx, local, localDriver, hub, hubDriver, name)
+			if err != nil {
+				if logf != nil {
+					logf("[sync] gagal salin DDL tabel %s ke hub: %v", name, err)
+				}
+				continue
+			}
+		} else {
+			model := models.ForTable(name)
+			if model == nil {
+				if logf != nil {
+					logf("[sync] tabel %s belum ada di hub dan tidak punya model GORM yang dikenal", name)
+				}
+				continue
+			}
+			gdb, err := hubGormMySQL(hubDSN)
+			if err != nil {
+				if logf != nil {
+					logf("[sync] koneksi GORM hub gagal: %v", err)
+				}
+				continue
+			}
+			if err := gdb.WithContext(ctx).AutoMigrate(model); err != nil {
+				if logf != nil {
+					logf("[sync] buat tabel %s di hub dari model: %v", name, err)
+				}
+				continue
+			}
+		}
+		created++
+		if logf != nil {
+			logf("[sync] tabel %s dibuat di hub", name)
+		}
+	}
+	if created < len(missing) && created == 0 {
+		return fmt.Errorf("%d tabel hilang di hub dan semua gagal dibuat", len(missing))
+	}
+	return nil
+}
+
+// hubGormMySQL membuka koneksi GORM MySQL ke hub untuk pembuatan tabel.
+func hubGormMySQL(dsn string) (*gorm.DB, error) {
+	dialector := gorm.Dialector(mysql.Open(dsn))
+	return gorm.Open(dialector, &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Error),
+	})
+}
+
 // ensureHubTable membuat tabel di hub bila belum ada.
 //
 // Dua jalur:
@@ -37,7 +114,7 @@ type hubTools struct {
 //     MySQL: id char(36), FK, indeks, dan setelan InnoDB.
 func ensureHubTable(ctx context.Context, e *Engine, table string) error {
 	if e.localDriver == e.hubDriver {
-		return createTableLike(ctx, e.local, e.hub, table)
+		return createTableLike(ctx, e.local, e.localDriver, e.hub, e.hubDriver, table)
 	}
 
 	model := models.ForTable(table)

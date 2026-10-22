@@ -137,6 +137,13 @@ func newEngine(ctx context.Context, local *sql.DB, localDriver string, hub *sql.
 		return nil, err
 	}
 	if localDriver == driverSQLite {
+		// Pastikan tabel yang hilang di hub dibuat dulu (dari model GORM bila
+		// dialek beda) supaya tidak semuanya "dilewati" pada hub baru.
+		if err := ensureMissingHubTables(ctx, local, localDriver, hub, hubDriver, hubDSN, tables, logf); err != nil {
+			local.Close()
+			hub.Close()
+			return nil, err
+		}
 		if err := restrictTablesToHub(ctx, hub, hubDriver, tables, logf); err != nil {
 			local.Close()
 			hub.Close()
@@ -535,6 +542,14 @@ func upsertRows(ctx context.Context, dst *sql.DB, driver string, ti *tableInfo, 
 	prefix, suffix := insertParts(driver, ti, strat)
 	rowPlaceholder := "(" + strings.TrimSuffix(strings.Repeat("?,", ncol), ",") + ")"
 
+	// Nilai yang dibaca dari MySQL selalu []byte, sedangkan driver SQLite
+	// menyimpannya sebagai BLOB saat menerima []byte. BLOB tidak cocok dengan
+	// perbandingan teks (WHERE username = "admin" gagal), jadi baris yang
+	// ditarik dari hub harus ditulis ulang sebagai teks.
+	if driver == driverSQLite {
+		rows = textifyRows(rows)
+	}
+
 	for start := 0; start < len(rows); start += batch {
 		end := start + batch
 		if end > len(rows) {
@@ -622,6 +637,20 @@ func insertParts(driver string, ti *tableInfo, strat strategy) (string, string) 
 		assigns = []string{"`" + ti.PK[0] + "`=`" + ti.PK[0] + "`"}
 	}
 	return prefix, " ON DUPLICATE KEY UPDATE " + strings.Join(assigns, ",")
+}
+
+// textifyRows mengubah []byte hasil baca MySQL menjadi string agar driver
+// SQLite menyimpannya dengan afinitas teks, bukan BLOB.
+func textifyRows(rows [][]any) [][]any {
+	for i, row := range rows {
+		for j, v := range row {
+			if b, ok := v.([]byte); ok {
+				row[j] = string(b)
+			}
+		}
+		rows[i] = row
+	}
+	return rows
 }
 
 func quotedColumnsList(cols []string) string {
