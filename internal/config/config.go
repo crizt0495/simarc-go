@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -46,10 +47,43 @@ type Config struct {
 
 var App Config
 
-func Load() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using environment variables")
+// loadDotEnv memuat .env. Urutan pencarian:
+//  1. direktori kerja saat ini (perilaku lama: pengembangan, systemd, Linux)
+//  2. folder induk direktori biner — pada rilis Windows biner berada di
+//     tmp\simarc-server.exe sedangkan .env ada di folder instalasi. Tanpa ini,
+//     jalur pintasan (working directory bisa berbeda) membuat .env tak terbaca
+//     dan aplikasi salah memakai default MySQL alih-alih SQLite.
+//
+// Nilai yang sudah ada di environment tidak ditimpa (godotenv tidak
+// menimpanya pada pemuatan kedua), jadi override eksplisit tetap dihormati.
+func loadDotEnv() {
+	if err := godotenv.Load(); err == nil {
+		return
 	}
+	exe, err := os.Executable()
+	if err != nil {
+		log.Println("No .env file found, using environment variables")
+		return
+	}
+	dir := filepath.Dir(exe)
+	// Biner rilis berada di <instalasi>\tmp\ — naik satu tingkat.
+	candidates := []string{
+		filepath.Join(dir, ".env"),
+		filepath.Join(filepath.Dir(dir), ".env"),
+	}
+	for _, p := range candidates {
+		if _, statErr := os.Stat(p); statErr != nil {
+			continue
+		}
+		if loadErr := godotenv.Load(p); loadErr == nil {
+			return
+		}
+	}
+	log.Println("No .env file found, using environment variables")
+}
+
+func Load() {
+	loadDotEnv()
 
 	// MySQL defaults — Aiven MySQL is the primary database.
 	dbHost := getEnv("DB_HOST", "127.0.0.1")

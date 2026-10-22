@@ -8,6 +8,7 @@ import (
 
 	"arsippro/internal/models"
 
+	sqlitedrv "github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -17,6 +18,7 @@ import (
 // dari Engine agar berkas engine.go tidak perlu mengimpor GORM.
 type hubTools struct {
 	dsn      string
+	driver   string
 	gormDB   *gorm.DB
 	gormOnce sync.Once
 	gormErr  error
@@ -53,6 +55,8 @@ func ensureMissingHubTables(ctx context.Context, local *sql.DB, localDriver stri
 	}
 
 	created := 0
+	var gdb *gorm.DB
+	var gormErr error
 	for _, name := range missing {
 		if localDriver == hubDriver {
 			err := createTableLike(ctx, local, localDriver, hub, hubDriver, name)
@@ -63,41 +67,54 @@ func ensureMissingHubTables(ctx context.Context, local *sql.DB, localDriver stri
 				continue
 			}
 		} else {
-			model := models.ForTable(name)
-			if model == nil {
+			// Dialek berbeda (SQLite lokal -> MySQL hub atau sebaliknya).
+			// Buat skema hub dari model GORM sekali saja (semua tabel), agar
+			// foreign key antar tabel dibuat benar (butuh referensi kedua sisi).
+			if gdb == nil && gormErr == nil {
+				gdb, gormErr = hubGormDBFor(hubDriver, hubDSN)
+			}
+			if gormErr != nil {
 				if logf != nil {
-					logf("[sync] tabel %s belum ada di hub dan tidak punya model GORM yang dikenal", name)
+					logf("[sync] koneksi GORM hub gagal: %v", gormErr)
 				}
 				continue
 			}
-			gdb, err := hubGormMySQL(hubDSN)
-			if err != nil {
+			if err := gdb.WithContext(ctx).AutoMigrate(models.AllModels()...); err != nil {
 				if logf != nil {
-					logf("[sync] koneksi GORM hub gagal: %v", err)
+					logf("[sync] migrasi skema hub: %v", err)
 				}
 				continue
 			}
-			if err := gdb.WithContext(ctx).AutoMigrate(model); err != nil {
+			// AutoMigrate semua model membuat tabel yang hilang + yang sudah ada
+			// (idempoten). Tandai semua missing sebagai dibuat.
+			for i := range missing {
+				created++
 				if logf != nil {
-					logf("[sync] buat tabel %s di hub dari model: %v", name, err)
+					logf("[sync] tabel %s dibuat di hub (via AutoMigrate)", missing[i])
 				}
-				continue
 			}
+			break
 		}
 		created++
 		if logf != nil {
 			logf("[sync] tabel %s dibuat di hub", name)
 		}
 	}
-	if created < len(missing) && created == 0 {
+	if created == 0 {
 		return fmt.Errorf("%d tabel hilang di hub dan semua gagal dibuat", len(missing))
 	}
 	return nil
 }
 
-// hubGormMySQL membuka koneksi GORM MySQL ke hub untuk pembuatan tabel.
-func hubGormMySQL(dsn string) (*gorm.DB, error) {
-	dialector := gorm.Dialector(mysql.Open(dsn))
+// hubGormDBFor membuka koneksi GORM ke hub sesuai dialeknya (MySQL atau
+// SQLite). Dipakai untuk membuat/memperbaiki skema hub.
+func hubGormDBFor(driver, dsn string) (*gorm.DB, error) {
+	var dialector gorm.Dialector
+	if driver == driverSQLite {
+		dialector = sqlitedrv.Open(dsn)
+	} else {
+		dialector = mysql.Open(dsn)
+	}
 	return gorm.Open(dialector, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Error),
 	})
@@ -154,10 +171,7 @@ func (e *Engine) migrateHubSchema(ctx context.Context) error {
 // keperluan pembuatan tabel.
 func (e *Engine) hubGormDB() (*gorm.DB, error) {
 	e.gormOnce.Do(func() {
-		dialector := gorm.Dialector(mysql.Open(e.dsn))
-		db, err := gorm.Open(dialector, &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Error),
-		})
+		db, err := hubGormDBFor(e.driver, e.dsn)
 		if err != nil {
 			e.gormErr = err
 			return

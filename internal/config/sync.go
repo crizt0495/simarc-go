@@ -38,6 +38,13 @@ type SyncConfig struct {
 	HubDBPass string
 	HubDBTLS  string
 
+	// HubDriver menentukan mesin database hub: "mysql" (default: Aiven, MySQL
+	// kantor, atau komputer server) atau "sqlite" (berkas pada komputer yang
+	// menjadi titik temu — berguna untuk instalasi tanpa server database).
+	HubDriver string
+	// HubDBPath adalah lokasi berkas SQLite bila HubDriver = "sqlite".
+	HubDBPath string
+
 	// Hub HTTP (archive-file transfer). The hub application serves
 	// token-protected endpoints so nodes can push/pull files under
 	// storage/app/uploads. HubURL is the base URL of the hub app, e.g.
@@ -69,6 +76,9 @@ func LoadSync() SyncConfig {
 		HubDBPass: os.Getenv("SYNC_HUB_DB_PASS"),
 		HubDBTLS:  getEnv("SYNC_HUB_DB_TLS", "preferred"),
 
+		HubDriver: strings.ToLower(strings.TrimSpace(getEnv("SYNC_HUB_DRIVER", "mysql"))),
+		HubDBPath: strings.TrimSpace(os.Getenv("SYNC_HUB_DB_PATH")),
+
 		HubURL:       strings.TrimRight(strings.TrimSpace(os.Getenv("SYNC_HUB_URL")), "/"),
 		HubToken:     strings.TrimSpace(os.Getenv("SYNC_HUB_TOKEN")),
 		FilesEnabled: getBoolEnv("SYNC_FILES_ENABLED", true),
@@ -97,8 +107,14 @@ func LoadSync() SyncConfig {
 // HubReady reports whether the hub database settings are complete enough to
 // attempt a connection.
 func (c SyncConfig) HubReady() bool {
+	if c.HubIsSQLite() {
+		return c.HubDBPath != ""
+	}
 	return c.HubDBHost != "" && c.HubDBName != "" && c.HubDBUser != ""
 }
+
+// HubIsSQLite reports whether the hub runs on SQLite instead of MySQL.
+func (c SyncConfig) HubIsSQLite() bool { return c.HubDriver == "sqlite" }
 
 // Active reports whether synchronisation should run at all.
 func (c SyncConfig) Active() bool {

@@ -39,15 +39,15 @@ type Engine struct {
 
 // Open builds an Engine using the application's local database and the hub
 // configured in cfg. Database lokal bisa MySQL (instalasi lama) atau SQLite
-// (desktop offline-first); hub selalu MySQL (Aiven atau MySQL kantor).
+// (desktop offline-first). Hub juga bisa SQLite (SYNC_HUB_DRIVER=sqlite)
+// bila titik temu memakai berkas lokal, selain MySQL (Aiven/kantor).
 func Open(ctx context.Context, cfg config.SyncConfig, logf func(string, ...any)) (*Engine, error) {
 	if !cfg.HubReady() {
 		return nil, fmt.Errorf("hub database belum dikonfigurasi (SYNC_HUB_DB_HOST/NAME/USER)")
 	}
-	hubDSN := dsn(cfg.HubDBHost, cfg.HubDBPort, cfg.HubDBName, cfg.HubDBUser, cfg.HubDBPass, cfg.HubDBTLS)
-	hub, err := openPool(hubDSN)
+	hub, hubDriver, hubDSN, err := openHub(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("buka database hub: %w", err)
+		return nil, err
 	}
 
 	if database.IsSQLite() {
@@ -56,14 +56,31 @@ func Open(ctx context.Context, cfg config.SyncConfig, logf func(string, ...any))
 			hub.Close()
 			return nil, fmt.Errorf("buka database lokal SQLite: %w", err)
 		}
-		return newEngine(ctx, local, driverSQLite, hub, driverMySQL, hubDSN, cfg, logf)
+		return newEngine(ctx, local, driverSQLite, hub, hubDriver, hubDSN, cfg, logf)
 	}
 	local, err := openPool(dsnFromApp())
 	if err != nil {
 		hub.Close()
 		return nil, fmt.Errorf("buka database lokal: %w", err)
 	}
-	return newEngine(ctx, local, driverMySQL, hub, driverMySQL, hubDSN, cfg, logf)
+	return newEngine(ctx, local, driverMySQL, hub, hubDriver, hubDSN, cfg, logf)
+}
+
+// openHub membuka koneksi ke hub sesuai dialek yang dikonfigurasi.
+func openHub(cfg config.SyncConfig) (*sql.DB, string, string, error) {
+	if cfg.HubIsSQLite() {
+		db, err := openSQLitePool(cfg.HubDBPath)
+		if err != nil {
+			return nil, driverSQLite, "", fmt.Errorf("buka database hub SQLite: %w", err)
+		}
+		return db, driverSQLite, cfg.HubDBPath, nil
+	}
+	hubDSN := dsn(cfg.HubDBHost, cfg.HubDBPort, cfg.HubDBName, cfg.HubDBUser, cfg.HubDBPass, cfg.HubDBTLS)
+	db, err := openPool(hubDSN)
+	if err != nil {
+		return nil, driverMySQL, "", fmt.Errorf("buka database hub: %w", err)
+	}
+	return db, driverMySQL, hubDSN, nil
 }
 
 // OpenWithDSN builds an Engine from explicit MySQL DSNs (CLI/tests).
@@ -152,7 +169,7 @@ func newEngine(ctx context.Context, local *sql.DB, localDriver string, hub *sql.
 	}
 
 	return &Engine{
-		hubTools:    hubTools{dsn: hubDSN},
+		hubTools:    hubTools{dsn: hubDSN, driver: hubDriver},
 		cfg:         cfg,
 		local:       local,
 		hub:         hub,

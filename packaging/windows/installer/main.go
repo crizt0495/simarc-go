@@ -381,11 +381,10 @@ func verifyInstall(installDir, mode string) error {
 			return fmt.Errorf("file wajib tidak ada atau kosong: %s", rel)
 		}
 	}
-	// Komponen database portabel wajib ada bila mode offline, ATAU bila .env
-	// komputer ini memang mengaktifkan database tertanam (SIMARC_EMBEDDED_DB).
-	// Memakai .env sebagai sumber kebenaran membuat verifikasi tetap tepat
-	// walau mode tidak ditentukan eksplisit (mis. dipasang lewat skrip lain).
-	if strings.EqualFold(mode, "offline") || envEmbeddedDB(installDir) {
+	// Komponen database portabel hanya wajib bila .env komputer ini memang
+	// memakai MySQL/MariaDB tertanam (instalasi lama/legacy). Instalasi baru
+	// memakai SQLite sehingga tidak butuh MariaDB sama sekali.
+	if envEmbeddedDB(installDir) && envUsesMySQL(filepath.Join(installDir, ".env")) {
 		for _, rel := range []string{"mariadb/bin/mariadbd.exe", "mariadb/bin/mariadb-install-db.exe"} {
 			fi, err := os.Stat(filepath.Join(installDir, filepath.FromSlash(rel)))
 			if err != nil || fi.IsDir() || fi.Size() == 0 {
@@ -647,18 +646,6 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 		}
 	}
 
-	// 1b. Ekstrak MariaDB portabel (bila ada bundel) — diperlukan untuk mode
-	//     offline mandiri. Hanya diekstrak bila mariadbd.exe belum ada (update
-	//     tidak menimpa database yang sudah terpasang).
-	if _, err := os.Stat(filepath.Join(srcDir, "mariadb-winx64.zip")); err == nil {
-		dbDir := filepath.Join(destDir, "mariadb")
-		if _, err := os.Stat(filepath.Join(dbDir, "bin", "mariadbd.exe")); os.IsNotExist(err) {
-			if err := extractZip(filepath.Join(srcDir, "mariadb-winx64.zip"), dbDir); err != nil {
-				return fmt.Errorf("mengekstrak MariaDB: %w", err)
-			}
-		}
-	}
-
 	// 2. Siapkan direktori runtime
 	for _, sub := range []string{"tmp", filepath.Join("storage", "app", "uploads"), filepath.Join("public", "storage")} {
 		if err := os.MkdirAll(filepath.Join(destDir, sub), 0o755); err != nil {
@@ -696,11 +683,15 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 			hubURL = "http://192.168.1.86:8080"
 		}
 
-		// Bundel MariaDB ada? -> memungkinkan mode offline mandiri.
+		// Bundel MariaDB ada? -> masih didukung untuk instalasi lama/legacy,
+		// tetapi instalasi BARU memakai SQLite (offline-first, tanpa MariaDB).
 		hasDB := false
 		if _, err := os.Stat(filepath.Join(srcDir, "mariadb-winx64.zip")); err == nil {
 			hasDB = true
 		}
+		// Mode warisan yang benar-benar minta MariaDB: hanya bila bundel ada
+		// DAN diinstruksikan eksplisit (MODE=mysql di simarc-install.txt).
+		wantMariaDB := hasDB && chosen == "mysql"
 
 		// Pilih port aplikasi yang benar-benar bebas. Bila 8080 sudah dipakai
 		// program lain di komputer ini, instalasi tetap berhasil (mis. 8081)
@@ -711,47 +702,58 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 			fmt.Printf("[INFO] Port 8080 sedang dipakai program lain; SIMARC memakai port %d.\n", appPort)
 		}
 
-		switch chosen {
-		case "offline":
-			if hasDB {
-				pw := randomPassword(24)
-				content = setEnvKeys(content, map[string]string{
-					"SIMARC_SERVER_URL":  "",
-					"DB_HOST":            "127.0.0.1",
-					"DB_PORT":            "3307",
-					"DB_DATABASE":        "simarc",
-					"DB_USERNAME":        "simarc",
-					"DB_PASSWORD":        pw,
-					"SIMARC_EMBEDDED_DB": "1",
-					"APP_PORT":           fmt.Sprintf("%d", appPort),
-					"APP_URL":            appURL,
-				})
-				content = applySyncEnv(content, srcDir)
-				fmt.Println("[OK]   Mode OFFLINE MANDIRI: database lokal otomatis (port 3307).")
-			} else {
-				content = setEnvKeys(content, map[string]string{"SIMARC_SERVER_URL": hubURL})
-				fmt.Println("[OK]   Mode KLIEN (bundel DB tidak ada) ke " + hubURL)
-			}
-		case "client":
+		if wantMariaDB {
+			// Instalasi warisan: MariaDB portabel + MySQL sebagai database.
+			pw := randomPassword(24)
+			content = setEnvKeys(content, map[string]string{
+				"SIMARC_SERVER_URL":  "",
+				"DB_DRIVER":          "mysql",
+				"DB_HOST":            "127.0.0.1",
+				"DB_PORT":            "3307",
+				"DB_DATABASE":        "simarc",
+				"DB_USERNAME":        "simarc",
+				"DB_PASSWORD":        pw,
+				"SIMARC_EMBEDDED_DB": "1",
+				"APP_PORT":           fmt.Sprintf("%d", appPort),
+				"APP_URL":            appURL,
+			})
+			content = applySyncEnv(content, srcDir)
+			fmt.Println("[OK]   Mode DATABASE MySQL/MariaDB portabel (port 3307).")
+		} else if chosen == "client" {
+			// Klien murni: ambil data dari server pusat lewat jaringan.
 			content = setEnvKeys(content, map[string]string{"SIMARC_SERVER_URL": hubURL})
 			fmt.Println("[OK]   Mode KLIEN ke " + hubURL)
-		default: // local
+		} else {
+			// Default & offline: database lokal SQLite per komputer.
+			// Tidak butuh MySQL/MariaDB sama sekali dan tetap bisa dipakai
+			// tanpa jaringan; perubahan disinkronkan saat hub terjangkau.
 			content = setEnvKeys(content, map[string]string{
-				"APP_PORT": fmt.Sprintf("%d", appPort),
-				"APP_URL":  appURL,
+				"SIMARC_SERVER_URL":  "",
+				"DB_DRIVER":          "sqlite",
+				"DB_PATH":            `storage\simarc.db`,
+				"SIMARC_EMBEDDED_DB": "0",
+				"APP_PORT":           fmt.Sprintf("%d", appPort),
+				"APP_URL":            appURL,
 			})
-			fmt.Println("[OK]   Mode SERVER LOKAL (butuh MySQL/MariaDB lokal).")
+			content = applySyncEnv(content, srcDir)
+			if chosen == "offline" {
+				fmt.Println("[OK]   Mode OFFLINE MANDIRI: database lokal SQLite (tanpa MySQL/MariaDB).")
+			} else {
+				fmt.Println("[OK]   Mode SERVER LOKAL: database lokal SQLite (tanpa MySQL/MariaDB).")
+			}
 		}
 		if err := os.WriteFile(envDest, []byte(content), 0o644); err != nil {
 			return fmt.Errorf("menulis .env: %w", err)
 		}
 	}
 
-	// 5. Ekstrak bundel MariaDB portabel jika ada
+	// 5. Ekstrak bundel MariaDB portabel hanya bila .env komputer ini memang
+	//    memakai MySQL (instalasi warisan). Instalasi SQLite tidak perlu
+	//    MariaDB sehingga tidak diekstrak (menghemat ruang & waktu instalasi).
 	zipMaria := filepath.Join(srcDir, "mariadb-winx64.zip")
 	mariadbDest := filepath.Join(destDir, "mariadb")
 	mariadbdExe := filepath.Join(mariadbDest, "bin", "mariadbd.exe")
-	if _, err := os.Stat(zipMaria); err == nil {
+	if _, err := os.Stat(zipMaria); err == nil && envUsesMySQL(envDest) {
 		if _, err := os.Stat(mariadbdExe); os.IsNotExist(err) {
 			fmt.Println("[INFO] Mengekstrak database portabel...")
 			if err := unzip(zipMaria, mariadbDest); err != nil {
@@ -763,9 +765,6 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 	// MariaDB tidak boleh diinisialisasi di sini. Server SIMARC sendiri
 	// menginisialisasi datadir, membuat kata sandi root, lalu membuat user
 	// aplikasi dengan password dari .env secara atomik pada startup pertama.
-	// Dengan begitu fallback ini setara dengan jalur PowerShell dan tidak
-	// menghasilkan user/password database yang tidak cocok.
-
 	return nil
 }
 
@@ -902,6 +901,32 @@ func randomPassword(n int) string {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+// envUsesMySQL melaporkan apakah .env komputer ini memakai MySQL/MariaDB
+// (DB_DRIVER=mysql atau DB_DRIVER tidak disetel). Dipakai untuk memutuskan
+// apakah bundel MariaDB perlu diekstrak: instalasi SQLite tidak membutuhkannya.
+func envUsesMySQL(envPath string) bool {
+	data, err := os.ReadFile(envPath)
+	if err != nil {
+		return false
+	}
+	driver := ""
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		j := strings.IndexByte(line, '=')
+		if j <= 0 {
+			continue
+		}
+		if strings.EqualFold(strings.TrimSpace(line[:j]), "DB_DRIVER") {
+			driver = strings.ToLower(strings.TrimSpace(line[j+1:]))
+		}
+	}
+	// Kosong (instalasi lama) berarti MySQL; hanya "sqlite" yang bukan MySQL.
+	return driver != "sqlite"
 }
 
 // setEnvKeys mengganti/menambahkan kunci pada isi .env tanpa menyentuh kunci lain.
