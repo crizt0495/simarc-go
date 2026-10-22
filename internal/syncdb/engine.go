@@ -27,30 +27,43 @@ var epoch = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 // directions: local edits are pushed to the hub, and changes made on other
 // computers (already merged into the hub) are pulled down.
 type Engine struct {
+	hubTools
 	cfg         config.SyncConfig
 	local       *sql.DB
 	hub         *sql.DB
 	localDriver string
+	hubDriver   string
 	logf        func(string, ...any)
 	tables      map[string]*tableInfo
 }
 
 // Open builds an Engine using the application's local database and the hub
 // configured in cfg. Database lokal bisa MySQL (instalasi lama) atau SQLite
-// (desktop offline-first); hub selalu MySQL.
+// (desktop offline-first); hub selalu MySQL (Aiven atau MySQL kantor).
 func Open(ctx context.Context, cfg config.SyncConfig, logf func(string, ...any)) (*Engine, error) {
 	if !cfg.HubReady() {
 		return nil, fmt.Errorf("hub database belum dikonfigurasi (SYNC_HUB_DB_HOST/NAME/USER)")
 	}
 	hubDSN := dsn(cfg.HubDBHost, cfg.HubDBPort, cfg.HubDBName, cfg.HubDBUser, cfg.HubDBPass, cfg.HubDBTLS)
+	hub, err := openPool(hubDSN)
+	if err != nil {
+		return nil, fmt.Errorf("buka database hub: %w", err)
+	}
+
 	if database.IsSQLite() {
 		local, err := openSQLitePool(config.App.DBPath)
 		if err != nil {
+			hub.Close()
 			return nil, fmt.Errorf("buka database lokal SQLite: %w", err)
 		}
-		return newEngine(ctx, local, driverSQLite, hubDSN, cfg, logf)
+		return newEngine(ctx, local, driverSQLite, hub, driverMySQL, hubDSN, cfg, logf)
 	}
-	return OpenWithDSN(ctx, dsnFromApp(), hubDSN, cfg, logf)
+	local, err := openPool(dsnFromApp())
+	if err != nil {
+		hub.Close()
+		return nil, fmt.Errorf("buka database lokal: %w", err)
+	}
+	return newEngine(ctx, local, driverMySQL, hub, driverMySQL, hubDSN, cfg, logf)
 }
 
 // OpenWithDSN builds an Engine from explicit MySQL DSNs (CLI/tests).
@@ -59,19 +72,19 @@ func OpenWithDSN(ctx context.Context, localDSN, hubDSN string, cfg config.SyncCo
 	if err != nil {
 		return nil, fmt.Errorf("buka database lokal: %w", err)
 	}
-	return newEngine(ctx, local, driverMySQL, hubDSN, cfg, logf)
-}
-
-// newEngine wires an opened local connection to the hub and prepares the sync
-// bookkeeping/schema metadata.
-func newEngine(ctx context.Context, local *sql.DB, localDriver, hubDSN string, cfg config.SyncConfig, logf func(string, ...any)) (*Engine, error) {
-	if logf == nil {
-		logf = func(string, ...any) {}
-	}
 	hub, err := openPool(hubDSN)
 	if err != nil {
 		local.Close()
 		return nil, fmt.Errorf("buka database hub: %w", err)
+	}
+	return newEngine(ctx, local, driverMySQL, hub, driverMySQL, hubDSN, cfg, logf)
+}
+
+// newEngine wires an opened local connection to the hub and prepares the sync
+// bookkeeping/schema metadata.
+func newEngine(ctx context.Context, local *sql.DB, localDriver string, hub *sql.DB, hubDriver string, hubDSN string, cfg config.SyncConfig, logf func(string, ...any)) (*Engine, error) {
+	if logf == nil {
+		logf = func(string, ...any) {}
 	}
 
 	// A single connection per side keeps session settings in effect and avoids
@@ -89,33 +102,32 @@ func newEngine(ctx context.Context, local *sql.DB, localDriver, hubDSN string, c
 		hub.Close()
 		return nil, err
 	}
-	if _, err := hub.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS=0"); err != nil {
-		local.Close()
-		hub.Close()
-		return nil, fmt.Errorf("set foreign_key_checks hub: %w", err)
-	}
 	// Kedua sisi harus mematikannya. Baris tiba dengan urutan induk/anak yang
 	// bisa tertukar dalam satu delta, sehingga node baru yang menarik data hub
 	// bisa kena galat foreign key pada tabel anak. Sesi ini terpisah dari
 	// koneksi aplikasi, jadi aman.
-	if localDriver == driverSQLite {
-		if _, err := local.ExecContext(ctx, "PRAGMA foreign_keys=OFF"); err != nil {
-			local.Close()
-			hub.Close()
-			return nil, fmt.Errorf("set foreign_keys lokal: %w", err)
-		}
-	} else {
-		if _, err := local.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS=0"); err != nil {
-			local.Close()
-			hub.Close()
-			return nil, fmt.Errorf("set foreign_key_checks lokal: %w", err)
-		}
+	if err := disableForeignKeys(ctx, hub, hubDriver); err != nil {
+		local.Close()
+		hub.Close()
+		return nil, fmt.Errorf("matikan foreign key check hub: %w", err)
+	}
+	if err := disableForeignKeys(ctx, local, localDriver); err != nil {
+		local.Close()
+		hub.Close()
+		return nil, fmt.Errorf("matikan foreign key check lokal: %w", err)
 	}
 
 	if err := ensureLocalSyncTables(ctx, local, localDriver); err != nil {
 		local.Close()
 		hub.Close()
 		return nil, err
+	}
+	// Tabel bookkeeping sync (terutama sync_tombstones yang dibagi antar-node)
+	// juga harus ada di hub.
+	if err := ensureLocalSyncTables(ctx, hub, hubDriver); err != nil {
+		local.Close()
+		hub.Close()
+		return nil, fmt.Errorf("siapkan tabel sync hub: %w", err)
 	}
 
 	tables, err := loadTables(ctx, local, localDriver)
@@ -124,8 +136,34 @@ func newEngine(ctx context.Context, local *sql.DB, localDriver, hubDSN string, c
 		hub.Close()
 		return nil, err
 	}
+	if localDriver == driverSQLite {
+		if err := restrictTablesToHub(ctx, hub, hubDriver, tables, logf); err != nil {
+			local.Close()
+			hub.Close()
+			return nil, err
+		}
+	}
 
-	return &Engine{cfg: cfg, local: local, hub: hub, localDriver: localDriver, logf: logf, tables: tables}, nil
+	return &Engine{
+		hubTools:    hubTools{dsn: hubDSN},
+		cfg:         cfg,
+		local:       local,
+		hub:         hub,
+		localDriver: localDriver,
+		hubDriver:   hubDriver,
+		logf:        logf,
+		tables:      tables,
+	}, nil
+}
+
+// disableForeignKeys mematikan pemeriksaan foreign key pada satu koneksi.
+func disableForeignKeys(ctx context.Context, db *sql.DB, driver string) error {
+	if driver == driverSQLite {
+		_, err := db.ExecContext(ctx, "PRAGMA foreign_keys=OFF")
+		return err
+	}
+	_, err := db.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS=0")
+	return err
 }
 
 // Close releases both connections.
@@ -136,6 +174,7 @@ func (e *Engine) Close() {
 	if e.hub != nil {
 		e.hub.Close()
 	}
+	e.closeHubGorm()
 }
 
 // TableResult is the per-table outcome of a run.
@@ -223,16 +262,13 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 
 // syncTable pushes local changes to the hub and pulls remote changes back.
 func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, tr *TableResult) error {
-	exists, err := tableExistsIn(ctx, e.hub, driverMySQL, ti.Name)
+	exists, err := tableExistsIn(ctx, e.hub, e.hubDriver, ti.Name)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		if e.localDriver == driverSQLite {
-			return fmt.Errorf("tabel %s belum ada di hub; jalankan migrasi hub terlebih dahulu", ti.Name)
-		}
-		if err := createTableLike(ctx, e.local, e.hub, ti.Name); err != nil {
-			return fmt.Errorf("buat tabel di hub: %w", err)
+		if err := ensureHubTable(ctx, e, ti.Name); err != nil {
+			return fmt.Errorf("buat tabel %s di hub: %w", ti.Name, err)
 		}
 	}
 
@@ -246,7 +282,7 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 		return fmt.Errorf("baca perubahan lokal: %w", err)
 	}
 	if len(pushedRows) > 0 {
-		if err := upsertRows(ctx, e.hub, driverMySQL, ti, strat, pushedRows, e.cfg.BatchSize); err != nil {
+		if err := upsertRows(ctx, e.hub, e.hubDriver, ti, strat, pushedRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke hub: %w", err)
 		}
 		tr.Pushed = len(pushedRows)
@@ -291,16 +327,13 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 //  3. pulls hub rows back and applies local tombstones (a row re-created after
 //     its tombstone survives).
 func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableResult) error {
-	exists, err := tableExistsIn(ctx, e.hub, driverMySQL, ti.Name)
+	exists, err := tableExistsIn(ctx, e.hub, e.hubDriver, ti.Name)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		if e.localDriver == driverSQLite {
-			return fmt.Errorf("tabel %s belum ada di hub; jalankan migrasi hub terlebih dahulu", ti.Name)
-		}
-		if err := createTableLike(ctx, e.local, e.hub, ti.Name); err != nil {
-			return fmt.Errorf("buat tabel di hub: %w", err)
+		if err := ensureHubTable(ctx, e, ti.Name); err != nil {
+			return fmt.Errorf("buat tabel %s di hub: %w", ti.Name, err)
 		}
 	}
 
@@ -312,7 +345,7 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 	}
 
 	// 2. Send tombstones to the hub and apply them there.
-	if err := copyTombstones(ctx, e.local, e.hub, ti.Name, e.localDriver, driverMySQL); err != nil {
+	if err := copyTombstones(ctx, e.local, e.hub, ti.Name, e.localDriver, e.hubDriver); err != nil {
 		return fmt.Errorf("kirim tombstone ke hub: %w", err)
 	}
 	if n, err := applyTombstones(ctx, e.hub, ti); err != nil {
@@ -331,7 +364,7 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 		return fmt.Errorf("baca perubahan lokal: %w", err)
 	}
 	if len(pushedRows) > 0 {
-		if err := upsertRows(ctx, e.hub, driverMySQL, ti, stratKeyed, pushedRows, e.cfg.BatchSize); err != nil {
+		if err := upsertRows(ctx, e.hub, e.hubDriver, ti, stratKeyed, pushedRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke hub: %w", err)
 		}
 		tr.Pushed = len(pushedRows)

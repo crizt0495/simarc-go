@@ -370,9 +370,8 @@ func tableExistsIn(ctx context.Context, db *sql.DB, driver, table string) (bool,
 	return n > 0, nil
 }
 
-// createTableLike copies a table's DDL from src to dst when dst lacks it.
-// Hanya dipakai untuk hub MySQL; database lokal SQLite tidak bisa menjadi
-// sumber DDL MySQL.
+// createTableLike copies a table's DDL from a MySQL source to a MySQL
+// destination (hub selalu MySQL).
 func createTableLike(ctx context.Context, src, dst *sql.DB, table string) error {
 	var name, ddl string
 	if err := src.QueryRowContext(ctx, "SHOW CREATE TABLE `"+table+"`").Scan(&name, &ddl); err != nil {
@@ -381,4 +380,72 @@ func createTableLike(ctx context.Context, src, dst *sql.DB, table string) error 
 	ddl = strings.Replace(ddl, "CREATE TABLE", "CREATE TABLE IF NOT EXISTS", 1)
 	_, err := dst.ExecContext(ctx, ddl)
 	return err
+}
+
+// restrictTablesToHub keeps only columns that exist on both sides. Database
+// lokal SQLite dibuat dari model GORM terbaru, sedangkan hub MySQL bisa lebih
+// lama (belum punya kolom baru). Tanpa irisan ini, push/pull gagal dengan
+// "Unknown column". Kolom yang belum ada di hub tidak disinkronkan sampai hub
+// dimigrasi; data lokal untuk kolom tersebut tetap aman.
+func restrictTablesToHub(ctx context.Context, hub *sql.DB, hubDriver string, tables map[string]*tableInfo, logf func(string, ...any)) error {
+	hubTables, err := loadTables(ctx, hub, hubDriver)
+	if err != nil {
+		return err
+	}
+	trimmed := 0
+	for name, ti := range tables {
+		ht, ok := hubTables[name]
+		if !ok {
+			// Tidak ada di hub: lewati tabel ini (tidak bisa dibuat dari SQLite).
+			if logf != nil {
+				logf("[sync] tabel %s belum ada di hub; dilewati", name)
+			}
+			delete(tables, name)
+			continue
+		}
+		allowed := make(map[string]bool, len(ht.Columns))
+		for _, c := range ht.Columns {
+			allowed[c] = true
+		}
+		cols := make([]string, 0, len(ti.Columns))
+		for _, c := range ti.Columns {
+			if allowed[c] {
+				cols = append(cols, c)
+			}
+		}
+		pkOK := true
+		for _, c := range ti.PK {
+			if !allowed[c] {
+				pkOK = false
+				break
+			}
+		}
+		if len(cols) == 0 || !pkOK {
+			if logf != nil {
+				logf("[sync] tabel %s dilewati: kolom kunci tidak cocok dengan hub", name)
+			}
+			delete(tables, name)
+			continue
+		}
+		if len(cols) != len(ti.Columns) {
+			trimmed++
+		}
+		ti.Columns = cols
+		ti.HasCreatedAt = containsString(cols, "created_at")
+		ti.HasUpdatedAt = containsString(cols, "updated_at")
+		ti.HasDeletedAt = containsString(cols, "deleted_at")
+	}
+	if trimmed > 0 && logf != nil {
+		logf("[sync] %d tabel memakai irisan kolom hub (hub belum dimigrasi penuh)", trimmed)
+	}
+	return nil
+}
+
+func containsString(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

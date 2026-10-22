@@ -30,6 +30,7 @@ import (
 
 	"arsippro/internal/app"
 	"arsippro/internal/config"
+	"arsippro/internal/database"
 	"arsippro/internal/embeddeddb"
 	"arsippro/internal/handlers"
 )
@@ -146,7 +147,11 @@ func printBanner(port, lanIP string) {
 	fmt.Println(bar('╠'))
 	fmt.Println(bannerLine(fmt.Sprintf("Local     : http://127.0.0.1:%s", port), w))
 	fmt.Println(bannerLine(fmt.Sprintf("Network   : http://%s:%s", lanIP, port), w))
-	fmt.Println(bannerLine(fmt.Sprintf("Database  : MySQL  (%s:%s/%s)", config.App.DBHost, config.App.DBPort, config.App.DBName), w))
+	if database.IsSQLite() {
+		fmt.Println(bannerLine(fmt.Sprintf("Database  : SQLite (%s)", config.App.DBPath), w))
+	} else {
+		fmt.Println(bannerLine(fmt.Sprintf("Database  : MySQL  (%s:%s/%s)", config.App.DBHost, config.App.DBPort, config.App.DBName), w))
+	}
 	fmt.Println(bannerLine("", w))
 	fmt.Println(bannerLine("Client di WiFi/LAN yang sama bisa akses:", w))
 	fmt.Println(bannerLine(fmt.Sprintf("-> http://%s:%s", lanIP, port), w))
