@@ -134,8 +134,8 @@ func bannerLine(text string, width int) string {
 }
 
 // printBanner prints the startup box with local/network URLs, auto-detected
-// LAN IP, and the active database (MySQL/MariaDB).
-func printBanner(port, lanIP string) {
+// LAN IPs, and the active database.
+func printBanner(port, lanIP string, lanIPs []string) {
 	w := 60
 	bar := func(r rune) string { return "  " + string(r) + strings.Repeat("═", w) + string(r) }
 
@@ -146,7 +146,28 @@ func printBanner(port, lanIP string) {
 	fmt.Println(bannerLine("", w))
 	fmt.Println(bar('╠'))
 	fmt.Println(bannerLine(fmt.Sprintf("Local     : http://127.0.0.1:%s", port), w))
-	fmt.Println(bannerLine(fmt.Sprintf("Network   : http://%s:%s", lanIP, port), w))
+	if len(lanIPs) == 0 {
+		lanIPs = []string{lanIP}
+	}
+	shown := 0
+	for _, ip := range lanIPs {
+		ip = strings.TrimSpace(ip)
+		if ip == "" || ip == "127.0.0.1" || ip == "::1" {
+			continue
+		}
+		if shown == 0 {
+			fmt.Println(bannerLine(fmt.Sprintf("Network   : http://%s:%s", ip, port), w))
+		} else {
+			fmt.Println(bannerLine(fmt.Sprintf("            http://%s:%s", ip, port), w))
+		}
+		shown++
+		if shown >= 4 {
+			break
+		}
+	}
+	if shown == 0 {
+		fmt.Println(bannerLine(fmt.Sprintf("Network   : http://%s:%s", lanIP, port), w))
+	}
 	if database.IsSQLite() {
 		fmt.Println(bannerLine(fmt.Sprintf("Database  : SQLite (%s)", config.App.DBPath), w))
 	} else {
@@ -154,8 +175,27 @@ func printBanner(port, lanIP string) {
 	}
 	fmt.Println(bannerLine("", w))
 	fmt.Println(bannerLine("Client di WiFi/LAN yang sama bisa akses:", w))
-	fmt.Println(bannerLine(fmt.Sprintf("-> http://%s:%s", lanIP, port), w))
+	shown = 0
+	for _, ip := range lanIPs {
+		ip = strings.TrimSpace(ip)
+		if ip == "" || ip == "127.0.0.1" || ip == "::1" {
+			continue
+		}
+		fmt.Println(bannerLine(fmt.Sprintf("-> http://%s:%s", ip, port), w))
+		shown++
+		if shown >= 4 {
+			break
+		}
+	}
+	if shown == 0 {
+		fmt.Println(bannerLine(fmt.Sprintf("-> http://%s:%s", lanIP, port), w))
+	}
 	fmt.Println(bannerLine("", w))
+	if runtime.GOOS == "windows" {
+		fmt.Println(bannerLine("Firewall Windows: bila tak bisa diakses, izinkan", w))
+		fmt.Println(bannerLine("    aplikasi ini pada jaringan Privat/Domestik.", w))
+		fmt.Println(bannerLine("", w))
+	}
 	fmt.Println(bannerLine("Tekan Ctrl+C untuk berhenti", w))
 	fmt.Println(bar('╚'))
 	fmt.Println()
@@ -321,6 +361,10 @@ func main() {
 	}
 	addr := ":" + port
 	lanIP := getLANIP()
+	lanIPs := lanIPCandidates()
+	if len(lanIPs) == 0 {
+		lanIPs = []string{lanIP}
+	}
 
 	// HTTPS (opsional): diperlukan agar PWA bisa di-install di Android
 	// (Chrome Android menolak install PWA pada HTTP non-localhost).
@@ -376,7 +420,7 @@ func main() {
 		if useHTTPS {
 			scheme = "https"
 		}
-		printBanner(port, lanIP)
+		printBanner(port, lanIP, lanIPs)
 		appCmd = openBrowser(fmt.Sprintf("%s://127.0.0.1:%s", scheme, port))
 	}
 

@@ -202,6 +202,7 @@ echo -e "  ${G}┌────────────────────�
 echo -e "  ${G}│  ${B}SIMARC SIAP DIGUNAKAN!${N}                    ${G}│${N}"
 echo -e "  ${G}│                                            │${N}"
 echo -e "  ${G}│  📍  Lokal    ${C}http://localhost:${PORT}${N}           ${G}│${N}"
+echo -e "  ${G}│  🌐  WiFi/LAN ${C}http://${LAN_IP}:${PORT}${N}           ${G}│${N}"
 echo -e "  ${G}│                                            │${N}"
 if [[ -n "$AIR_CMD" ]]; then
 echo -e "  ${G}│  🔄  Auto-reload aktif                        ${G}│${N}"

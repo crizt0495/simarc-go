@@ -243,8 +243,9 @@ PW="$(grep '^DB_PASSWORD=' .env | cut -d= -f2-)"
 mysql -u chris -p"$PW" -h 127.0.0.1 simarc
 
 # Hub (Aiven) — butuh --ssl (bukan --ssl-mode=REQUIRED)
+HUB_PW="$(grep '^SYNC_HUB_DB_PASS=' .env | cut -d= -f2-)"
 mysql --ssl -h mysql-1d4b6727-christwnto-b045.b.aivencloud.com -P 19160 \
-      -u avnadmin -p'AVNS_pi7_rHU5bZAqSVmiJyl' simarc_hub
+      -u avnadmin -p"$HUB_PW" simarc_hub
 
 # Sinkronisasi manual satu siklus
 go run ./cmd/sync

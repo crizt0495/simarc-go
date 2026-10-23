@@ -123,6 +123,13 @@
   }
 }
 
+/* Mobile search bar: only pushes content while open, so it never covers it */
+@media (max-width: 991.98px) {
+  body.mobile-search-open .main-content {
+    padding-top: calc(var(--topbar-h) + 61px + 0.9rem) !important;
+  }
+}
+
 /* Mobile page header compact */
 @media (max-width: 576px) {
   .page-header .page-title { font-size: 1.1rem !important; }
@@ -148,8 +155,8 @@ html, body { overflow-x: hidden; }
 
 {{template "components/sidebar.html" .}}
 
-<!-- Mobile Search Bar (hidden on mobile - using bottom nav search instead) -->
-<div class="mobile-search-bar" id="mobileSearchBar">
+<!-- Mobile Search Bar (hidden by default; dibuka lewat tombol pencarian di topbar) -->
+<div class="mobile-search-bar d-none" id="mobileSearchBar">
   <form action="/search" method="GET" style="display:contents;flex:1">
     <div class="mobile-search-inner">
       <i class="bi bi-search"></i>
@@ -157,7 +164,7 @@ html, body { overflow-x: hidden; }
       <button type="button" class="mobile-search-clear" id="mobileSearchClear" onclick="document.getElementById('mobileSearchBar').querySelector('input').value='';this.style.display='none'" style="display:none"><i class="bi bi-x-lg"></i></button>
     </div>
     <button type="submit" class="btn btn-primary btn-sm mobile-search-submit"><i class="bi bi-search"></i></button>
-    <button type="button" class="btn btn-light btn-sm mobile-search-close" onclick="var sb=document.getElementById('mobileSearchBar');sb.classList.add('d-none');document.getElementById('mobileSearchBtn')?.classList.remove('active')" aria-label="Tutup pencarian"><i class="bi bi-x-lg"></i></button>
+    <button type="button" class="btn btn-light btn-sm mobile-search-close" aria-label="Tutup pencarian"><i class="bi bi-x-lg"></i></button>
   </form>
 </div>
 
@@ -181,6 +188,10 @@ html, body { overflow-x: hidden; }
       <span class="cmdk-trigger-label">Cari atau jalankan perintah…</span>
       <span class="cmdk-kbd"><kbd id="cmdkKbd">Ctrl K</kbd></span>
     </button>
+    <button class="nav-icon-btn d-flex d-lg-none" id="mobileSearchBtn" title="Cari arsip" aria-label="Buka pencarian" aria-controls="mobileSearchBar" aria-expanded="false">
+      <i class="bi bi-search"></i>
+    </button>
+
     <button class="nav-icon-btn" id="themeToggle" title="Toggle Dark Mode">
       <i class="bi bi-moon" id="themeIcon"></i>
     </button>
@@ -321,35 +332,72 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ── Toggle "Lainnya" menu (vanilla, andal di WebView/Android) ──
-  // ── Toggle "Lainnya" menu (vanilla, andal di WebView/Android) ──
-  var moreBtn = document.getElementById('mobileMoreBtn');
   var moreMenu = document.getElementById('mobileMoreMenu');
   if (moreBtn && moreMenu) {
+    var setMoreOpen = function (open) {
+      moreMenu.classList.toggle('show', open);
+      document.body.classList.toggle('mobile-more-open', open);
+      moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
     moreBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      var isOpen = moreMenu.classList.contains('show');
-      if (isOpen) {
-        moreMenu.classList.remove('show');
-        moreBtn.setAttribute('aria-expanded', 'false');
-      } else {
-        moreMenu.classList.add('show');
-        moreBtn.setAttribute('aria-expanded', 'true');
-      }
+      setMoreOpen(!moreMenu.classList.contains('show'));
     });
     // Tutup menu saat klik di luar
     document.addEventListener('click', function (e) {
-      if (moreMenu.classList.contains('show') && !moreMenu.contains(e.target) && e.target !== moreBtn) {
-        moreMenu.classList.remove('show');
-        moreBtn.setAttribute('aria-expanded', 'false');
+      if (moreMenu.classList.contains('show') && !moreMenu.contains(e.target) && !moreBtn.contains(e.target)) {
+        setMoreOpen(false);
       }
     });
+    // Tutup juga saat mengetuk lapisan latar belakang.
+    document.addEventListener('click', function (e) {
+      if (moreMenu.classList.contains('show') && e.target === document.body && document.body.classList.contains('mobile-more-open')) {
+        setMoreOpen(false);
+      }
+    }, true);
     // Tutup menu saat item diklik (navigasi)
     moreMenu.querySelectorAll('.mobile-more-item').forEach(function (item) {
-      item.addEventListener('click', function () {
-        moreMenu.classList.remove('show');
-        moreBtn.setAttribute('aria-expanded', 'false');
-      });
+      item.addEventListener('click', function () { setMoreOpen(false); });
+    });
+    // Tutup juga dengan Escape.
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && moreMenu.classList.contains('show')) setMoreOpen(false);
+    });
+  }
+
+  // ── Mobile search: hidden until the topbar search button is pressed ──
+  var searchBar = document.getElementById('mobileSearchBar');
+  var searchBtn = document.getElementById('mobileSearchBtn');
+  if (searchBar && searchBtn) {
+    var setSearchOpen = function (open) {
+      searchBar.classList.toggle('d-none', !open);
+      document.body.classList.toggle('mobile-search-open', open);
+      searchBtn.classList.toggle('active', open);
+      searchBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        var input = searchBar.querySelector('input[type="search"]');
+        if (input) setTimeout(function () { input.focus(); }, 60);
+      }
+    };
+    searchBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      setSearchOpen(searchBar.classList.contains('d-none'));
+    });
+    var searchClose = searchBar.querySelector('.mobile-search-close');
+    if (searchClose) {
+      searchClose.addEventListener('click', function () { setSearchOpen(false); });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !searchBar.classList.contains('d-none')) {
+        setSearchOpen(false);
+      }
+    });
+    // Pastikan bilah tidak tertinggal terbuka saat layar diperbesar ke desktop.
+    window.addEventListener('resize', function () {
+      if (window.innerWidth >= 992 && !searchBar.classList.contains('d-none')) {
+        setSearchOpen(false);
+      }
     });
   }
 });
@@ -380,8 +428,14 @@ document.addEventListener('keydown', function(e) {
     if (window.SimarcCmdK && window.innerWidth >= 992) {
       window.SimarcCmdK.open();
     } else {
-      var searchInput = document.querySelector('.mobile-search-bar input');
-      if (searchInput) searchInput.focus();
+      var searchBar = document.getElementById('mobileSearchBar');
+      var searchBtn = document.getElementById('mobileSearchBtn');
+      if (searchBar && searchBar.classList.contains('d-none') && searchBtn) {
+        searchBtn.click();
+      } else {
+        var searchInput = document.querySelector('.mobile-search-bar input');
+        if (searchInput) searchInput.focus();
+      }
     }
   }
   // D to toggle dark mode (not in input)

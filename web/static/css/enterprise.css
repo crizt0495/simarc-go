@@ -911,6 +911,13 @@ kbd {
   .kpi-grid-5, .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
 }
 @media (max-width: 479.98px) {
+  /* Dua kolom tetap dipakai di ponsel umum (>=360px) supaya dashboard
+     tidak memanjang satu kartu per baris; hanya layar sangat kecil yang
+     turun ke satu kolom. */
+  .kpi-grid-5, .kpi-grid-4 { gap: 0.6rem; }
+  .kpi-grid .stat-card { padding: 0.9rem 0.85rem 0.8rem; }
+}
+@media (max-width: 359.98px) {
   .kpi-grid-5, .kpi-grid-4 { grid-template-columns: 1fr; }
 }
 
@@ -2693,8 +2700,63 @@ input.auth-input::placeholder { color: var(--nb-ink-5); }
 
 @media (max-width: 991.98px) {
   .main-content { padding: calc(var(--topbar-h) + 0.9rem) 0.9rem calc(5.5rem + env(safe-area-inset-bottom)); }
-  .mobile-bottom-nav { display: flex; }
+  .mobile-bottom-nav { display: flex; height: calc(56px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); }
   .desktop-only { display: none !important; }
+
+  /* ── Menu "Lainnya": bottom sheet ─────────────────────────────────────
+     Panel ini HARUS keluar dari alur flex bottom-nav. Tanpa position:fixed
+     ia ikut menggelembungkan tinggi nav (menutupi seluruh layar) dan
+     meluber ke kanan. */
+  .mobile-more-menu {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: min(76vh, 620px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    background: var(--nb-surface);
+    border: 1px solid var(--nb-border);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 32px rgba(15, 23, 42, 0.18);
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(110%);
+    visibility: hidden;
+    pointer-events: none;
+    z-index: var(--z-dropdown);
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+  .mobile-more-menu.show {
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform 0.22s ease;
+  }
+  .mobile-more-section { padding: 0; }
+  .mobile-more-section + .mobile-more-section {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--nb-border-light);
+  }
+  .mobile-more-item { min-height: 44px; padding: 0.6rem 0.65rem; }
+  .mobile-more-item span { line-height: 1.25; }
+
+  /* Kunci scroll halaman saat bottom sheet terbuka + lapisan gelap agar
+     area di luar panel bisa diketuk untuk menutup. */
+  body.mobile-more-open { overflow: hidden; }
+  body.mobile-more-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.38);
+    z-index: 1030;
+  }
+  body.mobile-more-open .mobile-bottom-nav { z-index: 1040; }
 }
 
 @media (min-width: 992px) {

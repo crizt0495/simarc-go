@@ -31,6 +31,8 @@ blob-report/
 # ── Runtime storage (regenerated) ──
 storage/app/backups/*
 storage/app/offsite/
+storage/app/uploads/
+storage/updates/
 storage/qr-codes/*
 public/storage/qr-codes/*
 !storage/app/backups/.gitkeep
