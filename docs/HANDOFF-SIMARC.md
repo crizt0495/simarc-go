@@ -4,8 +4,10 @@
 > dari perangkat/komputer lain tanpa membaca ulang seluruh riwayat obrolan.
 > Salin file ini bersama repo, atau ambil dari GitHub (`docs/HANDOFF-SIMARC.md`).
 
-**Terakhir diperbarui:** 2026-10-22 15:20 WIB
-**Status pekerjaan:** perbaikan inti SELESAI & terverifikasi · sisanya (installer, service hub, uji Android) dikerjakan pada sesi ini juga.
+**Terakhir diperbarui:** 2026-10-23 07:40 WIB
+**Status pekerjaan:** SELESAI & terverifikasi. Binary hub + installer sudah diperbarui
+ke `1.0.0-66-ga427a3f`. Klien desktop akan memperbarui diri dari hub (maks. 30 menit)
+dan data kembali 100% pada restart berikutnya.
 
 ---
 
@@ -121,6 +123,53 @@ activity_logs 1378, audit_logs 445, login_logs 1695.
 
 ---
 
+## 6b. 🔴 Penyebab "aplikasi desktop komputer klien menampilkan 0 data"
+
+Perangkat lunak komputer klien **memperbarui dirinya dari HUB**, bukan dari GitHub:
+
+```
+klien (setiap 30 menit) → GET http://192.168.1.86:8080/api/update/version
+                        → GET http://192.168.1.86:8080/api/update/binary
+                        → simpan ke tmp\src\..\simarc-server.exe.new
+                        → run.bat menukar binary saat aplikasi dibuka berikutnya
+```
+
+Hub di komputer ini ternyata masih menjalankan binary **lama**
+(`1.0.0-62-g9bf06bb`, dipasang 22 Okt 10:17 — sebelum perbaikan
+`permission_role`/tombstone/DEFAULT_GENERATED). Akibatnya setiap klien yang
+auto-update justru menerima binary lama itu dan tetap menampilkan 0 data,
+walaupun perbaikan sudah ada di GitHub.
+
+**Perbaikan yang dilakukan:**
+
+1. Binary Windows baru dibangun dari commit `HEAD` (a427a3f) di worktree bersih
+   (tanpa mengganggu perubahan sesi lain di working tree).
+2. Binary dipasang ke instalasi hub:
+   `~/.wine/drive_c/users/chris/AppData/Local/SIMARC/tmp/simarc-server.exe`
+   (+ `VERSION` di root dan `tmp/`) → **1.0.0-66-ga427a3f**.
+3. `simarc-hub.service` dijalankan ulang. Verifikasi:
+   - `GET /api/update/version` → `{"version":"1.0.0-66-ga427a3f","os":"windows"}`
+   - `GET /api/update/binary` → SHA-256 `235dd7c89d7a9719d19f529f4a4f14379800c144fcdd97de4d5d19cc77f39a60`
+   - `GET /login` → 200, `GET /viewer` → 200 (433 KB, berisi 4.172 arsip).
+4. Installer `SIMARC-Setup.exe` dibangun ulang dari commit yang sama
+   (SHA-256 `39d2673160a71cf3205d0de4564dbe0b9953d1f730220b6c464933fb02cf30b7`)
+   dan di-push ke GitHub.
+
+**Yang perlu dilakukan di komputer klien:** cukup **tutup lalu buka lagi**
+aplikasi SIMARC. Bila update belum terunduh (cek 30 menit), jalankan
+`SIMARC-Setup.exe` versi baru. Setelah binary baru berjalan, migrasi SQLite
+otomatis memperbaiki `permission_role`, membuang tombstone racun, dan menarik
+ulang seluruh data dari hub.
+
+### Uji verifikasi yang sudah dilakukan
+
+| Uji | Hasil |
+|---|---|
+| Klien SQLite **baru** (DB kosong) menarik dari hub | ✅ `arsip=4172`, `permission_role=808`, `users=5`, `kode_klasifikasi=3919`, `blockchain_audits=7791`, `login_logs=1701`, … **identik dengan server**; `tabel_error=0` |
+| Klien SQLite **lama yang rusak** (PK komposit + 808 tombstone racun + `arsip` kosong) dinaikkan ke binary baru | ✅ log `[MIGRASI] permission_role diperbaiki … (808 baris lama dilepas)`; `arsip` ditarik 4.172 baris; `permission_role` ditarik 808; 808 tombstone racun dibuang; **hub tetap utuh** (808/4172, tombstone 0) |
+
+---
+
 ## 6. Penting: APK Android
 
 File: `../SIMARC-Android.apk` (3.013.134 bytes) — **berada di luar git repo**
@@ -142,8 +191,7 @@ Artinya "100% terbaca di Android" berarti server pusat harus serves data lengkap
 jadi tidak bisa offline penuh tanpa server.
 > Catatan: tidak ada Android SDK maupun source project Android di repo ini,
 > sehingga APK tidak bisa dibangun ulang di sini. Kalau akan dibuatkan versi
-> offline (SQLite di HP), perlu source Android + SDK + Italiansinemua (butuh
-> Keputusan tersendiri).
+> offline (SQLite di HP), perlu source Android + SDK + keputusan tersendiri.
 
 ---
 
@@ -177,7 +225,10 @@ Kalau `git pull` konflik, simpan dulu kerjaan lokal:
 - [x] Installer Windows dibangun ulang + SHA baru di `docs/UJI-WINDOWS-ASLI.md`
 - [x] `simarc-hub.service` dijalankan ulang dengan binary baru
 - [x] Uji klien SQLite **bersih** (100% baca data dari hub)
+- [x] Uji klien SQLite **lama/rusak** → binary baru memulihkan data otomatis
 - [x] Uji server LAN `http://192.168.1.86:8080` (login + data)
+- [x] Binary hub diperbarui ke `1.0.0-66-ga427a3f` (auto-update klien berfungsi)
+- [x] Installer final `39d2673…` (identik dengan binary hub) di-push
 - [x] Dokumen pengingat ini dibuat
 
 ---
@@ -237,6 +288,11 @@ systemctl --user restart simarc-hub.service
 5. **Jangan** mengubah `permission_role` kembali ke PK komposit.
 6. Tabel ber-PK auto-increment **sengaja** tidak ikut sinkron (dokumentasi di
    `docs/OFFLINE-SYNC.md` §5.1) — itu bukan bug.
+7. **Klien memperbarui binary dari HUB**, bukan dari GitHub
+   (`/api/update/version` + `/api/update/binary`, lalu `run.bat` menukar
+   `tmp/simarc-server.exe.new`). Setiap kali ada perbaikan kode, binary hub di
+   Wine **wajib** ikut diganti (lihat §6b), kalau tidak klien akan terus
+   memakai versi lama. Versi hub dicek di `GET /api/update/version`.
 
 ---
 
