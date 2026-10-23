@@ -4,7 +4,7 @@ Panduan ini dipakai untuk membuktikan `SIMARC-Setup.exe` berjalan **tanpa error*
 di komputer Windows sungguhan (bukan Wine).
 
 File yang diuji: `SIMARC-Setup.exe`
-SHA-256: `0ff1cd35a96f162e6eb9430ebc25e5dfc987b6cbcbaaea1a6c083a1e0e79b41a`
+SHA-256: `39d2673160a71cf3205d0de4564dbe0b9953d1f730220b6c464933fb02cf30b7`
 
 > **Instalasi baru memakai database lokal SQLite** (`%LocalAppData%\SIMARC\storage\simarc.db`),
 > jadi tidak perlu MySQL/MariaDB sama sekali dan tetap bisa dipakai tanpa jaringan.
