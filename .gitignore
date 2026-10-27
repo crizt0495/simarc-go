@@ -12,6 +12,7 @@ packaging/cache/
 # Installer desktop Windows dilacak agar bisa diunduh langsung dari repo
 # (pengecualian harus ditulis setelah "*.exe" agar menang).
 !dist/SIMARC-Setup.exe
+!dist/SIMARC-Android.apk
 
 # ── Node / frontend tooling ──
 node_modules/
