@@ -51,6 +51,13 @@ func ensureLocalSyncTables(ctx context.Context, db *sql.DB, driver string) error
 				PRIMARY KEY (table_name, key_hash)
 			)`,
 			`CREATE INDEX IF NOT EXISTS idx_sync_tomb_updated ON sync_tombstones (updated_at)`,
+			`CREATE TABLE IF NOT EXISTS sync_boundary (
+				table_name TEXT NOT NULL,
+				key_hash TEXT NOT NULL,
+				direction TEXT NOT NULL,
+				row_hash TEXT NOT NULL,
+				PRIMARY KEY (table_name, key_hash, direction)
+			)`,
 		}
 		for _, q := range stmts {
 			if _, err := db.ExecContext(ctx, q); err != nil {
@@ -130,6 +137,22 @@ func ensureLocalSyncTables(ctx context.Context, db *sql.DB, driver string) error
 		updated_at DATETIME(3) NOT NULL,
 		PRIMARY KEY (table_name, key_hash),
 		INDEX idx_sync_tomb_updated (updated_at)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
+	if err != nil {
+		return err
+	}
+
+	// sync_boundary adalah memo lokal berisi hash konten baris yang berada
+	// tepat PADA watermark (boundary). Baris pada timestamp yang sama dengan
+	// data seed massal (semua ber-stempel identik) dulu dibaca ulang oleh
+	// jendela overlap dan dikirim ulang setiap run selamanya. Dengan memo ini
+	// baris boundary hanya dikalakan bila KONTENNYA berubah. Tidak disinkron.
+	_, err = db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS sync_boundary (
+		table_name VARCHAR(64) NOT NULL,
+		key_hash CHAR(64) NOT NULL,
+		direction VARCHAR(8) NOT NULL,
+		row_hash CHAR(64) NOT NULL,
+		PRIMARY KEY (table_name, key_hash, direction)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
 	return err
 }

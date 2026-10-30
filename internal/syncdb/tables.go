@@ -45,9 +45,10 @@ var skipTables = map[string]bool{
 
 	// Sync bookkeeping: state/runs/keys are local-only. sync_tombstones is NOT
 	// skipped — it is deliberately shared so deletes propagate.
-	"sync_state": true,
-	"sync_runs":  true,
-	"sync_keys":  true,
+	"sync_state":    true,
+	"sync_runs":     true,
+	"sync_keys":     true,
+	"sync_boundary": true,
 
 	"telescope_entries":      true,
 	"telescope_entries_tags": true,
@@ -168,42 +169,97 @@ func loadTables(ctx context.Context, db *sql.DB, driver string) (map[string]*tab
 	if driver == driverSQLite {
 		return loadTablesSQLite(ctx, db)
 	}
+	return loadTablesMySQL(ctx, db)
+}
 
+// loadTablesMySQL introspects every base table in a MySQL database using
+// exactly TWO information_schema queries (one for all columns, one for all
+// primary keys) instead of two per table. Over a WAN hub this cuts the sync
+// startup from ~20 s to well under a second of query time.
+func loadTablesMySQL(ctx context.Context, db *sql.DB) (map[string]*tableInfo, error) {
 	var schema string
 	if err := db.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&schema); err != nil {
 		return nil, err
 	}
 
-	rows, err := db.QueryContext(ctx, `
-		SELECT table_name FROM information_schema.tables
-		WHERE table_schema = ? AND table_type = 'BASE TABLE'
-		ORDER BY table_name`, schema)
+	out := map[string]*tableInfo{}
+	byName := func(name string) *tableInfo {
+		ti, ok := out[name]
+		if !ok {
+			ti = &tableInfo{Name: name}
+			out[name] = ti
+		}
+		return ti
+	}
+
+	colRows, err := db.QueryContext(ctx, `
+		SELECT table_name, column_name, extra FROM information_schema.columns
+		WHERE table_schema = ?
+		ORDER BY table_name, ordinal_position`, schema)
 	if err != nil {
 		return nil, err
 	}
-	var names []string
-	for rows.Next() {
-		var n string
-		if err := rows.Scan(&n); err != nil {
-			rows.Close()
+	for colRows.Next() {
+		var table, col, extra string
+		if err := colRows.Scan(&table, &col, &extra); err != nil {
+			colRows.Close()
 			return nil, err
 		}
-		names = append(names, n)
+		applyColumn(byName(table), col, extra)
 	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
+	colRows.Close()
+	if err := colRows.Err(); err != nil {
 		return nil, err
 	}
 
-	out := make(map[string]*tableInfo, len(names))
-	for _, name := range names {
-		ti, err := loadTable(ctx, db, schema, name)
-		if err != nil {
+	pkRows, err := db.QueryContext(ctx, `
+		SELECT table_name, column_name FROM information_schema.statistics
+		WHERE table_schema = ? AND index_name = 'PRIMARY'
+		ORDER BY table_name, seq_in_index`, schema)
+	if err != nil {
+		return nil, err
+	}
+	for pkRows.Next() {
+		var table, col string
+		if err := pkRows.Scan(&table, &col); err != nil {
+			pkRows.Close()
 			return nil, err
 		}
-		out[name] = ti
+		byName(table).PK = append(byName(table).PK, col)
+	}
+	pkRows.Close()
+	if err := pkRows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Tabel tanpa kolom yang bisa disalin tidak ikut disinkronkan (sama
+	// seperti perilaku introspeksi per tabel yang error atasnya).
+	for name, ti := range out {
+		if len(ti.Columns) == 0 {
+			delete(out, name)
+		}
 	}
 	return out, nil
+}
+
+// applyColumn menerima satu baris informasi kolom MySQL dan memetakkannya ke
+// tableInfo (dipakai bersama loader per tabel dan loader batch).
+func applyColumn(ti *tableInfo, col, extra string) {
+	if isTrulyGeneratedColumn(extra) {
+		return // generated columns cannot be inserted explicitly
+	}
+	ti.Columns = append(ti.Columns, col)
+	if strings.Contains(strings.ToLower(extra), "auto_increment") {
+		ti.AutoIncrement = true
+	}
+	switch col {
+	case "created_at":
+		ti.HasCreatedAt = true
+	case "updated_at":
+		ti.HasUpdatedAt = true
+	case "deleted_at":
+		ti.HasDeletedAt = true
+	}
 }
 
 // loadTablesSQLite membaca daftar tabel dan kolom dari katalog SQLite.
@@ -333,22 +389,7 @@ func loadTable(ctx context.Context, db *sql.DB, schema, name string) (*tableInfo
 			rows.Close()
 			return nil, err
 		}
-		lower := strings.ToLower(extra)
-		if isTrulyGeneratedColumn(extra) {
-			continue // generated columns cannot be inserted explicitly
-		}
-		ti.Columns = append(ti.Columns, col)
-		if strings.Contains(lower, "auto_increment") {
-			ti.AutoIncrement = true
-		}
-		switch col {
-		case "created_at":
-			ti.HasCreatedAt = true
-		case "updated_at":
-			ti.HasUpdatedAt = true
-		case "deleted_at":
-			ti.HasDeletedAt = true
-		}
+		applyColumn(ti, col, extra)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {

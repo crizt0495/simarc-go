@@ -35,6 +35,20 @@ type Engine struct {
 	hubDriver   string
 	logf        func(string, ...any)
 	tables      map[string]*tableInfo
+
+	// Memo baris boundary (timestamp == watermark) untuk mencegah pengiriman
+	// ulang baris seed massal ber-stempel identik pada setiap run. bMemo
+	// dimuat sekali di awal Run; bPend adalah penyangga tulisan memo yang
+	// di-flush ke sync_boundary di akhir Run.
+	bMemo map[string]map[string]map[string]string
+	bPend []boundaryPending
+
+	// Cache introspeksi hub per-run: daftar bentuk tabel hub dan keberadaan
+	// tabel di hub. Tanpa cache, tiap tabel membayar 2-3 query ke hub melalui
+	// WAN (~0,3 s/query); dengan satu loader batch + cache, startup sync
+	// melewati WAN hanya dengan beberapa query.
+	hubShapes map[string]*tableInfo
+	hubExists map[string]bool
 }
 
 // Open builds an Engine using the application's local database and the hub
@@ -267,9 +281,27 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 		e.logf("[sync] gagal membaca skema hub untuk pembersihan tombstone: %v", err)
 	} else if n, err := purgeStaleTombstones(ctx, e.hub, e.hubDriver, hubTables); err != nil {
 		e.logf("[sync] gagal membersihkan tombstone usang di hub: %v", err)
-	} else if n > 0 {
-		e.logf("[sync] %d tombstone usang dibuang dari hub", n)
+	} else {
+		if n > 0 {
+			e.logf("[sync] %d tombstone usang dibuang dari hub", n)
+		}
+		// Sekali introspeksi hub dibayar: sekaligus diambil sebagai cache
+		// bentuk tabel hub untuk seluruh run (lihat hubShape).
+		e.hubShapes = hubTables
 	}
+
+	// Memo boundary dimuat sekali per run dari sync_boundary (lokal saja).
+	// Kegagalannya non-fatal: tanpa memo baris boundary hanya dikirim sekali
+	// lagi (lazim), bukan selamanya.
+	if memos, err := loadBoundaryMemos(ctx, e.local); err != nil {
+		e.logf("[sync] gagal memuat memo boundary (dilewati): %v", err)
+	} else {
+		e.bMemo = memos
+	}
+	e.bPend = nil
+	// Cache hub per-run direset.
+	e.hubShapes = map[string]*tableInfo{}
+	e.hubExists = map[string]bool{}
 
 	for _, name := range names {
 		ti := e.tables[name]
@@ -298,6 +330,12 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 	}
 
 	res.FinishedAt = time.Now()
+	// Tulis memo boundary sebelum mencatat riwayat run. Kegagalannya
+	// non-fatal (run tetap sukses; memo ketinggalan hanya membuat beberapa
+	// baris boundary dikalakan lagi sekali di run berikutnya).
+	if err := flushBoundaryMemos(ctx, e.local, e.localDriver, e.bPend, e.logf); err != nil {
+		e.logf("[sync] gagal menyimpan memo boundary (dilewati): %v", err)
+	}
 	if err := recordRun(ctx, e.local, e.localDriver, res); err != nil {
 		e.logf("[sync] gagal mencatat riwayat: %v", err)
 	}
@@ -306,7 +344,7 @@ func (e *Engine) Run(ctx context.Context) (Result, error) {
 
 // syncTable pushes local changes to the hub and pulls remote changes back.
 func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, tr *TableResult) error {
-	exists, err := tableExistsIn(ctx, e.hub, e.hubDriver, ti.Name)
+	exists, err := e.hubTableExists(ctx, ti.Name)
 	if err != nil {
 		return err
 	}
@@ -314,6 +352,8 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 		if err := ensureHubTable(ctx, e, ti.Name); err != nil {
 			return fmt.Errorf("buat tabel %s di hub: %w", ti.Name, err)
 		}
+		e.invalidateHubCache(ti.Name)
+		e.invalidateHubCache(ti.Name)
 	}
 
 	// Push: local -> hub.
@@ -321,15 +361,44 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 	if err != nil {
 		return err
 	}
-	pushedRows, pushMax, err := readDelta(ctx, e.local, ti, readFrom(pushSince, e.cfg.Overlap()))
+	pushedRows, pushMax, err := readDelta(ctx, e.local, ti, pushSince)
 	if err != nil {
 		return fmt.Errorf("baca perubahan lokal: %w", err)
 	}
+	// Baris boundary (ts tepat == watermark): kirim hanya bila konten berubah.
+	pushBnd, berr := e.prepareBoundary(ctx, e.local, ti, "push", pushSince)
+	if berr != nil {
+		e.logf("[sync] %s: baca baris boundary push gagal (dilewati): %v", ti.Name, berr)
+	}
+	if len(pushBnd.pend) > 0 {
+		e.logf("[sync] %s: %d baris boundary berubah konten — didorong", ti.Name, len(pushBnd.pend))
+	}
+	pushedRows = append(pushedRows, pushBnd.rows...)
+	// Tabel append tanpa kolom waktu (mis. login_logs): delta membaca seluruh
+	// tabel setiap run — saring lewat memo konten agar baris lama tidak
+	// dikirim ulang selamanya.
+	var pushAppendPend []boundaryPending
+	if strat == stratAppend && ti.timestampColumn() == "" && len(pushedRows) > 0 {
+		var kept [][]any
+		kept, pushAppendPend = e.filterAppendRows(ti, "push", pushedRows)
+		dropped := len(pushedRows) - len(kept)
+		if dropped > 0 {
+			e.logf("[sync] %s: %d baris log append sudah dikenal — tidak didorong ulang", ti.Name, dropped)
+		}
+		pushedRows = kept
+	}
+	// Baris NULL-timestamp: kirim hanya bila kontennya berubah (memo).
+	pushedRows, pushNullPend := e.filterNullStamps(ti, "push", pushedRows)
 	if len(pushedRows) > 0 {
 		if err := upsertRows(ctx, e.hub, e.hubDriver, ti, strat, pushedRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke hub: %w", err)
 		}
 		tr.Pushed = len(pushedRows)
+		// Memo dicatat HANYA setelah upsert sukses — kegagalan tulisan membuat
+		// memo ketinggalan dan baris dikalakan lagi sekali di run berikutnya.
+		e.markBoundary(ti.Name, pushBnd.pend)
+		e.markBoundary(ti.Name, pushAppendPend)
+		e.markBoundary(ti.Name, pushNullPend)
 	}
 	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "push", advance(pushSince, pushMax)); err != nil {
 		return err
@@ -340,15 +409,41 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 	if err != nil {
 		return err
 	}
-	pulledRows, pullMax, err := readDelta(ctx, e.hub, ti, readFrom(pullSince, e.cfg.Overlap()))
+	pulledRows, pullMax, err := readDelta(ctx, e.hub, ti, pullSince)
 	if err != nil {
 		return fmt.Errorf("baca perubahan hub: %w", err)
 	}
+	// Baris boundary pull (ts tepat == watermark hub): tarik hanya bila
+	// kontennya berbeda dari memo.
+	pullBnd, berr := e.prepareBoundary(ctx, e.hub, ti, "pull", pullSince)
+	if berr != nil {
+		e.logf("[sync] %s: baca baris boundary pull gagal (dilewati): %v", ti.Name, berr)
+	}
+	if len(pullBnd.pend) > 0 {
+		e.logf("[sync] %s: %d baris boundary berubah konten — ditarik", ti.Name, len(pullBnd.pend))
+	}
+	pulledRows = append(pulledRows, pullBnd.rows...)
+	// Mirror filter untuk arah pull pada tabel append tanpa kolom waktu.
+	var pullAppendPend []boundaryPending
+	if strat == stratAppend && ti.timestampColumn() == "" && len(pulledRows) > 0 {
+		var kept [][]any
+		kept, pullAppendPend = e.filterAppendRows(ti, "pull", pulledRows)
+		dropped := len(pulledRows) - len(kept)
+		if dropped > 0 {
+			e.logf("[sync] %s: %d baris log append sudah dikenal — tidak ditarik ulang", ti.Name, dropped)
+		}
+		pulledRows = kept
+	}
+	// Baris NULL-timestamp: tarik hanya bila kontennya berubah (memo).
+	pulledRows, pullNullPend := e.filterNullStamps(ti, "pull", pulledRows)
 	if len(pulledRows) > 0 {
 		if err := upsertRows(ctx, e.local, e.localDriver, ti, strat, pulledRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke lokal: %w", err)
 		}
 		tr.Pulled = len(pulledRows)
+		e.markBoundary(ti.Name, pullBnd.pend)
+		e.markBoundary(ti.Name, pullAppendPend)
+		e.markBoundary(ti.Name, pullNullPend)
 	}
 	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
 		return err
@@ -371,7 +466,7 @@ func (e *Engine) syncTable(ctx context.Context, ti *tableInfo, strat strategy, t
 //  3. pulls hub rows back and applies local tombstones (a row re-created after
 //     its tombstone survives).
 func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableResult) error {
-	exists, err := tableExistsIn(ctx, e.hub, e.hubDriver, ti.Name)
+	exists, err := e.hubTableExists(ctx, ti.Name)
 	if err != nil {
 		return err
 	}
@@ -392,7 +487,7 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 	// memakai skema lama (mis. permission_role: PK komposit lama vs UUID `id`).
 	// Tombstone harus mengikuti bentuk PK masing-masing sisi, kalau tidak
 	// tombstone lama bisa menghapus baris yang masih sah di hub.
-	hubTI, err := loadTableFor(ctx, e.hub, e.hubDriver, ti.Name)
+	hubTI, err := e.hubShape(ctx, ti.Name)
 	if err != nil {
 		return fmt.Errorf("bentuk tabel %s di hub: %w", ti.Name, err)
 	}
@@ -418,15 +513,25 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 	if err != nil {
 		return err
 	}
-	pushedRows, pushMax, err := readDelta(ctx, e.local, ti, readFrom(pushSince, e.cfg.Overlap()))
+	pushedRows, pushMax, err := readDelta(ctx, e.local, ti, pushSince)
 	if err != nil {
 		return fmt.Errorf("baca perubahan lokal: %w", err)
 	}
+	// Baris boundary (ts tepat == watermark): kirim hanya bila konten berubah.
+	pushBnd, berr := e.prepareBoundary(ctx, e.local, ti, "push", pushSince)
+	if berr != nil {
+		e.logf("[sync] %s: baca baris boundary push gagal (dilewati): %v", ti.Name, berr)
+	}
+	pushedRows = append(pushedRows, pushBnd.rows...)
+	// Baris NULL-timestamp: kirim hanya bila kontennya berubah (memo).
+	pushedRows, pushNullPend := e.filterNullStamps(ti, "push", pushedRows)
 	if len(pushedRows) > 0 {
 		if err := upsertRows(ctx, e.hub, e.hubDriver, ti, stratKeyed, pushedRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke hub: %w", err)
 		}
 		tr.Pushed = len(pushedRows)
+		e.markBoundary(ti.Name, pushBnd.pend)
+		e.markBoundary(ti.Name, pushNullPend)
 	}
 	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "push", advance(pushSince, pushMax)); err != nil {
 		return err
@@ -437,15 +542,26 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 	if err != nil {
 		return err
 	}
-	pulledRows, pullMax, err := readDelta(ctx, e.hub, ti, readFrom(pullSince, e.cfg.Overlap()))
+	pulledRows, pullMax, err := readDelta(ctx, e.hub, ti, pullSince)
 	if err != nil {
 		return fmt.Errorf("baca perubahan hub: %w", err)
 	}
+	// Baris boundary pull (ts tepat == watermark hub): tarik hanya bila
+	// kontennya berbeda dari memo.
+	pullBnd, berr := e.prepareBoundary(ctx, e.hub, ti, "pull", pullSince)
+	if berr != nil {
+		e.logf("[sync] %s: baca baris boundary pull gagal (dilewati): %v", ti.Name, berr)
+	}
+	pulledRows = append(pulledRows, pullBnd.rows...)
+	// Baris NULL-timestamp: tarik hanya bila kontennya berubah (memo).
+	pulledRows, pullNullPend := e.filterNullStamps(ti, "pull", pulledRows)
 	if len(pulledRows) > 0 {
 		if err := upsertRows(ctx, e.local, e.localDriver, ti, stratKeyed, pulledRows, e.cfg.BatchSize); err != nil {
 			return fmt.Errorf("tulis ke lokal: %w", err)
 		}
 		tr.Pulled = len(pulledRows)
+		e.markBoundary(ti.Name, pullBnd.pend)
+		e.markBoundary(ti.Name, pullNullPend)
 	}
 	if err := setWatermark(ctx, e.local, e.localDriver, e.cfg.NodeID, ti.Name, "pull", advance(pullSince, pullMax)); err != nil {
 		return err
@@ -465,8 +581,9 @@ func (e *Engine) syncKeyedTable(ctx context.Context, ti *tableInfo, tr *TableRes
 }
 
 // advance returns the next watermark: the newest timestamp seen. When nothing
-// newer was seen the previous watermark is kept. re-reads are made safe by the
-// overlap window in readFrom plus last-write-wins.
+// newer was seen the previous watermark is kept. Rows exactly at the
+// watermark are re-checked each run by the boundary reader, whose content
+// memo makes the re-read a no-op once the content is stable.
 func advance(prev, maxSeen time.Time) time.Time {
 	if maxSeen.IsZero() {
 		return prev
@@ -477,8 +594,10 @@ func advance(prev, maxSeen time.Time) time.Time {
 	return maxSeen
 }
 
-// readFrom applies the overlap window to a stored watermark so a boundary row
-// whose timestamp equals the watermark is not skipped.
+// readFrom applied the old overlap window to a stored watermark. The main
+// delta is now strict greater-than and boundary rows (ts == watermark) are
+// handled by readBoundary + sync_boundary, so overlap is no longer needed;
+// kept only for reference/config compatibility.
 func readFrom(watermark time.Time, overlap time.Duration) time.Time {
 	if watermark.IsZero() {
 		return epoch
@@ -490,8 +609,11 @@ func readFrom(watermark time.Time, overlap time.Duration) time.Time {
 	return from
 }
 
-// readDelta reads rows changed since the watermark (minus the overlap window)
-// and reports the newest timestamp among them.
+// readDelta reads rows changed strictly AFTER the watermark and reports the
+// newest timestamp among them. Rows exactly at the watermark are NOT read
+// here; they are handled separately by readBoundary + the sync_boundary memo
+// (see boundary.go). This strictness is what stops bulk-seeded rows sharing
+// one identical timestamp from being re-sent on every run forever.
 func readDelta(ctx context.Context, db *sql.DB, ti *tableInfo, since time.Time) ([][]any, time.Time, error) {
 	tsCol := ti.timestampColumn()
 	if since.IsZero() {
@@ -512,10 +634,10 @@ func readDelta(ctx context.Context, db *sql.DB, ti *tableInfo, since time.Time) 
 		if ti.HasDeletedAt {
 			// A soft-deleted row carries deleted_at; updated_at may or may not
 			// move on delete, so test both to never miss a tombstone.
-			q += " WHERE (" + coalesce + ") >= ? OR (`deleted_at` IS NOT NULL AND `deleted_at` >= ?) OR (" + allNull + ")"
+			q += " WHERE (" + coalesce + ") > ? OR (`deleted_at` IS NOT NULL AND `deleted_at` > ?) OR (" + allNull + ")"
 			args = []any{from, from}
 		} else {
-			q += " WHERE (" + coalesce + ") >= ? OR (" + allNull + ")"
+			q += " WHERE (" + coalesce + ") > ? OR (" + allNull + ")"
 			args = []any{from}
 		}
 	}

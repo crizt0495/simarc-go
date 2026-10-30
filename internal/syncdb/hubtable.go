@@ -190,3 +190,49 @@ func (e *Engine) closeHubGorm() {
 		e.gormDB = nil
 	}
 }
+
+// hubTableExists menanyakan keberadaan tabel di hub, dengan cache per-run.
+// Hasil salah tidak di-cache selamanya: setelah ensureHubTable berhasil,
+// pemanggil diharuskan memvalidasi kembali (telah ditangani di bawah).
+func (e *Engine) hubTableExists(ctx context.Context, table string) (bool, error) {
+	if e.hubExists == nil {
+		return tableExistsIn(ctx, e.hub, e.hubDriver, table)
+	}
+	if v, ok := e.hubExists[table]; ok {
+		return v, nil
+	}
+	v, err := tableExistsIn(ctx, e.hub, e.hubDriver, table)
+	if err != nil {
+		return false, err
+	}
+	e.hubExists[table] = v
+	return v, nil
+}
+
+// hubShape mengembalikan bentuk tabel hub (kolom + PK) dengan cache per-run.
+func (e *Engine) hubShape(ctx context.Context, table string) (*tableInfo, error) {
+	if e.hubShapes != nil {
+		if ti, ok := e.hubShapes[table]; ok {
+			return ti, nil
+		}
+	}
+	ti, err := loadTableFor(ctx, e.hub, e.hubDriver, table)
+	if err != nil {
+		return nil, err
+	}
+	if e.hubShapes == nil {
+		e.hubShapes = map[string]*tableInfo{}
+	}
+	e.hubShapes[table] = ti
+	return ti, nil
+}
+
+// invalidateHubCache dipanggil setelah ensureHubTable berhasil membuat tabel:
+// keberadaan kini benar (true), sedangkan bentuknya harus dibaca ulang bila
+// nanti diminta.
+func (e *Engine) invalidateHubCache(table string) {
+	if e.hubExists != nil {
+		e.hubExists[table] = true
+	}
+	delete(e.hubShapes, table)
+}
