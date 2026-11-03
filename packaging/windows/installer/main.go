@@ -627,6 +627,17 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 		return err
 	}
 
+	// Uninstall aplikasi lama sebelum install baru (bersih, kecuali data)
+	if entries, err := os.ReadDir(destDir); err == nil {
+		for _, e := range entries {
+			name := e.Name()
+			if name == "storage" {
+				continue // pertahankan data/uploads
+			}
+			_ = os.RemoveAll(filepath.Join(destDir, name))
+		}
+	}
+
 	// 1. Salin komponen aplikasi
 	components := []string{"run.bat", ".env.example", "simarc.ico", "web", "docs", "dist", "packaging"}
 	for _, item := range components {
@@ -663,16 +674,15 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 		return fmt.Errorf("biner server Windows tidak ditemukan")
 	}
 
-	// 4. Siapkan .env bila belum ada (mode-aware) — konfigurasi milik komputer
-	//    ini TIDAK pernah ditimpa.
+	// Siapkan .env — selalu tulis sesuai mode agar instalasi di PC lain
+	// tidak terhalang oleh .env lama (mysql/hub) yang tidak cocok offline.
 	envDest := filepath.Join(destDir, ".env")
-	if _, err := os.Stat(envDest); os.IsNotExist(err) {
-		envEx := filepath.Join(srcDir, ".env.example")
-		data, err := os.ReadFile(envEx)
-		if err != nil {
-			return fmt.Errorf("membaca .env.example: %w", err)
-		}
-		content := string(data)
+	envEx := filepath.Join(srcDir, ".env.example")
+	data, err := os.ReadFile(envEx)
+	if err != nil {
+		return fmt.Errorf("membaca .env.example: %w", err)
+	}
+	content := string(data)
 
 		chosen := strings.ToLower(strings.TrimSpace(mode))
 		if chosen == "" || chosen == "auto" {
@@ -745,7 +755,6 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 		if err := os.WriteFile(envDest, []byte(content), 0o644); err != nil {
 			return fmt.Errorf("menulis .env: %w", err)
 		}
-	}
 
 	// 5. Ekstrak bundel MariaDB portabel hanya bila .env komputer ini memang
 	//    memakai MySQL (instalasi warisan). Instalasi SQLite tidak perlu

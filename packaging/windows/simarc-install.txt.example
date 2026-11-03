@@ -20,10 +20,7 @@
 #   client  = klien tipis ke server hub (data & berkas di server)
 #   local   = server lokal memakai MySQL/MariaDB yang sudah terpasang sendiri
 mode=offline
-
-# Alamat server hub (dipakai pada mode client, atau sebagai titik sinkronisasi
-# pada mode offline). Ganti dengan alamat komputer server kantor Anda.
-hub=http://192.168.1.86:8080
+hub=
 
 # ── Sinkronisasi antar-komputer (opsional, mode offline) ────────────────────
 # Cukup isi SYNC_HUB_DB_HOST di bawah: installer akan OTOMATIS mengaktifkan
@@ -37,7 +34,7 @@ hub=http://192.168.1.86:8080
 #
 # Bila hub memakai user khusus sinkronisasi di komputer server, isi kredensialnya
 # (jangan ditulis di berkas ini bila berkas disebar bebas).
-#SYNC_HUB_DB_HOST=192.168.1.86
+#SYNC_HUB_DB_HOST=
 #SYNC_HUB_DB_PORT=3306
 #SYNC_HUB_DB_NAME=simarc
 #SYNC_HUB_DB_USER=simarc_sync
