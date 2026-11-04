@@ -744,6 +744,8 @@ func nativeInstall(srcDir, destDir, mode, hub string) error {
 				"SIMARC_EMBEDDED_DB": "0",
 				"APP_PORT":           fmt.Sprintf("%d", appPort),
 				"APP_URL":            appURL,
+				"SIMARC_WINDOW":      "fullscreen",
+				"APP_DEBUG":          "false",
 			})
 			content = applySyncEnv(content, srcDir)
 			if chosen == "offline" {
