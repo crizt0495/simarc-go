@@ -1,32 +1,108 @@
 /**
- * AppSidebar — navigasi utama enterprise: collapsible, tooltip saat collapsed,
- * grup menu, profil pengguna, tema & keluar di bawah.
+ * AppSidebar — navigasi utama, diselaraskan dengan sidebar referensi
+ * aplikasi SIMARC (web/templates/components/sidebar.html).
+ * Grup, label, ikon (Lucide) dan urutan mengikuti referensi.
  */
 import React, { useState } from 'react';
 import {
-  LayoutDashboard, FolderOpen, RefreshCw, DatabaseBackup, Settings,
+  LayoutDashboard, FileText, PlusCircle, FolderPlus, Trash2,
+  FileUp, BookCheck, Building2, MapPin, Users, Tags, Folder,
+  Search, BarChart3, PieChart, CloudCheck, Clock, CalendarCheck,
+  ArrowRightLeft, UserCog, Settings, Database, ShieldCheck,
   PanelLeftClose, PanelLeft, Sun, Moon, Monitor, Archive,
 } from 'lucide-react';
 import { type ThemeMode, useTheme } from '../lib/theme';
 
-export type PageKey = 'dashboard' | 'arsip' | 'sinkronisasi' | 'backup' | 'pengaturan';
+export type PageKey =
+  | 'dashboard' | 'arsip' | 'arsip-create' | 'pemberkasan' | 'pemusnahan'
+  | 'peminjaman-create' | 'peminjaman' | 'unit-kerja' | 'lokasi-arsip'
+  | 'users' | 'kode-klasifikasi' | 'jenis-arsip' | 'search' | 'laporan'
+  | 'laporan-arsip' | 'laporan-digital' | 'laporan-pemberkasan' | 'laporan-lokasi'
+  | 'laporan-klasifikasi' | 'laporan-retensi' | 'laporan-pemusnahan' | 'log-aktivitas'
+  | 'statistik' | 'monitoring-retensi' | 'jadwal-retensi' | 'dashboard-penyusutan'
+  | 'roles' | 'pengaturan' | 'backup' | 'blockchain' | 'sinkronisasi';
 
 interface NavItem {
   key: PageKey;
   label: string;
   icon: React.ElementType;
-  group: string;
 }
 
-export const NAV_ITEMS: NavItem[] = [
-  { key: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard, group: 'Utama' },
-  { key: 'arsip',        label: 'Arsip',         icon: FolderOpen,      group: 'Utama' },
-  { key: 'sinkronisasi', label: 'Sinkronisasi',  icon: RefreshCw,       group: 'Sistem' },
-  { key: 'backup',       label: 'Backup',        icon: DatabaseBackup,  group: 'Sistem' },
-  { key: 'pengaturan',   label: 'Pengaturan',    icon: Settings,        group: 'Sistem' },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    label: '',
+    items: [
+      { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'Manajemen Arsip',
+    items: [
+      { key: 'arsip', label: 'Daftar Arsip', icon: FileText },
+      { key: 'arsip-create', label: 'Tambah Arsip', icon: PlusCircle },
+      { key: 'pemberkasan', label: 'Pemberkasan', icon: FolderPlus },
+      { key: 'pemusnahan', label: 'Pemusnahan Arsip', icon: Trash2 },
+    ],
+  },
+  {
+    label: 'Layanan',
+    items: [
+      { key: 'peminjaman-create', label: 'Permohonan Pinjam', icon: FileUp },
+      { key: 'peminjaman', label: 'Daftar Peminjaman', icon: BookCheck },
+    ],
+  },
+  {
+    label: 'Master Data',
+    items: [
+      { key: 'unit-kerja', label: 'Unit Kerja', icon: Building2 },
+      { key: 'lokasi-arsip', label: 'Lokasi Arsip', icon: MapPin },
+      { key: 'users', label: 'Petugas', icon: Users },
+      { key: 'kode-klasifikasi', label: 'Kode Klasifikasi', icon: Tags },
+      { key: 'jenis-arsip', label: 'Jenis Arsip', icon: Folder },
+    ],
+  },
+  {
+    label: 'Laporan',
+    items: [
+      { key: 'search', label: 'Pencarian Arsip', icon: Search },
+      { key: 'laporan', label: 'Dashboard Laporan', icon: BarChart3 },
+      { key: 'laporan-arsip', label: 'Laporan Arsip', icon: FileText },
+      { key: 'laporan-digital', label: 'Arsip Digital', icon: CloudCheck },
+      { key: 'laporan-pemberkasan', label: 'Laporan Pemberkasan', icon: Folder },
+      { key: 'laporan-lokasi', label: 'Laporan per Lokasi', icon: MapPin },
+      { key: 'laporan-klasifikasi', label: 'Laporan Klasifikasi', icon: Tags },
+      { key: 'laporan-retensi', label: 'Laporan Retensi', icon: Clock },
+      { key: 'laporan-pemusnahan', label: 'Laporan Pemusnahan', icon: Trash2 },
+      { key: 'log-aktivitas', label: 'Log Aktivitas', icon: Clock },
+      { key: 'statistik', label: 'Statistik', icon: PieChart },
+    ],
+  },
+  {
+    label: 'Monitoring',
+    items: [
+      { key: 'monitoring-retensi', label: 'Monitoring Retensi', icon: Clock },
+      { key: 'jadwal-retensi', label: 'Jadwal Retensi', icon: CalendarCheck },
+      { key: 'dashboard-penyusutan', label: 'Dashboard Penyusutan', icon: ArrowRightLeft },
+    ],
+  },
+  {
+    label: 'Administrasi',
+    items: [
+      { key: 'roles', label: 'Manajemen Role', icon: UserCog },
+      { key: 'pengaturan', label: 'Pengaturan', icon: Settings },
+      { key: 'backup', label: 'Backup & Restore', icon: Database },
+      { key: 'blockchain', label: 'Blockchain Audit', icon: ShieldCheck },
+      { key: 'sinkronisasi', label: 'Sinkronisasi', icon: ArrowRightLeft },
+    ],
+  },
 ];
 
-const GROUPS: Array<'Utama' | 'Sistem'> = ['Utama', 'Sistem'];
+export const NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 
 export const AppSidebar: React.FC<{
   page: PageKey;
@@ -61,13 +137,13 @@ export const AppSidebar: React.FC<{
 
       {/* Grup menu */}
       <nav className="flex-1 overflow-y-auto clamp py-3 px-2.5">
-        {GROUPS.map((g) => (
-          <div key={g} className="mb-3">
-            {!collapsed && (
-              <p className="text-caption font-medium text-ink-3 px-2.5 mb-1.5 tracking-wide uppercase">{g}</p>
+        {NAV_GROUPS.map((g, gi) => (
+          <div key={gi} className="mb-3">
+            {!collapsed && g.label && (
+              <p className="text-caption font-medium text-ink-3 px-2.5 mb-1.5 tracking-wide uppercase">{g.label}</p>
             )}
             <ul className="space-y-0.5">
-              {NAV_ITEMS.filter((n) => n.group === g).map((n) => {
+              {g.items.map((n) => {
                 const active = page === n.key;
                 const li = (
                   <button

@@ -1,6 +1,6 @@
 /**
- * App — bootstrapping data backend (GetStatus, PingBackend) dan routing
- * halaman sederhana berbasis state (tanpa router web; ini aplikasi desktop).
+ * App — bootstrapping data backend dan routing halaman (state-based, tanpa
+ * router web; ini aplikasi desktop).
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from './components/AppLayout';
@@ -9,15 +9,42 @@ import { ArsipPage } from './pages/ArsipPage';
 import { SinkronisasiPage } from './pages/SinkronisasiPage';
 import { BackupPage } from './pages/BackupPage';
 import { PengaturanPage } from './pages/PengaturanPage';
+import { ComingSoonPage } from './pages/ComingSoonPage';
 import type { PageKey } from './components/AppSidebar';
 import { getStatus, pingBackend, type Status } from './lib/bindings';
 
 const TITLES: Record<PageKey, string> = {
   dashboard: 'Dashboard',
-  arsip: 'Arsip',
-  sinkronisasi: 'Sinkronisasi',
-  backup: 'Backup',
+  arsip: 'Daftar Arsip',
+  'arsip-create': 'Tambah Arsip',
+  pemberkasan: 'Pemberkasan',
+  pemusnahan: 'Pemusnahan Arsip',
+  'peminjaman-create': 'Permohonan Pinjam',
+  peminjaman: 'Daftar Peminjaman',
+  'unit-kerja': 'Unit Kerja',
+  'lokasi-arsip': 'Lokasi Arsip',
+  users: 'Petugas',
+  'kode-klasifikasi': 'Kode Klasifikasi',
+  'jenis-arsip': 'Jenis Arsip',
+  search: 'Pencarian Arsip',
+  laporan: 'Dashboard Laporan',
+  'laporan-arsip': 'Laporan Arsip',
+  'laporan-digital': 'Arsip Digital',
+  'laporan-pemberkasan': 'Laporan Pemberkasan',
+  'laporan-lokasi': 'Laporan per Lokasi',
+  'laporan-klasifikasi': 'Laporan Klasifikasi',
+  'laporan-retensi': 'Laporan Retensi',
+  'laporan-pemusnahan': 'Laporan Pemusnahan',
+  'log-aktivitas': 'Log Aktivitas',
+  statistik: 'Statistik',
+  'monitoring-retensi': 'Monitoring Retensi',
+  'jadwal-retensi': 'Jadwal Retensi',
+  'dashboard-penyusutan': 'Dashboard Penyusutan',
+  roles: 'Manajemen Role',
   pengaturan: 'Pengaturan',
+  backup: 'Backup & Restore',
+  blockchain: 'Blockchain Audit',
+  sinkronisasi: 'Sinkronisasi',
 };
 
 const App: React.FC = () => {
@@ -27,12 +54,10 @@ const App: React.FC = () => {
   const refresh = useCallback(async () => {
     try {
       const [s, ping] = await Promise.all([getStatus(), pingBackend()]);
-      setStatus((prev) => {
-        void ping;
-        return s;
-      });
+      setStatus(s);
+      void ping;
     } catch {
-      setStatus((prev) => prev); // network err — biarkan nilai lama
+      /* biarkan state lama */
     }
   }, []);
 
@@ -42,6 +67,25 @@ const App: React.FC = () => {
     return () => clearInterval(t);
   }, [refresh]);
 
+  const renderPage = () => {
+    switch (page) {
+      case 'dashboard':
+        return <Dashboard status={status} />;
+      case 'arsip':
+        return <ArsipPage canWrite />;
+      case 'arsip-create':
+        return <ArsipPage canWrite />;
+      case 'sinkronisasi':
+        return <SinkronisasiPage status={status} />;
+      case 'backup':
+        return <BackupPage />;
+      case 'pengaturan':
+        return <PengaturanPage />;
+      default:
+        return <ComingSoonPage title={TITLES[page]} />;
+    }
+  };
+
   return (
     <AppLayout
       page={page}
@@ -49,11 +93,7 @@ const App: React.FC = () => {
       status={status}
       onRefresh={() => void refresh()}
     >
-      {page === 'dashboard' && <Dashboard status={status} />}
-      {page === 'arsip' && <ArsipPage canWrite />}
-      {page === 'sinkronisasi' && <SinkronisasiPage status={status} />}
-      {page === 'backup' && <BackupPage />}
-      {page === 'pengaturan' && <PengaturanPage />}
+      {renderPage()}
       <span className="sr-only" aria-live="polite">{TITLES[page]}</span>
     </AppLayout>
   );
