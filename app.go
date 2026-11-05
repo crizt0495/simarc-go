@@ -477,7 +477,7 @@ func (a *App) GetOverview() (DashboardOverview, error) {
 	}{
 		{`SELECT COUNT(*) FROM arsip WHERE deleted_at IS NULL`, &ov.TotalArsip},
 		{`SELECT COUNT(*) FROM pemberkasan WHERE deleted_at IS NULL`, &ov.TotalPemberkasan},
-		{`SELECT COUNT(*) FROM users WHERE deleted_at IS NULL AND active=1`, &ov.TotalUsers},
+		{`SELECT COUNT(*) FROM users WHERE deleted_at IS NULL AND is_active=1`, &ov.TotalUsers},
 		{`SELECT COUNT(*) FROM sync_queue WHERE status='pending'`, &ov.SyncQueuePending},
 	}
 	for _, q := range queries {
@@ -488,10 +488,10 @@ func (a *App) GetOverview() (DashboardOverview, error) {
 
 	rows, err := db.Query(`
         SELECT day, SUM(arsip) AS arsip, SUM(berkas) AS berkas FROM (
-            SELECT DATE(created_at) AS day, COUNT(*) AS arsip, 0 AS berkas
+            SELECT DATE_FORMAT(DATE(created_at), '%Y-%m-%d') AS day, COUNT(*) AS arsip, 0 AS berkas
               FROM arsip WHERE created_at >= CURDATE() - INTERVAL 13 DAY GROUP BY day
             UNION ALL
-            SELECT DATE(created_at), 0, COUNT(*)
+            SELECT DATE_FORMAT(DATE(created_at), '%Y-%m-%d') AS day, 0 AS berkas, COUNT(*) AS arsip
               FROM pemberkasan WHERE created_at >= CURDATE() - INTERVAL 13 DAY GROUP BY day
         ) t GROUP BY day ORDER BY day`)
 	if err != nil {
@@ -506,7 +506,7 @@ func (a *App) GetOverview() (DashboardOverview, error) {
 		if err := rows.Scan(&d, &p.Arsip, &p.Berkas); err != nil {
 			return DashboardOverview{}, err
 		}
-		dayMap[d] = p
+		dayMap[d] = DashboardPoint{Day: d, Arsip: p.Arsip, Berkas: p.Berkas}
 	}
 	for i := 13; i >= 0; i-- {
 		day := time.Now().AddDate(0, 0, -i).Format("2006-01-02")
