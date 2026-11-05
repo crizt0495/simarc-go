@@ -44,7 +44,7 @@ export const AppSidebar: React.FC<{
 
   return (
     <aside
-      className={`h-full bg-sidebar border-r border-line flex flex-col transition-[width] duration-200 shrink-0 ${collapsed ? 'w-[72px]' : 'w-[250px]'}`}
+      className={`h-full bg-sidebar border-r border-line flex flex-col transition-[width] duration-200 shrink-0 ${collapsed ? 'w-[72px]' : 'w-[264px]'}`}
     >
       {/* Logo + nama */}
       <div className={`flex items-center h-16 border-b border-line ${collapsed ? 'justify-center px-2' : 'px-5'}`}>

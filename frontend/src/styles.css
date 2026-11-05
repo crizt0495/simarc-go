@@ -8,44 +8,52 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════════════
-   Warna Modern Enterprise (lihat tailwind.config.js
-   untuk pemetaan token). Semua warna memakai CSS variable —
-   tidak ada warna hard-code di penggunanya.
+   Warna SIMARC — diselaraskan dengan referensi visual aplikasi
+   (enterprise.min.css / desktop-modern.min.css → --nb-* tokens).
+   Semua warna memakai CSS variable — tidak ada hard-code.
    ══════════════════════════════════════════════════════════════════ */
 :root {
-  --c-app-bg: #F5F7FA;
+  --c-app-bg: #F3F5F9;
   --c-sidebar-bg: #FFFFFF;
   --c-surface: #FFFFFF;
-  --c-surface-2: #FAFBFC;
+  --c-surface-2: #F8FAFD;
+  --c-surface-3: #EEF1F6;
   --c-primary: #2563EB;
   --c-primary-hover: #1D4ED8;
-  --c-primary-soft: #EFF6FF;
-  --c-text-1: #172033;
-  --c-text-2: #64748B;
-  --c-text-3: #94A3B8;
-  --c-border: #E5EAF0;
-  --c-border-soft: #EEF2F7;
-  --c-success: #16A34A;
-  --c-warning: #D97706;
+  --c-primary-soft: #EFF4FF;
+  --c-text-1: #0F172A;
+  --c-text-2: #475569;
+  --c-text-3: #637089;
+  --c-border: #E2E8F0;
+  --c-border-strong: #CBD5E1;
+  --c-border-soft: #EDF1F7;
+  --c-success: #047857;
+  --c-warning: #B45309;
   --c-danger: #DC2626;
-  --c-info: #0284C7;
+  --c-info: #0369A1;
   --c-primary-ring: rgba(37, 99, 235, 0.25);
 }
 
 .dark {
-  --c-app-bg: #0F172A;
-  --c-sidebar-bg: #111827;
-  --c-surface: #172033;
-  --c-surface-2: #1B2538;
-  --c-primary: #3B82F6;
-  --c-primary-hover: #2563EB;
-  --c-primary-soft: rgba(59, 130, 246, 0.12);
-  --c-text-1: #F1F5F9;
-  --c-text-2: #CBD5E1;
-  --c-text-3: #94A3B8;
-  --c-border: #293548;
-  --c-border-soft: #22304A;
-  --c-primary-ring: rgba(59, 130, 246, 0.3);
+  --c-app-bg: #0B1220;
+  --c-sidebar-bg: #111B2F;
+  --c-surface: #111B2F;
+  --c-surface-2: #16223A;
+  --c-surface-3: #1E2C47;
+  --c-primary: #5B8DEF;
+  --c-primary-hover: #83A6F5;
+  --c-primary-soft: #182A4E;
+  --c-text-1: #E8EEF7;
+  --c-text-2: #A6B4C8;
+  --c-text-3: #8595B0;
+  --c-border: #243450;
+  --c-border-strong: #334666;
+  --c-border-soft: #1C2A42;
+  --c-success: #34D399;
+  --c-warning: #FBBF24;
+  --c-danger: #F87171;
+  --c-info: #5B8DEF;
+  --c-primary-ring: rgba(91, 141, 239, 0.3);
 }
 
 html, body, #root { height: 100%; }
@@ -60,7 +68,6 @@ body {
 }
 
 @layer components {
-  /* ---------- Form field (enterprise : label di atas, 40px, fokus biru) ---------- */
   .f-input {
     @apply w-full h-10 px-3 rounded-lg border border-[#DCE3EA] bg-surface text-body text-ink-1
            placeholder:text-ink-3 transition-colors duration-150 outline-none
@@ -73,7 +80,6 @@ body {
   .f-error { @apply text-caption text-bad mt-1.5; }
   .f-help { @apply text-caption text-ink-3 mt-1.5; }
 
-  /* ---------- Table ---------- */
   .t-wrap {
     @apply bg-surface border border-line rounded-xl overflow-hidden shadow-soft;
   }
@@ -86,12 +92,10 @@ body {
   }
   .t-cell { @apply px-4 py-3; }
 
-  /* ---------- Card ---------- */
   .card {
     @apply bg-surface border border-line rounded-xl shadow-soft;
   }
 
-  /* ---------- Scrollbar tipis ---------- */
   .clamp {
     scrollbar-width: thin;
     scrollbar-color: var(--c-border) transparent;
