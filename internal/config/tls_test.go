@@ -58,19 +58,20 @@ func TestNormalizedTLSAcceptedByDriver(t *testing.T) {
 // TestLoadParsesDATABASEURLTLS verifies the full Aiven-style connection string
 // (ssl-mode=REQUIRED) is understood and turned into a driver-safe TLS mode.
 func TestLoadParsesDATABASEURLTLS(t *testing.T) {
-	old := App
-	t.Cleanup(func() { App = old })
-
 	t.Setenv("DATABASE_URL", "mysql://avnadmin:secret@mysql-x.aivencloud.com:19160/defaultdb?ssl-mode=REQUIRED")
-	Load()
+	c, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c
 
-	if App.DBHost != "mysql-x.aivencloud.com" || App.DBPort != "19160" || App.DBName != "defaultdb" {
-		t.Fatalf("DATABASE_URL not parsed: host=%q port=%q db=%q", App.DBHost, App.DBPort, App.DBName)
+	if App.DBHost != "mysql-x.aivencloud.com" || App.DBPort != 19160 || App.DBName != "defaultdb" {
+		t.Fatalf("DATABASE_URL not parsed: host=%q port=%d db=%q", App.DBHost, App.DBPort, App.DBName)
 	}
 	if App.DBUser != "avnadmin" || App.DBPass != "secret" {
 		t.Fatalf("credentials not parsed: user=%q pass=%q", App.DBUser, App.DBPass)
 	}
-	if got := NormalizeMySQLTLS(App.DBTLS); got != "skip-verify" {
-		t.Fatalf("ssl-mode=REQUIRED normalized to %q, want skip-verify", got)
+	if App.DBTLS != "skip-verify" {
+		t.Fatalf("ssl-mode=REQUIRED normalized to %q, want skip-verify", App.DBTLS)
 	}
 }

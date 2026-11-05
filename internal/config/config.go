@@ -1,93 +1,144 @@
+// Package config memuat seluruh pengaturan aplikasi desktop SIMARC.
+// Sumber nilai: process environment (dengan prioritas) lalu file .env
+// di samping executable (dimuat oleh LoadFrom dari package main).
 package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
-// Config represents all settings loaded from environment variables (.env file).
+// Config menyimpan semua setting dari environment (.env).
+// Nama field mengikuti nama variabel .env agar mudah dipetakan.
 type Config struct {
-	AppName string
-	AppURL  string
-	AppPort int
-	Debug   bool
-	Timezone string
+	AppName  string        // APP_NAME
+	AppURL   string        // APP_URL
+	Port     int           // APP_PORT (dipakai hanya bila fitur HTTP diaktifkan)
+	Debug    bool          // APP_DEBUG
+	Timezone string        // APP_TIMEZONE
+	Window   string        // SIMARC_WINDOW: normal|maximized|fullscreen|kiosk
 
-	// Desktop window mode: normal | maximized | fullscreen | kiosk
-	WindowMode string
+	// MySQL lokal (DB_*)
+	DBHost string
+	DBPort int
+	DBUser string
+	DBPass string
+	DBName string
+	DBTLS  string // dinormalisasi lewat NormalizeMySQLTLS
 
-	// Client mode: client = use server; local = run own server+db
-	ClientMode bool
-
-	ServerURL string // SIMARC_SERVER_URL — required for client mode, nil for local
-
-	// Local MySQL
-	DBDriver   string // mysql | sqlite
-	DBHost     string
-	DBPort     int
-	DBUser     string
-	DBPassword string
-	DBDatabase string
-	DBPath     string // local SQLite path if DB_DRIVER=sqlite
-
-	// Sync hub DB (for SYNC_ENABLED)
-	SyncEnabled bool
-	SyncHubHost string
-	SyncHubPort int
-	SyncHubUser string
-	SyncHubPass string
-
-	SessionKey string
+	// Sinkronisasi ke hub (SYNC_*)
+	SyncEnabled  bool
+	SyncNodeID   string
+	SyncInterval time.Duration // SYNC_INTERVAL_MINUTES
+	SyncHubURL   string        // SYNC_HUB_URL (basis URL aplikasi hub)
+	SyncHubToken string        // SYNC_HUB_TOKEN
 }
 
+// App adalah konfigurasi aktif (dipakai untuk pengujian dan akses nyaman).
+var App *Config
+
+// Load membaca environment dan mengembalikan konfigurasi final.
 func Load() (*Config, error) {
 	c := &Config{
-		AppName:      get("APP_NAME", "SIMARC"),
-		AppURL:       get("APP_URL", "http://localhost:8080"),
-		AppPort:      getInt("APP_PORT", 8080),
-		Debug:        getBool("APP_DEBUG", false),
-		Timezone:     get("APP_TIMEZONE", "Asia/Jakarta"),
-		WindowMode:   get("SIMARC_WINDOW", "fullscreen"),
-		ClientMode:   os.Getenv("SIMARC_SERVER_URL") != "",
-		DBDriver:     get("DB_DRIVER", "mysql"),
-		DBHost:       get("DB_HOST", "127.0.0.1"),
-		DBPort:       getInt("DB_PORT", 3306),
-		DBUser:       get("DB_USER", "simarc"),
-		DBPassword:   get("DB_PASSWORD", ""),
-		DBDatabase:   get("DB_DATABASE", "simarc_local"),
-		DBPath:       get("DB_PATH", "") + "/storage/simarc.db",
-		SyncEnabled:  getBool("SYNC_ENABLED", false),
-		SyncHubHost:  get("SYNC_HUB_DB_HOST", ""),
-		SyncHubPort:  getInt("SYNC_HUB_DB_PORT", 3306),
-		SyncHubUser:  get("SYNC_HUB_DB_USER", "simarc"),
+		AppName:  get("APP_NAME", "SIMARC"),
+		AppURL:   get("APP_URL", "http://localhost:8080"),
+		Port:     getInt("APP_PORT", 8080),
+		Debug:    getBool("APP_DEBUG", false),
+		Timezone: get("APP_TIMEZONE", "Asia/Jakarta"),
+		Window:   normalizeWindow(get("SIMARC_WINDOW", "fullscreen")),
+
+		DBHost: get("DB_HOST", "127.0.0.1"),
+		DBPort: getInt("DB_PORT", 3306),
+		DBUser: get("DB_USERNAME", get("DB_USER", "simarc")),
+		DBPass: os.Getenv("DB_PASSWORD"),
+		DBName: get("DB_DATABASE", get("DB_NAME", "simarc")),
+		DBTLS:  NormalizeMySQLTLS(get("DB_TLS", "preferred")),
+
+		SyncEnabled: getBool("SYNC_ENABLED", false),
+		SyncNodeID:  get("SYNC_NODE_ID", ""),
+		SyncInterval: time.Duration(getInt("SYNC_INTERVAL_MINUTES", 15)) * time.Minute,
+		SyncHubURL:   strings.TrimRight(get("SYNC_HUB_URL", ""), "/"),
+		SyncHubToken: os.Getenv("SYNC_HUB_TOKEN"),
 	}
-	if v := get("SESSION_KEY", ""); v != "" {
-		c.SessionKey = v
-	} else if v := os.Getenv("SESSION_KEY"); v != "" {
-		c.SessionKey = v
-	} else if v := get("SIMARC_SESSION_KEY", ""); v != "" {
-		c.SessionKey = v
+
+	// DATABASE_URL (format mysql://user:pass@host:port/db?ssl-mode=...)
+	// menimpa nilai field DB_* bila diisi.
+	if raw := get("DATABASE_URL", ""); raw != "" {
+		if u, err := url.Parse(raw); err == nil && u.Scheme == "mysql" {
+			c.DBHost = u.Hostname()
+			if p := u.Port(); p != "" {
+				c.DBPort = atoi(p, c.DBPort)
+			}
+			c.DBName = strings.TrimPrefix(u.Path, "/")
+			c.DBUser = u.User.Username()
+			c.DBPass, _ = u.User.Password()
+			c.DBTLS = NormalizeMySQLTLS(u.Query().Get("ssl-mode"))
+		}
 	}
+
+	// NODE_NAME fallback: pakai hostname komputer bila SYNC_NODE_ID kosong.
+	if c.SyncNodeID == "" {
+		if h, err := os.Hostname(); err == nil && h != "" {
+			c.SyncNodeID = h
+		} else {
+			c.SyncNodeID = "local"
+		}
+	}
+
+	App = c
 	return c, nil
 }
 
-// DSN returns a MySQL datasource name.
+// DSN membangun DSN MySQL untuk koneksi database lokal.
+// multiStatements=true agar migrator bisa mengeksekusi file SQL multi-statement.
 func (c *Config) DSN() string {
-	if c.DBDriver == "sqlite" && c.DBPath != "" {
-		// SQLite uses just the file path (no DSN format).
-		return c.DBPath
-	}
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&loc=%s&multiStatements=true",
-		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBDatabase, mapTz(c.Timezone))
-	return dsn
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&loc=%s&multiStatements=true&tls=%s",
+		c.DBUser, c.DBPass, c.DBHost, c.DBPort, c.DBName,
+		url.QueryEscape(mapTz(c.Timezone)), c.DBTLS)
 }
 
-// DSNLocal returns localhost DSN.
-func (c *Config) DSNLocal() string {
-	return fmt.Sprintf("127.0.0.1:%d/simarc_local?parseTime=true&loc=%s&multiStatements=true",
-		c.DBPort, mapTz(c.Timezone))
+// HubPullURL mengembalikan endpoint pull hub untuk sebuah tabel.
+func (c *Config) HubPullURL(table, cursor string) string {
+	return fmt.Sprintf("%s/api/v1/sync/pull?table=%s&cursor=%s", c.SyncHubURL,
+		url.QueryEscape(table), url.QueryEscape(cursor))
+}
+
+// HubPushURL mengembalikan endpoint push hub.
+func (c *Config) HubPushURL() string { return c.SyncHubURL + "/api/v1/sync/push" }
+
+// normalizeWindow memastikan nilai SIMARC_WINDOW valid
+// (fallback ke fullscreen bila nilai tidak dikenal).
+func normalizeWindow(v string) string {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "normal":
+		return "normal"
+	case "maximized":
+		return "maximized"
+	case "kiosk":
+		return "kiosk"
+	default:
+		if strings.EqualFold(v, "fullscreen") {
+			return "fullscreen"
+		}
+		if strings.TrimSpace(v) == "" {
+			return "fullscreen"
+		}
+		// Nilai asing → fullscreen (default aman).
+		return "fullscreen"
+	}
+}
+
+func mapTz(tz string) string {
+	switch tz {
+	case "Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura", "UTC":
+		return tz
+	default:
+		return "UTC"
+	}
 }
 
 func get(key, fallback string) string {
@@ -110,24 +161,17 @@ func getBool(key string, fb bool) bool {
 }
 
 func getInt(key string, fb int) int {
-	v := get(key, "")
-	if v == "" {
+	return atoi(os.Getenv(key), fb)
+}
+
+func atoi(s string, fb int) int {
+	s = strings.TrimSpace(s)
+	if s == "" {
 		return fb
 	}
-	n, err := strconv.Atoi(v)
+	n, err := strconv.Atoi(s)
 	if err != nil {
 		return fb
 	}
 	return n
-}
-
-func mapTz(tz string) string {
-	switch tz {
-	case "America/Jakarta":
-		return "America/Jakarta"
-	case "Asia/Jakarta":
-		return "Asia/Jakarta"
-	default:
-		return "UTC"
-	}
 }

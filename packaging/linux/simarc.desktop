@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=SIMARC
+GenericName=Arsip Record Center
+Comment=Sistem Informasi Manajemen Arsip — aplikasi desktop mandiri
+Exec=/usr/bin/SIMARC
+Icon=simarc
+Terminal=false
+Categories=Office;Database;
+Keywords=arsip;archive;simarc;record;center;
+StartupNotify=true
+StartupWMClass=SIMARC

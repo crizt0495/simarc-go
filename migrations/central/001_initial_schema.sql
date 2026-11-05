@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS devices (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sync_queue (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     operation_id VARCHAR(64) NOT NULL UNIQUE,
     table_name VARCHAR(64) NOT NULL,
     record_id BINARY(16) NOT NULL,
@@ -30,13 +30,13 @@ CREATE TABLE IF NOT EXISTS sync_queue (
     next_retry_at DATETIME(3) NULL,
     status ENUM('pending','sending','acknowledged','failed') DEFAULT 'pending',
     ack_received_at DATETIME(3) NULL,
-    deleted_at DATETIME(3) NULL
+    deleted_at DATETIME(3) NULL,
+    INDEX idx_sync_queue_status_retry (status, next_retry_at),
+    INDEX idx_sync_queue_operation (operation_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX idx_sync_queue_status_retry ON sync_queue(status, next_retry_at);
-CREATE INDEX idx_sync_queue_operation ON sync_queue(operation_id);
 
 CREATE TABLE IF NOT EXISTS sync_batches (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     batch_id VARCHAR(64) NOT NULL UNIQUE,
     device_id BINARY(16) NOT NULL,
     items_count INT NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS sync_batches (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sync_inbox (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     source_node VARCHAR(64) NOT NULL,
     change_log_id BINARY(16) NOT NULL,
     table_name VARCHAR(64) NOT NULL,
@@ -55,12 +55,11 @@ CREATE TABLE IF NOT EXISTS sync_inbox (
     payload JSON NOT NULL,
     applied_at DATETIME(3) NULL,
     created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
-    deleted_at DATETIME(3) NULL,
-    FOREIGN KEY (change_log_id) REFERENCES sync_cursors(id) ON DELETE SET NULL
+    deleted_at DATETIME(3) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sync_cursors (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     node_id VARCHAR(64) NOT NULL,
     table_name VARCHAR(64) NOT NULL,
     cursor_value VARCHAR(255) NOT NULL,
@@ -69,7 +68,7 @@ CREATE TABLE IF NOT EXISTS sync_cursors (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sync_conflicts (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     operation_id VARCHAR(64) NOT NULL,
     table_name VARCHAR(64) NOT NULL,
     record_id BINARY(16) NOT NULL,
@@ -82,7 +81,7 @@ CREATE TABLE IF NOT EXISTS sync_conflicts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS change_log (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     node_id VARCHAR(64) NOT NULL,
     table_name VARCHAR(64) NOT NULL,
     record_id BINARY(16) NOT NULL,
@@ -96,14 +95,14 @@ CREATE TABLE IF NOT EXISTS change_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sync_logs (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     event ENUM('push_start','push_ack','pull_start','pull_complete','conflict_detected','retry') NOT NULL,
     detail JSON,
     created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())) ,
+    id BINARY(16) NOT NULL PRIMARY KEY,
     user_id BINARY(16) NULL,
     action VARCHAR(255) NOT NULL,
     table_name VARCHAR(64) NULL,

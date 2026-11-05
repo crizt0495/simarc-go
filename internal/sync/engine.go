@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -17,45 +17,70 @@ const (
 	MaxRetries     = 10
 )
 
-// Engine implements bidirectional auto-sync with idempotency, retry, and crash recovery.
+// Engine implements bidirectional sync with an offline-first local database.
+// Seluruh akses database berjalan di sini (backend Golang), antarmuka hanya
+// menampilkan hasil binding — tidak ada akses DB dari frontend.
 type Engine struct {
-	db         *sql.DB
-	hubURL     string
-	hubToken   string
-	client     *http.Client
+	db        *sql.DB
+	hubURL    string
+	hubToken  string
+	client    *http.Client
+	mu        sync.Mutex // TriggerSync boleh dipangggil ulang dari UI
+	lastError string
 }
 
 func New(db *sql.DB, hubURL, token string) *Engine {
 	return &Engine{
-		db:       db,
-		hubURL:   hubURL,
+		db:      db,
+		hubURL:  hubURL,
 		hubToken: token,
-		client:   &http.Client{Timeout: 30 * time.Second},
+		client:  &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
-// Push reads sync_queue pending items and sends to server via POST /sync/push.
+// LastError returns the last sync error (untuk ditampilkan di UI).
+func (e *Engine) LastError() string { return e.lastError }
+
+// RunSync menjalankan satu siklus push+pull; aman dipanggil dari UI.
+func (e *Engine) RunSync(ctx context.Context) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if err := e.Push(ctx); err != nil {
+		e.lastError = err.Error()
+		return err
+	}
+	if err := e.Pull(ctx); err != nil {
+		e.lastError = err.Error()
+		return err
+	}
+	e.lastError = ""
+	return nil
+}
+
+// Push reads sync_queue pending items and sends to hub via POST /api/v1/sync/push.
 func (e *Engine) Push(ctx context.Context) error {
-	rows, err := e.db.Query("SELECT operation_id, table_name, record_id, operation, payload FROM sync_queue WHERE status='pending' LIMIT 100")
+	rows, err := e.db.Query("SELECT operation_id, table_name, HEX(record_id), operation, payload FROM sync_queue WHERE status='pending' ORDER BY created_at ASC LIMIT 100")
 	if err != nil {
 		return fmt.Errorf("push read queue: %w", err)
 	}
 	defer rows.Close()
 
 	items := make([]map[string]interface{}, 0, 100)
+	ids := make([]string, 0, 100)
 	for rows.Next() {
-		var opID, tbl, recID, op string
-		var payload json.RawMessage
+		var opID, tbl, recID, op, payload string
 		if err := rows.Scan(&opID, &tbl, &recID, &op, &payload); err != nil {
 			continue
 		}
 		var m map[string]interface{}
-		_ = json.Unmarshal(payload, &m)
+		_ = json.Unmarshal([]byte(payload), &m)
 		items = append(items, map[string]interface{}{
 			"operation_id": opID, "table_name": tbl, "record_id": recID,
 			"operation": op, "payload": m,
 		})
+		ids = append(ids, opID)
 	}
+	rows.Close()
 
 	if len(items) == 0 {
 		return nil
@@ -70,91 +95,95 @@ func (e *Engine) Push(ctx context.Context) error {
 		return fmt.Errorf("push request: %w", err)
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("server push failed: %d", resp.StatusCode)
+		return fmt.Errorf("hub push failed: HTTP %d", resp.StatusCode)
 	}
 
-	// Mark acknowledged server-side; client updates status to 'acknowledged'.
-	e.db.Exec(`UPDATE sync_queue SET status='acknowledged' WHERE status='pending' AND row_id IN (SELECT id FROM sync_queue WHERE status='pending' ORDER BY created_at ASC LIMIT ?)`, len(items))
-	e.logSync("push_ack", nil)
+	// Tandai terkirim (idempoten, hanya baris yang benar-benar dikirim).
+	for _, opID := range ids {
+		e.db.Exec(`UPDATE sync_queue SET status='acknowledged', ack_received_at=NOW(3) WHERE operation_id=?`, opID)
+	}
+	e.logSync("push_ack", map[string]interface{}{"count": len(items)})
 	return nil
 }
 
-// Pull fetches changes from server using cursor per table, applies locally, saves cursor atomically.
+// Pull fetches changes from hub per table using the stored cursor.
 func (e *Engine) Pull(ctx context.Context) error {
-	tables := []string{"arsip", "pemberkasan", "users"}
+	tables := []string{"arsip", "pemberkasan", "users", "roles"}
+	var cursor struct {
+		Table, Value string
+	}
 	for _, tbl := range tables {
-		cursorRow, err := e.db.Query("SELECT cursor_value FROM sync_cursors WHERE node_id=NULL OR node_id='local' AND table_name=?", tbl)
-		var lastCursor string
-		if cursorRow != nil {
-			_ = cursorRow.Scan(&lastCursor)
-			cursorRow.Close()
-		} else if err == sql.ErrNoRows {
-			lastCursor = ""
-		} else {
-			continue
-		}
+		e.db.QueryRow(`SELECT table_name, IFNULL(cursor_value,'') FROM sync_cursors WHERE node_id='local' AND table_name=?`, tbl).
+			Scan(&cursor.Table, &cursor.Value)
 
-		params := []interface{}{lastCursor, tbl}
-		query := "SELECT sequence, record_id, operation, payload FROM change_log WHERE table_name=? AND (node_id='central' OR node_id<>'local') AND deleted_at IS NULL AND seq > ? LIMIT 200"
-		changeRows, err := e.db.Query("SELECT sequence, table_name, record_id, operation, payload FROM sync_inbox WHERE table_name=? AND applied_at IS NULL LIMIT 200", tbl)
+		req, _ := http.NewRequestWithContext(ctx, "GET", e.hubURL+"/api/v1/sync/pull?table="+tbl+"&cursor="+cursor.Value, nil)
+		req.Header.Set("Authorization", "Bearer "+e.hubToken)
+		resp, err := e.client.Do(req)
 		if err != nil {
-			continue
+			return fmt.Errorf("pull request %s: %w", tbl, err)
+		}
+		if resp.StatusCode == http.StatusNoContent {
+			resp.Body.Close()
+			continue // tidak ada perubahan
+		}
+		if resp.StatusCode >= 400 {
+			resp.Body.Close()
+			return fmt.Errorf("hub pull %s: HTTP %d", tbl, resp.StatusCode)
 		}
 
-		entries := make([]map[string]interface{}, 0, 200)
-		for changeRows.Next() {
-			var seq int64
-			var tname string
-			var rid string
-			var op string
-			var payload json.RawMessage
-			_ = changeRows.Scan(&seq, &tname, &rid, &op, &payload)
-			entries = append(entries, map[string]interface{}{
-				"sequence": seq, "table_name": tname, "record_id": rid,
-				"operation": op, "payload": payload,
-			})
+		var batch struct {
+			Changes []struct {
+				Sequence  int64                  `json:"sequence"`
+				RecordID  string                 `json:"record_id"`
+				Operation string                 `json:"operation"`
+				Payload   map[string]interface{} `json:"payload"`
+			} `json:"changes"`
 		}
-		changeRows.Close()
+		dec := json.NewDecoder(resp.Body)
+		if err := dec.Decode(&batch); err != nil {
+			resp.Body.Close()
+			return fmt.Errorf("pull decode %s: %w", tbl, err)
+		}
+		resp.Body.Close()
 
-		cursorNew := fmt.Sprintf("%d", seqMax(entries))
-		e.applyPull(tbl, entries)
-		atomicSaveCursor(e.db, "local", tbl, cursorNew)
+		for _, c := range batch.Changes {
+			raw, _ := json.Marshal(c.Payload)
+			e.db.Exec(`UPDATE sync_inbox SET applied_at=NOW(3), payload=? WHERE change_log_id=(SELECT id FROM sync_cursors WHERE node_id='local' AND table_name=?) AND record_id=UNHEX(REPLACE(?,'-','')) AND applied_at IS NULL`,
+				string(raw), tbl, c.RecordID)
+		}
+		if len(batch.Changes) > 0 {
+			e.db.Exec(`INSERT INTO sync_cursors(id,node_id,table_name,cursor_value) VALUES(UUID_TO_BIN(UUID()),'local',?,?) 
+				ON DUPLICATE KEY UPDATE cursor_value=VALUES(cursor_value)`,
+				tbl, fmt.Sprintf("%d", batch.Changes[len(batch.Changes)-1].Sequence))
+		}
 	}
 	e.logSync("pull_complete", nil)
 	return nil
 }
 
-func (e *Engine) applyPull(table string, entries []map[string]interface{}) {
-	for _, entry := range entries {
-		sql := `INSERT INTO sync_inbox(table_name, record_id, operation, payload) VALUES(?,?,?,?)`
-		_, _ = e.db.Exec(sql, entry["table_name"], entry["record_id"], entry["operation"], jsonRaw(entry["payload"]))
-	}
-}
-
 func (e *Engine) RetryFailed(ctx context.Context) error {
-	rows, _ := e.db.Query("SELECT id FROM sync_queue WHERE status='failed'")
-	ids := make([]int64, 0)
-	for rows.Next() {
-		var id int64
-		rows.Scan(&id)
-		ids = append(ids, id)
-	}
-	rows.Close()
-	for _, id := range ids {
-		e.Push(ctx)
-	}
-	return nil
+	_, _ = e.db.Exec(`UPDATE sync_queue SET status='pending' WHERE status='failed' AND retry_count < ?`, MaxRetries)
+	return e.Push(ctx)
 }
 
-func (e *Engine) ResolveConflict(conflictID, choice string) error {
-	status := "resolved_merge"
-	if choice == "local" || choice == "server" {
-		status = choice
+// Enqueue menyimpan operasi lokal ke sync_queue (dipanggil oleh handler bisnis).
+func (e *Engine) Enqueue(tableName, operation string, recordID [16]byte, payload map[string]interface{}) error {
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
 	}
-	_, err := e.db.Exec(`UPDATE sync_conflicts SET status=?, resolved_by=?, resolved_at=NOW() WHERE id=?`, status, choice, conflictID)
+	_, err = e.db.Exec(`INSERT INTO sync_queue(operation_id, table_name, record_id, operation, payload) VALUES(REPLACE(UUID(),'-',''), ?, UNHEX(REPLACE(?,'-','')), ?, ?)`,
+		tableName, BINToHex(recordID), operation, string(raw))
 	return err
+}
+
+func BINToHex(v [16]byte) string {
+	s := ""
+	for _, b := range v {
+		s += fmt.Sprintf("%02x", b)
+	}
+	return s
 }
 
 func (e *Engine) LogSync(event string, detail map[string]interface{}) {
@@ -162,57 +191,20 @@ func (e *Engine) LogSync(event string, detail map[string]interface{}) {
 }
 
 func (e *Engine) logSync(event string, detail map[string]interface{}) {
-	body, _ := json.Marshal(detail)
-	req, _ := http.NewRequestWithContext(context.Background(), "POST", e.hubURL+"/api/v1/sync/log", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := e.client.Do(req)
-	if err == nil {
-		resp.Body.Close()
-	}
-}
-
-func seqMax(entries []map[string]interface{}) int64 {
-	var max int64 = 0
-	for _, item := range entries {
-		if v, ok := item["sequence"].(float64); ok && v > max {
-			max = int64(v)
-		}
-	}
-	return max
-}
-
-func jsonRaw(b interface{}) json.RawMessage {
-	if b == nil {
-		return nil
-	}
-	m, ok := b.([]byte)
-	if !ok {
-		return nil
-	}
-	return m
-}
-
-func atomicSaveCursor(db *sql.DB, nodeID, table, cursor string) error {
-	tx, _ := db.Begin()
-	tx.Exec(`INSERT INTO sync_cursors(id, node_id, table_name, cursor_value, updated_at) VALUES((UUID_TO_BIN(UUID())),?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE cursor_value=VALUES(cursor_value), updated_at=NOW()`,
-		nodeID, table, cursor)
-	tx.Commit()
-	return nil
+	detailStr, _ := json.Marshal(detail)
+	e.db.Exec(`INSERT INTO sync_logs(event, detail) VALUES(?, JSON_QUOTE(?))`, event, string(detailStr))
 }
 
 func (e *Engine) ResetOnRestart() error {
-	// Confirm: restart must never lose pending queue
-	c, _ := e.db.Exec("UPDATE sync_queue SET status='pending' WHERE status='failed'")
-	n, _ := c.RowsAffected()
-	_ = n
-	return nil
+	// Konfirmasi: restart tidak boleh kehilangan antrean pending.
+	_, err := e.db.Exec("UPDATE sync_queue SET status='pending' WHERE status='failed'")
+	return err
 }
 
 func retryBackoff(n int) time.Duration {
-	r := rand.Intn(60) // jitter
 	d := InitialBackoff << uint(n)
 	if d > MaxBackoff {
 		d = MaxBackoff
 	}
-	return d + time.Duration(r)*time.Millisecond
+	return d
 }

@@ -7,6 +7,12 @@ dist/*
 *.out
 *.test
 *.test.exe
+build/bin/
+frontend/dist/
+# Toolchain & data runtime lokal (tidak ikut git)
+toolchain/
+mariadb-data/
+*.deb
 # Bundel database portabel (hasil unduhan) & cache build — tidak ikut git.
 packaging/cache/
 # Installer desktop Windows dilacak agar bisa diunduh langsung dari repo
