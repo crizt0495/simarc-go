@@ -6,6 +6,7 @@ import {
   GetStatus,
   PingBackend,
   ListArsip,
+  GetDashboardStats,
 } from '../../wailsjs/go/main/App';
 
 export type Status = {
@@ -22,4 +23,8 @@ export async function pingBackend(): Promise<string> {
 
 export async function listArsip(): Promise<any[]> {
   return (await ListArsip()) as unknown as any[];
+}
+
+export async function getDashboardStats(): Promise<Record<string, any>> {
+  return (await GetDashboardStats()) as unknown as Record<string, any>;
 }
