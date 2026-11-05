@@ -1,6 +1,3 @@
-// Study: main SIMARC — aplikasi desktop standalone (Wails + React).
-// Tidak ada dev server, tidak ada browser eksternal: seluruh UI React
-// di-embed ke executable dan dirender WebView bawaan sistem operasi.
 package main
 
 import (
@@ -21,16 +18,10 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed all:migrations
-var migrationFS embed.FS
-
 func main() {
-	app := NewApp(migrationFS)
+	app := NewApp()
 
-	// Konfigurasi jendela (dibaca langsung dari process env sebelum aplikasi
-	// dimulai; nilai .env sudah dipetakan ke env oleh config loader saat dev,
-	// dan pada versi release file .env lazimnya telah ditangkap oleh system).
-	window := strings.ToLower(getEnvDefault("SIMARC_WINDOW", "fullscreen"))
+	window := strings.ToLower(readDotEnv("SIMARC_WINDOW", "fullscreen"))
 
 	opts := &options.App{
 		Title:     "SIMARC — Arsip Record Center",
@@ -41,7 +32,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 245, G: 247, B: 250, A: 255},
+		BackgroundColour: &options.RGBA{R: 243, G: 245, B: 249, A: 255},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
@@ -54,11 +45,11 @@ func main() {
 			WebviewIsTransparent: false,
 		},
 		Mac: &mac.Options{},
-		// window mode: normal | maximized | fullscreen | kiosk
 		WindowStartState: windowOpts(window).startState,
 		Frameless:        windowOpts(window).frameless,
 		DisableResize:    windowOpts(window).disallowResize,
 	}
+
 	if err := wails.Run(opts); err != nil {
 		println("Error:", err.Error())
 	} else {
@@ -66,7 +57,6 @@ func main() {
 	}
 }
 
-// windowOpts memetakan nama mode jendela ke opsi Wails.
 type windowFlags struct {
 	startState     options.WindowStartState
 	frameless      bool
@@ -87,21 +77,13 @@ func windowOpts(mode string) windowFlags {
 	return windowFlags{startState: options.Fullscreen}
 }
 
-func getEnvDefault(key, fb string) string {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
-		return v
-	}
-	// Fallback manual ke file .env bila env runtime belum memuat nilai.
-	// Ini penting saat menjalankan executable rilis, karena Wails memulai
-	// sebelum config loader di `startup` sempat mengeset env.
-	return readDotEnv(key, fb)
-}
-
-// readDotEnv membaca nilai `key` dari `.env` di CWD atau exe dir.
 func readDotEnv(key, fb string) string {
 	paths := []string{".env"}
 	if exe, err := os.Executable(); err == nil {
 		paths = append(paths, filepath.Join(filepath.Dir(exe), ".env"))
+	}
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		paths = append(paths, filepath.Join(home, ".env"))
 	}
 	for _, p := range paths {
 		f, err := os.Open(p)

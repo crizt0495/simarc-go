@@ -1,0 +1,535 @@
+package syncdb
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"strings"
+)
+
+// driverMySQL / driverSQLite menandai dialek mesin database. Database lokal
+// bisa MySQL (instalasi lama / server) atau SQLite (desktop offline-first),
+// sedangkan hub selalu MySQL.
+const (
+	driverMySQL  = "mysql"
+	driverSQLite = "sqlite"
+)
+
+// strategy is how a table is merged between nodes.
+type strategy int
+
+const (
+	// stratSoft: table has deleted_at (soft delete) and updated_at. Changes are
+	// read with updated_at/deleted_at timestamps and merged with
+	// last-write-wins. Deletions propagate because the tombstone row itself
+	// carries a fresh timestamp.
+	stratSoft strategy = iota
+	// stratKeyed: table has no deleted_at (hard deletes, configuration, pivot).
+	// Rows are upserted by primary key without deletion propagation (v1
+	// limitation — see docs/OFFLINE-SYNC.md).
+	stratKeyed
+	// stratAppend: immutable log table. Rows are inserted once and never
+	// overwritten or deleted.
+	stratAppend
+)
+
+// skipTables are never synchronised: infrastructure, caches, job queues, debug
+// tooling and the legacy duplicate plural tables. These either hold node-local
+// state or would collide/duplicate across nodes.
+var skipTables = map[string]bool{
+	"migrations":         true,
+	"schema_migrations":  true,
+	"jobs":               true,
+	"failed_jobs":        true,
+	"import_export_jobs": true,
+
+	// Sync bookkeeping: state/runs/keys are local-only. sync_tombstones is NOT
+	// skipped — it is deliberately shared so deletes propagate.
+	"sync_state":    true,
+	"sync_runs":     true,
+	"sync_keys":     true,
+	"sync_boundary": true,
+
+	"telescope_entries":      true,
+	"telescope_entries_tags": true,
+	"telescope_monitoring":   true,
+
+	"ai_classification_cache":  true,
+	"ai_classification_caches": true,
+	"analytics_cache":          true,
+	"ocr_temp_images":          true,
+
+	// Legacy duplicate (plural) tables kept for backward compatibility only.
+	"arsips":                true,
+	"kode_klasifikasis":     true,
+	"unit_kerjas":           true,
+	"jenis_arsips":          true,
+	"jadwal_retensis":       true,
+	"jadwal_retensi_arsips": true,
+	"pemberkasans":          true,
+	"pemusnahan_arsips":     true,
+	"permission_roles":      true,
+}
+
+// appendTables are immutable, append-only logs. They are inserted once and
+// never overwritten or deleted, so audit history from every node is preserved.
+var appendTables = map[string]bool{
+	"activity_logs":    true,
+	"audit_logs":       true,
+	"login_logs":       true,
+	"integration_logs": true,
+	"ocr_logs":         true,
+	"qr_scan_logs":     true,
+	"backup_logs":      true,
+}
+
+// tableInfo describes one table's shape for the generic merge engine.
+type tableInfo struct {
+	Name          string
+	Columns       []string // insertable columns, in order
+	PK            []string
+	HasCreatedAt  bool
+	HasUpdatedAt  bool
+	HasDeletedAt  bool
+	AutoIncrement bool
+}
+
+// timestampColumn returns the column used for change detection. updated_at is
+// preferred (it moves on soft deletes and edits); created_at is used for
+// append-only tables without updated_at.
+func (t *tableInfo) timestampColumn() string {
+	if t.HasUpdatedAt {
+		return "updated_at"
+	}
+	if t.HasCreatedAt {
+		return "created_at"
+	}
+	return ""
+}
+
+// deltaExpr returns the SQL pieces used by readDelta: an expression that
+// resolves a row's change time (falling back to created_at when updated_at is
+// NULL, which legacy data often has), and a test that matches rows where every
+// timestamp column is NULL. The latter have no usable change time, so they are
+// always included (the upsert is idempotent).
+func deltaExpr(t *tableInfo) (coalesce, allNull string) {
+	switch {
+	case t.HasUpdatedAt && t.HasCreatedAt:
+		return "COALESCE(`updated_at`, `created_at`)",
+			"(`updated_at` IS NULL AND `created_at` IS NULL)"
+	case t.HasUpdatedAt:
+		return "`updated_at`", "(`updated_at` IS NULL)"
+	case t.HasCreatedAt:
+		return "`created_at`", "(`created_at` IS NULL)"
+	default:
+		return "1=1", ""
+	}
+}
+
+// strategyFor decides how (and whether) a table participates in sync.
+func strategyFor(t *tableInfo) (strategy, bool) {
+	if skipTables[t.Name] {
+		return 0, false
+	}
+	if len(t.PK) == 0 {
+		return 0, false // cannot merge reliably without a primary key
+	}
+	if t.AutoIncrement {
+		// Auto-increment keys collide across independent computers, which would
+		// silently overwrite unrelated rows. Excluded until those tables use
+		// UUID keys (documented in docs/OFFLINE-SYNC.md).
+		return 0, false
+	}
+	if appendTables[t.Name] {
+		return stratAppend, true
+	}
+	if t.HasDeletedAt {
+		return stratSoft, true
+	}
+	return stratKeyed, true
+}
+
+// loadTableFor loads the shape of a single table from the given database,
+// resolving the schema name automatically. It is used to inspect the *hub's*
+// own table definition, which can differ from the local one (for example when
+// a client still runs an older schema).
+func loadTableFor(ctx context.Context, db *sql.DB, driver, name string) (*tableInfo, error) {
+	if driver == driverSQLite {
+		return loadTableSQLite(ctx, db, name)
+	}
+	var schema string
+	if err := db.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&schema); err != nil {
+		return nil, err
+	}
+	return loadTable(ctx, db, schema, name)
+}
+
+// loadTables introspects every base table in the given database.
+func loadTables(ctx context.Context, db *sql.DB, driver string) (map[string]*tableInfo, error) {
+	if driver == driverSQLite {
+		return loadTablesSQLite(ctx, db)
+	}
+	return loadTablesMySQL(ctx, db)
+}
+
+// loadTablesMySQL introspects every base table in a MySQL database using
+// exactly TWO information_schema queries (one for all columns, one for all
+// primary keys) instead of two per table. Over a WAN hub this cuts the sync
+// startup from ~20 s to well under a second of query time.
+func loadTablesMySQL(ctx context.Context, db *sql.DB) (map[string]*tableInfo, error) {
+	var schema string
+	if err := db.QueryRowContext(ctx, "SELECT DATABASE()").Scan(&schema); err != nil {
+		return nil, err
+	}
+
+	out := map[string]*tableInfo{}
+	byName := func(name string) *tableInfo {
+		ti, ok := out[name]
+		if !ok {
+			ti = &tableInfo{Name: name}
+			out[name] = ti
+		}
+		return ti
+	}
+
+	colRows, err := db.QueryContext(ctx, `
+		SELECT table_name, column_name, extra FROM information_schema.columns
+		WHERE table_schema = ?
+		ORDER BY table_name, ordinal_position`, schema)
+	if err != nil {
+		return nil, err
+	}
+	for colRows.Next() {
+		var table, col, extra string
+		if err := colRows.Scan(&table, &col, &extra); err != nil {
+			colRows.Close()
+			return nil, err
+		}
+		applyColumn(byName(table), col, extra)
+	}
+	colRows.Close()
+	if err := colRows.Err(); err != nil {
+		return nil, err
+	}
+
+	pkRows, err := db.QueryContext(ctx, `
+		SELECT table_name, column_name FROM information_schema.statistics
+		WHERE table_schema = ? AND index_name = 'PRIMARY'
+		ORDER BY table_name, seq_in_index`, schema)
+	if err != nil {
+		return nil, err
+	}
+	for pkRows.Next() {
+		var table, col string
+		if err := pkRows.Scan(&table, &col); err != nil {
+			pkRows.Close()
+			return nil, err
+		}
+		byName(table).PK = append(byName(table).PK, col)
+	}
+	pkRows.Close()
+	if err := pkRows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Tabel tanpa kolom yang bisa disalin tidak ikut disinkronkan (sama
+	// seperti perilaku introspeksi per tabel yang error atasnya).
+	for name, ti := range out {
+		if len(ti.Columns) == 0 {
+			delete(out, name)
+		}
+	}
+	return out, nil
+}
+
+// applyColumn menerima satu baris informasi kolom MySQL dan memetakkannya ke
+// tableInfo (dipakai bersama loader per tabel dan loader batch).
+func applyColumn(ti *tableInfo, col, extra string) {
+	if isTrulyGeneratedColumn(extra) {
+		return // generated columns cannot be inserted explicitly
+	}
+	ti.Columns = append(ti.Columns, col)
+	if strings.Contains(strings.ToLower(extra), "auto_increment") {
+		ti.AutoIncrement = true
+	}
+	switch col {
+	case "created_at":
+		ti.HasCreatedAt = true
+	case "updated_at":
+		ti.HasUpdatedAt = true
+	case "deleted_at":
+		ti.HasDeletedAt = true
+	}
+}
+
+// loadTablesSQLite membaca daftar tabel dan kolom dari katalog SQLite.
+func loadTablesSQLite(ctx context.Context, db *sql.DB) (map[string]*tableInfo, error) {
+	rows, err := db.QueryContext(ctx,
+		`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for rows.Next() {
+		var n string
+		if err := rows.Scan(&n); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		names = append(names, n)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]*tableInfo, len(names))
+	for _, name := range names {
+		ti, err := loadTableSQLite(ctx, db, name)
+		if err != nil {
+			return nil, fmt.Errorf("tabel %s: %w", name, err)
+		}
+		out[name] = ti
+	}
+	return out, nil
+}
+
+// loadTableSQLite membaca satu tabel lewat PRAGMA table_info.
+func loadTableSQLite(ctx context.Context, db *sql.DB, name string) (*tableInfo, error) {
+	ti := &tableInfo{Name: name}
+
+	rows, err := db.QueryContext(ctx, "PRAGMA table_info(`"+name+"`)")
+	if err != nil {
+		return nil, err
+	}
+	type pkCol struct {
+		pos int
+		col string
+	}
+	var pks []pkCol
+	for rows.Next() {
+		var cid, notNull, pk int
+		var col, typ string
+		var dflt sql.NullString
+		if err := rows.Scan(&cid, &col, &typ, &notNull, &dflt, &pk); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ti.Columns = append(ti.Columns, col)
+		if pk > 0 {
+			pks = append(pks, pkCol{pos: pk, col: col})
+		}
+		switch col {
+		case "created_at":
+			ti.HasCreatedAt = true
+		case "updated_at":
+			ti.HasUpdatedAt = true
+		case "deleted_at":
+			ti.HasDeletedAt = true
+		}
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Urutan kolom primer mengikuti posisi pk pada PRAGMA.
+	for i := 1; i <= len(pks); i++ {
+		for _, p := range pks {
+			if p.pos == i {
+				ti.PK = append(ti.PK, p.col)
+			}
+		}
+	}
+
+	var ddl string
+	if err := db.QueryRowContext(ctx,
+		`SELECT COALESCE(sql,'') FROM sqlite_master WHERE type='table' AND name=?`, name).Scan(&ddl); err == nil {
+		if strings.Contains(strings.ToUpper(ddl), "AUTOINCREMENT") {
+			ti.AutoIncrement = true
+		}
+	}
+
+	if len(ti.Columns) == 0 {
+		return nil, fmt.Errorf("tabel %s tidak punya kolom yang bisa disalin", name)
+	}
+	return ti, nil
+}
+
+// isTrulyGeneratedColumn reports whether an information_schema `EXTRA` value
+// describes a column that is computed by MySQL and therefore cannot be inserted
+// explicitly (VIRTUAL GENERATED / STORED GENERATED).
+//
+// Kritis: nilai "DEFAULT_GENERATED" BUKAN kolom generated. Itu hanya penanda
+// kolom dengan ekspresi DEFAULT (mis. `id char(36) DEFAULT (uuid())`, lazim di
+// MySQL 8/Aiven). Kolom semacam itu tetap kolom biasa yang WAJIB ikut disalin.
+// Menyamakan "DEFAULT_GENERATED" dengan kolom generated membuat kolom PRIMARY
+// KEY seperti `id` terbuang, lalu seluruh tabel (mis. `arsip`) dilewati saat
+// sinkron sehingga komputer klien tidak pernah menerima datanya.
+func isTrulyGeneratedColumn(extra string) bool {
+	lower := strings.ToLower(extra)
+	return strings.Contains(lower, "virtual generated") ||
+		strings.Contains(lower, "stored generated")
+}
+
+// loadTable introspects a single table (MySQL).
+func loadTable(ctx context.Context, db *sql.DB, schema, name string) (*tableInfo, error) {
+	ti := &tableInfo{Name: name}
+
+	rows, err := db.QueryContext(ctx, `
+		SELECT column_name, extra FROM information_schema.columns
+		WHERE table_schema = ? AND table_name = ?
+		ORDER BY ordinal_position`, schema, name)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var col, extra string
+		if err := rows.Scan(&col, &extra); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		applyColumn(ti, col, extra)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	pkRows, err := db.QueryContext(ctx, `
+		SELECT column_name FROM information_schema.statistics
+		WHERE table_schema = ? AND table_name = ? AND index_name = 'PRIMARY'
+		ORDER BY seq_in_index`, schema, name)
+	if err != nil {
+		return nil, err
+	}
+	for pkRows.Next() {
+		var col string
+		if err := pkRows.Scan(&col); err != nil {
+			pkRows.Close()
+			return nil, err
+		}
+		ti.PK = append(ti.PK, col)
+	}
+	pkRows.Close()
+	if err := pkRows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(ti.Columns) == 0 {
+		return nil, fmt.Errorf("tabel %s tidak punya kolom yang bisa disalin", name)
+	}
+	return ti, nil
+}
+
+// tableExistsIn reports whether a table exists in the given database.
+func tableExistsIn(ctx context.Context, db *sql.DB, driver, table string) (bool, error) {
+	var n int64
+	if driver == driverSQLite {
+		err := db.QueryRowContext(ctx,
+			`SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name=?`, table).Scan(&n)
+		if err != nil {
+			return false, err
+		}
+		return n > 0, nil
+	}
+	err := db.QueryRowContext(ctx, `
+		SELECT COUNT(1) FROM information_schema.tables
+		WHERE table_schema = DATABASE() AND table_name = ?`, table).Scan(&n)
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+// createTableLike copies a table's DDL from a MySQL source to a MySQL
+// destination (hub selalu MySQL).
+func createTableLike(ctx context.Context, src *sql.DB, srcDriver string, dst *sql.DB, dstDriver string, table string) error {
+	if srcDriver != dstDriver {
+		return fmt.Errorf("penyamaan skema %s -> %s belum didukung; jalankan migrasi hub", srcDriver, dstDriver)
+	}
+	var ddl string
+	if srcDriver == driverSQLite {
+		err := src.QueryRowContext(ctx,
+			`SELECT sql FROM sqlite_master WHERE type='table' AND name=?`, table).Scan(&ddl)
+		if err != nil {
+			return err
+		}
+	} else {
+		var name string
+		if err := src.QueryRowContext(ctx, "SHOW CREATE TABLE `"+table+"`").Scan(&name, &ddl); err != nil {
+			return err
+		}
+	}
+	ddl = strings.Replace(ddl, "CREATE TABLE", "CREATE TABLE IF NOT EXISTS", 1)
+	_, err := dst.ExecContext(ctx, ddl)
+	return err
+}
+
+// restrictTablesToHub keeps only columns that exist on both sides. Database
+// lokal SQLite dibuat dari model GORM terbaru, sedangkan hub MySQL bisa lebih
+// lama (belum punya kolom baru). Tanpa irisan ini, push/pull gagal dengan
+// "Unknown column". Kolom yang belum ada di hub tidak disinkronkan sampai hub
+// dimigrasi; data lokal untuk kolom tersebut tetap aman.
+func restrictTablesToHub(ctx context.Context, hub *sql.DB, hubDriver string, tables map[string]*tableInfo, logf func(string, ...any)) error {
+	hubTables, err := loadTables(ctx, hub, hubDriver)
+	if err != nil {
+		return err
+	}
+	trimmed := 0
+	for name, ti := range tables {
+		ht, ok := hubTables[name]
+		if !ok {
+			// Tidak ada di hub: lewati tabel ini (tidak bisa dibuat dari SQLite).
+			if logf != nil {
+				logf("[sync] tabel %s belum ada di hub; dilewati", name)
+			}
+			delete(tables, name)
+			continue
+		}
+		allowed := make(map[string]bool, len(ht.Columns))
+		for _, c := range ht.Columns {
+			allowed[c] = true
+		}
+		cols := make([]string, 0, len(ti.Columns))
+		for _, c := range ti.Columns {
+			if allowed[c] {
+				cols = append(cols, c)
+			}
+		}
+		pkOK := true
+		for _, c := range ti.PK {
+			if !allowed[c] {
+				pkOK = false
+				break
+			}
+		}
+		if len(cols) == 0 || !pkOK {
+			if logf != nil {
+				logf("[sync] tabel %s dilewati: kolom kunci tidak cocok dengan hub", name)
+			}
+			delete(tables, name)
+			continue
+		}
+		if len(cols) != len(ti.Columns) {
+			trimmed++
+		}
+		ti.Columns = cols
+		ti.HasCreatedAt = containsString(cols, "created_at")
+		ti.HasUpdatedAt = containsString(cols, "updated_at")
+		ti.HasDeletedAt = containsString(cols, "deleted_at")
+	}
+	if trimmed > 0 && logf != nil {
+		logf("[sync] %d tabel memakai irisan kolom hub (hub belum dimigrasi penuh)", trimmed)
+	}
+	return nil
+}
+
+func containsString(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}

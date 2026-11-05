@@ -1,15 +1,10 @@
 /**
- * App — bootstrapping data backend dan routing halaman (state-based, tanpa
- * router web; ini aplikasi desktop).
+ * App — bootstrapping data backend dan routing halaman.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from './components/AppLayout';
 import { Dashboard } from './pages/Dashboard';
 import { ArsipPage } from './pages/ArsipPage';
-import { SinkronisasiPage } from './pages/SinkronisasiPage';
-import { BackupPage } from './pages/BackupPage';
-import { PengaturanPage } from './pages/PengaturanPage';
-import { ComingSoonPage } from './pages/ComingSoonPage';
 import type { PageKey } from './components/AppSidebar';
 import { getStatus, pingBackend, type Status } from './lib/bindings';
 
@@ -72,15 +67,8 @@ const App: React.FC = () => {
       case 'dashboard':
         return <Dashboard status={status} />;
       case 'arsip':
-        return <ArsipPage canWrite />;
       case 'arsip-create':
         return <ArsipPage canWrite />;
-      case 'sinkronisasi':
-        return <SinkronisasiPage status={status} />;
-      case 'backup':
-        return <BackupPage />;
-      case 'pengaturan':
-        return <PengaturanPage />;
       default:
         return <ComingSoonPage title={TITLES[page]} />;
     }
